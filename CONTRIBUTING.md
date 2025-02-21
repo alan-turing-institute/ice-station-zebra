@@ -2,9 +2,9 @@
 
 Welcome! Thanks for your interest in contributing to this project.
 
-  - We manage our day-to-day work on this internal [project management board](https://github.com/alan-turing-institute/ice-station-zebra-project-board).
-  - Our [list of open issues](https://github.com/alan-turing-institute/ice-station-zebra/issues) is on GitHub.
-  - Contact us at by [email](mailto:SeaIce@turing.ac.uk).
+- We manage our day-to-day work on this internal [project management board](https://github.com/alan-turing-institute/ice-station-zebra-project-board).
+- Our [list of open issues](https://github.com/alan-turing-institute/ice-station-zebra/issues) is on GitHub.
+- Contact us at by [email](mailto:SeaIce@turing.ac.uk).
 
 ## Submitting changes
 

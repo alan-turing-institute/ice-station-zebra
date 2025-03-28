@@ -1,9 +1,17 @@
-import hydra
-from omegaconf import DictConfig, OmegaConf
+import sys
+import argparse
 
-@hydra.main(version_base=None, config_path="config", config_name="zebra")
-def main(cfg : DictConfig) -> None:
-    print(OmegaConf.to_yaml(cfg))
+from ice_station_zebra.commands import test, train
 
-if __name__ == "__main__":
-    main()
+def main() -> None:
+    # Select command
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["test", "train"], type=str)
+    args, unknown = parser.parse_known_args()
+
+    # Reset system arguments and run the appropriate hydra entrypoint
+    sys.argv = [sys.argv[0]] + unknown
+    if args.command == "test":
+        test()
+    elif args.command == "train":
+        train()

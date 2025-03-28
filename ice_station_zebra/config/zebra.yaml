@@ -1,4 +1,4 @@
-db:
-  driver: mysql
-  user: omry
-  pass: secret
+test:
+  test_option: 1
+train:
+  train_option: 2

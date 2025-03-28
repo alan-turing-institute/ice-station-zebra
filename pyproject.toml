@@ -7,7 +7,9 @@ authors = [
     { name = "James Robinson", email = "james.em.robinson@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "hydra-core>=1.3.2",
+]
 
 [project.scripts]
 zebra = "ice_station_zebra.cli:main"

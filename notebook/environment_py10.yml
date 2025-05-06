@@ -1,0 +1,22 @@
+name: seaice_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - gdal
+  - udunits2
+  - cf-units
+  - pip
+  - pip:
+      - torch
+      - torchvision
+      - torchaudio
+      - torchmetrics
+      - lightning
+      - ipykernel
+      - pandas
+      - numpy==1.26.4 
+      - scipy==1.13.0
+      - shapely<2.0
+      - icenet

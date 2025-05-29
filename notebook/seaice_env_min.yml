@@ -21,3 +21,4 @@ dependencies:
       - shapely<2.0
       - icenet
       - netcdf4<1.6.0
+      - xarray[io]

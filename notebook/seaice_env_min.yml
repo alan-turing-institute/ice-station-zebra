@@ -20,3 +20,4 @@ dependencies:
       - scipy==1.13.0
       - shapely<2.0
       - icenet
+      - netcdf4<1.6.0

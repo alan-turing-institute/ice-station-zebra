@@ -1,6 +1,7 @@
 from pathlib import Path
-from torch.utils.data import Dataset
+
 import xarray as xr
+from torch.utils.data import Dataset
 
 
 class OSISAFDataset(Dataset):

@@ -8,22 +8,29 @@ from ice_station_zebra.commands import test, train
 app = typer.Typer()
 
 
-def override_base_config(config_name: str, overrides: list[str] | None) -> DictConfig:
-    """Apply command-line overrides to base config"""
-    with initialize(config_path="config", version_base=None):
-        return compose(config_name=config_name, overrides=overrides)
+def hydra_override(function):
+    def wrapper(
+        overrides: list[str] | None = typer.Argument(None), config_name: str = "zebra"
+    ):
+        with initialize(config_path="config", version_base=None):
+            config = compose(config_name=config_name, overrides=overrides)
+        return function(config)
+
+    return wrapper
 
 
 @app.command(name="test")
-def cmd_test(overrides: list[str] | None = typer.Argument(None), config_name: str = "zebra") -> None:
+@hydra_override
+def cmd_test(config: DictConfig) -> None:
     """Test command"""
-    test(override_base_config(config_name, overrides))
+    test(config)
 
 
 @app.command("train")
-def cmd_train(overrides: list[str] | None = typer.Argument(None), config_name: str = "zebra") -> None:
+@hydra_override
+def cmd_train(config: DictConfig) -> None:
     """Train command"""
-    train(override_base_config(config_name, overrides))
+    train(config)
 
 
 def main() -> None:

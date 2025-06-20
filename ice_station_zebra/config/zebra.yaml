@@ -1,4 +1,4 @@
 test:
-  test_option: 1
+  some_test_parameter: 1
 train:
-  train_option: 2
+  osisaf_path: "/bask/projects/v/vjgo8416-ice-frcst/shared/prototype_data/osisaf/south/siconca/2000"

@@ -1,6 +1,7 @@
-from .main import app, hydra_override
+from .hydra import hydra_adaptor
+from .main import app
 
 __all__ = [
     "app",
-    "hydra_override",
+    "hydra_adaptor",
 ]

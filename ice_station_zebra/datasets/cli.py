@@ -25,5 +25,17 @@ def create(
         dataset.download()
 
 
+@datasets_cli.command("inspect")
+@hydra_adaptor
+def inspect(
+    config: DictConfig,
+) -> None:
+    """Inspect all datasets"""
+    manager = AnemoiDatasetManager(config)
+    for dataset in manager.datasets:
+        log.info(f"Working on {dataset.name}")
+        dataset.inspect()
+
+
 if __name__ == "__main__":
     datasets_cli()

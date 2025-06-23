@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from anemoi.datasets.commands.create import Create
+from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 
 log = logging.getLogger(__name__)
@@ -15,6 +16,15 @@ class AnemoiCreateArgs:
     command: str = "unused"
     threads: int = 0
     processes: int = 0
+
+
+@dataclass
+class AnemoiInspectArgs:
+    path: str
+    detailed: bool
+    progress: bool
+    statistics: bool
+    size: bool
 
 
 class AnemoiDataset:
@@ -31,6 +41,19 @@ class AnemoiDataset:
             AnemoiCreateArgs(
                 path=str(self.path),
                 config=self.config,
+            )
+        )
+
+    def inspect(self) -> None:
+        """Inspect a single Anemoi dataset"""
+        log.info(f"Inspecting dataset {self.name} at {self.path}")
+        InspectZarr().run(
+            AnemoiInspectArgs(
+                path=str(self.path),
+                detailed=True,
+                progress=True,
+                statistics=True,
+                size=True,
             )
         )
 

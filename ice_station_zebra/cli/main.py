@@ -1,9 +1,14 @@
 import typer
+from hydra.core.utils import simple_stdout_log_config
 from omegaconf import DictConfig
 
-from .hydra import hydra_override
 from ice_station_zebra.commands import test, train
 from ice_station_zebra.datasets import datasets_cli
+
+from .hydra import hydra_adaptor
+
+# Configure hydra logging
+simple_stdout_log_config()
 
 # Create the typer app
 app = typer.Typer(
@@ -15,14 +20,14 @@ app.add_typer(datasets_cli, name="datasets")
 
 
 @app.command("test")
-@hydra_override
+@hydra_adaptor
 def cmd_test(config: DictConfig) -> None:
     """Test command"""
     test(config)
 
 
 @app.command("train")
-@hydra_override
+@hydra_adaptor
 def cmd_train(config: DictConfig) -> None:
     """Train command"""
     train(config)

@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-zebra = "ice_station_zebra.cli:main"
+zebra = "ice_station_zebra.cli:app"
 
 [build-system]
 requires = ["hatchling"]

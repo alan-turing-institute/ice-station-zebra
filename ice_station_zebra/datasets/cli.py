@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 
-from .anemoi_dataset import AnemoiDatasetManager
+from .anemoi_dataset_factory import AnemoiDatasetFactory
 
 # Create the typer app
 datasets_cli = typer.Typer(help="Manage datasets")
@@ -19,8 +19,8 @@ def create(
     config: DictConfig,
 ) -> None:
     """Create all datasets"""
-    manager = AnemoiDatasetManager(config)
-    for dataset in manager.datasets:
+    factory = AnemoiDatasetFactory(config)
+    for dataset in factory.datasets:
         log.info(f"Working on {dataset.name}")
         dataset.download()
 
@@ -31,8 +31,8 @@ def inspect(
     config: DictConfig,
 ) -> None:
     """Inspect all datasets"""
-    manager = AnemoiDatasetManager(config)
-    for dataset in manager.datasets:
+    factory = AnemoiDatasetFactory(config)
+    for dataset in factory.datasets:
         log.info(f"Working on {dataset.name}")
         dataset.inspect()
 

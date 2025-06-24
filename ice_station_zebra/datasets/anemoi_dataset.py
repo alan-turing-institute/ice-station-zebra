@@ -56,10 +56,3 @@ class AnemoiDataset:
                 size=True,
             )
         )
-
-
-class AnemoiDatasetManager:
-    def __init__(self, config: DictConfig) -> None:
-        self.datasets = [
-            AnemoiDataset(dataset_name, config) for dataset_name in config["datasets"]
-        ]

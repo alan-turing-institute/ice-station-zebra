@@ -22,7 +22,7 @@ def create(
     factory = AnemoiDatasetFactory(config)
     for dataset in factory.datasets:
         log.info(f"Working on {dataset.name}")
-        dataset.download()
+        dataset.create()
 
 
 @datasets_cli.command("inspect")

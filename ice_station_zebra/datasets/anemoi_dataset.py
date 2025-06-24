@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Type
+from zarr.errors import PathNotFoundError
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.inspect import InspectZarr
@@ -45,6 +46,15 @@ class AnemoiDataset:
         if "preprocessor" in cfg_anemoi:
             cfg_anemoi["preprocessor"]["outputs"] = self.preprocessor.outputs()
         self.config = OmegaConf.to_container(cfg_anemoi, resolve=True)
+
+    def create(self) -> None:
+        """Ensure that a single Anemoi dataset exists"""
+        try:
+            self.inspect()
+            log.info(f"Dataset {self.name} already exists at {self.path}, no need to download")
+        except PathNotFoundError:
+            log.info(f"Dataset {self.name} not found at {self.path}")
+            self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset"""

@@ -1,5 +1,5 @@
-.python-version
-outputs
-
 __pycache__
+.DS_Store
+.python-version
 *local.yaml
+outputs

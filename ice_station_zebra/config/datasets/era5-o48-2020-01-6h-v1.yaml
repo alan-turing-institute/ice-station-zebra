@@ -67,4 +67,4 @@ era5-o48-2020-01-6h-v1:
         - sin_julian_day
         - sin_local_time
         - insolation
-        template: ${input.join.0.mars}
+        template: \${input.join.0.mars}  # we escape this so it is resolved by Anemoi, not OmegaConf

@@ -1,7 +1,8 @@
-from .base import NullPreprocessor
+from .base import NullPreprocessor, IPreprocessor
 from .icenet_sic import IceNetSICPreprocessor
 
 __all__ = [
-    "NullPreprocessor",
     "IceNetSICPreprocessor",
+    "IPreprocessor",
+    "NullPreprocessor",
 ]

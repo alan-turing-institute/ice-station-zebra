@@ -1,0 +1,9 @@
+defaults:
+  - checkpointing: default
+  - hardware: laptop
+  - learning: default
+  - logging: default
+  - split: default
+
+# Disable checkpointing by setting this to False
+enable_checkpointing: True

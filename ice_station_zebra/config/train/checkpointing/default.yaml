@@ -1,0 +1,13 @@
+# Enable checkpointing by time, number of epochs or number of training steps
+# - num_models_saved: -1: keep all models, k: keep the last k models
+every_n_minutes:
+  save_frequency: 30
+  num_models_saved: 3
+
+every_n_epochs:
+  save_frequency: 1
+  num_models_saved: -1
+
+every_n_train_steps:
+  save_frequency: null
+  num_models_saved: 0

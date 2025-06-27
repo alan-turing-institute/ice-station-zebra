@@ -1,4 +1,4 @@
-from .base import NullPreprocessor, IPreprocessor
+from .base import IPreprocessor, NullPreprocessor
 from .icenet_sic import IceNetSICPreprocessor
 
 __all__ = [

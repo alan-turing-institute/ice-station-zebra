@@ -1,12 +1,13 @@
 import logging
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Type
-from zarr.errors import PathNotFoundError
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
+from zarr.errors import PathNotFoundError
 
 from ice_station_zebra.datasets.preprocessors import IPreprocessor
 
@@ -36,43 +37,41 @@ class AnemoiDataset:
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
     ) -> None:
         self.name = name
-        self.path = Path(config["data_path"]) / f"{self.name}.zarr"
-        self.preprocessor = cls_preprocessor(
-            config["datasets"][name], config["data_path"]
-        )
-        # Add preprocessor outputs to config then resolve references
+        self.path_dataset = Path(config["data_path"]) / "anemoi" / f"{name}.zarr"
+        self.path_preprocessor = Path(config["data_path"]) / "preprocessing"
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
-        cfg_anemoi = OmegaConf.create(config["datasets"][name])
-        if "preprocessor" in cfg_anemoi:
-            cfg_anemoi["preprocessor"]["outputs"] = self.preprocessor.outputs()
-        self.config = OmegaConf.to_container(cfg_anemoi, resolve=True)
+        self.config = OmegaConf.to_container(config, resolve=True)["datasets"][name]
+        self.preprocessor = cls_preprocessor(self.config)
 
     def create(self) -> None:
         """Ensure that a single Anemoi dataset exists"""
         try:
             self.inspect()
-            log.info(f"Dataset {self.name} already exists at {self.path}, no need to download")
-        except PathNotFoundError:
-            log.info(f"Dataset {self.name} not found at {self.path}")
+            log.info(
+                f"Dataset {self.name} already exists at {self.path_dataset}, no need to download"
+            )
+        except (AttributeError, PathNotFoundError):
+            log.info(f"Dataset {self.name} not found at {self.path_dataset}")
+            shutil.rmtree(self.path_dataset)
             self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset"""
-        log.info(f"Creating dataset {self.name} at {self.path}")
-        self.preprocessor.download()
+        self.preprocessor.download(self.path_preprocessor)
+        log.info(f"Creating dataset {self.name} at {self.path_dataset}")
         Create().run(
             AnemoiCreateArgs(
-                path=str(self.path),
+                path=str(self.path_dataset),
                 config=self.config,
             )
         )
 
     def inspect(self) -> None:
         """Inspect a single Anemoi dataset"""
-        log.info(f"Inspecting dataset {self.name} at {self.path}")
+        log.info(f"Inspecting dataset {self.name} at {self.path_dataset}")
         InspectZarr().run(
             AnemoiInspectArgs(
-                path=str(self.path),
+                path=str(self.path_dataset),
                 detailed=True,
                 progress=True,
                 statistics=True,

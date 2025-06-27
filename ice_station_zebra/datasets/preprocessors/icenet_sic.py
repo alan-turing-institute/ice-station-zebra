@@ -12,9 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class IceNetSICPreprocessor(IPreprocessor):
-    def __init__(self, config: DictConfig, data_path: str):
-        super().__init__(config, data_path)
-        self.data_path = Path(data_path) / "icenet"
+    def __init__(self, config: DictConfig):
+        super().__init__(config)
         self.date_range = pd.date_range(
             config["dates"]["start"],
             config["dates"]["end"],
@@ -26,9 +25,10 @@ class IceNetSICPreprocessor(IPreprocessor):
     def is_south(self) -> bool:
         return not self.is_north
 
-    def download(self) -> None:
+    def download(self, data_path: Path) -> None:
+        icenet_path = data_path / self.name
         # Generate polar masks: note that only 1979-2015 are available
-        masks = Masks(north=self.is_north, south=self.is_south, path=self.data_path)
+        masks = Masks(north=self.is_north, south=self.is_south, path=icenet_path)
         mask_year = max(max(1979, min(date.year, 2015)) for date in self.date_range)
         log.info(f"Generating polar masks for {mask_year}...")
         masks.generate(year=mask_year)
@@ -41,18 +41,8 @@ class IceNetSICPreprocessor(IPreprocessor):
             delete_tempfiles=True,  # Delete temporary downloaded files after use
             north=self.is_north,  # Use mask for the Northern Hemisphere (set to True if needed)
             south=self.is_south,  # Use mask for the Southern Hemisphere
-            masks_path=self.data_path,  # Path to masks
+            masks_path=icenet_path,  # Path to masks
             parallel_opens=False,  # Concatenation is not working correctly with dask
-            path=self.data_path,  # Path to download data
+            path=icenet_path,  # Path to download data
         )
         sic.download()
-
-    def outputs(self) -> dict[str, str]:
-        return {
-            "path": str(
-                self.data_path
-                / "osisaf"
-                / ("north" if self.is_north else "south")
-                / "siconca"
-            )
-        }

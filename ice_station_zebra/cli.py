@@ -1,7 +1,8 @@
-import sys
 import argparse
+import sys
 
 from ice_station_zebra.commands import test, train
+
 
 def main() -> None:
     # Select command

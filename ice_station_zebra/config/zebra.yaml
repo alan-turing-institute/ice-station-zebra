@@ -1,7 +1,7 @@
 defaults:
   - datasets:
     - era5-o48-2020-01-6h-v1
-    - osisaf-sic-south-2020-24h-v1
+    - osisaf-sic-south-2020-01-24h-v1
   - _self_
 
 data_path: /bask/projects/v/vjgo8416-ice-frcst/shared/data/

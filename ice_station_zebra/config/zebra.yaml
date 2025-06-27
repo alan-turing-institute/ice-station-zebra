@@ -1,6 +1,5 @@
 defaults:
   - datasets:
-    - era5-o48-2020-01-6h-v1
     - osisaf-sic-south-2019-12-24h-v1
     - osisaf-sic-south-2020-01-24h-v1
   - train: default

@@ -1,7 +1,7 @@
 import inspect
 import itertools
 from collections.abc import Callable
-from typing import Annotated, Concatenate, ParamSpec, TypeVar
+from typing import Annotated, ParamSpec, TypeVar
 
 from hydra import compose, initialize
 from omegaconf import DictConfig
@@ -9,14 +9,9 @@ from typer import Argument, Option
 
 Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
-type CallableWithOverrides[**Param, RetType] = Callable[
-    Concatenate[list[str] | None, str | None, Param], RetType
-]
 
 
-def hydra_adaptor[
-    **Param, RetType
-](function: CallableWithOverrides[Param, RetType]) -> Callable[Param, RetType]:
+def hydra_adaptor(function) -> Callable[Param, RetType]:
     """Replace a function that takes a Hydra config with one that takes string arguments
 
     Args:

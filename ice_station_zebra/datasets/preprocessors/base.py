@@ -7,7 +7,7 @@ class IPreprocessor:
     def __init__(self, config: DictConfig):
         self.name = config.get("preprocessor", {}).get("type", "None")
 
-    def download(self, data_path: Path) -> None:
+    def download(self, preprocessor_path: Path) -> None:
         pass
 
 

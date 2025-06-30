@@ -37,7 +37,7 @@ class ZebraDataset:
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
     ) -> None:
         self.name = name
-        _data_path = Path(config["data_path"]).resolve()
+        _data_path = Path(config["base_path"]).resolve() / "data"
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
         self.path_preprocessor = _data_path / "preprocessing"
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here

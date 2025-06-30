@@ -15,4 +15,4 @@ osisaf-sic-south-2020-01-24h-v1:
 
   input:
     netcdf:
-      path: ${data_path}/preprocessing/${...preprocessor.type}/osisaf/${...preprocessor.hemisphere}/siconca/2020.nc
+      path: ${base_path}/preprocessing/${...preprocessor.type}/osisaf/${...preprocessor.hemisphere}/siconca/2020.nc

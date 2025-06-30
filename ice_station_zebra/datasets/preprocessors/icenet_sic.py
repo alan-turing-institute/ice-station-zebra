@@ -25,8 +25,8 @@ class IceNetSICPreprocessor(IPreprocessor):
     def is_south(self) -> bool:
         return not self.is_north
 
-    def download(self, data_path: Path) -> None:
-        icenet_path = data_path / self.name
+    def download(self, preprocessor_path: Path) -> None:
+        icenet_path = preprocessor_path / self.name
         # Generate polar masks: note that only 1979-2015 are available
         masks = Masks(north=self.is_north, south=self.is_south, path=icenet_path)
         mask_year = max(max(1979, min(date.year, 2015)) for date in self.date_range)

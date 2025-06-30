@@ -74,7 +74,7 @@ class ZebraDataset:
             AnemoiInspectArgs(
                 path=str(self.path_dataset),
                 detailed=True,
-                progress=True,
+                progress=False,  # must be disabled until https://github.com/ecmwf/anemoi-datasets/pull/372 is merged
                 statistics=False,
                 size=True,
             )

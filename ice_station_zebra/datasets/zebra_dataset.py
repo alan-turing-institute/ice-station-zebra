@@ -31,6 +31,7 @@ class AnemoiInspectArgs:
     statistics: bool
     size: bool
 
+
 class ZebraDataset:
     def __init__(
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]

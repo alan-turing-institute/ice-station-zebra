@@ -16,6 +16,7 @@ dependencies = [
     "typer>=0.16.0",
     "xarray>=2025.3.0",
     "zarr<3.0.0",  # not compatible with anemoi
+    "anemoi-datasets>=0.5.25",
 ]
 
 [project.scripts]

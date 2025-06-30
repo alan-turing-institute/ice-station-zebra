@@ -37,8 +37,9 @@ class ZebraDataset:
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
     ) -> None:
         self.name = name
-        self.path_dataset = Path(config["data_path"]) / "anemoi" / f"{name}.zarr"
-        self.path_preprocessor = Path(config["data_path"]) / "preprocessing"
+        _data_path = Path(config["data_path"]).resolve()
+        self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
+        self.path_preprocessor = _data_path / "preprocessing"
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
         self.config = OmegaConf.to_container(config, resolve=True)["datasets"][name]
         self.preprocessor = cls_preprocessor(self.config)

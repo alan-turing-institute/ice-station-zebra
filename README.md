@@ -2,7 +2,20 @@
 
 A pipeline for predicting sea ice.
 
-# Create
+## Creating your own configuration file
+
+Create a file in `config` that is called `<your chosen name here>.local.yaml`.
+You will want this to inherit from `zebra.yaml` and then apply your own changes on top.
+For example, the following config will override the `data_path` option in `zebra.yaml`:
+
+```yaml
+defaults:
+  - zebra
+
+data_path: /local/path/to/my/data
+```
+
+## Create
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi`.
 

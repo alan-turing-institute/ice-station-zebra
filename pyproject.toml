@@ -11,12 +11,12 @@ dependencies = [
     "anemoi-datasets>=0.5.25",
     "cdsapi>=0.7.6",
     "hydra-core>=1.3.2",
-    "icenet>=0.2.7",
+    "icenet==0.2.7",  # newer versions require netCDF4<1.6.1 which does not work on macOS 15
     "lightning>=2.5.1",
-    "netcdf4>=1.7.2",
+    "netcdf4>=1.7.0",
     "typer>=0.16.0",
     "xarray>=2025.3.0",
-    "zarr<3.0.0",  # not compatible with anemoi
+    "zarr<3.0.0",  # v3 is not compatible with anemoi
 ]
 
 [project.scripts]

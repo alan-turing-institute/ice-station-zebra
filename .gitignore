@@ -1,7 +1,7 @@
-.python-version
-outputs
-
 __pycache__
-
+.DS_Store
 .ipynb_checkpoints/
-
+.python-version
+.venv
+*local.yaml
+outputs

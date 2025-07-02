@@ -1,13 +1,13 @@
-era5-o48-2020-01-6h-v1:
-  name: era5-o48-2020-01-6h-v1
+era5-o48-2012-12-24h-v1:
+  name: era5-o48-2019-12-24h-v1
   description: Low resolution reduced dataset for documentation purposes
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 
   dates:
-    start: '2020-01-01T00:00:00'
-    end: '2020-01-31T23:00:00'
-    frequency: 6h
+    start: '2019-12-01T00:00:00'
+    end: '2019-12-31T23:00:00'
+    frequency: 24h
 
   input:
     join:

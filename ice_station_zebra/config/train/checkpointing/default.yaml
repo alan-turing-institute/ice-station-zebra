@@ -1,3 +1,5 @@
+enable_checkpointing: True # whether to save checkpoints
+
 # Enable checkpointing by time, number of epochs or number of training steps
 # - num_models_saved: -1: keep all models, k: keep the last k models
 every_n_minutes:

@@ -1,6 +1,6 @@
 from .unet_diffusion import UNetDiffusion
 from .lit_diffusion import LitDiffusion
-from .gaussiandiffusion import GaussianDiffusion  
+from .gaussian_diffusion import GaussianDiffusion  
 
 __all__ = [
     "UNetDiffusion", 

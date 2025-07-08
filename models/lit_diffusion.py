@@ -23,8 +23,8 @@ from torch_ema import ExponentialMovingAverage
 
 # Relative Imports (assuming your project structure)
 from .unet_diffusion import UNetDiffusion  # Your model class
-from ..utils.metrics import IceNetAccuracy, SIEError  # Custom metrics
-from ..utils.losses import WeightedMSELoss  # Or your chosen loss
+from .utils.metrics import IceNetAccuracy, SIEError  # Custom metrics
+from .utils.losses import WeightedMSELoss  # Or your chosen loss
 
 class LitDiffusion(pl.LightningModule):
     """

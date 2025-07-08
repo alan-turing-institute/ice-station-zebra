@@ -4,8 +4,17 @@ GaussianDiffusion: Gaussian Diffusion Process Implementation
 Author: Maria Carolina Novitasari 
 
 Description:
-    Implements the forward/reverse processes of DDPM with cosine/linear noise schedules.
+    Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
+    with support for both cosine and linear beta schedules.
+
+    Key Definitions:
+    - Beta (βₜ): Variance schedule controlling the amount of noise added at each timestep.
+      A small βₜ means less noise; a large βₜ means more noise.
+    - Alpha (αₜ): Defined as (1 - βₜ), representing the retained signal at each step.
+    - Alpha Cumprod (ᾱₜ): Cumulative product of alphas over time, representing the overall
+      signal preservation from step 0 to t.
 """
+
 
 import torch
 import torch.nn.functional as F
@@ -41,15 +50,16 @@ class GaussianDiffusion:
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
         self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
     
-    # def _cosine_beta_schedule(self, timesteps, s=0.008):
-    def _cosine_beta_schedule(self, timesteps, s=0.015):
+    def _cosine_beta_schedule(self, timesteps, s=0.008):
         """
         Compute beta schedule using a cosine function.
-
+    
         Args:
             timesteps (int): Total number of timesteps.
             s (float): Small offset to prevent singularities near 0.
-
+                      Controls how fast the signal decays: a smaller s results in faster
+                      corruption early on; a larger s gives a smoother, slower decay.
+    
         Returns:
             torch.Tensor: Beta values of shape (timesteps,).
         """
@@ -83,7 +93,7 @@ class GaussianDiffusion:
     
     def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_noise: torch.Tensor) -> torch.Tensor:
         """
-        Perform a single reverse diffusion step.
+        Perform a single reverse diffusion (denoising) step.
 
         Args:
             x (torch.Tensor): Current noisy sample at timestep t.
@@ -108,7 +118,7 @@ class GaussianDiffusion:
         noise = torch.randn_like(x)
         
         return model_mean + nonzero_mask * torch.sqrt(posterior_variance_t) * noise
-
+        
     def _extract(self, a: torch.Tensor, t: torch.Tensor, x_shape: Tuple[int]) -> torch.Tensor:
         """
         Extract values from a tensor at specific timesteps t and reshape for broadcasting.

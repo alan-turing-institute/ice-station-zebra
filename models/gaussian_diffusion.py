@@ -50,7 +50,8 @@ class GaussianDiffusion:
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
         self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
     
-    def _cosine_beta_schedule(self, timesteps, s=0.008):
+    # def _cosine_beta_schedule(self, timesteps, s=0.008):
+    def _cosine_beta_schedule(self, timesteps, s=0.015):
         """
         Compute beta schedule using a cosine function.
     
@@ -68,6 +69,8 @@ class GaussianDiffusion:
         alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
         alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
         betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
+
+        print("s...",s)
         
         return torch.clip(betas, 0, 0.999)
     

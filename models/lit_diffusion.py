@@ -257,8 +257,27 @@ class LitDiffusion(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: Adam optimizer.
         """
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        # Add weight decay to discourage large weights (helps generalization)
+        optimizer = torch.optim.Adam(
+            self.parameters(),
+            lr=self.learning_rate,
+            weight_decay=1e-5  # L2 regularization strength
+        )
+        
+        scheduler = {
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='min',           # For val_loss
+                factor=0.8,           # If the metric stops improving, reduce LR by half
+                patience=10,           # Number of epochs with no improvement to wait before reducing LR
+                verbose=True
+            ),
+            'monitor': 'val_loss',    # Metric to watch
+            'interval': 'epoch',
+            'frequency': 1,
+            'name': 'lr'
+        }
+        return {'optimizer': optimizer, 'lr_scheduler': scheduler}
 
     def optimizer_step(self,
                        epoch,

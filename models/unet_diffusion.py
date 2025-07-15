@@ -303,6 +303,7 @@ class UNetDiffusion(nn.Module):
             nn.Conv2d(in_channels, out_channels, kernel_size=self.filter_size, padding="same"),
             nn.GroupNorm(num_groups, out_channels),
             nn.SiLU(),
+            nn.Dropout2d(0.1), 
             nn.Conv2d(out_channels, out_channels, kernel_size=self.filter_size, padding="same"),
             nn.GroupNorm(num_groups, out_channels),
             nn.SiLU(),

@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class DataloaderArgs(TypedDict):
     batch_size: int
     sampler: None

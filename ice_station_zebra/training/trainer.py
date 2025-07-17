@@ -2,11 +2,9 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
+import hydra
 from lightning import Trainer
 from omegaconf import DictConfig, OmegaConf
-
-from ice_station_zebra.models import ZebraModelEncProcDec
-from ice_station_zebra.types import ZebraDataSpace
 
 from .data_modules import ZebraDataModule
 
@@ -37,14 +35,22 @@ class ZebraTrainer:
             dataset_groups, predict_target=config["train"]["predict_target"]
         )
 
-    def train(self) -> None:
-        model = ZebraModelEncProcDec(
-            input_spaces=self.data_module.input_spaces,
-            latent_space=ZebraDataSpace(shape=(32, 32), channels=20),
-            output_space=self.data_module.output_space,
+        # Construct the model
+        self.model = hydra.utils.instantiate(
+            dict(
+                {
+                    "input_spaces": self.data_module.input_spaces,
+                    "output_space": self.data_module.output_space,
+                },
+                **config["model"],
+            ),
+            _recursive_=False,
+            _convert_="object",
         )
+
+    def train(self) -> None:
         trainer = Trainer(fast_dev_run=100)
         trainer.fit(
-            model=model,
+            model=self.model,
             datamodule=self.data_module,
         )

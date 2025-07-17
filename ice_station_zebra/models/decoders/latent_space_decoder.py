@@ -41,7 +41,7 @@ class LatentSpaceDecoder(nn.Module):
             )
             n_channels //= 2
 
-        # Upsample to the desired output shape
+        # Resample to the desired output shape
         layers.append(nn.Upsample(output_space.shape))
 
         # Convolve to the desired number of output channels
@@ -54,10 +54,10 @@ class LatentSpaceDecoder(nn.Module):
         """
         Transformation summary
 
-        Inputs:
-            x: Tensor(batch_size, channels, input_shape[0], input_shape[1])
+        Input:
+            x: Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
 
-        Outputs:
-            Tensor(batch_size, output_channels, 2^latent_size, 2^latent_size)
+        Output:
+            Tensor of (batch_size, output_channels, output_shape_x, output_shape_y)
         """
         return self.model(x)

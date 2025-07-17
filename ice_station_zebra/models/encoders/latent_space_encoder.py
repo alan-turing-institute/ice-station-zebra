@@ -38,7 +38,7 @@ class LatentSpaceEncoder(nn.Module):
             )
             n_channels *= 2
 
-        # Upsample to the desired latent shape
+        # Resample to the desired latent shape
         layers.append(nn.Upsample(latent_space.shape))
 
         # Convolve to the desired number of latent channels
@@ -51,10 +51,10 @@ class LatentSpaceEncoder(nn.Module):
         """
         Transformation summary
 
-        Inputs:
-            x: Tensor(batch_size, channels, input_shape[0], input_shape[1])
+        Input:
+            x: Tensor of (batch_size, input_channels, input_shape_x, input_shape_y)
 
-        Outputs:
-            Tensor(batch_size, output_channels, 2^latent_size, 2^latent_size)
+        Output:
+            Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
         """
         return self.model(x)

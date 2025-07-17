@@ -4,7 +4,7 @@ defaults:
     - era5-0d5-south-2020-01-24h-v1
     - osisaf-sic-south-2019-12-24h-v1
     - osisaf-sic-south-2020-01-24h-v1
-  - model: null_processor
+  - model: encode_null_decode
   - train: default
   - _self_
 

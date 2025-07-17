@@ -1,5 +1,5 @@
-from .zebra_model import ZebraModelEncProcDec
+from .encode_process_decode import EncodeProcessDecode
 
 __all__ = [
-    "ZebraModelEncProcDec",
+    "EncodeProcessDecode",
 ]

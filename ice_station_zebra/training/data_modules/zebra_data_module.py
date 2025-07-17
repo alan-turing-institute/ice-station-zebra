@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 
 import numpy as np
@@ -12,10 +13,16 @@ from .zebra_dataset import ZebraDataset
 
 class ZebraDataModule(LightningDataModule):
     def __init__(
-        self, dataset_groups: dict[str, list[Path]], batch_size: int = 2
+        self,
+        dataset_groups: dict[str, list[Path]],
+        predict_target: str,
+        batch_size: int = 2,
     ) -> None:
         super().__init__()
         self.dataset_groups = dataset_groups
+        if predict_target not in self.dataset_groups:
+            raise ValueError(f"Could not find prediction target {predict_target}")
+        self.predict_target = predict_target
         self.batch_size = batch_size
         self.train_period = [None, "2019-12-31"]
         self.val_period = ["2020-01-01", "2020-01-15"]
@@ -30,6 +37,14 @@ class ZebraDataModule(LightningDataModule):
             worker_init_fn=None,
         )
 
+    @cached_property
+    def input_shapes(self) -> list[tuple[int, int, int]]:
+        """Return [variables, pos_x, pos_y]"""
+        return [
+            ZebraDataset(name, paths).shape
+            for name, paths in self.dataset_groups.values()
+        ]
+
     def train_dataloader(
         self,
     ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
@@ -37,10 +52,11 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    paths, start=self.train_period[0], end=self.train_period[1]
+                    name, paths, start=self.train_period[0], end=self.train_period[1]
                 )
-                for paths in self.dataset_groups.values()
-            ]
+                for name, paths in self.dataset_groups.items()
+            ],
+            target=self.predict_target,
         )
         return DataLoader(dataset, shuffle=True, **self._common_dataloader_kwargs)
 
@@ -51,10 +67,11 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    paths, self.val_period[0], self.val_period[1], preshuffle=True
+                    name, paths, self.val_period[0], self.val_period[1], preshuffle=True
                 )
-                for paths in self.dataset_groups.values()
-            ]
+                for name, paths in self.dataset_groups.items()
+            ],
+            target=self.predict_target,
         )
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 
@@ -64,8 +81,9 @@ class ZebraDataModule(LightningDataModule):
         """Construct test dataloader"""
         dataset = CombinedDataset(
             [
-                ZebraDataset(paths, self.test_period[0], self.test_period[1])
-                for paths in self.dataset_groups.values()
-            ]
+                ZebraDataset(name, paths, self.test_period[0], self.test_period[1])
+                for name, paths in self.dataset_groups.items()
+            ],
+            target=self.predict_target,
         )
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)

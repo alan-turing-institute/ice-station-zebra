@@ -1,5 +1,6 @@
 era5-0d5-south-2019-12-24h-v1:
   name: era5-0d5-south-2019-12-24h-v1
+  group_as: era5-south
   description: 0.5 degree resolution ERA5 for southern hemisphere
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
@@ -59,6 +60,3 @@ era5-0d5-south-2019-12-24h-v1:
         param:
         - cp
         - tp
-
-  output:
-    original_shape: [181, 720]

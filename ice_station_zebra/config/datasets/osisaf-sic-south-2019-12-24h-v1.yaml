@@ -1,5 +1,6 @@
 osisaf-sic-south-2019-12-24h-v1:
   name: osisaf-sic-south-2019-12-24h-v1
+  group_as: osisaf-south
   description: OSISAF sea ice concentration for southern hemisphere
   attribution: EUMETSAT
   licence: CC-BY-4.0
@@ -16,6 +17,3 @@ osisaf-sic-south-2019-12-24h-v1:
   input:
     netcdf:
       path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2019.nc
-
-  output:
-    original_shape: [432, 432]

@@ -28,7 +28,9 @@ class ZebraTrainer:
             dataset_groups[dataset["group_as"]].append(
                 (anemoi_data_path / f"{dataset['name']}.zarr").resolve()
             )
-        logger.info(f"Found {len(dataset_groups)} dataset_groups {dataset_groups}")
+        logger.info(f"Found {len(dataset_groups)} dataset_groups")
+        for dataset_group in dataset_groups.keys():
+            logger.debug(f"... {dataset_group}")
 
         # Create a data module combining all groups
         self.data_module = ZebraDataModule(
@@ -41,6 +43,7 @@ class ZebraTrainer:
                 {
                     "input_spaces": self.data_module.input_spaces,
                     "output_space": self.data_module.output_space,
+                    "optimizer": config["train"]["optimizer"],
                 },
                 **config["model"],
             ),
@@ -49,7 +52,7 @@ class ZebraTrainer:
         )
 
         # Construct the trainer
-        self.trainer: Trainer = hydra.utils.instantiate(config["train"]["lightning"])
+        self.trainer: Trainer = hydra.utils.instantiate(config["train"]["trainer"])
 
     def train(self) -> None:
         self.trainer.fit(

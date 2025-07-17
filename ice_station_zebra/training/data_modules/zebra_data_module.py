@@ -42,8 +42,18 @@ class ZebraDataModule(LightningDataModule):
         """Return [variables, pos_x, pos_y]"""
         return [
             ZebraDataset(name, paths).shape
-            for name, paths in self.dataset_groups.values()
+            for name, paths in self.dataset_groups.items()
+            if name != self.predict_target
         ]
+
+    @cached_property
+    def output_shape(self) -> tuple[int, int, int]:
+        """Return [variables, pos_x, pos_y]"""
+        return next(
+            ZebraDataset(name, paths).shape
+            for name, paths in self.dataset_groups.items()
+            if name == self.predict_target
+        )
 
     def train_dataloader(
         self,

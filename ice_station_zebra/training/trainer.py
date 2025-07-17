@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ZebraTrainer:
-    """An Anemoi trainer with no graph"""
+    """A wrapper for PyTorch training"""
 
     def __init__(self, config: DictConfig) -> None:
         """Initialize the Zebra trainer."""
@@ -21,7 +21,6 @@ class ZebraTrainer:
         config = OmegaConf.to_container(config, resolve=True)
 
         # Load paths
-        training_path = Path(config["base_path"]) / "training"
         anemoi_data_path = Path(config["base_path"]) / "data" / "anemoi"
 
         # Construct dataset groups
@@ -38,7 +37,9 @@ class ZebraTrainer:
         )
 
     def train(self) -> None:
-        model = ZebraModelEncProcDec(self.data_module.input_shapes)
+        model = ZebraModelEncProcDec(
+            self.data_module.input_shapes, self.data_module.output_shape
+        )
         trainer = Trainer(fast_dev_run=100)
         trainer.fit(
             model=model,

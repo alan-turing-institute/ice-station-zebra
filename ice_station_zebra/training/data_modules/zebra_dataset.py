@@ -17,14 +17,13 @@ class ZebraDataset(Dataset):
         *,
         start: str | None = None,
         end: str | None = None,
-        **kwargs: Any,
     ) -> None:
         """A dataset for use by Zebra
 
         Dataset shape is: time; variables; ensembles; position
         We reshape each time point to: variables; pos_x; pos_y
         """
-        super().__init__(**kwargs)
+        super().__init__()
         self.dataset = open_dataset(input_files, start=start, end=end)
         self.dataset._name = name
 

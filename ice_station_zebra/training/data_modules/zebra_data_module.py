@@ -78,7 +78,7 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    name, paths, self.val_period[0], self.val_period[1], preshuffle=True
+                    name, paths, start=self.val_period[0], end=self.val_period[1]
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -92,7 +92,9 @@ class ZebraDataModule(LightningDataModule):
         """Construct test dataloader"""
         dataset = CombinedDataset(
             [
-                ZebraDataset(name, paths, self.test_period[0], self.test_period[1])
+                ZebraDataset(
+                    name, paths, start=self.test_period[0], end=self.test_period[1]
+                )
                 for name, paths in self.dataset_groups.items()
             ],
             target=self.predict_target,

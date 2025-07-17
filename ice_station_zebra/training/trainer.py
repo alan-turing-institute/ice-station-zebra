@@ -48,9 +48,11 @@ class ZebraTrainer:
             _convert_="object",
         )
 
+        # Construct the trainer
+        self.trainer: Trainer = hydra.utils.instantiate(config["train"]["lightning"])
+
     def train(self) -> None:
-        trainer = Trainer(fast_dev_run=100)
-        trainer.fit(
+        self.trainer.fit(
             model=self.model,
             datamodule=self.data_module,
         )

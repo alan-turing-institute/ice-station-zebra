@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 from lightning import LightningModule
 
-from .decoders import ConvDecoder
-from .encoders import SquareConvEncoder
+from ice_station_zebra.types import ZebraDataSpace
+
+from .decoders import LatentSpaceDecoder
+from .encoders import LatentSpaceEncoder
 from .processors import NullProcessor
 
 LightningBatch = list[torch.Tensor, torch.Tensor]
@@ -12,25 +14,21 @@ LightningBatch = list[torch.Tensor, torch.Tensor]
 class ZebraModelEncProcDec(LightningModule):
     def __init__(
         self,
-        input_shapes: list[tuple[int, int, int]],
-        output_shape: tuple[int, int, int],
-        latent_scale: int = 6,
+        *,
+        input_spaces: list[ZebraDataSpace],
+        latent_space: ZebraDataSpace,
+        output_space: ZebraDataSpace,
     ) -> None:
         super().__init__()
         self.model = None
         self.encoders = [
-            SquareConvEncoder(
-                input_shape[1:], input_shape[0], latent_scale=latent_scale
-            )
-            for input_shape in input_shapes
+            LatentSpaceEncoder(input_space=input_space, latent_space=latent_space)
+            for input_space in input_spaces
         ]
-        latent_channels = sum([enc.latent_channels for enc in self.encoders])
+        latent_channels = latent_space.channels * len(self.encoders)
         self.processor = NullProcessor(latent_channels)
-        self.decoder = ConvDecoder(
-            output_shape[1:],
-            output_shape[0],
-            latent_channels=latent_channels,
-            latent_scale=latent_scale,
+        self.decoder = LatentSpaceDecoder(
+            latent_space=latent_space, output_space=output_space
         )
         self.model_list = nn.ModuleList(
             self.encoders + [self.processor] + [self.decoder]

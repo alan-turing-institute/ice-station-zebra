@@ -1,3 +1,0 @@
-model_class: ice_station_zebra.models.Persistence
-encoder_class: None
-decoder_class: None

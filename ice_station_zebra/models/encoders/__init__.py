@@ -1,5 +1,5 @@
-from .square_conv_encoder import SquareConvEncoder
+from .latent_space_encoder import LatentSpaceEncoder
 
 __all__ = [
-    "SquareConvEncoder",
+    "LatentSpaceEncoder",
 ]

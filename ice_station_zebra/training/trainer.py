@@ -6,6 +6,7 @@ from lightning import Trainer
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.models import ZebraModelEncProcDec
+from ice_station_zebra.types import ZebraDataSpace
 
 from .data_modules import ZebraDataModule
 
@@ -38,7 +39,9 @@ class ZebraTrainer:
 
     def train(self) -> None:
         model = ZebraModelEncProcDec(
-            self.data_module.input_shapes, self.data_module.output_shape
+            input_spaces=self.data_module.input_spaces,
+            latent_space=ZebraDataSpace(shape=(32, 32), channels=20),
+            output_space=self.data_module.output_space,
         )
         trainer = Trainer(fast_dev_run=100)
         trainer.fit(

@@ -6,8 +6,9 @@ from lightning import LightningDataModule
 from numpy.typing import NDArray
 from torch.utils.data import DataLoader
 
+from ice_station_zebra.types import DataloaderArgs, ZebraDataSpace
+
 from .combined_dataset import CombinedDataset
-from .dataloader_args import DataloaderArgs
 from .zebra_dataset import ZebraDataset
 
 
@@ -38,19 +39,19 @@ class ZebraDataModule(LightningDataModule):
         )
 
     @cached_property
-    def input_shapes(self) -> list[tuple[int, int, int]]:
+    def input_spaces(self) -> list[ZebraDataSpace]:
         """Return [variables, pos_x, pos_y]"""
         return [
-            ZebraDataset(name, paths).shape
+            ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
             if name != self.predict_target
         ]
 
     @cached_property
-    def output_shape(self) -> tuple[int, int, int]:
+    def output_space(self) -> ZebraDataSpace:
         """Return [variables, pos_x, pos_y]"""
         return next(
-            ZebraDataset(name, paths).shape
+            ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
             if name == self.predict_target
         )

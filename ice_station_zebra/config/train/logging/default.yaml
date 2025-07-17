@@ -1,8 +1,0 @@
-interval: 100 # passed to trainer.log_every_n_steps
-
-mlflow:
-  enabled: False
-tensorboard:
-  enabled: False
-wandb:
-  enabled: False

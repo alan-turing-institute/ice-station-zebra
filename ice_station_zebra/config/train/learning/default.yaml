@@ -1,6 +1,0 @@
-accum_grad_batches: 1 # only propagate gradients every N batches (effective batch size is num-devices * batch_size * N)
-
-learning:
-  min: 3e-7 # Not scaled by GPU
-  rate: 0.625e-4 # local_lr
-  warmup: 1000 # number of warmup iterations

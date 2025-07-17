@@ -6,7 +6,7 @@ from torch import Tensor
 from ice_station_zebra.types import ZebraDataSpace
 
 
-class LatentSpaceEncoder(nn.Module):
+class NaiveLatentSpaceEncoder(nn.Module):
     """
     Encoder that takes data in an input space and translates it to a smaller latent space
 

@@ -6,10 +6,10 @@ latent_space:
   shape: [32, 32]
 
 encoder:
-  _target_: ice_station_zebra.models.encoders.LatentSpaceEncoder
+  _target_: ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder
 
 processor:
   _target_: ice_station_zebra.models.processors.NullProcessor
 
 decoder:
-  _target_: ice_station_zebra.models.decoders.LatentSpaceDecoder
+  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder

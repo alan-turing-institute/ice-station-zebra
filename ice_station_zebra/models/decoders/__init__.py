@@ -1,5 +1,5 @@
-from .latent_space_decoder import LatentSpaceDecoder
+from .naive_latent_space_decoder import NaiveLatentSpaceDecoder
 
 __all__ = [
-    "LatentSpaceDecoder",
+    "NaiveLatentSpaceDecoder",
 ]

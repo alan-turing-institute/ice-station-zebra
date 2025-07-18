@@ -1,0 +1,42 @@
+name: "Regular issue"
+description: "For feature work, bugs, improvements, analysis tasks, etc."
+title: "[Verb-based title] Add … / Implement … / Fix …"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before you submit: 
+        - Set priority label ('P1', 'P2' or 'P3')
+        - Link a milestone (if applicable)  
+        - Assign yourself if you're picking this up
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Goal
+      description: What’s the issue, opportunity, or task? Why is it needed? How does it relate to our upcoming milestone?
+      placeholder: >
+        AMSR2 data loader fails on some files due to unexpected metadata structure.
+    validations:
+      required: true
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: What does good look like?
+      description: Describe the intended outcome. When will this be considered “done”? List acceptance criteria and deliverables.
+      placeholder: |
+        - [ ] Loader passes on full AMSR2 subset (2022–2023)
+        - [ ] Notebook with sample outputs added
+        - [ ] Test added for known failure case
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Related context
+      description: Reference any relevant links, threads, or files.
+      placeholder: |
+        - Related issues: #123, #456
+        - Slack thread: https://...
+        - Docs/Notebooks: [Notebook X](https://...), [Spec Y](https://...)
+    validations:
+      required: false

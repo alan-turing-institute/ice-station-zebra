@@ -51,7 +51,7 @@ class ZebraDataset:
             log.info(
                 f"Dataset {self.name} already exists at {self.path_dataset}, no need to download"
             )
-        except (AttributeError, PathNotFoundError):
+        except (AttributeError, FileNotFoundError, PathNotFoundError):
             log.info(f"Dataset {self.name} not found at {self.path_dataset}")
             shutil.rmtree(self.path_dataset, ignore_errors=True)
             self.download()

@@ -1,0 +1,12 @@
+# Name of the dataset group containing our prediction target
+predict_target: osisaf-south
+
+# PyTorch lightning settings
+trainer:
+  _target_: lightning.pytorch.trainer.trainer.Trainer
+  accelerator: auto
+  devices: auto
+  max_epochs: 10
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 5e-4

@@ -15,7 +15,6 @@ Description:
       signal preservation from step 0 to t.
 """
 
-
 import torch
 import torch.nn.functional as F
 import math
@@ -48,10 +47,18 @@ class GaussianDiffusion:
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - self.alphas_cumprod)
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
+
         self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
-    
-    # def _cosine_beta_schedule(self, timesteps, s=0.008):
-    def _cosine_beta_schedule(self, timesteps, s=0.015):
+        self.posterior_log_variance_clipped = torch.log(torch.clamp(self.posterior_variance, min=1e-20))
+
+        self.posterior_mean_coef1 = (
+            self.betas * torch.sqrt(self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+        )
+        self.posterior_mean_coef2 = (
+            (1. - self.alphas_cumprod_prev) * torch.sqrt(self.alphas) / (1. - self.alphas_cumprod)
+        )
+          
+    def _cosine_beta_schedule(self, timesteps, s=0.008):
         """
         Compute beta schedule using a cosine function.
     
@@ -69,8 +76,6 @@ class GaussianDiffusion:
         alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
         alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
         betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-
-        print("s...",s)
         
         return torch.clip(betas, 0, 0.999)
     
@@ -92,7 +97,11 @@ class GaussianDiffusion:
         sqrt_alphas_cumprod_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alphas_cumprod_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
         
-        return sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
+        is_t0 = (t == 0).to(dtype=x_start.dtype, device=x_start.device).view(-1, *([1] * (len(x_start.shape) - 1)))
+        
+        noisy = sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
+        
+        return noisy * (1 - is_t0) + x_start * is_t0
     
     def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_noise: torch.Tensor) -> torch.Tensor:
         """
@@ -106,20 +115,23 @@ class GaussianDiffusion:
         Returns:
             torch.Tensor: Sample from the previous timestep (x_{t-1}).
         """
-        betas_t = self._extract(self.betas, t, x.shape)
-        sqrt_one_minus_alphas_cumprod_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x.shape)
-        sqrt_recip_alphas_t = self._extract(self.sqrt_recip_alphas, t, x.shape)
-        
-        # Equation 11 in the paper (our pred_noise is εθ)
-        model_mean = sqrt_recip_alphas_t * (x - betas_t * pred_noise / sqrt_one_minus_alphas_cumprod_t)
-        
-        # Create mask for where t == 0
-        nonzero_mask = (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
-        
-        # Only add noise if t != 0
+        sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x.shape)
+        sqrt_one_minus_alpha_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x.shape)
+    
+        # Compute predicted x0 from v and current x_t
+        pred_xstart = sqrt_alpha_t * x - sqrt_one_minus_alpha_t * pred_v
+        pred_xstart = torch.clamp(pred_xstart, -1., 1.)
+       
+        # Compute model mean for posterior q(x_{t-1} | x_t, x_0)
+        model_mean = (
+            self._extract(self.posterior_mean_coef1, t, x.shape) * pred_xstart +
+            self._extract(self.posterior_mean_coef2, t, x.shape) * x
+        )
+
         posterior_variance_t = self._extract(self.posterior_variance, t, x.shape)
         noise = torch.randn_like(x)
-        
+        nonzero_mask = (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
+
         return model_mean + nonzero_mask * torch.sqrt(posterior_variance_t) * noise
         
     def _extract(self, a: torch.Tensor, t: torch.Tensor, x_shape: Tuple[int]) -> torch.Tensor:
@@ -138,3 +150,27 @@ class GaussianDiffusion:
         out = a[t]  # (batch_size,) # Reshape for broadcasting: [batch_size, 1, 1, 1, 1]
       
         return out.view((t.shape[0],) + (1,) * (len(x_shape) - 1))
+
+    def calculate_v(self, x_start: torch.Tensor, noise: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the velocity variable v_t used in v-prediction.
+    
+        This function calculates the target v_t given the clean input x_start, 
+        the noise ε, and the timestep t, based on the formulation:
+    
+            v_t = ᾱ_t * ε - sqrt(1 - ᾱ_t) * x_start
+    
+        Args:
+            x_start (torch.Tensor): Original clean sample (e.g., groundtruth output).
+            noise (torch.Tensor): Gaussian noise added to the sample (ε).
+            t (torch.Tensor): Timesteps for each sample in the batch (shape: [B]).
+    
+        Returns:
+            torch.Tensor: Velocity v_t at each timestep, same shape as x_start.
+        """
+        alpha_t = self._extract(self.alphas_cumprod, t, x_start.shape)
+        sqrt_one_minus_alpha_t = self._extract(1.0 - self.alphas_cumprod, t, x_start.shape)
+
+        return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start
+
+

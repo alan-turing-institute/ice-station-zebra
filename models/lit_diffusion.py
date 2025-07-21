@@ -55,7 +55,7 @@ class LitDiffusion(pl.LightningModule):
         self.timesteps = timesteps
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
         self.criterion = criterion
-        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.999)
+        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.99)
 
         self.n_output_classes = model.n_output_classes
 
@@ -96,7 +96,6 @@ class LitDiffusion(pl.LightningModule):
         print(f"[LitDiffusion] Moving EMA shadow parameters to device: {device}")
         self.ema.to(device)
 
-
     def forward(self, x):
         """
         Run the model in inference mode.
@@ -112,7 +111,6 @@ class LitDiffusion(pl.LightningModule):
         elif not isinstance(x, torch.Tensor):
             x = torch.tensor(x, device=self.device)
         return self.sample(x)
-
 
     def training_step(self, batch):
         """
@@ -133,33 +131,24 @@ class LitDiffusion(pl.LightningModule):
         # Create noisy version
         noise = torch.randn_like(y)
         noisy_y = self.diffusion.q_sample(y, t, noise)
+
+        # Predict v instead of epsilon
+        pred_v = self.model(noisy_y, t, x, sample_weight)
         
-        # Predict the noise
-        pred_noise = self.model(noisy_y, t, x, sample_weight)
-        
-        pred_noise = pred_noise.squeeze()
+        pred_v = pred_v.squeeze()
+        y = y.squeeze()
         noise = noise.squeeze()
-
-        # Calculate loss
-        loss = F.mse_loss(pred_noise, noise) #, reduction='none')  
-
-        # print(f"loss: {loss.shape}")  # Should be [B,H,W,432]
-        # print(f"sample_weight: {sample_weight.shape}")  # Likely [B,H,W,7,1]
         
-        # # Apply sample weights
-        # if sample_weight is not None:
-        #     # Ensure proper broadcasting: [B,H,W,1] -> [B,H,W,C]
-        #     loss = loss * sample_weight.squeeze(-1)
+        # Compute target v
+        target_v = self.diffusion.calculate_v(y, noise, t)
         
-        # # Final reduction
-        # noise_loss = loss.mean()  # Scalar value
-        
-        # outputs = self.sample(x, sample_weight)
-        # y_hat = torch.sigmoid(outputs)
-        # pred_loss = self.criterion(y_hat, y, sample_weight)
+        # Calculate v-prediction loss
+        loss = F.mse_loss(pred_v, target_v) #* 0.5
 
-        # alpha = 0.5
-        # loss = (alpha * noise_loss) + ((1 - alpha) * pred_loss)
+        # Debugging checks
+        print(f"pred_v range: [{pred_v.min():.3f}, {pred_v.max():.3f}]")
+        print(f"target_v range: [{target_v.min():.3f}, {target_v.max():.3f}]")
+        print(f"Loss: {loss.item():.4f}")
         
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return {"loss": loss}
@@ -179,6 +168,10 @@ class LitDiffusion(pl.LightningModule):
         
         outputs = self.sample(x, sample_weight)
         y_hat = torch.sigmoid(outputs)
+
+        # Print min/max and shapes for debugging
+        print(f"[val_step] y_hat min/max: {y_hat.min().item():.4f}/{y_hat.max().item():.4f}, shape: {y_hat.shape}")
+        print(f"[val_step] y min/max: {y.min().item():.4f}/{y.max().item():.4f}, shape: {y.shape}")
 
         loss = self.criterion(y_hat, y, sample_weight)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)  # epoch-level loss
@@ -201,16 +194,14 @@ class LitDiffusion(pl.LightningModule):
         shape = (x.shape[0], *x.shape[1:-1], self.model.n_forecast_days * self.n_output_classes)
         device = x.device
         
-        # Start from pure noise
         y = torch.randn(shape, device=device)
         
         for t in reversed(range(0, self.timesteps)):
             t_batch = torch.full((x.shape[0],), t, device=device, dtype=torch.long)
             pred_noise = self.model(y, t_batch, x, sample_weight)
-        
             pred_noise = pred_noise.squeeze(3)
             y = self.diffusion.p_sample(y, t_batch, pred_noise)
-            
+
         return y
 
     def on_validation_epoch_end(self):
@@ -243,6 +234,7 @@ class LitDiffusion(pl.LightningModule):
     
         return loss
 
+
     def on_test_epoch_end(self):
         """
         Called at the end of test loop to log all collected metrics.
@@ -258,10 +250,12 @@ class LitDiffusion(pl.LightningModule):
             torch.optim.Optimizer: Adam optimizer.
         """
         # Add weight decay to discourage large weights (helps generalization)
-        optimizer = torch.optim.Adam(
+        optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.learning_rate,
-            weight_decay=1e-5  # L2 regularization strength
+            weight_decay=1e-5,  # L2 regularization strength
+            betas=(0.9, 0.999),
+            eps=1e-8
         )
         
         scheduler = {
@@ -331,4 +325,9 @@ class LitDiffusion(pl.LightningModule):
         loss = self.criterion(y_hat, y, sample_weight)
 
         return y_hat
+
+
+
+    
+    
         

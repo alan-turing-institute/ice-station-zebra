@@ -145,11 +145,6 @@ class LitDiffusion(pl.LightningModule):
         # Calculate v-prediction loss
         loss = F.mse_loss(pred_v, target_v) #* 0.5
 
-        # Debugging checks
-        print(f"pred_v range: [{pred_v.min():.3f}, {pred_v.max():.3f}]")
-        print(f"target_v range: [{target_v.min():.3f}, {target_v.max():.3f}]")
-        print(f"Loss: {loss.item():.4f}")
-        
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return {"loss": loss}
 
@@ -168,10 +163,6 @@ class LitDiffusion(pl.LightningModule):
         
         outputs = self.sample(x, sample_weight)
         y_hat = torch.sigmoid(outputs)
-
-        # Print min/max and shapes for debugging
-        print(f"[val_step] y_hat min/max: {y_hat.min().item():.4f}/{y_hat.max().item():.4f}, shape: {y_hat.shape}")
-        print(f"[val_step] y min/max: {y.min().item():.4f}/{y.max().item():.4f}, shape: {y.shape}")
 
         loss = self.criterion(y_hat, y, sample_weight)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)  # epoch-level loss

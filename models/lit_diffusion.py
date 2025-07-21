@@ -194,14 +194,19 @@ class LitDiffusion(pl.LightningModule):
         shape = (x.shape[0], *x.shape[1:-1], self.model.n_forecast_days * self.n_output_classes)
         device = x.device
         
+        # Start from pure noise
         y = torch.randn(shape, device=device)
         
         for t in reversed(range(0, self.timesteps)):
             t_batch = torch.full((x.shape[0],), t, device=device, dtype=torch.long)
-            pred_noise = self.model(y, t_batch, x, sample_weight)
-            pred_noise = pred_noise.squeeze(3)
-            y = self.diffusion.p_sample(y, t_batch, pred_noise)
-
+            # pred_noise = self.model(y, t_batch, x, sample_weight)
+            # pred_noise = pred_noise.squeeze(3)
+            # y = self.diffusion.p_sample(y, t_batch, pred_noise)
+            
+            pred_v = self.model(y, t_batch, x, sample_weight)
+            pred_v = pred_v.squeeze(3)  # Remove extra dimension if needed
+            y = self.diffusion.p_sample(y, t_batch, pred_v)
+            
         return y
 
     def on_validation_epoch_end(self):

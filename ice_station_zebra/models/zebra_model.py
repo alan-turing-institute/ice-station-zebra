@@ -25,7 +25,7 @@ class ZebraModel(LightningModule, ABC):
         super().__init__()
 
         self.name = name
-
+        
         # Construct the input and output spaces
         self.input_spaces = input_spaces
         self.output_space = output_space
@@ -41,6 +41,9 @@ class ZebraModel(LightningModule, ABC):
 
         # Store the optimizer config
         self.optimizer_cfg = optimizer
+        
+        # save hyper-parameters to self.hparams (auto-logged by W&B)
+        self.save_hyperparameters()
 
     @abstractmethod
     def forward(self, inputs: LightningBatch) -> torch.Tensor:

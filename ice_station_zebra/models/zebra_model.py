@@ -16,12 +16,15 @@ class ZebraModel(LightningModule, ABC):
     def __init__(
         self,
         *,
+        name: str,
         input_spaces: list[ZebraDataSpace],
         output_space: ZebraDataSpace,
         latent_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
         super().__init__()
+
+        self.name = name
 
         # Construct the input and output spaces
         self.input_spaces = input_spaces

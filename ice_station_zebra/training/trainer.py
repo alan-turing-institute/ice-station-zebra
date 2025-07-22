@@ -55,7 +55,14 @@ class ZebraTrainer:
 
         # Construct lightning loggers
         lightning_loggers = [
-            hydra.utils.instantiate(logger_config)
+            hydra.utils.instantiate(
+                dict(
+                    {
+                        "job_type": "train",
+                    },
+                    **logger_config,
+                )
+            )
             for logger_config in config.get("loggers", {}).values()
         ]
 

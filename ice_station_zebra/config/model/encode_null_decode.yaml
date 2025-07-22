@@ -1,5 +1,7 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
 
+name: encode-null-decode
+
 # Each dataset will be encoded into a latent space with these properties
 latent_space:
   channels: 20

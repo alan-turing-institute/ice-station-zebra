@@ -9,7 +9,7 @@ from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.datasets.preprocessors import IPreprocessor
+from ice_station_zebra.data.anemoi.preprocessors import IPreprocessor
 
 log = logging.getLogger(__name__)
 

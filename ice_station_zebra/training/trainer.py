@@ -9,7 +9,7 @@ from lightning import Callback, Trainer
 from omegaconf import DictConfig, OmegaConf
 from wandb.sdk.lib.runid import generate_id
 
-from .data_modules import ZebraDataModule
+from ice_station_zebra.data.lightning import ZebraDataModule
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,6 @@
+wandb:
+  _target_: lightning.pytorch.loggers.wandb.WandbLogger
+  entity: "turing-seaice"
+  project: ${...model.name}
+  name: null # Run name: defaults to random, can be overridden by the user
+  

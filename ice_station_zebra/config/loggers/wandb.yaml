@@ -1,0 +1,3 @@
+wandb:
+  _target_: lightning.pytorch.loggers.wandb.WandbLogger
+  project: "ice_station_zebra"

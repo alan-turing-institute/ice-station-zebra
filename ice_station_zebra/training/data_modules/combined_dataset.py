@@ -21,3 +21,21 @@ class CombinedDataset(Dataset):
     def __getitem__(self, idx: int) -> NDArray[np.float32]:
         """Return a single timestep"""
         return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])
+
+    @property
+    def end_date(self) -> np.datetime64:
+        """Return the end date of the dataset."""
+        end_date = set(dataset.end_date for dataset in self.datasets)
+        if len(end_date) != 1:
+            msg = f"Datasets have {len(end_date)} different end dates"
+            raise ValueError(msg)
+        return end_date.pop()
+
+    @property
+    def start_date(self) -> np.datetime64:
+        """Return the start date of the dataset."""
+        start_date = set(dataset.start_date for dataset in self.datasets)
+        if len(start_date) != 1:
+            msg = f"Datasets have {len(start_date)} different start dates"
+            raise ValueError(msg)
+        return start_date.pop()

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
@@ -28,14 +27,26 @@ class ZebraDataset(Dataset):
         self.dataset._name = name
 
     @property
+    def end_date(self) -> np.datetime64:
+        """Return the end date of the dataset."""
+        return self.dataset.end_date
+
+    @property
     def name(self) -> str | None:
+        """Return the name of the dataset."""
         return self.dataset.name
 
     @property
     def space(self) -> ZebraDataSpace:
+        """Return the [C, H, W] shape for this dataset."""
         return ZebraDataSpace(
             channels=self.dataset.shape[1], shape=self.dataset.field_shape
         )
+
+    @property
+    def start_date(self) -> np.datetime64:
+        """Return the start date of the dataset."""
+        return self.dataset.start_date
 
     def __len__(self) -> int:
         """Return the total length of the dataset"""

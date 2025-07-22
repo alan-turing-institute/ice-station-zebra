@@ -1,3 +1,4 @@
+import logging
 from functools import cached_property
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from ice_station_zebra.types import DataloaderArgs, ZebraDataSpace
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset
+
+logger = logging.getLogger(__name__)
 
 
 class ZebraDataModule(LightningDataModule):
@@ -79,6 +82,12 @@ class ZebraDataModule(LightningDataModule):
             ],
             target=self.predict_target,
         )
+        logger.info(
+            "Loaded training dataset with %d samples between %s and %s",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
         return DataLoader(dataset, shuffle=True, **self._common_dataloader_kwargs)
 
     def val_dataloader(
@@ -97,6 +106,12 @@ class ZebraDataModule(LightningDataModule):
             ],
             target=self.predict_target,
         )
+        logger.info(
+            "Loaded validation dataset with %d samples between %s and %s",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 
     def test_dataloader(
@@ -114,5 +129,11 @@ class ZebraDataModule(LightningDataModule):
                 for name, paths in self.dataset_groups.items()
             ],
             target=self.predict_target,
+        )
+        logger.info(
+            "Loaded test dataset with %d samples between %s and %s",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
         )
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)

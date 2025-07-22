@@ -53,8 +53,16 @@ class ZebraTrainer:
             _convert_="object",
         )
 
+        # Construct lightning loggers
+        lightning_loggers = [
+            hydra.utils.instantiate(logger_config)
+            for logger_config in config.get("loggers", {}).values()
+        ]
+
         # Construct the trainer
-        self.trainer: Trainer = hydra.utils.instantiate(config["train"]["trainer"])
+        self.trainer: Trainer = hydra.utils.instantiate(
+            config["train"]["trainer"], logger=lightning_loggers
+        )
 
     def train(self) -> None:
         self.trainer.fit(

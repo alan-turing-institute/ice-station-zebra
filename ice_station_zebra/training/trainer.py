@@ -34,7 +34,9 @@ class ZebraTrainer:
 
         # Create a data module combining all groups
         self.data_module = ZebraDataModule(
-            dataset_groups, predict_target=config["train"]["predict_target"]
+            dataset_groups,
+            predict_target=config["train"]["predict_target"],
+            split=config["split"],
         )
 
         # Construct the model

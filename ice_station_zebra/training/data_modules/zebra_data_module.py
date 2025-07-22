@@ -17,6 +17,7 @@ class ZebraDataModule(LightningDataModule):
         self,
         dataset_groups: dict[str, list[Path]],
         predict_target: str,
+        split: dict[str, dict[str, str]],
         batch_size: int = 2,
     ) -> None:
         super().__init__()
@@ -25,9 +26,15 @@ class ZebraDataModule(LightningDataModule):
             raise ValueError(f"Could not find prediction target {predict_target}")
         self.predict_target = predict_target
         self.batch_size = batch_size
-        self.train_period = [None, "2019-12-31"]
-        self.val_period = ["2020-01-01", "2020-01-15"]
-        self.test_period = ["2020-01-16", None]
+        self.train_period = {
+            k: None if v == "None" else v for k, v in split["train"].items()
+        }
+        self.val_period = {
+            k: None if v == "None" else v for k, v in split["validate"].items()
+        }
+        self.test_period = {
+            k: None if v == "None" else v for k, v in split["test"].items()
+        }
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(
@@ -63,7 +70,10 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    name, paths, start=self.train_period[0], end=self.train_period[1]
+                    name,
+                    paths,
+                    start=self.train_period["start"],
+                    end=self.train_period["end"],
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -78,7 +88,10 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    name, paths, start=self.val_period[0], end=self.val_period[1]
+                    name,
+                    paths,
+                    start=self.val_period["start"],
+                    end=self.val_period["end"],
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -93,7 +106,10 @@ class ZebraDataModule(LightningDataModule):
         dataset = CombinedDataset(
             [
                 ZebraDataset(
-                    name, paths, start=self.test_period[0], end=self.test_period[1]
+                    name,
+                    paths,
+                    start=self.test_period["start"],
+                    end=self.test_period["end"],
                 )
                 for name, paths in self.dataset_groups.items()
             ],

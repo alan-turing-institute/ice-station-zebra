@@ -45,3 +45,7 @@ Run `uv run zebra datasets create` to download all datasets locally.
 ### Inspect
 
 Run `uv run zebra datasets inspect` to inspect all datasets available locally.
+
+### Train
+
+Run `uv run zebra train` to train using the datasets specified in the config.

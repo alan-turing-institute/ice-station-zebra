@@ -1,7 +1,12 @@
 defaults:
   - datasets:
-    - era5-o48-2020-01-6h-v1
+    - era5-0d5-south-2019-12-24h-v1
+    - era5-0d5-south-2020-01-24h-v1
+    - osisaf-sic-south-2019-12-24h-v1
     - osisaf-sic-south-2020-01-24h-v1
+  - model: encode_null_decode
+  - split: default
+  - train: default
   - _self_
 
 base_path: /bask/projects/v/vjgo8416-ice-frcst/shared/zebra/

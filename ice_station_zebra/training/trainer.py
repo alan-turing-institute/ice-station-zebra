@@ -20,13 +20,13 @@ class ZebraTrainer:
         config = OmegaConf.to_container(config, resolve=True)
 
         # Load paths
-        anemoi_data_path = Path(config["base_path"]) / "data" / "anemoi"
+        base_path = Path(config["base_path"])
 
         # Construct dataset groups
         dataset_groups = defaultdict(list)
         for dataset in config["datasets"].values():
             dataset_groups[dataset["group_as"]].append(
-                (anemoi_data_path / f"{dataset['name']}.zarr").resolve()
+                (base_path / "data" / "anemoi" / f"{dataset['name']}.zarr").resolve()
             )
         logger.info(f"Found {len(dataset_groups)} dataset_groups")
         for dataset_group in dataset_groups.keys():
@@ -68,7 +68,13 @@ class ZebraTrainer:
 
         # Construct the trainer
         self.trainer: Trainer = hydra.utils.instantiate(
-            config["train"]["trainer"], logger=lightning_loggers
+            dict(
+                {
+                    "default_root_dir": base_path / "training",
+                    "logger": lightning_loggers,
+                },
+                **config["train"]["trainer"],
+            )
         )
 
     def train(self) -> None:

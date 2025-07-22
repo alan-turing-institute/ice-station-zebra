@@ -11,10 +11,10 @@ class NaiveLatentSpaceEncoder(nn.Module):
     Encoder that takes data in an input space and translates it to a smaller latent space
 
     Input:
-        Tensor of (batch_size, input_channels, input_shape_x, input_shape_y)
+        Tensor of (batch_size, input_channels, input_height, input_width)
 
     Output:
-        Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
+        Tensor of (batch_size, latent_channels, latent_height, latent_width)
     """
 
     def __init__(
@@ -52,9 +52,9 @@ class NaiveLatentSpaceEncoder(nn.Module):
         Transformation summary
 
         Input:
-            x: Tensor of (batch_size, input_channels, input_shape_x, input_shape_y)
+            x: Tensor of (batch_size, input_channels, input_height, input_width)
 
         Output:
-            Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
+            Tensor of (batch_size, latent_channels, latent_height, latent_width)
         """
         return self.model(x)

@@ -11,10 +11,10 @@ class NaiveLatentSpaceDecoder(nn.Module):
     Decoder that takes data in a latent space and translates it to a larger output space
 
     Input:
-        Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
+        Tensor of (batch_size, latent_channels, latent_height, latent_width)
 
     Output:
-        Tensor of (batch_size, output_channels, output_shape_x, output_shape_y)
+        Tensor of (batch_size, output_channels, output_height, output_width)
     """
 
     def __init__(
@@ -55,9 +55,9 @@ class NaiveLatentSpaceDecoder(nn.Module):
         Transformation summary
 
         Input:
-            x: Tensor of (batch_size, latent_channels, latent_shape_x, latent_shape_y)
+            x: Tensor of (batch_size, latent_channels, latent_height, latent_width)
 
         Output:
-            Tensor of (batch_size, output_channels, output_shape_x, output_shape_y)
+            Tensor of (batch_size, output_channels, output_height, output_width)
         """
         return self.model(x)

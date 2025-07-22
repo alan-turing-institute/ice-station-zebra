@@ -56,20 +56,21 @@ class EncodeProcessDecode(ZebraModel):
     def forward(self, inputs: LightningBatch) -> torch.Tensor:
         """Forward step of the model
 
-        - encode inputs to latent space
-        - combine inputs
-        - process in latent space
-        - decode back to output space
+        - start with multiple inputs each with shape [N, C_input_k, H_input_k, W_input_k]
+        - encode inputs to latent space [N, C_input, H_latent, W_latent]
+        - concatenate inputs in latent space [N, C_total, H_latent, W_latent]
+        - process in latent space [N, C_total, H_latent, W_latent]
+        - decode back to output space [N, C_output, H_output, W_output]
         """
-        # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_size, latent_size)
+        # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_height, latent_width)
         latent_inputs = [
             encoder(input) for (input, encoder) in zip(inputs, self.encoders)
         ]
 
-        # Combine in the variable dimension: tensor with (batch_size, all_variables, latent_size, latent_size)
+        # Combine in the variable dimension: tensor with (batch_size, all_variables, latent_height, latent_width)
         latent_input_combined = torch.cat(latent_inputs, dim=1)
 
-        # Process in latent space: tensor with (batch_size, all_variables, latent_size, latent_size)
+        # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
         latent_output = self.processor(latent_input_combined)
 
         # Decode to output space: tensor with (batch_size, output_variables, output_height, output_width)

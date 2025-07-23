@@ -4,6 +4,8 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
+from ice_station_zebra.types import ZebraDataSpace
+
 from .zebra_model import ZebraModel
 
 LightningBatch = list[torch.Tensor, torch.Tensor]
@@ -16,15 +18,22 @@ class EncodeProcessDecode(ZebraModel):
         encoder: DictConfig,
         processor: DictConfig,
         decoder: DictConfig,
+        latent_space: DictConfig,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
+
+        # Construct the latent space
+        latent_space_ = ZebraDataSpace(
+            channels=latent_space["channels"],
+            shape=latent_space["shape"],
+        )
 
         # Add one encoder per dataset
         self.encoders = [
             hydra.utils.instantiate(
                 dict(
-                    {"input_space": input_space, "latent_space": self.latent_space},
+                    {"input_space": input_space, "latent_space": latent_space_},
                     **encoder,
                 ),
                 _convert_="object",
@@ -33,16 +42,18 @@ class EncodeProcessDecode(ZebraModel):
         ]
 
         # Add a processor
-        n_latent_channels = self.latent_space.channels * len(self.encoders)
         self.processor = hydra.utils.instantiate(
-            dict({"n_latent_channels": n_latent_channels}, **processor),
+            dict(
+                {"n_latent_channels": latent_space_.channels * len(self.encoders)},
+                **processor,
+            ),
             _convert_="object",
         )
 
         # Add a decoder
         self.decoder = hydra.utils.instantiate(
             dict(
-                {"latent_space": self.latent_space, "output_space": self.output_space},
+                {"latent_space": latent_space_, "output_space": self.output_space},
                 **decoder,
             ),
             _convert_="object",
@@ -52,6 +63,16 @@ class EncodeProcessDecode(ZebraModel):
         self.model_list.extend(self.encoders)
         self.model_list.append(self.processor)
         self.model_list.append(self.decoder)
+
+        # Save hyperparameters
+        self.register_hyperparameters(
+            {
+                "latent_space": {
+                    "channels": latent_space_.channels,
+                    "shape": latent_space_.shape,
+                },
+            }
+        )
 
     def forward(self, inputs: LightningBatch) -> torch.Tensor:
         """Forward step of the model

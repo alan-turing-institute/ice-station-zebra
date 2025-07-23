@@ -1,7 +1,7 @@
 import typer
 from hydra.core.utils import simple_stdout_log_config
 
-from ice_station_zebra.datasets import datasets_cli
+from ice_station_zebra.data.anemoi import datasets_cli
 from ice_station_zebra.training import training_cli
 
 # Configure hydra logging

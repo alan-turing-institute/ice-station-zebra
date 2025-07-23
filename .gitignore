@@ -5,5 +5,4 @@ __pycache__
 .venv
 *local.yaml
 outputs
-lightning_logs/
 wandb/

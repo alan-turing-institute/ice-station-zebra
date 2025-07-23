@@ -1,3 +1,8 @@
+defaults:
+  - callbacks:
+    - device_stats
+  - _self_
+
 # Name of the dataset group containing our prediction target
 predict_target: osisaf-south
 

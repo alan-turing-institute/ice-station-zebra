@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import hydra
 import torch
@@ -19,31 +20,48 @@ class ZebraModel(LightningModule, ABC):
         name: str,
         input_spaces: list[ZebraDataSpace],
         output_space: ZebraDataSpace,
-        latent_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
         super().__init__()
 
+        # Save model name
         self.name = name
-        
+
         # Construct the input and output spaces
         self.input_spaces = input_spaces
         self.output_space = output_space
-
-        # Construct the latent space
-        self.latent_space = ZebraDataSpace(
-            channels=latent_space["channels"],
-            shape=latent_space["shape"],
-        )
 
         # Initialise an empty module list
         self.model_list = nn.ModuleList()
 
         # Store the optimizer config
         self.optimizer_cfg = optimizer
-        
-        # save hyper-parameters to self.hparams (auto-logged by W&B)
-        self.save_hyperparameters()
+
+    def register_hyperparameters(self, hyperparameters: dict[str, Any] = {}) -> None:
+        """Save the hyper-parameters of the model
+
+        All children of this class should call this method at the end of __init__
+        """
+        hparams = {
+            "input_spaces": {
+                "channels": [input_space.channels for input_space in self.input_spaces],
+                "shape": [input_space.shape for input_space in self.input_spaces],
+            },
+            "model": {
+                "components": [module._get_name() for module in self.model_list],
+                "name": self.name,
+            },
+            "optimizer": {
+                "type": self.optimizer_cfg.get("_target_", None),
+                "lr": self.optimizer_cfg.get("lr", None),
+            },
+            "output_space": {
+                "channels": self.output_space.channels,
+                "shape": self.output_space.shape,
+            },
+        }
+        hparams.update(hyperparameters)
+        self.save_hyperparameters(hparams)
 
     @abstractmethod
     def forward(self, inputs: LightningBatch) -> torch.Tensor:

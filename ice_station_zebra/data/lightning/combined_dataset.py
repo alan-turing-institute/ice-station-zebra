@@ -22,6 +22,10 @@ class CombinedDataset(Dataset):
         """Return a single timestep"""
         return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])
 
+    def date_from_index(self, idx: int) -> np.datetime64:
+        """Return the date of the timestep"""
+        return self.target.dataset.dates[idx]
+
     @property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""

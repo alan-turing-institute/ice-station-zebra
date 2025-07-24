@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
@@ -19,28 +18,8 @@ class ZebraTrainer:
 
     def __init__(self, config: DictConfig) -> None:
         """Initialize the Zebra trainer."""
-        # Load the resolved config into Python format
-        config = OmegaConf.to_container(config, resolve=True)
-
-        # Load paths
-        base_path = Path(config["base_path"])
-
-        # Construct dataset groups
-        dataset_groups = defaultdict(list)
-        for dataset in config["datasets"].values():
-            dataset_groups[dataset["group_as"]].append(
-                (base_path / "data" / "anemoi" / f"{dataset['name']}.zarr").resolve()
-            )
-        logger.info(f"Found {len(dataset_groups)} dataset_groups")
-        for dataset_group in dataset_groups.keys():
-            logger.debug(f"... {dataset_group}")
-
-        # Create a data module combining all groups
-        self.data_module = ZebraDataModule(
-            dataset_groups,
-            predict_target=config["train"]["predict_target"],
-            split=config["split"],
-        )
+        # Load inputs into a data module
+        self.data_module = ZebraDataModule(config)
 
         # Construct the model
         self.model = hydra.utils.instantiate(
@@ -76,7 +55,7 @@ class ZebraTrainer:
                 run_directory = Path(lightning_logger.experiment._settings.sync_dir)
         if not run_directory:
             name_ = f"run-{datetime.now().strftime(r'%Y%m%d_%H%M%S')}-{generate_id()}"
-            run_directory = base_path / "training" / "local" / name_
+            run_directory = self.data_module.base_path / "training" / "local" / name_
 
         # Add callbacks
         callbacks: list[Callback] = []

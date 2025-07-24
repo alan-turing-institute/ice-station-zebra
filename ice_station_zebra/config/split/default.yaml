@@ -1,3 +1,5 @@
+batch_size: 2
+
 # This dataset is used for training the model
 train:
   start: None

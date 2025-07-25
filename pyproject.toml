@@ -23,8 +23,17 @@ dependencies = [
     "zarr<3.0.0", # v3 is not compatible with anemoi
 ]
 
+[dependency-groups]
+test = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+
 [project.scripts]
 zebra = "ice_station_zebra.cli:app"
+
+[tool.pytest.ini_options]
+addopts = "--cov=ice_station_zebra"
 
 [build-system]
 requires = ["hatchling"]

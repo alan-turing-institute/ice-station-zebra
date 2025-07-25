@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
 
-from ice_station_zebra.types import DataloaderArgs, ZebraDataSpace
+from ice_station_zebra.types import DataloaderArgs, DataSpace
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset
@@ -63,8 +63,8 @@ class ZebraDataModule(LightningDataModule):
         )
 
     @cached_property
-    def input_spaces(self) -> list[ZebraDataSpace]:
-        """Return [variables, pos_x, pos_y]"""
+    def input_spaces(self) -> list[DataSpace]:
+        """Return the data space for each input"""
         return [
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
@@ -72,8 +72,8 @@ class ZebraDataModule(LightningDataModule):
         ]
 
     @cached_property
-    def output_space(self) -> ZebraDataSpace:
-        """Return [variables, pos_x, pos_y]"""
+    def output_space(self) -> DataSpace:
+        """Return the data space of the desired output"""
         return next(
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()

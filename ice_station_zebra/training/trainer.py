@@ -25,8 +25,10 @@ class ZebraTrainer:
         self.model = hydra.utils.instantiate(
             dict(
                 {
-                    "input_spaces": self.data_module.input_spaces,
-                    "output_space": self.data_module.output_space,
+                    "input_spaces": [
+                        s.as_dict() for s in self.data_module.input_spaces
+                    ],
+                    "output_space": self.data_module.output_space.as_dict(),
                     "optimizer": config["train"]["optimizer"],
                 },
                 **config["model"],

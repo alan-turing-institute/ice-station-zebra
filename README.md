@@ -4,6 +4,12 @@ A pipeline for predicting sea ice.
 
 ## Setting up your environment
 
+### Tools
+
+You will need to install the following tools if you want to develop this project:
+
+- [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+
 ### Creating your own configuration file
 
 Create a file in `config` that is called `<your chosen name here>.local.yaml`.

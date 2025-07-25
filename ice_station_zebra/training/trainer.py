@@ -1,14 +1,13 @@
 import logging
-from contextlib import suppress
-from datetime import datetime
 from pathlib import Path
 
 import hydra
 from lightning import Callback, Trainer
 from omegaconf import DictConfig, OmegaConf
-from wandb.sdk.lib.runid import generate_id
 
 from ice_station_zebra.data.lightning import ZebraDataModule
+from ice_station_zebra.models import ZebraModel
+from ice_station_zebra.utils import generate_run_name, get_wandb_logger
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ class ZebraTrainer:
         self.data_module = ZebraDataModule(config)
 
         # Construct the model
-        self.model = hydra.utils.instantiate(
+        self.model: ZebraModel = hydra.utils.instantiate(
             dict(
                 {
                     "input_spaces": [
@@ -43,6 +42,7 @@ class ZebraTrainer:
                 dict(
                     {
                         "job_type": "train",
+                        "project": self.model.name,
                     },
                     **logger_config,
                 )
@@ -50,14 +50,13 @@ class ZebraTrainer:
             for logger_config in config.get("loggers", {}).values()
         ]
 
-        # Get run directory from wandb logger if available
-        run_directory = None
-        for lightning_logger in lightning_loggers:
-            with suppress(AttributeError):
-                run_directory = Path(lightning_logger.experiment._settings.sync_dir)
-        if not run_directory:
-            name_ = f"run-{datetime.now().strftime(r'%Y%m%d_%H%M%S')}-{generate_id()}"
-            run_directory = self.data_module.base_path / "training" / "local" / name_
+        # Get run directory from wandb logger or generate a new one
+        if wandb_logger := get_wandb_logger(lightning_loggers):
+            run_directory = Path(wandb_logger.experiment._settings.sync_dir)
+        else:
+            run_directory = (
+                self.data_module.base_path / "training" / "local" / generate_run_name()
+            )
 
         # Add callbacks
         callbacks: list[Callback] = []

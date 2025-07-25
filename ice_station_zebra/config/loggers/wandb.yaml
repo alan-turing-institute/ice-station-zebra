@@ -4,4 +4,3 @@ wandb:
   save_dir: ${...base_path}/training/
   log_model: false # do not log the model to W&B
   name: null # Run name: defaults to random, can be overridden by the user
-  project: ${...model.name}

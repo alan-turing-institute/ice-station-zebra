@@ -2,11 +2,14 @@ from datetime import date
 
 import numpy as np
 from matplotlib import pyplot as plt
-from PIL import ImageFile
+from PIL.ImageFile import ImageFile
+
 from .convert import image_from_figure
 
 
-def plot_sic_comparison(target: np.ndarray, prediction: np.ndarray, date: date) -> ImageFile:
+def plot_sic_comparison(
+    target: np.ndarray, prediction: np.ndarray, date: date
+) -> list[ImageFile]:
     """Plot the comparison of target and prediction for sea ice concentration."""
     fig, axs = plt.subplots(1, 2, figsize=(12, 6))
     # Ground truth
@@ -22,4 +25,4 @@ def plot_sic_comparison(target: np.ndarray, prediction: np.ndarray, date: date) 
     # Title
     date_string = date.strftime(r"%Y-%m-%d")
     fig.suptitle(f"Comparison at {date_string}")
-    return image_from_figure(fig)
+    return [image_from_figure(fig)]

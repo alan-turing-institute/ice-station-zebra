@@ -31,7 +31,9 @@ class ZebraDataModule(LightningDataModule):
         self.dataset_groups = defaultdict(list)
         for dataset in config["datasets"].values():
             self.dataset_groups[dataset["group_as"]].append(
-                (self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr").resolve()
+                (
+                    self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
+                ).resolve()
             )
         logger.info(f"Found {len(self.dataset_groups)} dataset_groups")
         for dataset_group in self.dataset_groups.keys():
@@ -47,7 +49,8 @@ class ZebraDataModule(LightningDataModule):
             k: None if v == "None" else v for k, v in config["split"]["train"].items()
         }
         self.val_period = {
-            k: None if v == "None" else v for k, v in config["split"]["validate"].items()
+            k: None if v == "None" else v
+            for k, v in config["split"]["validate"].items()
         }
         self.test_period = {
             k: None if v == "None" else v for k, v in config["split"]["test"].items()

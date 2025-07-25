@@ -7,6 +7,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data.lightning import ZebraDataModule
 from ice_station_zebra.models import ZebraModel
+from ice_station_zebra.utils import get_timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +52,12 @@ class ZebraEvaluator:
         # Construct lightning loggers
         lightning_loggers = [
             hydra.utils.instantiate(
-                dict(
-                    {
-                        "job_type": "evaluate",
-                        "project": "leaderboard",
-                    },
-                    **logger_config,
-                )
+                dict(**logger_config)
+                | {
+                    "job_type": "evaluate",
+                    "name": f"{self.model.name}-{get_timestamp()}",
+                    "project": "leaderboard",
+                },
             )
             for logger_config in config.get("loggers", {}).values()
         ]

@@ -6,7 +6,11 @@ from wandb.sdk.lib.runid import generate_id
 
 def generate_run_name() -> str:
     """Generate a unique run name based on the current timestamp."""
-    return f"run-{datetime.now().strftime(r'%Y%m%d_%H%M%S')}-{generate_id()}"
+    return f"run-{get_timestamp()}-{generate_id()}"
+
+
+def get_timestamp() -> str:
+    return datetime.now().strftime(r"%Y%m%d_%H%M%S")
 
 
 def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:

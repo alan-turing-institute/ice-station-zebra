@@ -13,11 +13,9 @@ training_cli = typer.Typer(help="Train models")
 log = logging.getLogger(__name__)
 
 
-@training_cli.command()
+@training_cli.command(help="Train a model")
 @hydra_adaptor
-def train(
-    config: DictConfig,
-) -> None:
+def train(config: DictConfig) -> None:
     """Train a model"""
     trainer = ZebraTrainer(config)
     trainer.train()

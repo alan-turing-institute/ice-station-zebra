@@ -1,13 +1,15 @@
 import logging
+from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
 import numpy as np
 from lightning import LightningDataModule
 from numpy.typing import NDArray
+from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
 
-from ice_station_zebra.types import DataloaderArgs, ZebraDataSpace
+from ice_station_zebra.types import DataloaderArgs, DataSpace
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset
@@ -16,32 +18,47 @@ logger = logging.getLogger(__name__)
 
 
 class ZebraDataModule(LightningDataModule):
-    def __init__(
-        self,
-        dataset_groups: dict[str, list[Path]],
-        predict_target: str,
-        split: dict[str, dict[str, str]],
-        batch_size: int = 2,
-    ) -> None:
+    def __init__(self, config: DictConfig) -> None:
         super().__init__()
-        self.dataset_groups = dataset_groups
-        if predict_target not in self.dataset_groups:
-            raise ValueError(f"Could not find prediction target {predict_target}")
-        self.predict_target = predict_target
-        self.batch_size = batch_size
+
+        # Load the resolved config into Python format
+        config = OmegaConf.to_container(config, resolve=True)
+
+        # Load paths
+        self.base_path = Path(config["base_path"])
+
+        # Construct dataset groups
+        self.dataset_groups = defaultdict(list)
+        for dataset in config["datasets"].values():
+            self.dataset_groups[dataset["group_as"]].append(
+                (
+                    self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
+                ).resolve()
+            )
+        logger.info(f"Found {len(self.dataset_groups)} dataset_groups")
+        for dataset_group in self.dataset_groups.keys():
+            logger.debug(f"... {dataset_group}")
+
+        # Check prediction target
+        self.predict_target = config["train"]["predict_target"]
+        if self.predict_target not in self.dataset_groups:
+            raise ValueError(f"Could not find prediction target {self.predict_target}")
+
+        self.batch_size = int(config["split"]["batch_size"])
         self.train_period = {
-            k: None if v == "None" else v for k, v in split["train"].items()
+            k: None if v == "None" else v for k, v in config["split"]["train"].items()
         }
         self.val_period = {
-            k: None if v == "None" else v for k, v in split["validate"].items()
+            k: None if v == "None" else v
+            for k, v in config["split"]["validate"].items()
         }
         self.test_period = {
-            k: None if v == "None" else v for k, v in split["test"].items()
+            k: None if v == "None" else v for k, v in config["split"]["test"].items()
         }
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(
-            batch_size=batch_size,
+            batch_size=self.batch_size,
             sampler=None,
             batch_sampler=None,
             drop_last=False,
@@ -49,8 +66,8 @@ class ZebraDataModule(LightningDataModule):
         )
 
     @cached_property
-    def input_spaces(self) -> list[ZebraDataSpace]:
-        """Return [variables, pos_x, pos_y]"""
+    def input_spaces(self) -> list[DataSpace]:
+        """Return the data space for each input"""
         return [
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
@@ -58,8 +75,8 @@ class ZebraDataModule(LightningDataModule):
         ]
 
     @cached_property
-    def output_space(self) -> ZebraDataSpace:
-        """Return [variables, pos_x, pos_y]"""
+    def output_space(self) -> DataSpace:
+        """Return the data space of the desired output"""
         return next(
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()

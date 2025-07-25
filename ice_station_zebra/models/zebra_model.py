@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 import hydra
 import torch
@@ -8,7 +7,7 @@ from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
 
-from ice_station_zebra.types import ZebraDataSpace
+from ice_station_zebra.types import DataSpace
 
 LightningBatch = list[torch.Tensor, torch.Tensor]
 
@@ -18,8 +17,8 @@ class ZebraModel(LightningModule, ABC):
         self,
         *,
         name: str,
-        input_spaces: list[ZebraDataSpace],
-        output_space: ZebraDataSpace,
+        input_spaces: list[DictConfig],
+        output_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
         super().__init__()
@@ -28,8 +27,8 @@ class ZebraModel(LightningModule, ABC):
         self.name = name
 
         # Construct the input and output spaces
-        self.input_spaces = input_spaces
-        self.output_space = output_space
+        self.input_spaces = [DataSpace(**space) for space in input_spaces]
+        self.output_space = DataSpace(**output_space)
 
         # Initialise an empty module list
         self.model_list = nn.ModuleList()
@@ -37,31 +36,10 @@ class ZebraModel(LightningModule, ABC):
         # Store the optimizer config
         self.optimizer_cfg = optimizer
 
-    def register_hyperparameters(self, hyperparameters: dict[str, Any] = {}) -> None:
-        """Save the hyper-parameters of the model
-
-        All children of this class should call this method at the end of __init__
-        """
-        hparams = {
-            "input_spaces": {
-                "channels": [input_space.channels for input_space in self.input_spaces],
-                "shape": [input_space.shape for input_space in self.input_spaces],
-            },
-            "model": {
-                "components": [module._get_name() for module in self.model_list],
-                "name": self.name,
-            },
-            "optimizer": {
-                "type": self.optimizer_cfg.get("_target_", None),
-                "lr": self.optimizer_cfg.get("lr", None),
-            },
-            "output_space": {
-                "channels": self.output_space.channels,
-                "shape": self.output_space.shape,
-            },
-        }
-        hparams.update(hyperparameters)
-        self.save_hyperparameters(hparams)
+        # Save all of the arguments to __init__ as hyperparameters
+        # This will also save the parameters of whichever child class is used
+        # Note that W&B will log all hyperparameters
+        self.save_hyperparameters()
 
     @abstractmethod
     def forward(self, inputs: LightningBatch) -> torch.Tensor:
@@ -78,6 +56,23 @@ class ZebraModel(LightningModule, ABC):
 
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.l1_loss(output, target)
+
+    def test_step(
+        self, batch: LightningBatch, batch_idx: int
+    ) -> dict[str, torch.Tensor]:
+        """Run the test step, in PyTorch eval model (i.e. no gradients)
+
+        A batch contains one tensor for each input dataset followed by one for the target
+        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+
+        - Separate the batch into inputs and target
+        - Run inputs through the model
+        - Return the output, target and loss
+        """
+        inputs, target = batch[:-1], batch[-1]
+        output = self(inputs)
+        loss = self.loss(output, target)
+        return {"output": output, "target": target, "loss": loss}
 
     def training_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
         """Run the training step

@@ -41,4 +41,4 @@ zebra = "ice_station_zebra.cli:app"
 line-length = 88
 
 [tool.pytest.ini_options]
-addopts = "--cov=ice_station_zebra"
+addopts = "--cov ice_station_zebra --cov-report term-missing"

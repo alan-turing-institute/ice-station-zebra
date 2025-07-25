@@ -1,0 +1,4 @@
+defaults:
+  - callbacks:
+    - plotting
+  - _self_

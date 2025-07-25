@@ -57,6 +57,23 @@ class ZebraModel(LightningModule, ABC):
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.l1_loss(output, target)
 
+    def test_step(
+        self, batch: LightningBatch, batch_idx: int
+    ) -> dict[str, torch.Tensor]:
+        """Run the test step, in PyTorch eval model (i.e. no gradients)
+
+        A batch contains one tensor for each input dataset followed by one for the target
+        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+
+        - Separate the batch into inputs and target
+        - Run inputs through the model
+        - Return the output, target and loss
+        """
+        inputs, target = batch[:-1], batch[-1]
+        output = self(inputs)
+        loss = self.loss(output, target)
+        return {"output": output, "target": target, "loss": loss}
+
     def training_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
         """Run the training step
 

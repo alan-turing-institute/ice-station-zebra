@@ -4,6 +4,7 @@ defaults:
     - era5-0d5-south-2020-01-24h-v1
     - osisaf-sic-south-2019-12-24h-v1
     - osisaf-sic-south-2020-01-24h-v1
+  - evaluate: default
   - loggers:
     - wandb
   - model: encode_null_decode

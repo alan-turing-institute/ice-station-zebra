@@ -1,0 +1,2 @@
+plotting:
+  _target_: ice_station_zebra.evaluation.callbacks.PlottingCallback

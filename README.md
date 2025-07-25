@@ -54,6 +54,4 @@ Run `uv run zebra train` to train using the datasets specified in the config.
 
 ### Evaluate
 
-Run `uv run evaluate PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
-
-:information_source: Some settings will be loaded from the config file from `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/model_config.yaml`.
+Run `uv run evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.

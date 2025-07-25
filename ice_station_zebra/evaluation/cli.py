@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from omegaconf import DictConfig
+
+from ice_station_zebra.cli import hydra_adaptor
 
 from .evaluator import ZebraEvaluator
 
@@ -13,13 +16,15 @@ log = logging.getLogger(__name__)
 
 
 @evaluation_cli.command(help="Evaluate a model")
+@hydra_adaptor
 def evaluate(
+    config: DictConfig,
     checkpoint: Annotated[
-        str, typer.Argument(help="Specify the path to a trained model checkpoint")
-    ]
+        str, typer.Option(help="Specify the path to a trained model checkpoint")
+    ],
 ) -> None:
     """Evaluate a model"""
-    evaluator = ZebraEvaluator(Path(checkpoint).resolve())
+    evaluator = ZebraEvaluator(config, Path(checkpoint).resolve())
     evaluator.evaluate()
 
 

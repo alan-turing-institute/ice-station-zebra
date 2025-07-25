@@ -3,7 +3,7 @@ from pathlib import Path
 
 import hydra
 from lightning import Callback, Trainer
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data.lightning import ZebraDataModule
 from ice_station_zebra.models import ZebraModel
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ZebraEvaluator:
     """A wrapper for PyTorch evaluation"""
 
-    def __init__(self, checkpoint_path: Path) -> None:
+    def __init__(self, config: DictConfig, checkpoint_path: Path) -> None:
         """Initialize the Zebra evaluator."""
         # Verify the checkpoint path
         if checkpoint_path.exists():
@@ -26,11 +26,12 @@ class ZebraEvaluator:
         # Load the model configuration
         config_path = checkpoint_path.parent.parent / "model_config.yaml"
         try:
-            config = OmegaConf.load(config_path)
-            logger.debug(f"Loaded model config from {config_path}.")
+            ckpt_config = OmegaConf.load(config_path)
+            logger.debug(f"Loaded checkpoint config from {ckpt_config}.")
+            config["model"]["_target_"] = ckpt_config["model"]["_target_"]
         except (NotADirectoryError, FileNotFoundError):
             msg = f"Could not find model configuration file at {config_path}."
-            raise FileNotFoundError(msg)
+            logger.debug(msg)
 
         # Load the model from checkpoint
         model_cls: type[ZebraModel] = hydra.utils.get_class(config["model"]["_target_"])

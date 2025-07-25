@@ -1,4 +1,5 @@
 defaults:
   - callbacks:
+    - metric_summary
     - plotting
   - _self_

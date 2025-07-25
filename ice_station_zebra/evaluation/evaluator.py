@@ -43,6 +43,9 @@ class ZebraEvaluator:
         callbacks: list[Callback] = []
         for callback_cfg in config["evaluate"].get("callbacks", {}).values():
             callbacks.append(hydra.utils.instantiate(callback_cfg))
+            logger.debug(
+                f"Adding evaluation callback {callbacks[-1].__class__.__name__}."
+            )
 
         # Construct lightning loggers
         lightning_loggers = [

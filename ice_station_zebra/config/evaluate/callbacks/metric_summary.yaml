@@ -1,0 +1,3 @@
+metric_summary:
+  _target_: ice_station_zebra.evaluation.callbacks.MetricSummaryCallback
+  average_loss: true

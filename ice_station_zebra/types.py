@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from collections.abc import Iterable
 from typing import TypedDict
 
-from pydantic import validate_arguments
+from omegaconf import DictConfig
 
 
 class DataloaderArgs(TypedDict):
@@ -12,12 +12,14 @@ class DataloaderArgs(TypedDict):
     worker_init_fn: None
 
 
-@validate_arguments
-@dataclass
-class ZebraDataSpace:
+class DataSpace:
     channels: int
     shape: tuple[int, int]
 
-    def __post_init__(self):
-        if not isinstance(self.shape, tuple):
-            self.shape = tuple(self.shape)
+    def __init__(self, channels: int, shape: Iterable[int]) -> None:
+        self.channels = int(channels)
+        self.shape = (int(shape[0]), int(shape[1]))
+
+    def as_dict(self) -> DictConfig:
+        """Return the DataSpace as a DictConfig."""
+        return DictConfig({"channels": self.channels, "shape": self.shape})

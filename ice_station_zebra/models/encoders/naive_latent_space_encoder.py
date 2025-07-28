@@ -3,7 +3,7 @@ import math
 import torch.nn as nn
 from torch import Tensor
 
-from ice_station_zebra.types import ZebraDataSpace
+from ice_station_zebra.types import DataSpace
 
 
 class NaiveLatentSpaceEncoder(nn.Module):
@@ -17,9 +17,7 @@ class NaiveLatentSpaceEncoder(nn.Module):
         Tensor of (batch_size, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(
-        self, *, input_space: ZebraDataSpace, latent_space: ZebraDataSpace
-    ) -> None:
+    def __init__(self, *, input_space: DataSpace, latent_space: DataSpace) -> None:
         super().__init__()
 
         # Construct list of layers
@@ -44,7 +42,7 @@ class NaiveLatentSpaceEncoder(nn.Module):
         # Convolve to the desired number of latent channels
         layers.append(nn.Conv2d(n_channels, latent_space.channels, 1))
 
-        # Combine the layers into a list
+        # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: Tensor) -> Tensor:

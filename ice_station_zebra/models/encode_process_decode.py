@@ -4,7 +4,7 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import ZebraDataSpace
+from ice_station_zebra.types import DataSpace
 
 from .zebra_model import ZebraModel
 
@@ -24,10 +24,7 @@ class EncodeProcessDecode(ZebraModel):
         super().__init__(**kwargs)
 
         # Construct the latent space
-        latent_space_ = ZebraDataSpace(
-            channels=latent_space["channels"],
-            shape=latent_space["shape"],
-        )
+        latent_space_ = DataSpace(**latent_space)
 
         # Add one encoder per dataset
         self.encoders = [
@@ -36,7 +33,6 @@ class EncodeProcessDecode(ZebraModel):
                     {"input_space": input_space, "latent_space": latent_space_},
                     **encoder,
                 ),
-                _convert_="object",
             )
             for input_space in self.input_spaces
         ]
@@ -47,7 +43,6 @@ class EncodeProcessDecode(ZebraModel):
                 {"n_latent_channels": latent_space_.channels * len(self.encoders)},
                 **processor,
             ),
-            _convert_="object",
         )
 
         # Add a decoder
@@ -56,23 +51,12 @@ class EncodeProcessDecode(ZebraModel):
                 {"latent_space": latent_space_, "output_space": self.output_space},
                 **decoder,
             ),
-            _convert_="object",
         )
 
         # Register all modules that need to be trained
         self.model_list.extend(self.encoders)
         self.model_list.append(self.processor)
         self.model_list.append(self.decoder)
-
-        # Save hyperparameters
-        self.register_hyperparameters(
-            {
-                "latent_space": {
-                    "channels": latent_space_.channels,
-                    "shape": latent_space_.shape,
-                },
-            }
-        )
 
     def forward(self, inputs: LightningBatch) -> torch.Tensor:
         """Forward step of the model

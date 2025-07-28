@@ -5,7 +5,7 @@ from anemoi.datasets.data import open_dataset
 from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
-from ice_station_zebra.types import ZebraDataSpace
+from ice_station_zebra.types import DataSpace
 
 
 class ZebraDataset(Dataset):
@@ -37,11 +37,9 @@ class ZebraDataset(Dataset):
         return self.dataset.name
 
     @property
-    def space(self) -> ZebraDataSpace:
-        """Return the [C, H, W] shape for this dataset."""
-        return ZebraDataSpace(
-            channels=self.dataset.shape[1], shape=self.dataset.field_shape
-        )
+    def space(self) -> DataSpace:
+        """Return the data space for this dataset."""
+        return DataSpace(channels=self.dataset.shape[1], shape=self.dataset.field_shape)
 
     @property
     def start_date(self) -> np.datetime64:
@@ -53,6 +51,6 @@ class ZebraDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx: int) -> NDArray[np.float32]:
-        """Return a single timestep after reshaping"""
-        shape_ = (self.space.channels, *self.space.shape)
-        return self.dataset[idx].reshape(shape_)
+        """Return a single timestep after reshaping to [C, H, W]"""
+        chw = (self.space.channels, *self.space.shape)
+        return self.dataset[idx].reshape(chw)

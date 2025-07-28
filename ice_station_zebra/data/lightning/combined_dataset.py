@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 
 import numpy as np
 from numpy.typing import NDArray
@@ -21,6 +22,11 @@ class CombinedDataset(Dataset):
     def __getitem__(self, idx: int) -> NDArray[np.float32]:
         """Return a single timestep"""
         return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])
+
+    def date_from_index(self, idx: int) -> datetime:
+        """Return the date of the timestep"""
+        np_datetime = self.target.dataset.dates[idx]
+        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S")
 
     @property
     def end_date(self) -> np.datetime64:

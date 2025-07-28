@@ -27,7 +27,7 @@ uv run zebra datasets create ++base_path=/local/path/to/my/data
 
 As `uv` cannot easily be installed on Baskerville, you should install the `zebra` package directly into a virtual environment that you have set up.
 
-```sh
+```bash
 source /path/to/venv/activate.sh
 pip install -e .
 ```
@@ -49,3 +49,9 @@ Run `uv run zebra datasets inspect` to inspect all datasets available locally.
 ### Train
 
 Run `uv run zebra train` to train using the datasets specified in the config.
+
+:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`.
+
+### Evaluate
+
+Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.

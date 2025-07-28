@@ -158,7 +158,7 @@ class GaussianDiffusion:
         This function calculates the target v_t given the clean input x_start, 
         the noise ε, and the timestep t, based on the formulation:
     
-            v_t = ᾱ_t * ε - sqrt(1 - ᾱ_t) * x_start
+            v_t = ᾱ_t * ε - sqrt(1 - ᾱ_t) * x_start
     
         Args:
             x_start (torch.Tensor): Original clean sample (e.g., groundtruth output).
@@ -172,5 +172,4 @@ class GaussianDiffusion:
         sqrt_one_minus_alpha_t = self._extract(1.0 - self.alphas_cumprod, t, x_start.shape)
 
         return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start
-
 

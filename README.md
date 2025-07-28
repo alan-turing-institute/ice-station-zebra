@@ -54,4 +54,4 @@ Run `uv run zebra train` to train using the datasets specified in the config.
 
 ### Evaluate
 
-Run `uv run evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
+Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.

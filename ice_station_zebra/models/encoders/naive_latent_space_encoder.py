@@ -21,7 +21,7 @@ class NaiveLatentSpaceEncoder(nn.Module):
         super().__init__()
 
         # Construct list of layers
-        layers = []
+        layers: list[nn.Module] = []
 
         # Add size-reducing convolutional layers while we are larger than the latent shape
         n_conv_layers = math.floor(

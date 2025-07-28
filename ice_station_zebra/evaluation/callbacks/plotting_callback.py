@@ -34,7 +34,7 @@ class PlottingCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: dict[str, Tensor],
+        outputs: dict[str, Tensor],  # type: ignore[override]
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,

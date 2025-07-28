@@ -19,9 +19,9 @@ class CombinedDataset(Dataset):
         """Return the total length of the dataset"""
         return min([len(ds) for ds in self.datasets] + [len(self.target)])
 
-    def __getitem__(self, idx: int) -> NDArray[np.float32]:
+    def __getitem__(self, idx: int) -> tuple[NDArray[np.float32]]:
         """Return a single timestep"""
-        return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])
+        return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])  # type: ignore[return-value]
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep"""

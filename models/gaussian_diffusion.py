@@ -172,7 +172,7 @@ class GaussianDiffusion:
         Returns:
             torch.Tensor: Velocity v_t at each timestep, same shape as x_start.
         """
-        alpha_t = self._extract(self.alphas_cumprod, t, x_start.shape)
-        sqrt_one_minus_alpha_t = self._extract(1.0 - self.alphas_cumprod, t, x_start.shape)
+        sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
+        sqrt_one_minus_alpha_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
 
         return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start

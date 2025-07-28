@@ -24,7 +24,7 @@ class EncodeProcessDecode(ZebraModel):
         super().__init__(**kwargs)
 
         # Construct the latent space
-        latent_space_ = DataSpace(**latent_space)
+        latent_space_ = DataSpace.from_dict(latent_space)
 
         # Add one encoder per dataset
         self.encoders = [

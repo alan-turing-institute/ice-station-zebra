@@ -27,8 +27,8 @@ class ZebraModel(LightningModule, ABC):
         self.name = name
 
         # Construct the input and output spaces
-        self.input_spaces = [DataSpace(**space) for space in input_spaces]
-        self.output_space = DataSpace(**output_space)
+        self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]
+        self.output_space = DataSpace.from_dict(output_space)
 
         # Initialise an empty module list
         self.model_list = nn.ModuleList()

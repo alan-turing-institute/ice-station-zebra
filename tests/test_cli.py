@@ -10,8 +10,8 @@ runner = CliRunner()
 def test_help():
     result = runner.invoke(app, ["--help"])
     expected_patterns = [
-        "│ datasets\s+Manage datasets",
-        "│ train",
+        r"│ datasets\s+Manage datasets",
+        r"│ train",
     ]
     lines = result.output.split("\n")
     for pattern in expected_patterns:

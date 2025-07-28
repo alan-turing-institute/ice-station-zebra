@@ -28,5 +28,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.3"
-      - name: Run tests
+      - name: Run pytest
         run: uv run --group test pytest
+      - name: Run mypy
+        run: uv run --group test mypy .

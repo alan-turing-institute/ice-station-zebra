@@ -94,6 +94,9 @@ class GaussianDiffusion:
         if noise is None:
             noise = torch.randn_like(x_start)
             
+        if noise is None:
+            noise = torch.randn_like(x_start)
+            
         sqrt_alphas_cumprod_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alphas_cumprod_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
         
@@ -120,8 +123,9 @@ class GaussianDiffusion:
     
         # Compute predicted x0 from v and current x_t
         pred_xstart = sqrt_alpha_t * x - sqrt_one_minus_alpha_t * pred_v
-        pred_xstart = torch.clamp(pred_xstart, -1., 1.)
-       
+        
+        pred_xstart = torch.clamp(pred_xstart, 0., 1.)
+        
         # Compute model mean for posterior q(x_{t-1} | x_t, x_0)
         model_mean = (
             self._extract(self.posterior_mean_coef1, t, x.shape) * pred_xstart +
@@ -172,4 +176,3 @@ class GaussianDiffusion:
         sqrt_one_minus_alpha_t = self._extract(1.0 - self.alphas_cumprod, t, x_start.shape)
 
         return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start
-

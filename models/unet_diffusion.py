@@ -135,6 +135,9 @@ class UNetDiffusion(nn.Module):
         Returns:
             torch.Tensor: Predicted denoised forecast of shape [B, H, W, n_classes, n_forecast_days].
         """
+        x = 2.0 * x - 1.0    
+        y = 2.0 * y - 1.0    
+    
         # Time embedding
         t = self._timestep_embedding(t)
         t = self.time_embed(t)

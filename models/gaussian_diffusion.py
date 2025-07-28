@@ -93,10 +93,7 @@ class GaussianDiffusion:
         """
         if noise is None:
             noise = torch.randn_like(x_start)
-            
-        if noise is None:
-            noise = torch.randn_like(x_start)
-            
+                
         sqrt_alphas_cumprod_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alphas_cumprod_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
         

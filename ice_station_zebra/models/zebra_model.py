@@ -46,10 +46,7 @@ class ZebraModel(LightningModule, ABC):
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
-            dict(
-                {"params": self.model_list.parameters()},
-                **self.optimizer_cfg,
-            ),
+            dict(**self.optimizer_cfg) | {"params": self.model_list.parameters()}
         )
 
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:

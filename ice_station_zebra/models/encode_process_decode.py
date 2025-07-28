@@ -27,28 +27,22 @@ class EncodeProcessDecode(ZebraModel):
         # Add one encoder per dataset
         self.encoders = [
             hydra.utils.instantiate(
-                dict(
-                    {"input_space": input_space, "latent_space": latent_space_},
-                    **encoder,
-                ),
+                dict(**encoder)
+                | {"input_space": input_space, "latent_space": latent_space_}
             )
             for input_space in self.input_spaces
         ]
 
         # Add a processor
         self.processor = hydra.utils.instantiate(
-            dict(
-                {"n_latent_channels": latent_space_.channels * len(self.encoders)},
-                **processor,
-            ),
+            dict(**processor)
+            | {"n_latent_channels": latent_space_.channels * len(self.encoders)}
         )
 
         # Add a decoder
         self.decoder = hydra.utils.instantiate(
-            dict(
-                {"latent_space": latent_space_, "output_space": self.output_space},
-                **decoder,
-            ),
+            dict(**decoder)
+            | {"latent_space": latent_space_, "output_space": self.output_space}
         )
 
         # Register all modules that need to be trained

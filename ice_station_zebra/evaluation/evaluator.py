@@ -29,7 +29,7 @@ class ZebraEvaluator:
         try:
             ckpt_config = OmegaConf.load(config_path)
             logger.debug(f"Loaded checkpoint config from {ckpt_config}.")
-            config["model"]["_target_"] = ckpt_config["model"]["_target_"]
+            config["model"]["_target_"] = ckpt_config["model"]["_target_"]  # type: ignore[index]
         except (NotADirectoryError, FileNotFoundError):
             msg = f"Could not find model configuration file at {config_path}."
             logger.debug(msg)

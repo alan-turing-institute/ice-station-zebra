@@ -4,8 +4,10 @@ from typing import Any
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
+from torch.utils.data import DataLoader
 
 from ice_station_zebra.visualisations import plot_sic_comparison
+from ice_station_zebra.data.lightning import CombinedDataset
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +44,18 @@ class PlottingCallback(Callback):
         if batch_idx % self.frequency == 0:
             # Get date for this batch
             batch_size = outputs["target"].shape[0]
-            try:
-                dataloader = trainer.test_dataloaders[dataloader_idx]
-            except TypeError:
-                dataloader = trainer.test_dataloaders
-            date_ = dataloader.dataset.date_from_index(batch_size * batch_idx)
+            test_dataloaders: DataLoader | list[DataLoader] | None = (
+                trainer.test_dataloaders
+            )
+            if test_dataloaders is None:
+                logger.debug("No test dataloaders found, skipping plotting.")
+                return
+            dataset: CombinedDataset = (
+                test_dataloaders[dataloader_idx]
+                if isinstance(test_dataloaders, list)
+                else test_dataloaders
+            ).dataset  # type: ignore[assignment]
+            date_ = dataset.date_from_index(batch_size * batch_idx)
 
             # Load the ground truth and prediction
             np_ground_truth = outputs["target"].cpu().numpy()[0, 0, :, :]

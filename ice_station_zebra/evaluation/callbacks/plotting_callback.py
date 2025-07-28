@@ -59,11 +59,11 @@ class PlottingCallback(Callback):
             }
 
             # Log images to each logger
-            for logger in trainer.loggers:
-                try:
-                    for key, image_list in images.items():
-                        logger.log_image(key=key, images=image_list)
-                except AttributeError:
-                    logger.debug(
-                        f"Logger {logger.name} does not support logging images."
-                    )
+            for lightning_logger in trainer.loggers:
+                for key, image_list in images.items():
+                    if hasattr(lightning_logger, "log_image"):
+                        lightning_logger.log_image(key=key, images=image_list)
+                    else:
+                        logger.debug(
+                            f"Logger {lightning_logger.name} does not support logging images."
+                        )

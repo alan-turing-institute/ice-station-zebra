@@ -37,8 +37,16 @@ test = [
 [project.scripts]
 zebra = "ice_station_zebra.cli:app"
 
-[tool.ruff]
-line-length = 88
+[[tool.mypy.overrides]]
+module = [
+    "anemoi.datasets.*",
+    "icenet.data.sic.*",
+    "zarr.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = "--cov ice_station_zebra --cov-report term-missing"
+
+[tool.ruff]
+line-length = 88

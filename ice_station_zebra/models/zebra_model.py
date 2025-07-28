@@ -7,9 +7,7 @@ from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
 
-from ice_station_zebra.types import DataSpace
-
-LightningBatch = list[torch.Tensor, torch.Tensor]
+from ice_station_zebra.types import DataSpace, LightningBatch
 
 
 class ZebraModel(LightningModule, ABC):

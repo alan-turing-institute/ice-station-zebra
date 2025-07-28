@@ -1,7 +1,10 @@
 from collections.abc import Sequence
 from typing import Any, Self, TypedDict
+from torch import Tensor
 
 from omegaconf import DictConfig
+
+LightningBatch = tuple[Tensor, Tensor]
 
 
 class DataloaderArgs(TypedDict):

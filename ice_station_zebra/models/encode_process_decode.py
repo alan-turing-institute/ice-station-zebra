@@ -4,11 +4,9 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import DataSpace, LightningBatch
 
 from .zebra_model import ZebraModel
-
-LightningBatch = list[torch.Tensor, torch.Tensor]
 
 
 class EncodeProcessDecode(ZebraModel):

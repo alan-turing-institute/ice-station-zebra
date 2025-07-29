@@ -48,7 +48,11 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "--cov ice_station_zebra --cov-report term-missing"
+addopts = [
+    "--cov=ice_station_zebra",
+    "--cov-report=term-missing",
+    "-vvv",
+]
 
 [tool.ruff]
 line-length = 88

@@ -39,6 +39,15 @@ dev = [
 [project.scripts]
 zebra = "ice_station_zebra.cli:app"
 
+[tool.coverage.paths]
+source = ["ice_station_zebra/"]
+
+[tool.coverage.run]
+relative_files = true
+omit= [
+  "tests/*",
+]
+
 [[tool.mypy.overrides]]
 module = [
     "anemoi.datasets.*",

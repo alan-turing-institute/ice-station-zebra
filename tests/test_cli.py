@@ -10,8 +10,10 @@ runner = CliRunner()
 def test_help():
     result = runner.invoke(app, ["--help"])
     expected_patterns = [
-        r"│ datasets\s+Manage datasets",
-        r"│ train",
+        r"Entrypoint for zebra application commands"
+        r"Manage datasets",
+        r"Evaluate a model",
+        r"Train a model",
     ]
     lines = result.output.split("\n")
     for pattern in expected_patterns:

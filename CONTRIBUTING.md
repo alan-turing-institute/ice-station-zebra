@@ -13,4 +13,13 @@ Welcome! Thanks for your interest in contributing to this project.
 
 ## Coding conventions
 
-TBD
+- We use `pre-commit` to enforce code-style conventions.
+- You can install `pre-commit` following the instructions [here](https://pre-commit.com/#install).
+- Run `pre-commit install` inside your locally-checked-out repository to activate it.
+- You can also run the style checks without installing `pre-commit` by running `uv run --group dev pre-commit run --all-files`
+
+## Tests
+
+We encourage the use of tests across the whole codebase.
+Run the `pytest` tests with `uv run --group dev pytest`.
+Run the `mypy` checks with `uv run --group dev mypy .`.

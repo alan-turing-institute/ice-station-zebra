@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [
     { name = "James Robinson", email = "james.em.robinson@gmail.com" }
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13" # Note "3.13" is currently incompatible with the tensorflow requirement from icenet
 dependencies = [
     "anemoi-datasets>=0.5.25",
     "cdsapi>=0.7.6",

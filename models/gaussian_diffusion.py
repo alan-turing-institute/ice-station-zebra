@@ -107,15 +107,15 @@ class GaussianDiffusion:
     
     def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_v: torch.Tensor) -> torch.Tensor:
         """
-        Perform a single reverse diffusion (denoising) step.
-
+        Perform a single reverse diffusion (denoising) step using the velocity prediction.
+    
         Args:
-            x (torch.Tensor): Current noisy sample at timestep t.
+            x (torch.Tensor): Current noisy sample x_t at timestep t.
             t (torch.Tensor): Timesteps for each sample in the batch (shape: [B]).
-            pred_noise (torch.Tensor): Model's predicted noise (εθ) for x at timestep t.
-
+            pred_v (torch.Tensor): Model's predicted velocity (v_theta) at timestep t.
+    
         Returns:
-            torch.Tensor: Sample from the previous timestep (x_{t-1}).
+            torch.Tensor: Sample from the previous timestep x_{t-1}.
         """
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x.shape)
         sqrt_one_minus_alpha_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x.shape)
@@ -148,7 +148,7 @@ class GaussianDiffusion:
             torch.Tensor: Extracted and reshaped values for each timestep in the batch.
         """
         a = a.to(t.device)
-        out = a[t]
+        out = a[t] # (batch_size,) # Reshape for broadcasting: [batch_size, 1, 1, 1, 1]
         
         return out.view((t.shape[0],) + (1,) * (len(x_shape) - 1))
 

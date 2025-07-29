@@ -107,7 +107,10 @@ class GaussianDiffusion:
     
     def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_v: torch.Tensor) -> torch.Tensor:
         """
-        Perform a single reverse diffusion (denoising) step using the velocity prediction.
+        Perform a single reverse diffusion (denoising) step using the v-prediction parameterization.
+        
+        This method implements the reverse process using v-prediction rather than epsilon-prediction, 
+        where the model predicts velocity v_t instead of noise epsilon.
     
         Args:
             x (torch.Tensor): Current noisy sample x_t at timestep t.
@@ -120,16 +123,18 @@ class GaussianDiffusion:
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x.shape)
         sqrt_one_minus_alpha_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x.shape)
     
-        # Compute predicted x0 from v and current x_t
+        # Convert the predicted velocity (pred_v) back to the predicted clean image (x_0)
         pred_xstart = sqrt_alpha_t * x - sqrt_one_minus_alpha_t * pred_v
         
-        # Compute model mean for posterior q(x_{t-1} | x_t, x_0)
+        # Use the predicted x_0 to compute the posterior mean of q(x_{t-1} | x_t, x_0)
         model_mean = (
             self._extract(self.posterior_mean_coef1, t, x.shape) * pred_xstart +
             self._extract(self.posterior_mean_coef2, t, x.shape) * x
         )
 
         posterior_variance_t = self._extract(self.posterior_variance, t, x.shape)
+
+        # Add noise scaled by the posterior variance (except at t=0)
         noise = torch.randn_like(x)
         nonzero_mask = (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
 
@@ -159,7 +164,7 @@ class GaussianDiffusion:
         This function calculates the target v_t given the clean input x_start, 
         the noise ε, and the timestep t, based on the formulation:
     
-            v_t = ᾱ_t * ε - sqrt(1 - ᾱ_t) * x_start
+            v_t = sqrt(ᾱ_t) * ε - sqrt(1 - ᾱ_t) * x_start
     
         Args:
             x_start (torch.Tensor): Original clean sample (e.g., groundtruth output).

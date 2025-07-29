@@ -15,7 +15,7 @@ evaluation_cli = typer.Typer(help="Evaluate models")
 log = logging.getLogger(__name__)
 
 
-@evaluation_cli.command(help="Evaluate a model")
+@evaluation_cli.command()
 @hydra_adaptor
 def evaluate(
     config: DictConfig,

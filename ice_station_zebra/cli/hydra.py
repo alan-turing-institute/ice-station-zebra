@@ -58,4 +58,5 @@ def hydra_adaptor(function) -> Callable[Param, RetType]:
     combined_parameters = list(itertools.chain(function_params, additional_params))
     wrapper.__signature__ = fn_signature.replace(parameters=combined_parameters)  # type: ignore[attr-defined]
     wrapper.__name__ = function.__name__
+    wrapper.__doc__ = function.__doc__
     return wrapper  # type: ignore[return-value]

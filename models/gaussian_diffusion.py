@@ -48,6 +48,7 @@ class GaussianDiffusion:
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - self.alphas_cumprod)
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
 
+        # Posterior variance and mean coefficients
         self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
         self.posterior_log_variance_clipped = torch.log(torch.clamp(self.posterior_variance, min=1e-20))
 
@@ -93,17 +94,18 @@ class GaussianDiffusion:
         """
         if noise is None:
             noise = torch.randn_like(x_start)
-                
+            
         sqrt_alphas_cumprod_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alphas_cumprod_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
         
+        # For t=0, return exactly x_start (no noise)
         is_t0 = (t == 0).to(dtype=x_start.dtype, device=x_start.device).view(-1, *([1] * (len(x_start.shape) - 1)))
         
         noisy = sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
         
         return noisy * (1 - is_t0) + x_start * is_t0
     
-    def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_noise: torch.Tensor) -> torch.Tensor:
+    def p_sample(self, x: torch.Tensor, t: torch.Tensor, pred_v: torch.Tensor) -> torch.Tensor:
         """
         Perform a single reverse diffusion (denoising) step.
 
@@ -120,8 +122,6 @@ class GaussianDiffusion:
     
         # Compute predicted x0 from v and current x_t
         pred_xstart = sqrt_alpha_t * x - sqrt_one_minus_alpha_t * pred_v
-        
-        pred_xstart = torch.clamp(pred_xstart, 0., 1.)
         
         # Compute model mean for posterior q(x_{t-1} | x_t, x_0)
         model_mean = (
@@ -148,8 +148,8 @@ class GaussianDiffusion:
             torch.Tensor: Extracted and reshaped values for each timestep in the batch.
         """
         a = a.to(t.device)
-        out = a[t]  # (batch_size,) # Reshape for broadcasting: [batch_size, 1, 1, 1, 1]
-      
+        out = a[t]
+        
         return out.view((t.shape[0],) + (1,) * (len(x_shape) - 1))
 
     def calculate_v(self, x_start: torch.Tensor, noise: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
@@ -171,5 +171,5 @@ class GaussianDiffusion:
         """
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alpha_t = self._extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
-
+        
         return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start

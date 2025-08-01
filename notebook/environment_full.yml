@@ -316,5 +316,5 @@ dependencies:
       - yarl==1.18.3
       - zarr==2.18.4
       - zict==3.0.0
-prefix: 
+prefix:
   /bask/homes/l/llcu4279/vjgo8416-ice-frcst/users/llcu4279/myenv/miniconda3/envs/seaice_env2

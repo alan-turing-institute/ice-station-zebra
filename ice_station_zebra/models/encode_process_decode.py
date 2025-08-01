@@ -4,11 +4,9 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import DataSpace, LightningBatch
 
 from .zebra_model import ZebraModel
-
-LightningBatch = list[torch.Tensor, torch.Tensor]
 
 
 class EncodeProcessDecode(ZebraModel):
@@ -24,33 +22,27 @@ class EncodeProcessDecode(ZebraModel):
         super().__init__(**kwargs)
 
         # Construct the latent space
-        latent_space_ = DataSpace(**latent_space)
+        latent_space_ = DataSpace.from_dict(latent_space)
 
         # Add one encoder per dataset
         self.encoders = [
             hydra.utils.instantiate(
-                dict(
-                    {"input_space": input_space, "latent_space": latent_space_},
-                    **encoder,
-                ),
+                dict(**encoder)
+                | {"input_space": input_space, "latent_space": latent_space_}
             )
             for input_space in self.input_spaces
         ]
 
         # Add a processor
         self.processor = hydra.utils.instantiate(
-            dict(
-                {"n_latent_channels": latent_space_.channels * len(self.encoders)},
-                **processor,
-            ),
+            dict(**processor)
+            | {"n_latent_channels": latent_space_.channels * len(self.encoders)}
         )
 
         # Add a decoder
         self.decoder = hydra.utils.instantiate(
-            dict(
-                {"latent_space": latent_space_, "output_space": self.output_space},
-                **decoder,
-            ),
+            dict(**decoder)
+            | {"latent_space": latent_space_, "output_space": self.output_space}
         )
 
         # Register all modules that need to be trained

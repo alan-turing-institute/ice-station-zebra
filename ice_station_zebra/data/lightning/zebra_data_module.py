@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from lightning import LightningDataModule
 from numpy.typing import NDArray
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.types import DataloaderArgs, DataSpace
@@ -20,9 +20,6 @@ logger = logging.getLogger(__name__)
 class ZebraDataModule(LightningDataModule):
     def __init__(self, config: DictConfig) -> None:
         super().__init__()
-
-        # Load the resolved config into Python format
-        config = OmegaConf.to_container(config, resolve=True)
 
         # Load paths
         self.base_path = Path(config["base_path"])

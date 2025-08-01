@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
+
 [project]
 name = "ice-station-zebra"
 version = "0.1.0"
@@ -6,7 +10,7 @@ readme = "README.md"
 authors = [
     { name = "James Robinson", email = "james.em.robinson@gmail.com" }
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13" # Note "3.13" is currently incompatible with the tensorflow requirement from icenet
 dependencies = [
     "anemoi-datasets>=0.5.25",
     "cdsapi>=0.7.6",
@@ -23,9 +27,44 @@ dependencies = [
     "zarr<3.0.0", # v3 is not compatible with anemoi
 ]
 
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "pandas-stubs>=2.3.0.250703",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+
 [project.scripts]
 zebra = "ice_station_zebra.cli:app"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.coverage.paths]
+source = ["ice_station_zebra/"]
+
+[tool.coverage.run]
+relative_files = true
+omit= [
+  "tests/*",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "anemoi.datasets.*",
+    "icenet.data.sic.*",
+    "zarr.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=ice_station_zebra",
+    "--cov-report=term-missing",
+    "-vvv",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.uv.build-backend]
+module-root = ""

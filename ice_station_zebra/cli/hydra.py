@@ -56,6 +56,7 @@ def hydra_adaptor(function) -> Callable[Param, RetType]:
 
     # Since the additional parameters are keyword arguments we can simply append them
     combined_parameters = list(itertools.chain(function_params, additional_params))
-    wrapper.__signature__ = fn_signature.replace(parameters=combined_parameters)
+    wrapper.__signature__ = fn_signature.replace(parameters=combined_parameters)  # type: ignore[attr-defined]
     wrapper.__name__ = function.__name__
-    return wrapper
+    wrapper.__doc__ = function.__doc__
+    return wrapper  # type: ignore[return-value]

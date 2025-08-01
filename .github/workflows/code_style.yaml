@@ -1,0 +1,26 @@
+---
+name: Fix code style
+
+# Run workflow on pushes to matching branches
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  fix_code_style:
+    runs-on: ubuntu-latest
+    name: Format and lint code
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --hook-stage manual --all-files

@@ -21,7 +21,7 @@ class NaiveLatentSpaceDecoder(nn.Module):
         super().__init__()
 
         # List of layers
-        layers = []
+        layers: list[nn.Module] = []
 
         # Add size-increasing convolutional layers until we are larger than the output shape
         n_conv_layers = math.floor(

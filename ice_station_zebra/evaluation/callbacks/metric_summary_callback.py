@@ -1,3 +1,4 @@
+import statistics
 from typing import Any
 
 from lightning import LightningModule, Trainer
@@ -14,7 +15,7 @@ class MetricSummaryCallback(Callback):
         Args:
             average_loss: Whether to log average loss
         """
-        self.metrics = {}
+        self.metrics: dict[str, list[float]] = {}
         if average_loss:
             self.metrics["average_loss"] = []
 
@@ -22,7 +23,7 @@ class MetricSummaryCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: dict[str, Tensor],
+        outputs: dict[str, Tensor],  # type: ignore[override]
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,
@@ -33,11 +34,12 @@ class MetricSummaryCallback(Callback):
 
     def on_test_epoch_end(self, trainer: Trainer, module: LightningModule) -> None:
         """Called at the end of the test epoch."""
-        # Post-process metrics if needed
-        if "average_loss" in self.metrics:
-            losses = self.metrics["average_loss"]
-            self.metrics["average_loss"] = sum(losses) / len(losses)
+        # Post-process accumulated metrics into a single value
+        metrics_: dict[str, float] = {}
+        for name, values in self.metrics.items():
+            if name.startswith("average_"):
+                metrics_[name] = statistics.mean(values)
 
         # Log metrics to each logger
         for logger in trainer.loggers:
-            logger.log_metrics(self.metrics)
+            logger.log_metrics(metrics_)

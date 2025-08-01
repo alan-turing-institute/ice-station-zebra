@@ -13,7 +13,7 @@ training_cli = typer.Typer(help="Train models")
 log = logging.getLogger(__name__)
 
 
-@training_cli.command(help="Train a model")
+@training_cli.command()
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model"""

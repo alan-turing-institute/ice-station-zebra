@@ -7,9 +7,7 @@ from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
 
-from ice_station_zebra.types import DataSpace
-
-LightningBatch = list[torch.Tensor, torch.Tensor]
+from ice_station_zebra.types import DataSpace, LightningBatch
 
 
 class ZebraModel(LightningModule, ABC):
@@ -27,8 +25,8 @@ class ZebraModel(LightningModule, ABC):
         self.name = name
 
         # Construct the input and output spaces
-        self.input_spaces = [DataSpace(**space) for space in input_spaces]
-        self.output_space = DataSpace(**output_space)
+        self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]
+        self.output_space = DataSpace.from_dict(output_space)
 
         # Initialise an empty module list
         self.model_list = nn.ModuleList()
@@ -48,10 +46,7 @@ class ZebraModel(LightningModule, ABC):
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
-            dict(
-                {"params": self.model_list.parameters()},
-                **self.optimizer_cfg,
-            ),
+            dict(**self.optimizer_cfg) | {"params": self.model_list.parameters()}
         )
 
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:

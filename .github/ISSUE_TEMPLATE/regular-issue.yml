@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before you submit: 
+        Before you submit:
         - Set priority label ('P1', 'P2' or 'P3')
-        - Link a milestone (if applicable)  
+        - Link a milestone (if applicable)
         - Assign yourself if you're picking this up
   - type: textarea
     id: problem

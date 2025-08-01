@@ -25,9 +25,9 @@ class ZebraTrainer:
             dict(
                 {
                     "input_spaces": [
-                        s.as_dict() for s in self.data_module.input_spaces
+                        s.to_dict() for s in self.data_module.input_spaces
                     ],
-                    "output_space": self.data_module.output_space.as_dict(),
+                    "output_space": self.data_module.output_space.to_dict(),
                     "optimizer": config["train"]["optimizer"],
                 },
                 **config["model"],

@@ -37,7 +37,7 @@ class ZebraDataModule(LightningDataModule):
             logger.debug(f"... {dataset_group}")
 
         # Check prediction target
-        self.predict_target = config["train"]["predict_target"]
+        self.predict_target = config["train"]["predict"]["dataset_group"]
         if self.predict_target not in self.dataset_groups:
             raise ValueError(f"Could not find prediction target {self.predict_target}")
 

@@ -2,8 +2,6 @@ defaults:
   - callbacks:
     - device_stats
   - optimizer: default
+  - predict: osisaf-south
   - trainer: default
   - _self_
-
-# Name of the dataset group containing our prediction target
-predict_target: osisaf-south

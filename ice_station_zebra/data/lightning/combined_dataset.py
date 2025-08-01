@@ -9,7 +9,14 @@ from .zebra_dataset import ZebraDataset
 
 
 class CombinedDataset(Dataset):
-    def __init__(self, datasets: Sequence[ZebraDataset], *, target: str) -> None:
+    def __init__(
+        self,
+        datasets: Sequence[ZebraDataset],
+        target: str,
+        *,
+        n_forecast_steps: int = 1,
+        n_history_steps: int = 1,
+    ) -> None:
         """Constructor"""
         super().__init__()
         self.target = next(ds for ds in datasets if ds.name == target)

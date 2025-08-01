@@ -20,6 +20,10 @@ class CombinedDataset(Dataset):
         """Constructor"""
         super().__init__()
 
+        # Store the number of forecast and history steps
+        self.n_forecast_steps = n_forecast_steps
+        self.n_history_steps = n_history_steps
+
         # Define target and input datasets
         self.target = next(ds for ds in datasets if ds.name == target)
         self.inputs = [ds for ds in datasets]
@@ -43,6 +47,19 @@ class CombinedDataset(Dataset):
         """Return the date of the timestep"""
         np_datetime = self.target.dataset.dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S")
+
+    def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
+        """Return list of consecutive forecast dates for a given start date."""
+        return [
+            start_date + (idx + self.n_history_steps) * self.frequency
+            for idx in range(self.n_forecast_steps)
+        ]
+
+    def get_history_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
+        """Return list of consecutive history dates for a given start date."""
+        return [
+            start_date + idx * self.frequency for idx in range(self.n_history_steps)
+        ]
 
     @property
     def end_date(self) -> np.datetime64:

@@ -19,16 +19,25 @@ class CombinedDataset(Dataset):
     ) -> None:
         """Constructor"""
         super().__init__()
+
+        # Define target and input datasets
         self.target = next(ds for ds in datasets if ds.name == target)
-        self.datasets = [ds for ds in datasets if ds != self.target]
+        self.inputs = [ds for ds in datasets]
+
+        # Require that all datasets have the same frequency
+        frequencies = sorted(set(ds.dataset.frequency for ds in datasets))
+        if len(frequencies) != 1:
+            msg = f"Cannot combine datasets with different frequencies: {frequencies}."
+            raise ValueError(msg)
+        self.frequency = np.timedelta64(frequencies[0])
 
     def __len__(self) -> int:
         """Return the total length of the dataset"""
-        return min([len(ds) for ds in self.datasets] + [len(self.target)])
+        return min([len(ds) for ds in self.inputs] + [len(self.target)])
 
     def __getitem__(self, idx: int) -> tuple[NDArray[np.float32]]:
         """Return a single timestep"""
-        return tuple([ds[idx] for ds in self.datasets] + [self.target[idx]])  # type: ignore[return-value]
+        return tuple([ds[idx] for ds in self.inputs] + [self.target[idx]])  # type: ignore[return-value]
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep"""
@@ -38,7 +47,7 @@ class CombinedDataset(Dataset):
     @property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""
-        end_date = set(dataset.end_date for dataset in self.datasets)
+        end_date = set(dataset.end_date for dataset in self.inputs)
         if len(end_date) != 1:
             msg = f"Datasets have {len(end_date)} different end dates"
             raise ValueError(msg)
@@ -47,7 +56,7 @@ class CombinedDataset(Dataset):
     @property
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
-        start_date = set(dataset.start_date for dataset in self.datasets)
+        start_date = set(dataset.start_date for dataset in self.inputs)
         if len(start_date) != 1:
             msg = f"Datasets have {len(start_date)} different start dates"
             raise ValueError(msg)

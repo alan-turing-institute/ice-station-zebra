@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
+from cachetools import LRUCache, cachedmethod
 from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
@@ -25,6 +26,8 @@ class ZebraDataset(Dataset):
         super().__init__()
         self.dataset = open_dataset(input_files, start=start, end=end)
         self.dataset._name = name
+        self.chw = (self.space.channels, *self.space.shape)
+        self._cache = LRUCache(maxsize=128)
 
     @property
     def end_date(self) -> np.datetime64:
@@ -56,5 +59,10 @@ class ZebraDataset(Dataset):
 
     def __getitem__(self, idx: int) -> NDArray[np.float32]:
         """Return a single timestep after reshaping to [C, H, W]"""
-        chw = (self.space.channels, *self.space.shape)
-        return self.dataset[idx].reshape(chw)
+        return self.dataset[idx].reshape(self.chw)
+
+    @cachedmethod(lambda self: self._cache)
+    def index_from_date(self, date: np.datetime64) -> int:
+        """Return the index of a given date in the dataset."""
+        idx, _, _ = self.dataset.to_index(date, 0)
+        return idx

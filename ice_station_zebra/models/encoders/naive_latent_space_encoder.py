@@ -19,6 +19,7 @@ class NaiveLatentSpaceEncoder(nn.Module):
 
     def __init__(self, *, input_space: DataSpace, latent_space: DataSpace) -> None:
         super().__init__()
+        self.name = input_space.name
 
         # Construct list of layers
         layers: list[nn.Module] = []

@@ -3,8 +3,10 @@ from typing import Any
 import hydra
 import torch
 from omegaconf import DictConfig
+from torch import Tensor
 
 from ice_station_zebra.types import DataSpace, LightningBatch
+from ice_station_zebra.models.encoders import BaseEncoder
 
 from .zebra_model import ZebraModel
 
@@ -22,10 +24,11 @@ class EncodeProcessDecode(ZebraModel):
         super().__init__(**kwargs)
 
         # Construct the latent space
-        latent_space_ = DataSpace.from_dict(latent_space)
+        latent_space_ = DataSpace.from_dict(latent_space | {"name": "latent_space"})
 
         # Add one encoder per dataset
-        self.encoders = [
+        # We store this as a list to ensure consistent ordering
+        self.encoders: list[BaseEncoder] = [
             hydra.utils.instantiate(
                 dict(**encoder)
                 | {"input_space": input_space, "latent_space": latent_space_}
@@ -59,18 +62,18 @@ class EncodeProcessDecode(ZebraModel):
         - decode back to output space [N, C_output, H_output, W_output]
         """
         # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_height, latent_width)
-        latent_inputs = [
-            encoder(input) for (input, encoder) in zip(inputs, self.encoders)
+        latent_inputs: list[Tensor] = [
+            encoder(inputs[encoder.name]) for encoder in self.encoders
         ]
 
         # Combine in the variable dimension: tensor with (batch_size, all_variables, latent_height, latent_width)
         latent_input_combined = torch.cat(latent_inputs, dim=1)
 
         # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
-        latent_output = self.processor(latent_input_combined)
+        latent_output: Tensor = self.processor(latent_input_combined)
 
         # Decode to output space: tensor with (batch_size, output_variables, output_height, output_width)
-        output = self.decoder(latent_output)
+        output: Tensor = self.decoder(latent_output)
 
         # Return
         return output

@@ -39,7 +39,11 @@ class ZebraDataset(Dataset):
     @property
     def space(self) -> DataSpace:
         """Return the data space for this dataset."""
-        return DataSpace(channels=self.dataset.shape[1], shape=self.dataset.field_shape)
+        return DataSpace(
+            channels=self.dataset.shape[1],
+            name=self.name,
+            shape=self.dataset.field_shape,
+        )
 
     @property
     def start_date(self) -> np.datetime64:

@@ -66,8 +66,8 @@ class ZebraModel(LightningModule, ABC):
         - Run inputs through the model
         - Return the output, target and loss
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         loss = self.loss(output, target)
         return {"output": output, "target": target, "loss": loss}
 
@@ -81,8 +81,8 @@ class ZebraModel(LightningModule, ABC):
         - Run inputs through the model
         - Calculate the loss wrt. the target
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         return self.loss(output, target)
 
     def validation_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
@@ -95,8 +95,8 @@ class ZebraModel(LightningModule, ABC):
         - Run inputs through the model
         - Calculate the loss wrt. the target
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         loss = self.loss(output, target)
         self.log("validation_loss", loss)
         return loss

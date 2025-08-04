@@ -1,24 +1,28 @@
 import math
+from typing import Any
 
 import torch.nn as nn
 from torch import Tensor
 
 from ice_station_zebra.types import DataSpace
+from .base_decoder import BaseDecoder
 
 
-class NaiveLatentSpaceDecoder(nn.Module):
+class NaiveLatentSpaceDecoder(BaseDecoder):
     """
-    Decoder that takes data in a latent space and translates it to a larger output space
+    Naive, linear decoder that takes data in a latent space and translates it to a larger output space
 
-    Input:
-        Tensor of (batch_size, latent_channels, latent_height, latent_width)
+    Latent space:
+        Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
 
-    Output:
-        Tensor of (batch_size, output_channels, output_height, output_width)
+    Output space:
+        Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
-    def __init__(self, *, latent_space: DataSpace, output_space: DataSpace) -> None:
-        super().__init__()
+    def __init__(
+        self, *, latent_space: DataSpace, output_space: DataSpace, **kwargs: Any
+    ) -> None:
+        super().__init__(**kwargs)
 
         # List of layers
         layers: list[nn.Module] = []
@@ -40,7 +44,12 @@ class NaiveLatentSpaceDecoder(nn.Module):
         layers.append(nn.Upsample(output_space.shape))
 
         # Convolve to the desired number of output channels
-        layers.append(nn.Conv2d(n_channels, output_space.channels, 1))
+        layers.append(
+            nn.Conv2d(n_channels, output_space.channels * self.n_forecast_steps, 1)
+        )
+
+        # Unflatten the time and channels
+        layers.append(nn.Unflatten(1, [self.n_forecast_steps, output_space.channels]))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
@@ -49,10 +58,10 @@ class NaiveLatentSpaceDecoder(nn.Module):
         """
         Transformation summary
 
-        Input:
-            x: Tensor of (batch_size, latent_channels, latent_height, latent_width)
+        Args:
+            x: Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
 
-        Output:
-            Tensor of (batch_size, output_channels, output_height, output_width)
+        Returns:
+            Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
         """
         return self.model(x)

@@ -55,8 +55,10 @@ class ZebraDataModule(LightningDataModule):
         }
 
         # Set history and forecast steps
-        self.n_forecast_steps = config["train"]["predict"].get("n_forecast_steps", 1)
-        self.n_history_steps = config["train"]["predict"].get("n_history_steps", 1)
+        self.n_forecast_steps = int(
+            config["train"]["predict"].get("n_forecast_steps", 1)
+        )
+        self.n_history_steps = int(config["train"]["predict"].get("n_history_steps", 1))
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(

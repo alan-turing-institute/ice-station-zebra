@@ -16,6 +16,8 @@ class ZebraModel(LightningModule, ABC):
         *,
         name: str,
         input_spaces: list[DictConfig],
+        n_forecast_steps: int,
+        n_history_steps: int,
         output_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
@@ -23,6 +25,10 @@ class ZebraModel(LightningModule, ABC):
 
         # Save model name
         self.name = name
+
+        # Save history and forecast steps
+        self.n_forecast_steps = n_forecast_steps
+        self.n_history_steps = n_history_steps
 
         # Construct the input and output spaces
         self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]

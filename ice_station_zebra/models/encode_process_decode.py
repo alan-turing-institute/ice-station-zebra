@@ -31,7 +31,11 @@ class EncodeProcessDecode(ZebraModel):
         self.encoders: list[BaseEncoder] = [
             hydra.utils.instantiate(
                 dict(**encoder)
-                | {"input_space": input_space, "latent_space": latent_space_}
+                | {
+                    "input_space": input_space,
+                    "latent_space": latent_space_,
+                    "n_history_steps": self.n_history_steps,
+                }
             )
             for input_space in self.input_spaces
         ]
@@ -49,7 +53,11 @@ class EncodeProcessDecode(ZebraModel):
         # Add a decoder
         self.decoder = hydra.utils.instantiate(
             dict(**decoder)
-            | {"latent_space": latent_space_, "output_space": self.output_space}
+            | {
+                "latent_space": latent_space_,
+                "n_forecast_steps": self.n_forecast_steps,
+                "output_space": self.output_space,
+            }
         )
 
     def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:

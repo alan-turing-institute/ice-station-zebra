@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model"""
-    print(OmegaConf.to_yaml(config, resolve=True))
     trainer = ZebraTrainer(config)
     trainer.train()
 

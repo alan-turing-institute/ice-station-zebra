@@ -12,14 +12,14 @@ class UNetProcessor(nn.Module):
         n_latent_channels: int,
         filter_size=3,
         n_filters_factor=1,
-        #n_forecast_days=7,
+        # n_forecast_days=7,
     ) -> None:
         super().__init__()
 
         start_out_channels = 64
-        
+
         reduced_channels = int(start_out_channels * n_filters_factor)
-        
+
         channels = [reduced_channels * 2**pow for pow in range(4)]
 
         # Encoder
@@ -29,9 +29,7 @@ class UNetProcessor(nn.Module):
         self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size)
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(
-            channels[2], channels[3], filter_size=filter_size
-        )
+        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size)
 
         # Decoder
         self.up6 = UpconvBlock(channels[3], channels[2])
@@ -63,19 +61,19 @@ class UNetProcessor(nn.Module):
         conv3 = F.max_pool2d(bn3, kernel_size=2)
         bn4 = self.conv4(conv3)
         conv4 = F.max_pool2d(bn4, kernel_size=2)
-        
+
         # Bottleneck
         bn5 = self.conv5(conv4)
-        
+
         # Decoder
         up6 = self.up6b(torch.cat([bn4, self.up6(bn5)], dim=1))
         up7 = self.up7b(torch.cat([bn3, self.up7(up6)], dim=1))
         up8 = self.up8b(torch.cat([bn2, self.up8(up7)], dim=1))
         up9 = self.up9b(torch.cat([bn1, self.up9(up8)], dim=1))
-        
+
         # Final layer
         output = self.final_layer(up9)
-        
+
         return output
 
 

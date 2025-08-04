@@ -5,7 +5,7 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor
 
-from ice_station_zebra.types import DataSpace, LightningBatch
+from ice_station_zebra.types import CombinedTensorBatch, DataSpace
 from ice_station_zebra.models.encoders import BaseEncoder
 
 from .zebra_model import ZebraModel
@@ -52,7 +52,7 @@ class EncodeProcessDecode(ZebraModel):
             | {"latent_space": latent_space_, "output_space": self.output_space}
         )
 
-    def forward(self, inputs: LightningBatch) -> torch.Tensor:
+    def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:
         """Forward step of the model
 
         - start with multiple inputs each with shape [N, C_input_k, H_input_k, W_input_k]

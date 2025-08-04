@@ -1,10 +1,13 @@
 from collections.abc import Sequence
+from numpy.typing import NDArray
+from numpy import float32
 from typing import Any, Self, TypedDict
 from torch import Tensor
 
 from omegaconf import DictConfig
 
-LightningBatch = dict[str, Tensor]
+CombinedTensorBatch = dict[str, Tensor]
+CombinedNumpyBatch = dict[str, NDArray[float32]]
 
 
 class DataloaderArgs(TypedDict):

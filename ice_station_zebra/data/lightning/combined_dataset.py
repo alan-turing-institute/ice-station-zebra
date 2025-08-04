@@ -2,10 +2,10 @@ from collections.abc import Sequence
 from datetime import datetime
 
 import numpy as np
-from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
 from .zebra_dataset import ZebraDataset
+from ice_station_zebra.types import CombinedNumpyBatch
 
 
 class CombinedDataset(Dataset):
@@ -39,7 +39,7 @@ class CombinedDataset(Dataset):
         """Return the total length of the dataset"""
         return min([len(ds) for ds in self.inputs] + [len(self.target)])
 
-    def __getitem__(self, idx: int) -> dict[str, NDArray[np.float32]]:
+    def __getitem__(self, idx: int) -> CombinedNumpyBatch:
         """Return the data for a single timestep as a dictionary
 
         Returns:

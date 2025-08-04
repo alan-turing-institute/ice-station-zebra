@@ -7,7 +7,7 @@ from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
 
-from ice_station_zebra.types import DataSpace, LightningBatch
+from ice_station_zebra.types import CombinedTensorBatch, DataSpace
 
 
 class ZebraModel(LightningModule, ABC):
@@ -37,7 +37,7 @@ class ZebraModel(LightningModule, ABC):
         self.save_hyperparameters()
 
     @abstractmethod
-    def forward(self, inputs: LightningBatch) -> torch.Tensor:
+    def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:
         """Forward step of the model"""
 
     def configure_optimizers(self) -> Optimizer:
@@ -55,7 +55,7 @@ class ZebraModel(LightningModule, ABC):
         return torch.nn.functional.l1_loss(output, target)
 
     def test_step(
-        self, batch: LightningBatch, batch_idx: int
+        self, batch: CombinedTensorBatch, batch_idx: int
     ) -> dict[str, torch.Tensor]:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
@@ -71,7 +71,7 @@ class ZebraModel(LightningModule, ABC):
         loss = self.loss(output, target)
         return {"output": output, "target": target, "loss": loss}
 
-    def training_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: CombinedTensorBatch, batch_idx: int) -> torch.Tensor:
         """Run the training step
 
         A batch contains one tensor for each input dataset followed by one for the target
@@ -85,7 +85,9 @@ class ZebraModel(LightningModule, ABC):
         output = self(batch)
         return self.loss(output, target)
 
-    def validation_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
+    def validation_step(
+        self, batch: CombinedTensorBatch, batch_idx: int
+    ) -> torch.Tensor:
         """Run the validation step
 
         A batch contains one tensor for each input dataset followed by one for the target

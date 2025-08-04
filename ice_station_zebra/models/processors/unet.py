@@ -16,9 +16,6 @@ class UNetProcessor(nn.Module):
     ) -> None:
         super().__init__()
 
-        # self.n_filters_factor = n_filters_factor
-        # self.n_forecast_days = n_forecast_days
-        # self.n_output_classes = n_output_classes
         start_out_channels = 64
 
         reduced_channels = int(start_out_channels * n_filters_factor)

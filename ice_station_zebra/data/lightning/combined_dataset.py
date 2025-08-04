@@ -72,7 +72,7 @@ class CombinedDataset(Dataset):
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep"""
-        np_datetime = self.target.dataset.dates[idx]
+        np_datetime = self.available_dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S")
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:

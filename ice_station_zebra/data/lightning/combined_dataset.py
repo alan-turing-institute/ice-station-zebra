@@ -68,7 +68,14 @@ class CombinedDataset(Dataset):
             - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
             - target dataset: [n_forecast_steps, C_target, H_target, W_target]
         """
-        return {ds.name: ds[idx] for ds in self.inputs} | {"target": self.target[idx]}
+        return {
+            ds.name: ds.get_tchw(self.get_history_steps(self.available_dates[idx]))
+            for ds in self.inputs
+        } | {
+            "target": self.target.get_tchw(
+                self.get_forecast_steps(self.available_dates[idx])
+            )
+        }
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep"""

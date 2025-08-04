@@ -5,4 +5,4 @@ dataset_group: osisaf-south
 n_forecast_steps: 2
 
 # Number of history steps to use when predicting
-n_history_steps: 2
+n_history_steps: 3

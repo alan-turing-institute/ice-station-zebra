@@ -63,11 +63,11 @@ class EncodeProcessDecode(ZebraModel):
     def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:
         """Forward step of the model
 
-        - start with multiple inputs each with shape [N, C_input_k, H_input_k, W_input_k]
-        - encode inputs to latent space [N, C_input, H_latent, W_latent]
-        - concatenate inputs in latent space [N, C_total, H_latent, W_latent]
-        - process in latent space [N, C_total, H_latent, W_latent]
-        - decode back to output space [N, C_output, H_output, W_output]
+        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
+        - encode inputs to [NCHW] latent space [batch, C_input_kprime, H_latent, W_latent]
+        - concatenate inputs in [NCHW] latent space [batch, C_total, H_latent, W_latent]
+        - process in latent space [NCHW] [batch, C_total, H_latent, W_latent]
+        - decode back to [NTCHW] output space [batch, n_forecast_steps, C_output, H_output, W_output]
         """
         # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_height, latent_width)
         latent_inputs: list[Tensor] = [

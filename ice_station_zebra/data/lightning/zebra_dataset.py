@@ -66,3 +66,9 @@ class ZebraDataset(Dataset):
         """Return the index of a given date in the dataset."""
         idx, _, _ = self.dataset.to_index(date, 0)
         return idx
+
+    def get_tchw(self, dates: list[np.datetime64]) -> NDArray[np.float32]:
+        """Return the data for a given set of dates in [T, C, H, W] format"""
+        return np.stack(
+            [self[self.index_from_date(target_date)] for target_date in dates], axis=0
+        )

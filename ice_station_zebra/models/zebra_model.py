@@ -44,7 +44,14 @@ class ZebraModel(LightningModule, ABC):
 
     @abstractmethod
     def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:
-        """Forward step of the model"""
+        """Forward step of the model
+
+        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
+        - encode inputs to [NCHW] latent space [batch, C_input_kprime, H_latent, W_latent]
+        - concatenate inputs in [NCHW] latent space [batch, C_total, H_latent, W_latent]
+        - process in latent space [NCHW] [batch, C_total, H_latent, W_latent]
+        - decode back to [NTCHW] output space [batch, n_forecast_steps, C_output, H_output, W_output]
+        """
 
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
@@ -65,8 +72,8 @@ class ZebraModel(LightningModule, ABC):
     ) -> dict[str, torch.Tensor]:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
@@ -80,8 +87,8 @@ class ZebraModel(LightningModule, ABC):
     def training_step(self, batch: CombinedTensorBatch, batch_idx: int) -> torch.Tensor:
         """Run the training step
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
@@ -96,8 +103,8 @@ class ZebraModel(LightningModule, ABC):
     ) -> torch.Tensor:
         """Run the validation step
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model

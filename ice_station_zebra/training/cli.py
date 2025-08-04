@@ -1,7 +1,7 @@
 import logging
 
 import typer
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 

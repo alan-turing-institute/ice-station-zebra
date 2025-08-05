@@ -95,7 +95,7 @@ class LitDiffusion(pl.LightningModule):
         print(f"[LitDiffusion] Moving EMA shadow parameters to device: {device}")
         self.ema.to(device)
 
-    def forward(self, x):
+    def forward(self, x, sample_weight=None):
         """
         Run the model in inference mode.
 

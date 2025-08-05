@@ -306,55 +306,24 @@ class LitDiffusion(pl.LightningModule):
         }
         return {'optimizer': optimizer, 'lr_scheduler': scheduler}
 
-    def optimizer_step(self,
-                       epoch,
-                       batch_idx,
-                       optimizer,
-                       optimizer_closure,
-                       on_tpu=False,
-                       using_native_amp=False,
-                       using_lbfgs=False):
+    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure, **kwargs):
         """
         Custom optimizer step used in PyTorch Lightning.
     
-        This method performs a single optimization step and updates the 
-        Exponential Moving Average (EMA) of the model weights.
+        This method performs a single optimization step using the provided closure,
+        and updates the Exponential Moving Average (EMA) of the model weights.
     
         Args:
             epoch (int): Current epoch number.
             batch_idx (int): Index of the current batch.
-            optimizer (Optimizer): The optimizer being used (e.g., Adam).
-            optimizer_idx (int): Index of the optimizer (useful when multiple optimizers are used).
+            optimizer (Optimizer): The optimizer instance (e.g., Adam).
             optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
-            on_tpu (bool): Whether the training is running on a TPU.
-            using_native_amp (bool): Whether automatic mixed precision (AMP) is being used.
-            using_lbfgs (bool): Whether the LBFGS optimizer is being used.
+            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
     
         Notes:
-            - PyTorch Lightning calls this method automatically during training.
+            - This method is automatically called by PyTorch Lightning during training.
             - `self.ema.update()` updates the EMA shadow weights after the optimizer step.
         """
         optimizer.step(closure=optimizer_closure)
-        self.ema.update()  # Update EMA weights after optimizer step
+        self.ema.update()
         
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        """
-        Perform prediction on a single batch.
-
-        Args:
-            batch (tuple): (x, y, sample_weight).
-            batch_idx (int): Batch index.
-            dataloader_idx (int): Index of the DataLoader (if using multiple).
-
-        Returns:
-            torch.Tensor: Prediction tensor [B, H, W, C_out].
-        """
-        x, y, sample_weight = batch
-        y = y.squeeze(-1)  # Removes the last dimension (size 1)
-        
-        outputs = self.sample(x, sample_weight)
-        y_hat = torch.sigmoid(outputs)
-            
-        loss = self.criterion(y_hat, y, sample_weight)
-
-        return y_hat

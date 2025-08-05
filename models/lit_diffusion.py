@@ -295,14 +295,11 @@ class LitDiffusion(pl.LightningModule):
         )
         
         scheduler = {
-            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
+            'scheduler': torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
-                mode='min',           # For val_loss
-                factor=0.8,           # If the metric stops improving, reduce LR by half
-                patience=10,           # Number of epochs with no improvement to wait before reducing LR
-                verbose=True
+                T_max=100,
+                eta_min=self.learning_rate * 0.01
             ),
-            'monitor': 'val_loss',    # Metric to watch
             'interval': 'epoch',
             'frequency': 1,
             'name': 'lr'

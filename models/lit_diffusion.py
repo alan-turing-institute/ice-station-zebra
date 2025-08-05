@@ -106,10 +106,19 @@ class LitDiffusion(pl.LightningModule):
             torch.Tensor: Generated sample(s).
         """
         if isinstance(x, (list, tuple)):
-            x = x[0]  # Extract input features from batch tuple
+            x = x[0]
         elif not isinstance(x, torch.Tensor):
             x = torch.tensor(x, device=self.device)
-        return self.sample(x)
+
+        if sample_weight is None:
+            sample_weight = torch.ones_like(x[..., :1])
+
+        outputs = self.sample(x, sample_weight)
+        
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+        
+        return y_hat
 
     def training_step(self, batch):
         """

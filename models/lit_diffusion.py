@@ -186,6 +186,32 @@ class LitDiffusion(pl.LightningModule):
         self.metrics.update(y_hat, y, sample_weight)
         return {"val_loss": loss}
 
+    def test_step(self, batch, batch_idx):
+        """
+        One test step using the specified loss function and full metric evaluation.
+
+        Args:
+            batch (tuple): (x, y, sample_weight)
+            batch_idx (int): Batch index.
+
+        Returns:
+            torch.Tensor: Loss value.
+        """
+        x, y, sample_weight = batch
+        y = y.squeeze(-1)
+        
+        outputs = self.sample(x, sample_weight)
+        
+        # Convert to [0, 1] for metrics and loss
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+        
+        loss = self.criterion(y_hat, y, sample_weight)
+        self.log("test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.test_metrics.update(y_hat, y, sample_weight)
+        
+        return loss
+
     def sample(self, x, sample_weight, num_samples=1):
         """
         Perform reverse diffusion sampling starting from noise.
@@ -222,30 +248,6 @@ class LitDiffusion(pl.LightningModule):
         """
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
         self.metrics.reset()
-
-    def test_step(self, batch, batch_idx):
-        """
-        One test step using the specified loss function and full metric evaluation.
-
-        Args:
-            batch (tuple): (x, y, sample_weight)
-            batch_idx (int): Batch index.
-
-        Returns:
-            torch.Tensor: Loss value.
-        """
-        x, y, sample_weight = batch
-        y = y.squeeze(-1)  # Removes the last dimension (size 1)
-        
-        outputs = self.sample(x, sample_weight)
-        y_hat = torch.sigmoid(outputs)
-        loss = self.criterion(y_hat, y, sample_weight)
-        
-        self.log("test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)  # epoch-level loss
-        self.test_metrics.update(y_hat, y, sample_weight)
-    
-        return loss
-
 
     def on_test_epoch_end(self):
         """

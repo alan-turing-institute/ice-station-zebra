@@ -289,8 +289,8 @@ class LitDiffusion(pl.LightningModule):
         optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.learning_rate,
-            weight_decay=1e-5,  # L2 regularization strength
-            betas=(0.9, 0.999),
+            weight_decay=1e-4,  
+            betas=(0.9, 0.95),  
             eps=1e-8
         )
         

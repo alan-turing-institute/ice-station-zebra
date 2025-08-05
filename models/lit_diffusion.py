@@ -48,14 +48,13 @@ class LitDiffusion(pl.LightningModule):
             timesteps (int): Number of diffusion steps (T).
         """
         super().__init__()
-        device = torch.device("cuda", torch.cuda.current_device())
         
         self.model = model
         self.learning_rate = learning_rate
         self.timesteps = timesteps
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
         self.criterion = criterion
-        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.99)
+        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)  
 
         self.n_output_classes = model.n_output_classes
 
@@ -123,28 +122,30 @@ class LitDiffusion(pl.LightningModule):
             dict: {"loss": loss}
         """
         x, y, sample_weight = batch
-        y = y.squeeze(-1)  # Removes the last dimension (size 1)
+        y = y.squeeze(-1)
+        
+        # FIXED: Scale target to [-1, 1] 
+        y_scaled = 2.0 * y - 1.0
         
         # Sample random timesteps
         t = torch.randint(0, self.timesteps, (x.shape[0],), device=x.device).long()
         
-        # Create noisy version
-        noise = torch.randn_like(y)
-        noisy_y = self.diffusion.q_sample(y, t, noise)
-
-        # Predict v instead of epsilon
+        # Create noisy version using scaled target
+        noise = torch.randn_like(y_scaled)
+        noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
+        
+        # Predict v
         pred_v = self.model(noisy_y, t, x, sample_weight)
-        
         pred_v = pred_v.squeeze()
-        y = y.squeeze()
-        noise = noise.squeeze()
         
-        # Compute target v
-        target_v = self.diffusion.calculate_v(y, noise, t)
+        # Compute target v using scaled data
+        target_v = self.diffusion.calculate_v(y_scaled, noise, t)
         
-        # Calculate v-prediction loss
-        loss = F.mse_loss(pred_v, target_v) #* 0.5
-
+        loss = F.mse_loss(pred_v, target_v)
+        
+        if self.global_step % 100 == 0:
+            print(f"Step {self.global_step}: Loss {loss.item():.4f}")
+        
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return {"loss": loss}
 
@@ -321,9 +322,3 @@ class LitDiffusion(pl.LightningModule):
         loss = self.criterion(y_hat, y, sample_weight)
 
         return y_hat
-
-
-
-    
-    
-        

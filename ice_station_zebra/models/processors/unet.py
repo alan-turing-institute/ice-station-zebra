@@ -10,8 +10,8 @@ class UNetProcessor(nn.Module):
     def __init__(
         self,
         n_latent_channels: int,
-        filter_size=3,
-        n_filters_factor=1,
+        filter_size: int,
+        n_filters_factor: float,
     ) -> None:
         super().__init__()
 
@@ -82,7 +82,7 @@ class ConvBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         *,
-        filter_size: int = 3,
+        filter_size: int,
         final: bool = False,
     ) -> None:
         super().__init__()
@@ -125,7 +125,7 @@ class BottleneckBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         *,
-        filter_size: int = 3,
+        filter_size: int,
     ) -> None:
         super().__init__()
 

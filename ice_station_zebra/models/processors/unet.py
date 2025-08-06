@@ -12,7 +12,6 @@ class UNetProcessor(nn.Module):
         n_latent_channels: int,
         filter_size=3,
         n_filters_factor=1,
-        # n_forecast_days=7,
     ) -> None:
         super().__init__()
 

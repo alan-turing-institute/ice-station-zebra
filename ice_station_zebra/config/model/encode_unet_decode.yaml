@@ -1,0 +1,19 @@
+_target_: ice_station_zebra.models.EncodeProcessDecode
+
+name: encode-unet-decode
+
+# Each dataset will be encoded into a latent space with these properties
+latent_space:
+  channels: 20
+  shape: [128, 128]
+
+encoder:
+  _target_: ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder
+
+processor:
+  _target_: ice_station_zebra.models.processors.UNetProcessor
+  filter_size: 3 # Size of the kernel for convolutional layers
+  start_out_channels: 64 # Initial number of channels for the first convolutional layer
+
+decoder:
+  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder

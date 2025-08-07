@@ -27,7 +27,7 @@ class ZebraDataset(Dataset):
         self.dataset = open_dataset(input_files, start=start, end=end)
         self.dataset._name = name
         self.chw = (self.space.channels, *self.space.shape)
-        self._cache = LRUCache(maxsize=128)
+        self._cache: LRUCache = LRUCache(maxsize=128)
 
     @property
     def end_date(self) -> np.datetime64:

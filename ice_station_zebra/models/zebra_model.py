@@ -1,6 +1,5 @@
 import itertools
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
 
 import hydra
 import torch
@@ -44,16 +43,16 @@ class ZebraModel(LightningModule, ABC):
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
-            dict(**self.optimizer_cfg) | {"params": self.parameters()}
+            dict(**self.optimizer_cfg)
+            | {
+                "params": itertools.chain(
+                    *[module.parameters() for module in self._modules.values()]
+                )
+            }
         )
 
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.l1_loss(output, target)
-
-    def parameters(self) -> Iterator[torch.nn.Parameter]:
-        return itertools.chain(
-            *[module.parameters() for module in self._modules.values()]
-        )
 
     def test_step(
         self, batch: LightningBatch, batch_idx: int

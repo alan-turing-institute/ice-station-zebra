@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from .zebra_dataset import ZebraDataset
-from ice_station_zebra.types import CombinedNumpyBatch
+from ice_station_zebra.types import ArrayTCHW
 
 
 class CombinedDataset(Dataset):
@@ -59,7 +59,7 @@ class CombinedDataset(Dataset):
         """Return the total length of the dataset"""
         return len(self.available_dates)
 
-    def __getitem__(self, idx: int) -> CombinedNumpyBatch:
+    def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary
 
         Returns:

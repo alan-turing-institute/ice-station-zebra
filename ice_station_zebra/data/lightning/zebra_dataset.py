@@ -1,12 +1,12 @@
 from pathlib import Path
+from collections.abc import Sequence
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
 from cachetools import LRUCache, cachedmethod
-from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
 
 
 class ZebraDataset(Dataset):
@@ -57,8 +57,8 @@ class ZebraDataset(Dataset):
         """Return the total length of the dataset"""
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> NDArray[np.float32]:
-        """Return a single timestep after reshaping to [C, H, W]"""
+    def __getitem__(self, idx: int) -> ArrayCHW:
+        """Return the data for a single timestep in [C, H, W] format"""
         return self.dataset[idx].reshape(self.chw)
 
     @cachedmethod(lambda self: self._cache)
@@ -67,8 +67,8 @@ class ZebraDataset(Dataset):
         idx, _, _ = self.dataset.to_index(date, 0)
         return idx
 
-    def get_tchw(self, dates: list[np.datetime64]) -> NDArray[np.float32]:
-        """Return the data for a given set of dates in [T, C, H, W] format"""
+    def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
+        """Return the data for a series of timesteps in [T, C, H, W] format"""
         return np.stack(
             [self[self.index_from_date(target_date)] for target_date in dates], axis=0
         )

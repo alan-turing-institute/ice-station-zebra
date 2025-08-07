@@ -3,9 +3,8 @@ from typing import Any
 import hydra
 import torch
 from omegaconf import DictConfig
-from torch import Tensor
 
-from ice_station_zebra.types import CombinedTensorBatch, DataSpace
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 from ice_station_zebra.models.encoders import BaseEncoder
 
 from .zebra_model import ZebraModel
@@ -61,7 +60,7 @@ class EncodeProcessDecode(ZebraModel):
             }
         )
 
-    def forward(self, inputs: CombinedTensorBatch) -> torch.Tensor:
+    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Forward step of the model
 
         - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
@@ -71,18 +70,18 @@ class EncodeProcessDecode(ZebraModel):
         - decode back to [NTCHW] output space [batch, n_forecast_steps, C_output, H_output, W_output]
         """
         # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_height, latent_width)
-        latent_inputs: list[Tensor] = [
+        latent_inputs: list[TensorNCHW] = [
             encoder(inputs[encoder.name]) for encoder in self.encoders
         ]
 
         # Combine in the variable dimension: tensor with (batch_size, all_variables, latent_height, latent_width)
-        latent_input_combined = torch.cat(latent_inputs, dim=1)
+        latent_input_combined: TensorNCHW = torch.cat(latent_inputs, dim=1)
 
         # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
-        latent_output: Tensor = self.processor(latent_input_combined)
+        latent_output: TensorNCHW = self.processor(latent_input_combined)
 
         # Decode to output space: tensor with (batch_size, output_variables, output_height, output_width)
-        output: Tensor = self.decoder(latent_output)
+        output: TensorNTCHW = self.decoder(latent_output)
 
         # Return
         return output

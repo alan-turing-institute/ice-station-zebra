@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 import torch.nn as nn
-from torch import Tensor
+
+from ice_station_zebra.types import TensorNCHW, TensorNTCHW
 
 
 class BaseDecoder(nn.Module, ABC):
@@ -9,10 +10,10 @@ class BaseDecoder(nn.Module, ABC):
     Decoder that takes data in a latent space and translates it to a larger output space
 
     Latent space:
-        Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
     Output space:
-        Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
     def __init__(self, *, n_forecast_steps: int) -> None:
@@ -20,13 +21,13 @@ class BaseDecoder(nn.Module, ABC):
         self.n_forecast_steps = n_forecast_steps
 
     @abstractmethod
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNTCHW:
         """
         Transformation summary
 
         Args:
-            x: Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         Returns:
-            Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+            TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
         """

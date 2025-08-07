@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from jaxtyping import Float
 from numpy.typing import NDArray
 from numpy import float32
 from typing import Any, Self, TypedDict
@@ -6,8 +7,10 @@ from torch import Tensor
 
 from omegaconf import DictConfig
 
-CombinedTensorBatch = dict[str, Tensor]
-CombinedNumpyBatch = dict[str, NDArray[float32]]
+ArrayCHW = Float[NDArray[float32], "channels height width"]
+ArrayTCHW = Float[NDArray[float32], "time channels height width"]
+TensorNCHW = Float[Tensor, "batch channels height width"]
+TensorNTCHW = Float[Tensor, "batch time channels height width"]
 
 
 class DataloaderArgs(TypedDict):

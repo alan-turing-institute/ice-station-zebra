@@ -2,9 +2,8 @@ import math
 from typing import Any
 
 import torch.nn as nn
-from torch import Tensor
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 from .base_decoder import BaseDecoder
 
 
@@ -13,10 +12,10 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
     Naive, linear decoder that takes data in a latent space and translates it to a larger output space
 
     Latent space:
-        Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
     Output space:
-        Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
     def __init__(
@@ -54,14 +53,14 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNTCHW:
         """
         Transformation summary
 
         Args:
-            x: Tensor[NCHW] with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         Returns:
-            Tensor[NTCHW] with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+            TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
         """
         return self.model(x)

@@ -3,13 +3,11 @@ from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
-import numpy as np
 from lightning import LightningDataModule
-from numpy.typing import NDArray
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from ice_station_zebra.types import DataloaderArgs, DataSpace
+from ice_station_zebra.types import ArrayTCHW, DataloaderArgs, DataSpace
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset
@@ -89,7 +87,7 @@ class ZebraDataModule(LightningDataModule):
 
     def train_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct train dataloader"""
         dataset = CombinedDataset(
             [
@@ -115,7 +113,7 @@ class ZebraDataModule(LightningDataModule):
 
     def val_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct validation dataloader"""
         dataset = CombinedDataset(
             [
@@ -141,7 +139,7 @@ class ZebraDataModule(LightningDataModule):
 
     def test_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct test dataloader"""
         dataset = CombinedDataset(
             [

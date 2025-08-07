@@ -3,6 +3,10 @@ from torch import Tensor
 import torch
 import torch.nn.functional as F
 
+from ice_station_zebra.models.common.convblock import ConvBlock
+from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
+from ice_station_zebra.models.common.upconvblock import UpconvBlock
+
 
 class UNetProcessor(nn.Module):
     """UNet model that processes input through a UNet architecture"""
@@ -74,86 +78,3 @@ class UNetProcessor(nn.Module):
         output = self.final_layer(up9)
 
         return output
-
-
-class ConvBlock(nn.Module):
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        *,
-        filter_size: int,
-        final: bool = False,
-    ) -> None:
-        super().__init__()
-
-        layers = [
-            nn.Conv2d(
-                in_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(
-                out_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            nn.ReLU(inplace=True),
-        ]
-        if final:
-            layers += [
-                nn.Conv2d(
-                    out_channels,
-                    out_channels,
-                    kernel_size=filter_size,
-                    padding="same",
-                ),
-                nn.ReLU(inplace=True),
-            ]
-
-        else:
-            layers.append(
-                nn.BatchNorm2d(num_features=out_channels),
-            )
-
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)
-
-
-class BottleneckBlock(nn.Module):
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        *,
-        filter_size: int,
-    ) -> None:
-        super().__init__()
-
-        self.model = nn.Sequential(
-            nn.Conv2d(
-                in_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(
-                out_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(num_features=out_channels),
-        )
-
-    def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)
-
-
-class UpconvBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int) -> None:
-        super().__init__()
-
-        self.model = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode="nearest"),
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)

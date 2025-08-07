@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torch import Tensor
 
+
 class ConvBlock(nn.Module):
     def __init__(
         self,
@@ -42,4 +43,3 @@ class ConvBlock(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
-

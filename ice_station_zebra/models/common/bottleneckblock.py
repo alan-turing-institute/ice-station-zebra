@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torch import Tensor
 
+
 class BottleneckBlock(nn.Module):
     def __init__(
         self,
@@ -25,4 +26,3 @@ class BottleneckBlock(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
-

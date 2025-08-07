@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torch import Tensor
 
+
 class UpconvBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()

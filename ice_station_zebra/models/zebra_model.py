@@ -1,8 +1,9 @@
+import itertools
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 
 import hydra
 import torch
-import torch.nn as nn
 from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
@@ -28,9 +29,6 @@ class ZebraModel(LightningModule, ABC):
         self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]
         self.output_space = DataSpace.from_dict(output_space)
 
-        # Initialise an empty module list
-        self.model_list = nn.ModuleList()
-
         # Store the optimizer config
         self.optimizer_cfg = optimizer
 
@@ -46,11 +44,16 @@ class ZebraModel(LightningModule, ABC):
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
-            dict(**self.optimizer_cfg) | {"params": self.model_list.parameters()}
+            dict(**self.optimizer_cfg) | {"params": self.parameters()}
         )
 
     def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.l1_loss(output, target)
+
+    def parameters(self) -> Iterator[torch.nn.Parameter]:
+        return itertools.chain(
+            *[module.parameters() for module in self._modules.values()]
+        )
 
     def test_step(
         self, batch: LightningBatch, batch_idx: int

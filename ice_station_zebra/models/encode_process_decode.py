@@ -32,6 +32,10 @@ class EncodeProcessDecode(ZebraModel):
             )
             for input_space in self.input_spaces
         ]
+        # We have to explicitly register each encoder as list[Module] will not be
+        # automatically picked up by PyTorch
+        for idx, encoder in enumerate(self.encoders):
+            self.add_module(f"encoder_{idx}", encoder)
 
         # Add a processor
         self.processor = hydra.utils.instantiate(
@@ -44,11 +48,6 @@ class EncodeProcessDecode(ZebraModel):
             dict(**decoder)
             | {"latent_space": latent_space_, "output_space": self.output_space}
         )
-
-        # Register all modules that need to be trained
-        self.model_list.extend(self.encoders)
-        self.model_list.append(self.processor)
-        self.model_list.append(self.decoder)
 
     def forward(self, inputs: LightningBatch) -> torch.Tensor:
         """Forward step of the model

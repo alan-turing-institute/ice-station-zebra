@@ -15,15 +15,11 @@ class UNetProcessor(nn.Module):
         self,
         n_latent_channels: int,
         filter_size: int,
-        n_filters_factor: float,
+        start_out_channels: int,
     ) -> None:
         super().__init__()
 
-        start_out_channels = 64
-
-        reduced_channels = int(start_out_channels * n_filters_factor)
-
-        channels = [reduced_channels * 2**pow for pow in range(4)]
+        channels = [start_out_channels * 2**pow for pow in range(4)]
 
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)

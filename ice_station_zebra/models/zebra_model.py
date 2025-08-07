@@ -46,7 +46,7 @@ class ZebraModel(LightningModule, ABC):
             dict(**self.optimizer_cfg)
             | {
                 "params": itertools.chain(
-                    *[module.parameters() for module in self._modules.values()]
+                    *[module.parameters() for module in self.children()]
                 )
             }
         )

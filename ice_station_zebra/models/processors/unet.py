@@ -1,7 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
 import torch
-import torch.nn.functional as F
 
 from ice_station_zebra.models.common.convblock import ConvBlock
 from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
@@ -26,9 +25,13 @@ class UNetProcessor(nn.Module):
 
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size)
+        self.maxpool3 = nn.MaxPool2d(kernel_size=2)
         self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size)
+        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
 
         # Bottleneck
         self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size)
@@ -56,13 +59,13 @@ class UNetProcessor(nn.Module):
 
         # Encoder
         bn1 = self.conv1(x)
-        conv1 = F.max_pool2d(bn1, kernel_size=2)
+        conv1 = self.maxpool1(bn1)
         bn2 = self.conv2(conv1)
-        conv2 = F.max_pool2d(bn2, kernel_size=2)
+        conv2 = self.maxpool1(bn2)
         bn3 = self.conv3(conv2)
-        conv3 = F.max_pool2d(bn3, kernel_size=2)
+        conv3 = self.maxpool3(bn3)
         bn4 = self.conv4(conv3)
-        conv4 = F.max_pool2d(bn4, kernel_size=2)
+        conv4 = self.maxpool4(bn4)
 
         # Bottleneck
         bn5 = self.conv5(conv4)

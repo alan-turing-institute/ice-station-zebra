@@ -9,7 +9,10 @@ from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 
 class UNetProcessor(nn.Module):
-    """UNet model that processes input through a UNet architecture"""
+    """UNet model that processes input through a UNet architecture
+
+    Structure based on Andersson et al. (2021) Nature Communications
+    https://doi.org/10.1038/s41467-021-25257-4"""
 
     def __init__(
         self,
@@ -53,38 +56,24 @@ class UNetProcessor(nn.Module):
 
         # Encoder
         bn1 = self.conv1(x)
-        print(f"bn1 shape: {bn1.shape}")
         conv1 = F.max_pool2d(bn1, kernel_size=2)
-        print(f"conv1 shape: {conv1.shape}")
         bn2 = self.conv2(conv1)
-        print(f"bn2 shape: {bn2.shape}")
         conv2 = F.max_pool2d(bn2, kernel_size=2)
-        print(f"conv2 shape: {conv2.shape}")
         bn3 = self.conv3(conv2)
-        print(f"bn3 shape: {bn3.shape}")
         conv3 = F.max_pool2d(bn3, kernel_size=2)
-        print(f"conv3 shape: {conv3.shape}")
         bn4 = self.conv4(conv3)
-        print(f"bn4 shape: {bn4.shape}")
         conv4 = F.max_pool2d(bn4, kernel_size=2)
-        print(f"conv4 shape: {conv4.shape}")
 
         # Bottleneck
         bn5 = self.conv5(conv4)
-        print(f"bn5 shape: {bn5.shape}")
 
         # Decoder
         up6 = self.up6b(torch.cat([bn4, self.up6(bn5)], dim=1))
-        print(f"up6 shape: {up6.shape}")
         up7 = self.up7b(torch.cat([bn3, self.up7(up6)], dim=1))
-        print(f"up7 shape: {up7.shape}")
         up8 = self.up8b(torch.cat([bn2, self.up8(up7)], dim=1))
-        print(f"up8 shape: {up8.shape}")
         up9 = self.up9b(torch.cat([bn1, self.up9(up8)], dim=1))
-        print(f"up9 shape: {up9.shape}")
 
         # Final layer
         output = self.final_layer(up9)
-        print(f"output shape: {output.shape}")
 
         return output

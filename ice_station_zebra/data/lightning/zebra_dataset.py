@@ -35,9 +35,9 @@ class ZebraDataset(Dataset):
         return self.dataset.end_date
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> str:
         """Return the name of the dataset."""
-        return self.dataset.name
+        return self.dataset.name or "unnamed"
 
     @property
     def space(self) -> DataSpace:

@@ -1,0 +1,19 @@
+name: nongriddedenv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - xarray
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - cartopy
+  - cmocean
+  - ipython
+  - ipykernel
+  - cdsapi
+  - pip
+  - pip:
+      - imageio
+      - download-toolbox

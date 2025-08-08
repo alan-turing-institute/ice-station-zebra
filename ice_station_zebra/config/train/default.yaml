@@ -2,6 +2,5 @@ defaults:
   - callbacks:
     - device_stats
   - optimizer: default
-  - predict: osisaf-south
   - trainer: default
   - _self_

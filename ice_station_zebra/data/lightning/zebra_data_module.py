@@ -35,7 +35,7 @@ class ZebraDataModule(LightningDataModule):
             logger.debug(f"... {dataset_group}")
 
         # Check prediction target
-        self.predict_target = config["train"]["predict"]["dataset_group"]
+        self.predict_target = config["predict"]["dataset_group"]
         if self.predict_target not in self.dataset_groups:
             raise ValueError(f"Could not find prediction target {self.predict_target}")
 
@@ -53,10 +53,8 @@ class ZebraDataModule(LightningDataModule):
         }
 
         # Set history and forecast steps
-        self.n_forecast_steps = int(
-            config["train"]["predict"].get("n_forecast_steps", 1)
-        )
-        self.n_history_steps = int(config["train"]["predict"].get("n_history_steps", 1))
+        self.n_forecast_steps = int(config["predict"].get("n_forecast_steps", 1))
+        self.n_history_steps = int(config["predict"].get("n_history_steps", 1))
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(

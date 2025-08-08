@@ -16,15 +16,15 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: ["--pytest-test-first"]
-        exclude: ^tests/legacy_metrics.py
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.12.5"
     hooks:
       # Run the linter
-      - id: ruff
-        types_or: [python, pyi]
+      - id: ruff-check
         args: ["--fix", "--show-fixes"]
+        pass_filenames: false
       # Run the formatter
       - id: ruff-format
+        pass_filenames: false

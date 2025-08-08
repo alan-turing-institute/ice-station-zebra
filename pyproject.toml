@@ -65,6 +65,7 @@ addopts = [
 
 [tool.ruff]
 line-length = 88
+exclude = ["notebooks/*ipynb"]
 
 [tool.uv.build-backend]
 module-root = ""

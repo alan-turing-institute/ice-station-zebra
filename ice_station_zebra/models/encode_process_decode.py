@@ -34,8 +34,8 @@ class EncodeProcessDecode(ZebraModel):
         ]
         # We have to explicitly register each encoder as list[Module] will not be
         # automatically picked up by PyTorch
-        for idx, encoder in enumerate(self.encoders):
-            self.add_module(f"encoder_{idx}", encoder)
+        for idx, module in enumerate(self.encoders):
+            self.add_module(f"encoder_{idx}", module)
 
         # Add a processor
         self.processor = hydra.utils.instantiate(

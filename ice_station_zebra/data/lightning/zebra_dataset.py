@@ -3,6 +3,7 @@ from collections.abc import Sequence
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
+from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from cachetools import LRUCache, cachedmethod
 from torch.utils.data import Dataset
 
@@ -24,10 +25,13 @@ class ZebraDataset(Dataset):
         We reshape each time point to: variables; pos_x; pos_y
         """
         super().__init__()
-        self.dataset = open_dataset(input_files, start=start, end=end)
-        self.dataset._name = name
-        self.chw = (self.space.channels, *self.space.shape)
         self._cache: LRUCache = LRUCache(maxsize=128)
+        self._dataset: AnemoiDataset | None = None
+        self._end = end
+        self._input_files = input_files
+        self._name = name
+        self._start = start
+        self.chw = (self.space.channels, *self.space.shape)
 
     @property
     def end_date(self) -> np.datetime64:
@@ -37,7 +41,17 @@ class ZebraDataset(Dataset):
     @property
     def name(self) -> str:
         """Return the name of the dataset."""
-        return self.dataset.name or "unnamed"
+        return self._name
+
+    @property
+    def dataset(self) -> AnemoiDataset:
+        """Load the underlying Anemoi dataset."""
+        if not self._dataset:
+            self._dataset = open_dataset(
+                self._input_files, start=self._start, end=self._end
+            )
+            self._dataset._name = self._name
+        return self._dataset
 
     @property
     def space(self) -> DataSpace:

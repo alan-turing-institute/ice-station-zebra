@@ -29,13 +29,13 @@
 | ice\_station\_zebra/models/\_\_init\_\_.py                            |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                   |        2 |        2 |      0% |       1-3 |
 | ice\_station\_zebra/models/decoders/naive\_latent\_space\_decoder.py  |       18 |       18 |      0% |      1-58 |
-| ice\_station\_zebra/models/encode\_process\_decode.py                 |       22 |       13 |     41% |22-51, 63-77 |
+| ice\_station\_zebra/models/encode\_process\_decode.py                 |       21 |       12 |     43% |22-47, 62-76 |
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                   |        2 |        2 |      0% |       1-3 |
 | ice\_station\_zebra/models/encoders/naive\_latent\_space\_encoder.py  |       18 |       18 |      0% |      1-58 |
 | ice\_station\_zebra/models/processors/\_\_init\_\_.py                 |        3 |        3 |      0% |       1-4 |
 | ice\_station\_zebra/models/processors/null.py                         |        9 |        9 |      0% |      1-14 |
 | ice\_station\_zebra/models/processors/unet.py                         |       44 |       44 |      0% |      1-82 |
-| ice\_station\_zebra/models/zebra\_model.py                            |       38 |       21 |     45% |22-40, 48, 53, 67-70, 82-84, 96-100 |
+| ice\_station\_zebra/models/zebra\_model.py                            |       37 |       20 |     46% |22-37, 45, 55, 69-72, 84-86, 98-102 |
 | ice\_station\_zebra/training/\_\_init\_\_.py                          |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                   |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                               |       25 |       13 |     48% | 21-79, 82 |
@@ -44,7 +44,7 @@
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                    |        2 |        2 |      0% |       1-3 |
 | ice\_station\_zebra/visualisations/convert.py                         |        8 |        8 |      0% |      1-12 |
 | ice\_station\_zebra/visualisations/sea\_ice\_concentration.py         |       17 |       17 |      0% |      1-28 |
-|                                                             **TOTAL** |  **643** |  **371** | **42%** |           |
+|                                                             **TOTAL** |  **641** |  **369** | **42%** |           |
 
 
 ## Setup coverage badge

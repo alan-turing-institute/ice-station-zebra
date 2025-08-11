@@ -26,19 +26,11 @@ class ZebraDataset(Dataset):
         """
         super().__init__()
         self._cache: LRUCache = LRUCache(maxsize=128)
-        self._chw: tuple[int, int, int] | None = None
         self._dataset: AnemoiDataset | None = None
         self._end = end
         self._input_files = input_files
         self._name = name
         self._start = start
-
-    @property
-    def chw(self) -> tuple[int, int, int]:
-        """Return a tuple of [channels, height, width]."""
-        if not self._chw:
-            self._chw = (self.space.channels, *self.space.shape)
-        return self._chw
 
     @property
     def dataset(self) -> AnemoiDataset:
@@ -80,7 +72,7 @@ class ZebraDataset(Dataset):
 
     def __getitem__(self, idx: int) -> ArrayCHW:
         """Return the data for a single timestep in [C, H, W] format"""
-        return self.dataset[idx].reshape(self.chw)
+        return self.dataset[idx].reshape(self.space.chw)
 
     @cachedmethod(lambda self: self._cache)
     def index_from_date(self, date: np.datetime64) -> int:

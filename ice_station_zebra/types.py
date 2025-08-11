@@ -31,6 +31,11 @@ class DataSpace:
         self.name = name
         self.shape = (int(shape[0]), int(shape[1]))
 
+    @property
+    def chw(self) -> tuple[int, int, int]:
+        """Return a tuple of [channels, height, width]."""
+        return (self.channels, *self.shape)
+
     @classmethod
     def from_dict(cls, config: DictConfig | dict[str, Any]) -> Self:
         return cls(

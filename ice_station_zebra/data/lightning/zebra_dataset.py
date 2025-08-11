@@ -26,22 +26,19 @@ class ZebraDataset(Dataset):
         """
         super().__init__()
         self._cache: LRUCache = LRUCache(maxsize=128)
+        self._chw: tuple[int, int, int] | None = None
         self._dataset: AnemoiDataset | None = None
         self._end = end
         self._input_files = input_files
         self._name = name
         self._start = start
-        self.chw = (self.space.channels, *self.space.shape)
 
     @property
-    def end_date(self) -> np.datetime64:
-        """Return the end date of the dataset."""
-        return self.dataset.end_date
-
-    @property
-    def name(self) -> str:
-        """Return the name of the dataset."""
-        return self._name
+    def chw(self) -> tuple[int, int, int]:
+        """Return a tuple of [channels, height, width]."""
+        if not self._chw:
+            self._chw = (self.space.channels, *self.space.shape)
+        return self._chw
 
     @property
     def dataset(self) -> AnemoiDataset:
@@ -52,6 +49,16 @@ class ZebraDataset(Dataset):
             )
             self._dataset._name = self._name
         return self._dataset
+
+    @property
+    def end_date(self) -> np.datetime64:
+        """Return the end date of the dataset."""
+        return self.dataset.end_date
+
+    @property
+    def name(self) -> str:
+        """Return the name of the dataset."""
+        return self._name
 
     @property
     def space(self) -> DataSpace:

@@ -3,8 +3,7 @@ import torch.nn as nn
 
 from ice_station_zebra.types import TensorNCHW
 from torch_ema import ExponentialMovingAverage
-from ice_station_zebra.models.diffusion import GaussianDiffusion
-
+from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 
 class DDPMProcessor(nn.Module):
     """ Denoising Diffusion Probabilistic Model (DDPM)
@@ -15,8 +14,7 @@ class DDPMProcessor(nn.Module):
 
     def __init__(self, n_latent_channels: int, timesteps: int = 1000) -> None:
         super().__init__()
-        self.n_latent_channels = n_latent_channels
-        self.model = nn.Identity()
+        self.model = UNetDiffusion(n_latent_channels, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)  
         self.diffusion = GaussianDiffusion(timesteps=timesteps)

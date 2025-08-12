@@ -4,8 +4,9 @@ from datetime import datetime
 import numpy as np
 from torch.utils.data import Dataset
 
-from .zebra_dataset import ZebraDataset
 from ice_station_zebra.types import ArrayTCHW
+
+from .zebra_dataset import ZebraDataset
 
 
 class CombinedDataset(Dataset):

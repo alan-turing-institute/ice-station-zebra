@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from jaxtyping import Float
-from numpy.typing import NDArray
-from numpy import float32
 from typing import Any, Self, TypedDict
-from torch import Tensor
 
+from jaxtyping import Float
+from numpy import float32
+from numpy.typing import NDArray
 from omegaconf import DictConfig
+from torch import Tensor
 
 ArrayCHW = Float[NDArray[float32], "channels height width"]
 ArrayTCHW = Float[NDArray[float32], "time channels height width"]

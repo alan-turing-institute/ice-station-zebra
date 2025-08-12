@@ -6,8 +6,8 @@ from lightning.pytorch import Callback
 from torch import Tensor
 from torch.utils.data import DataLoader
 
+from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.visualisations import plot_sic_comparison
-from ice_station_zebra.data.lightning import CombinedDataset
 
 logger = logging.getLogger(__name__)
 

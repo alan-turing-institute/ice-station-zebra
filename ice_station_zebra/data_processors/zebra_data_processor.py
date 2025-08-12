@@ -8,13 +8,14 @@ from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.data.anemoi.preprocessors import IPreprocessor
 from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
+
+from .preprocessors import IPreprocessor
 
 log = logging.getLogger(__name__)
 
 
-class ZebraDataset:
+class ZebraDataProcessor:
     def __init__(
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
     ) -> None:

@@ -1,8 +1,8 @@
 from typing import Any
 
-from torch import nn
 import torch
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
+from torch import nn
 
 from ice_station_zebra.types import TensorNTCHW
 

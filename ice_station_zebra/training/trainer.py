@@ -3,8 +3,10 @@ from pathlib import Path
 
 import hydra
 from lightning import Callback, Trainer
+from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
 
+from ice_station_zebra.callbacks import UnconditionalCheckpoint
 from ice_station_zebra.data_loaders import ZebraDataModule
 from ice_station_zebra.models import ZebraModel
 from ice_station_zebra.utils import generate_run_name, get_wandb_logger
@@ -75,7 +77,11 @@ class ZebraTrainer:
                 **config["train"]["trainer"],
             )
         )
-        self.trainer.checkpoint_callback.dirpath = run_directory / "checkpoints"
+
+        # Set properties for checkpoint callbacks
+        for callback in self.trainer.callbacks:
+            if isinstance(callback, (ModelCheckpoint, UnconditionalCheckpoint)):
+                callback.dirpath = run_directory / "checkpoints"
 
         # Save config to the output directory
         OmegaConf.save(config, run_directory / "model_config.yaml")

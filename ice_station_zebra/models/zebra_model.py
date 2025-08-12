@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 import hydra
 import torch
 from lightning import LightningModule
-from omegaconf import DictConfig
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
+from omegaconf import DictConfig
 
 from ice_station_zebra.types import DataSpace, TensorNTCHW
 

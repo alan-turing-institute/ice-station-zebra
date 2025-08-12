@@ -19,6 +19,7 @@ from typing import Tuple
 from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
 from ice_station_zebra.models.common.convblock import ConvBlock
 from ice_station_zebra.models.common.upconvblock import UpconvBlock
+from ice_station_zebra.models.common.timeembed import TimeEmbed 
         
 class UNetDiffusion(nn.Module):
     """
@@ -53,16 +54,13 @@ class UNetDiffusion(nn.Module):
         
         # Time embedding
         self.time_embed_dim = 256
-        self.time_embed = nn.Sequential(
-            nn.Linear(self.time_embed_dim, self.time_embed_dim * 4),
-            nn.SiLU(),
-            nn.Linear(self.time_embed_dim * 4, self.time_embed_dim),
-        )
+        self.time_embed = TimeEmbed(self.time_embed_dim)
         
         # Channel calculations
         channels = [start_out_channels * 2**pow for pow in range(4)]
 
-        self.initial_conv_channels = 2*input_channels
+        output_channels = input_channels
+        self.initial_conv_channels = input_channels + output_channels
         
         # Encoder
         self.conv1 = ConvBlock(self.initial_conv_channels, channels[0],filter_size=filter_size)
@@ -89,16 +87,16 @@ class UNetDiffusion(nn.Module):
         self.up9b = ConvBlock(channels[1] + self.time_embed_dim, channels[0], filter_size=filter_size, final=True)
 
         # Final layer
-        self.final_layer = nn.Conv2d(channels[0], n_latent_channels, kernel_size=1, padding="same")
+        self.final_layer = nn.Conv2d(channels[0], output_channels, kernel_size=1, padding="same")
 
     def forward(self, noise, t, conditioning, sample_weight):
         """
         Forward pass of the U-Net diffusion model.
 
         Args:
-            x (torch.Tensor): Noisy forecast tensor of shape [B, H, W, n_classes, n_forecast_days].
+            noise (torch.Tensor): Noisy forecast tensor of shape [B, H, W, n_classes, n_forecast_days].
             t (torch.Tensor): Diffusion timestep tensor of shape [B].
-            y (torch.Tensor): Conditioning input tensor of shape [B, H, W, input_channels].
+            conditioning (torch.Tensor): Conditioning input tensor of shape [B, H, W, input_channels].
             sample_weight (torch.Tensor or None): Optional weighting mask [B, H, W, n_classes, n_forecast_days].
 
         Returns:
@@ -172,7 +170,7 @@ class UNetDiffusion(nn.Module):
         half = dim // 2
         freqs = torch.exp(
             -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
-        ).to(timesteps.device)
+        )
         args = timesteps[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:

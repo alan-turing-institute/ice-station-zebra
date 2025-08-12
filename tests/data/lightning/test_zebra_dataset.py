@@ -1,42 +1,42 @@
-import pytest
+from pathlib import Path
 import numpy as np
 
 from ice_station_zebra.data.lightning.zebra_dataset import ZebraDataset
-from ice_station_zebra.types import DataSpace
-
-
-class MockAnemoiDataset:
-    def __init__(self):
-        self.name = "mock_dataset"
-        self.start_date = np.datetime64("2020-01-01")
-        self.end_date = np.datetime64("2020-12-31")
-        self.field_shape = (5, 5)
-        self.shape = [1, 10]  # (time, channels)
-
-    def __len__(self):
-        return 10
 
 
 class TestZebraDataset:
-    def test_init(self) -> None:
+    dates_str = ["2020-01-01", "2020-01-02", "2020-01-03"]
+    dates_np = list(map(np.datetime64, dates_str))
+
+    def test_dataset_name(self) -> None:
         dataset = ZebraDataset(
             name="test_dataset",
             input_files=[],
         )
         assert dataset.name == "test_dataset"
 
-    def test_dataset(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            ZebraDataset, "dataset", property(lambda _: MockAnemoiDataset())
-        )
+    def test_dataset_dates(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
-            input_files=[],
+            input_files=[mock_dataset],
         )
-        assert dataset.end_date == np.datetime64("2020-12-31")
-        assert dataset.name == "mock_dataset"
-        assert isinstance(dataset.space, DataSpace)
-        assert dataset.space.channels == 10
-        assert dataset.space.shape == (5, 5)
-        assert dataset.start_date == np.datetime64("2020-01-01")
-        assert len(dataset) == 10
+        # Test dates
+        assert all(date in dataset.dataset.dates for date in self.dates_np)
+
+    def test_dataset_end_date(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            end=self.dates_str[1],
+        )
+        assert dataset.start_date == self.dates_np[0]
+        assert dataset.end_date == self.dates_np[1]
+
+    def test_dataset_start_date(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            start=self.dates_str[1],
+        )
+        assert dataset.start_date == self.dates_np[1]
+        assert dataset.end_date == self.dates_np[-1]

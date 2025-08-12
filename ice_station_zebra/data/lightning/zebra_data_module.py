@@ -3,13 +3,11 @@ from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
-import numpy as np
 from lightning import LightningDataModule
-from numpy.typing import NDArray
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from ice_station_zebra.types import DataloaderArgs, DataSpace
+from ice_station_zebra.types import ArrayTCHW, DataloaderArgs, DataSpace
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset
@@ -37,10 +35,11 @@ class ZebraDataModule(LightningDataModule):
             logger.debug(f"... {dataset_group}")
 
         # Check prediction target
-        self.predict_target = config["train"]["predict_target"]
+        self.predict_target = config["predict"]["dataset_group"]
         if self.predict_target not in self.dataset_groups:
             raise ValueError(f"Could not find prediction target {self.predict_target}")
 
+        # Set periods for train, validation, and test
         self.batch_size = int(config["split"]["batch_size"])
         self.train_period = {
             k: None if v == "None" else v for k, v in config["split"]["train"].items()
@@ -52,6 +51,10 @@ class ZebraDataModule(LightningDataModule):
         self.test_period = {
             k: None if v == "None" else v for k, v in config["split"]["test"].items()
         }
+
+        # Set history and forecast steps
+        self.n_forecast_steps = int(config["predict"].get("n_forecast_steps", 1))
+        self.n_history_steps = int(config["predict"].get("n_history_steps", 1))
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(
@@ -82,7 +85,7 @@ class ZebraDataModule(LightningDataModule):
 
     def train_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct train dataloader"""
         dataset = CombinedDataset(
             [
@@ -94,6 +97,8 @@ class ZebraDataModule(LightningDataModule):
                 )
                 for name, paths in self.dataset_groups.items()
             ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
             target=self.predict_target,
         )
         logger.info(
@@ -106,7 +111,7 @@ class ZebraDataModule(LightningDataModule):
 
     def val_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct validation dataloader"""
         dataset = CombinedDataset(
             [
@@ -118,6 +123,8 @@ class ZebraDataModule(LightningDataModule):
                 )
                 for name, paths in self.dataset_groups.items()
             ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
             target=self.predict_target,
         )
         logger.info(
@@ -130,7 +137,7 @@ class ZebraDataModule(LightningDataModule):
 
     def test_dataloader(
         self,
-    ) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
         """Construct test dataloader"""
         dataset = CombinedDataset(
             [
@@ -142,6 +149,8 @@ class ZebraDataModule(LightningDataModule):
                 )
                 for name, paths in self.dataset_groups.items()
             ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
             target=self.predict_target,
         )
         logger.info(

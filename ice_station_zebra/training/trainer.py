@@ -27,6 +27,8 @@ class ZebraTrainer:
                     "input_spaces": [
                         s.to_dict() for s in self.data_module.input_spaces
                     ],
+                    "n_forecast_steps": self.data_module.n_forecast_steps,
+                    "n_history_steps": self.data_module.n_history_steps,
                     "output_space": self.data_module.output_space.to_dict(),
                     "optimizer": config["train"]["optimizer"],
                 },

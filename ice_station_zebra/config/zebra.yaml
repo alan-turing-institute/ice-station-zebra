@@ -8,6 +8,7 @@ defaults:
   - loggers:
     - wandb
   - model: encode_null_decode
+  - predict: osisaf-south
   - split: default
   - train: default
   - _self_

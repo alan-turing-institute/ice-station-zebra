@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 from jaxtyping import Float
 from numpy.typing import NDArray
 from numpy import float32
@@ -11,6 +12,25 @@ ArrayCHW = Float[NDArray[float32], "channels height width"]
 ArrayTCHW = Float[NDArray[float32], "time channels height width"]
 TensorNCHW = Float[Tensor, "batch channels height width"]
 TensorNTCHW = Float[Tensor, "batch time channels height width"]
+
+
+@dataclass
+class AnemoiCreateArgs:
+    config: DictConfig
+    path: str
+    command: str = "unused"
+    overwrite: bool = False
+    processes: int = 0
+    threads: int = 0
+
+
+@dataclass
+class AnemoiInspectArgs:
+    detailed: bool
+    path: str
+    progress: bool
+    size: bool
+    statistics: bool
 
 
 class DataloaderArgs(TypedDict):

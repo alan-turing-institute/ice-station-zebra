@@ -1,6 +1,5 @@
 import logging
 import shutil
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Type
 
@@ -10,26 +9,9 @@ from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
 from ice_station_zebra.data.anemoi.preprocessors import IPreprocessor
+from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class AnemoiCreateArgs:
-    path: str
-    config: DictConfig
-    command: str = "unused"
-    threads: int = 0
-    processes: int = 0
-
-
-@dataclass
-class AnemoiInspectArgs:
-    path: str
-    detailed: bool
-    progress: bool
-    statistics: bool
-    size: bool
 
 
 class ZebraDataset:

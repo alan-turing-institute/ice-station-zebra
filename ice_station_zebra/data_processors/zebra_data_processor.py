@@ -15,7 +15,7 @@ from .preprocessors import IPreprocessor
 log = logging.getLogger(__name__)
 
 
-class ZebraDataset:
+class ZebraDataProcessor:
     def __init__(
         self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
     ) -> None:

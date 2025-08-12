@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 
-from .zebra_dataset_factory import ZebraDatasetFactory
+from .zebra_data_processor_factory import ZebraDataProcessorFactory
 
 # Create the typer app
 datasets_cli = typer.Typer(help="Manage datasets")
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def create(config: DictConfig) -> None:
     """Create all datasets"""
-    factory = ZebraDatasetFactory(config)
+    factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         log.info(f"Working on {dataset.name}")
         dataset.create()
@@ -27,7 +27,7 @@ def create(config: DictConfig) -> None:
 @hydra_adaptor
 def inspect(config: DictConfig) -> None:
     """Inspect all datasets"""
-    factory = ZebraDatasetFactory(config)
+    factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         log.info(f"Working on {dataset.name}")
         dataset.inspect()

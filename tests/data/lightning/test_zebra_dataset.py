@@ -46,6 +46,18 @@ class TestZebraDataset:
             dataset[5]
         assert "list index out of range" in str(excinfo.value)
 
+    def test_dataset_index_from_date(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        # Check type
+        assert dataset.index_from_date(self.dates_np[0]) == 0
+        # Check exception for out of range
+        with pytest.raises(ValueError) as excinfo:
+            dataset.index_from_date(np.datetime64("1970-01-01"))
+        assert "Date 1970-01-01T00:00:00 not found in the dataset" in str(excinfo.value)
+
     def test_dataset_len(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",

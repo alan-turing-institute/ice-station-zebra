@@ -60,7 +60,7 @@ class DDPMProcessor(nn.Module):
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(0, self.timesteps)):
-                t_batch = torch.full((x.shape[0],), t, device=device, dtype=torch.long)
+                t_batch = torch.full((x.shape[0],), t, dtype=torch.long)
                 pred_v = self.model(y, t_batch, x, sample_weight)
                 pred_v = pred_v.squeeze(3) if pred_v.dim() > 3 else pred_v.squeeze()
                 y = self.diffusion.p_sample(y, t_batch, pred_v)

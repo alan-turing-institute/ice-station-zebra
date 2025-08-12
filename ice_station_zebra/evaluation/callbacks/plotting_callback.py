@@ -58,8 +58,8 @@ class PlottingCallback(Callback):
             date_ = dataset.date_from_index(batch_size * batch_idx)
 
             # Load the ground truth and prediction
-            np_ground_truth = outputs["target"].cpu().numpy()[0, 0, :, :]
-            np_prediction = outputs["output"].cpu().numpy()[0, 0, :, :]
+            np_ground_truth = outputs["target"].cpu().numpy()[0, 0, 0, :, :]
+            np_prediction = outputs["output"].cpu().numpy()[0, 0, 0, :, :]
 
             # Create each requested plot
             images = {

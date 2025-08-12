@@ -1,13 +1,13 @@
+import itertools
 from abc import ABC, abstractmethod
 
 import hydra
 import torch
-import torch.nn as nn
 from lightning import LightningModule
 from omegaconf import DictConfig
 from torch.optim import Optimizer
 
-from ice_station_zebra.types import DataSpace, LightningBatch
+from ice_station_zebra.types import DataSpace, TensorNTCHW
 
 
 class ZebraModel(LightningModule, ABC):
@@ -16,6 +16,8 @@ class ZebraModel(LightningModule, ABC):
         *,
         name: str,
         input_spaces: list[DictConfig],
+        n_forecast_steps: int,
+        n_history_steps: int,
         output_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
@@ -24,12 +26,13 @@ class ZebraModel(LightningModule, ABC):
         # Save model name
         self.name = name
 
+        # Save history and forecast steps
+        self.n_forecast_steps = n_forecast_steps
+        self.n_history_steps = n_history_steps
+
         # Construct the input and output spaces
         self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]
         self.output_space = DataSpace.from_dict(output_space)
-
-        # Initialise an empty module list
-        self.model_list = nn.ModuleList()
 
         # Store the optimizer config
         self.optimizer_cfg = optimizer
@@ -40,61 +43,74 @@ class ZebraModel(LightningModule, ABC):
         self.save_hyperparameters()
 
     @abstractmethod
-    def forward(self, inputs: LightningBatch) -> torch.Tensor:
-        """Forward step of the model"""
+    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
+        """Forward step of the model
+
+        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
+        - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
+        """
 
     def configure_optimizers(self) -> Optimizer:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
-            dict(**self.optimizer_cfg) | {"params": self.model_list.parameters()}
+            dict(**self.optimizer_cfg)
+            | {
+                "params": itertools.chain(
+                    *[module.parameters() for module in self.children()]
+                )
+            }
         )
 
-    def loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    def loss(self, output: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
         return torch.nn.functional.l1_loss(output, target)
 
     def test_step(
-        self, batch: LightningBatch, batch_idx: int
+        self, batch: dict[str, TensorNTCHW], batch_idx: int
     ) -> dict[str, torch.Tensor]:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
         - Return the output, target and loss
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         loss = self.loss(output, target)
         return {"output": output, "target": target, "loss": loss}
 
-    def training_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
+    def training_step(
+        self, batch: dict[str, TensorNTCHW], batch_idx: int
+    ) -> torch.Tensor:
         """Run the training step
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
         - Calculate the loss wrt. the target
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         return self.loss(output, target)
 
-    def validation_step(self, batch: LightningBatch, batch_idx: int) -> torch.Tensor:
+    def validation_step(
+        self, batch: dict[str, TensorNTCHW], batch_idx: int
+    ) -> torch.Tensor:
         """Run the validation step
 
-        A batch contains one tensor for each input dataset followed by one for the target
-        The shape of each of these tensors is (batch_size; variables; ensembles; position)
+        A batch contains one tensor for each input dataset and one for the target
+        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
         - Calculate the loss wrt. the target
         """
-        inputs, target = batch[:-1], batch[-1]
-        output = self(inputs)
+        target = batch.pop("target")
+        output = self(batch)
         loss = self.loss(output, target)
         self.log("validation_loss", loss)
         return loss

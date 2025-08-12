@@ -1,18 +1,6 @@
 defaults:
   - callbacks:
     - device_stats
+  - optimizer: default
+  - trainer: default
   - _self_
-
-# Name of the dataset group containing our prediction target
-predict_target: osisaf-south
-
-# PyTorch lightning settings
-trainer:
-  _target_: lightning.pytorch.trainer.trainer.Trainer
-  accelerator: auto
-  devices: auto
-  log_every_n_steps: 10
-  max_epochs: 50
-optimizer:
-  _target_: torch.optim.AdamW
-  lr: 5e-4

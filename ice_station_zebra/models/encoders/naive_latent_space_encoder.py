@@ -1,33 +1,39 @@
 import math
+from typing import Any
 
 import torch.nn as nn
-from torch import Tensor
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from .base_encoder import BaseEncoder
 
 
-class NaiveLatentSpaceEncoder(nn.Module):
+class NaiveLatentSpaceEncoder(BaseEncoder):
     """
-    Encoder that takes data in an input space and translates it to a smaller latent space
+    Naive, linear encoder that takes data in an input space and translates it to a smaller latent space
 
-    Input:
-        Tensor of (batch_size, input_channels, input_height, input_width)
+    Input space:
+        TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
-    Output:
-        Tensor of (batch_size, latent_channels, latent_height, latent_width)
+    Latent space:
+        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(self, *, input_space: DataSpace, latent_space: DataSpace) -> None:
-        super().__init__()
+    def __init__(
+        self, *, input_space: DataSpace, latent_space: DataSpace, **kwargs: Any
+    ) -> None:
+        super().__init__(name=input_space.name, **kwargs)
 
         # Construct list of layers
         layers: list[nn.Module] = []
+
+        # Start by flattening the time and channels
+        layers.append(nn.Flatten(1, 2))
+        n_channels = input_space.channels * self.n_history_steps
 
         # Add size-reducing convolutional layers while we are larger than the latent shape
         n_conv_layers = math.floor(
             math.log2(min(*input_space.shape) / max(*latent_space.shape))
         )
-        n_channels = input_space.channels
         for _ in range(n_conv_layers):
             layers.append(
                 nn.Conv2d(
@@ -45,14 +51,14 @@ class NaiveLatentSpaceEncoder(nn.Module):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: TensorNTCHW) -> TensorNCHW:
         """
         Transformation summary
 
-        Input:
-            x: Tensor of (batch_size, input_channels, input_height, input_width)
+        Args:
+            x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
-        Output:
-            Tensor of (batch_size, latent_channels, latent_height, latent_width)
+        Returns:
+            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
         """
         return self.model(x)

@@ -1,11 +1,13 @@
 from pathlib import Path
+from collections.abc import Sequence
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
-from numpy.typing import NDArray
+from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
+from cachetools import LRUCache, cachedmethod
 from torch.utils.data import Dataset
 
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
 
 
 class ZebraDataset(Dataset):
@@ -23,8 +25,22 @@ class ZebraDataset(Dataset):
         We reshape each time point to: variables; pos_x; pos_y
         """
         super().__init__()
-        self.dataset = open_dataset(input_files, start=start, end=end)
-        self.dataset._name = name
+        self._cache: LRUCache = LRUCache(maxsize=128)
+        self._dataset: AnemoiDataset | None = None
+        self._end = end
+        self._input_files = input_files
+        self._name = name
+        self._start = start
+
+    @property
+    def dataset(self) -> AnemoiDataset:
+        """Load the underlying Anemoi dataset."""
+        if not self._dataset:
+            self._dataset = open_dataset(
+                self._input_files, start=self._start, end=self._end
+            )
+            self._dataset._name = self._name
+        return self._dataset
 
     @property
     def end_date(self) -> np.datetime64:
@@ -32,14 +48,18 @@ class ZebraDataset(Dataset):
         return self.dataset.end_date
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> str:
         """Return the name of the dataset."""
-        return self.dataset.name
+        return self._name
 
     @property
     def space(self) -> DataSpace:
         """Return the data space for this dataset."""
-        return DataSpace(channels=self.dataset.shape[1], shape=self.dataset.field_shape)
+        return DataSpace(
+            channels=self.dataset.shape[1],
+            name=self.name,
+            shape=self.dataset.field_shape,
+        )
 
     @property
     def start_date(self) -> np.datetime64:
@@ -50,7 +70,18 @@ class ZebraDataset(Dataset):
         """Return the total length of the dataset"""
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> NDArray[np.float32]:
-        """Return a single timestep after reshaping to [C, H, W]"""
-        chw = (self.space.channels, *self.space.shape)
-        return self.dataset[idx].reshape(chw)
+    def __getitem__(self, idx: int) -> ArrayCHW:
+        """Return the data for a single timestep in [C, H, W] format"""
+        return self.dataset[idx].reshape(self.space.chw)
+
+    @cachedmethod(lambda self: self._cache)
+    def index_from_date(self, date: np.datetime64) -> int:
+        """Return the index of a given date in the dataset."""
+        idx, _, _ = self.dataset.to_index(date, 0)
+        return idx
+
+    def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
+        """Return the data for a series of timesteps in [T, C, H, W] format"""
+        return np.stack(
+            [self[self.index_from_date(target_date)] for target_date in dates], axis=0
+        )

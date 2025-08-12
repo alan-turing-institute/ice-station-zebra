@@ -1,8 +1,9 @@
 from pathlib import Path
 import numpy as np
+import pytest
 
 from ice_station_zebra.data.lightning.zebra_dataset import ZebraDataset
-from ice_station_zebra.types import DataSpace
+from ice_station_zebra.types import ArrayCHW, DataSpace
 
 
 class TestZebraDataset:
@@ -32,6 +33,18 @@ class TestZebraDataset:
         )
         assert dataset.start_date == self.dates_np[0]
         assert dataset.end_date == self.dates_np[1]
+
+    def test_dataset_getitem(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        # Check type
+        assert isinstance(dataset[0], ArrayCHW)
+        # Check exception for out of range
+        with pytest.raises(IndexError) as excinfo:
+            dataset[5]
+        assert "list index out of range" in str(excinfo.value)
 
     def test_dataset_len(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

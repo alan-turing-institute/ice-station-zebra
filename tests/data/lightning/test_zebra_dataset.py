@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from ice_station_zebra.data.lightning.zebra_dataset import ZebraDataset
-from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
+from ice_station_zebra.types import DataSpace
 
 
 class TestZebraDataset:
@@ -39,8 +39,10 @@ class TestZebraDataset:
             name="mock_dataset",
             input_files=[mock_dataset],
         )
-        # Check type
-        assert isinstance(dataset[0], ArrayCHW)
+        # Check return type and shape
+        data_array = dataset[0]
+        assert isinstance(data_array, np.ndarray)
+        assert data_array.shape == (1, 2, 2)
         # Check exception for out of range
         with pytest.raises(IndexError) as excinfo:
             dataset[5]
@@ -53,7 +55,7 @@ class TestZebraDataset:
         )
         # Check return type and shape
         data_array = dataset.get_tchw(self.dates_np)
-        assert isinstance(data_array, ArrayTCHW)
+        assert isinstance(data_array, np.ndarray)
         assert data_array.shape == (3, 1, 2, 2)
         # Check exception for out of range
         with pytest.raises(ValueError) as excinfo:

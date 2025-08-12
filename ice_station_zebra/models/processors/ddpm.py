@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
-
-from ice_station_zebra.types import TensorNCHW
 from torch_ema import ExponentialMovingAverage
+
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
+from ice_station_zebra.types import TensorNCHW
+
 
 class DDPMProcessor(nn.Module):
-    """ Denoising Diffusion Probabilistic Model (DDPM)
+    """Denoising Diffusion Probabilistic Model (DDPM)
 
     Operations all occur in latent space:
         TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
@@ -16,7 +17,7 @@ class DDPMProcessor(nn.Module):
         super().__init__()
         self.model = UNetDiffusion(n_latent_channels, timesteps)
         self.timesteps = timesteps
-        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)  
+        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
@@ -29,7 +30,7 @@ class DDPMProcessor(nn.Module):
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
         """
-        x_bhwc = x.movedim(1,-1)
+        x_bhwc = x.movedim(1, -1)
         sample_weight = torch.ones_like(x_bhwc[..., :1])
 
         y_bhwc = self.sample(x_bhwc, sample_weight)
@@ -37,7 +38,7 @@ class DDPMProcessor(nn.Module):
         y_bchw = y_bhwc.movedim(-1, 1)
         y_hat = (y_bchw + 1.0) / 2.0
         y_hat = torch.clamp(y_hat, 0, 1)
-        
+
         return y_hat
 
     def sample(self, x, sample_weight, num_samples=1):
@@ -54,7 +55,7 @@ class DDPMProcessor(nn.Module):
         """
         # Start from pure noise
         y = torch.randn(x.shape)
-        
+
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(0, self.timesteps)):
@@ -62,5 +63,5 @@ class DDPMProcessor(nn.Module):
                 pred_v = self.model(y, t_batch, x, sample_weight)
                 pred_v = pred_v.squeeze(3) if pred_v.dim() > 3 else pred_v.squeeze()
                 y = self.diffusion.p_sample(y, t_batch, pred_v)
-            
+
         return y

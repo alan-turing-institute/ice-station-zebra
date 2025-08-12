@@ -1,7 +1,7 @@
 """
 UNetDiffusion: Conditional U-Net for DDPM-based Forecasting
 
-Author: Maria Carolina Novitasari 
+Author: Maria Carolina Novitasari
 
 Description:
     U-Net architecture for use in conditional denoising diffusion probabilistic models (DDPM),
@@ -11,29 +11,32 @@ Description:
 
 """
 
+import math
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import math
-from typing import Tuple
+
 from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
 from ice_station_zebra.models.common.convblock import ConvBlock
+from ice_station_zebra.models.common.timeembed import TimeEmbed
 from ice_station_zebra.models.common.upconvblock import UpconvBlock
-from ice_station_zebra.models.common.timeembed import TimeEmbed 
-        
+
+
 class UNetDiffusion(nn.Module):
     """
     U-Net architecture for conditional DDPM-based forecasting.
     Inputs include noisy predictions, time step embeddings, and conditioning inputs.
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
-    
-    def __init__(self,
-                 input_channels,
-                 timesteps=1000,
-                 filter_size=3,
-                 start_out_channels=64,
-                 **kwargs):
+
+    def __init__(
+        self,
+        input_channels,
+        timesteps=1000,
+        filter_size=3,
+        start_out_channels=64,
+        **kwargs,
+    ):
         """
         Initialize the U-Net diffusion model.
 
@@ -51,19 +54,21 @@ class UNetDiffusion(nn.Module):
         self.filter_size = filter_size
         self.start_out_channels = start_out_channels
         self.timesteps = timesteps
-        
+
         # Time embedding
         self.time_embed_dim = 256
         self.time_embed = TimeEmbed(self.time_embed_dim)
-        
+
         # Channel calculations
         channels = [start_out_channels * 2**pow for pow in range(4)]
 
         output_channels = input_channels
         self.initial_conv_channels = input_channels + output_channels
-        
+
         # Encoder
-        self.conv1 = ConvBlock(self.initial_conv_channels, channels[0],filter_size=filter_size)
+        self.conv1 = ConvBlock(
+            self.initial_conv_channels, channels[0], filter_size=filter_size
+        )
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
@@ -81,13 +86,26 @@ class UNetDiffusion(nn.Module):
         self.up8 = UpconvBlock(channels[2], channels[1])
         self.up9 = UpconvBlock(channels[1], channels[0])
 
-        self.up6b = ConvBlock(channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size)
-        self.up7b = ConvBlock(channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size)
-        self.up8b = ConvBlock(channels[2] + self.time_embed_dim, channels[1], filter_size=filter_size)
-        self.up9b = ConvBlock(channels[1] + self.time_embed_dim, channels[0], filter_size=filter_size, final=True)
+        self.up6b = ConvBlock(
+            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size
+        )
+        self.up7b = ConvBlock(
+            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size
+        )
+        self.up8b = ConvBlock(
+            channels[2] + self.time_embed_dim, channels[1], filter_size=filter_size
+        )
+        self.up9b = ConvBlock(
+            channels[1] + self.time_embed_dim,
+            channels[0],
+            filter_size=filter_size,
+            final=True,
+        )
 
         # Final layer
-        self.final_layer = nn.Conv2d(channels[0], output_channels, kernel_size=1, padding="same")
+        self.final_layer = nn.Conv2d(
+            channels[0], output_channels, kernel_size=1, padding="same"
+        )
 
     def forward(self, noise, t, conditioning, sample_weight):
         """
@@ -102,16 +120,16 @@ class UNetDiffusion(nn.Module):
         Returns:
             torch.Tensor: Predicted denoised forecast of shape [B, H, W, n_classes, n_forecast_days].
         """
-        noise = 2.0 * noise - 1.0    
-        conditioning = 2.0 * conditioning - 1.0    
-    
+        noise = 2.0 * noise - 1.0
+        conditioning = 2.0 * conditioning - 1.0
+
         # Time embedding
         t = self._timestep_embedding(t)
         t = self.time_embed(t)
-        
+
         # Concatenate with conditional input
         noise = torch.cat([noise, conditioning], dim=-1)  # [b,h,w,(d*c)+input_channels]
-        
+
         # Convert to channel-first format
         noise = torch.movedim(noise, -1, 1)  # [b,channels,h,w]
 
@@ -133,17 +151,17 @@ class UNetDiffusion(nn.Module):
         up6 = torch.cat([bn4, up6], dim=1)
         up6 = self._add_time_embedding(up6, t)
         up6 = self.up6b(up6)
-        
+
         up7 = self.up7(up6)
         up7 = torch.cat([bn3, up7], dim=1)
         up7 = self._add_time_embedding(up7, t)
         up7 = self.up7b(up7)
-        
+
         up8 = self.up8(up7)
         up8 = torch.cat([bn2, up8], dim=1)
         up8 = self._add_time_embedding(up8, t)
         up8 = self.up8b(up8)
-        
+
         up9 = self.up9(up8)
         up9 = torch.cat([bn1, up9], dim=1)
         up9 = self._add_time_embedding(up9, t)
@@ -169,14 +187,18 @@ class UNetDiffusion(nn.Module):
         """
         half = dim // 2
         freqs = torch.exp(
-            -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
+            -math.log(max_period)
+            * torch.arange(start=0, end=half, dtype=torch.float32)
+            / half
         )
         args = timesteps[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
-            embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
+            embedding = torch.cat(
+                [embedding, torch.zeros_like(embedding[:, :1])], dim=-1
+            )
         return embedding
-    
+
     def _add_time_embedding(self, x, t):
         """
         Concatenates time embedding across spatial dimensions.
@@ -191,5 +213,3 @@ class UNetDiffusion(nn.Module):
         b, c, h, w = x.shape
         t = t.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, h, w)
         return torch.cat([x, t], dim=1)
-    
-    

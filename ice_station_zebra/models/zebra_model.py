@@ -47,10 +47,7 @@ class ZebraModel(LightningModule, ABC):
         """Forward step of the model
 
         - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
-        - encode inputs to [NCHW] latent space [batch, C_input_kprime, H_latent, W_latent]
-        - concatenate inputs in [NCHW] latent space [batch, C_total, H_latent, W_latent]
-        - process in latent space [NCHW] [batch, C_total, H_latent, W_latent]
-        - decode back to [NTCHW] output space [batch, n_forecast_steps, C_output, H_output, W_output]
+        - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
         """
 
     def configure_optimizers(self) -> Optimizer:

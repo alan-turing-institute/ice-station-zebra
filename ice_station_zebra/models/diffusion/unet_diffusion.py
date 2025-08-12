@@ -135,13 +135,13 @@ class UNetDiffusion(nn.Module):
 
         # Encoder pathway
         bn1 = self.conv1(noise)
-        conv1 = self.maxpool1(bn1, kernel_size=2)
+        conv1 = self.maxpool1(bn1)
         bn2 = self.conv2(conv1)
-        conv2 = self.maxpool2(bn2, kernel_size=2)
+        conv2 = self.maxpool2(bn2)
         bn3 = self.conv3(conv2)
-        conv3 = self.maxpool3(bn3, kernel_size=2)
+        conv3 = self.maxpool3(bn3)
         bn4 = self.conv4(conv3)
-        conv4 = self.maxpool4(bn4, kernel_size=2)
+        conv4 = self.maxpool4(bn4)
 
         # Bottleneck
         bn5 = self.conv5(conv4)

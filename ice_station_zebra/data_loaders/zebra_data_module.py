@@ -3,11 +3,11 @@ from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
+from lightning import LightningDataModule
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.types import ArrayTCHW, DataloaderArgs, DataSpace
-from lightning import LightningDataModule
 
 from .combined_dataset import CombinedDataset
 from .zebra_dataset import ZebraDataset

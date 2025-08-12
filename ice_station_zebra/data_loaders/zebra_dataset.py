@@ -74,14 +74,14 @@ class ZebraDataset(Dataset):
         """Return the data for a single timestep in [C, H, W] format"""
         return self.dataset[idx].reshape(self.space.chw)
 
-    @cachedmethod(lambda self: self._cache)
-    def index_from_date(self, date: np.datetime64) -> int:
-        """Return the index of a given date in the dataset."""
-        idx, _, _ = self.dataset.to_index(date, 0)
-        return idx
-
     def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
         """Return the data for a series of timesteps in [T, C, H, W] format"""
         return np.stack(
             [self[self.index_from_date(target_date)] for target_date in dates], axis=0
         )
+
+    @cachedmethod(lambda self: self._cache)
+    def index_from_date(self, date: np.datetime64) -> int:
+        """Return the index of a given date in the dataset."""
+        idx, _, _ = self.dataset.to_index(date, 0)
+        return idx

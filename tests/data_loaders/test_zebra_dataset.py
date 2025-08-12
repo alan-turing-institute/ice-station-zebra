@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ice_station_zebra.data.lightning.zebra_dataset import ZebraDataset
+from ice_station_zebra.data_loaders.zebra_dataset import ZebraDataset
 from ice_station_zebra.types import DataSpace
 
 

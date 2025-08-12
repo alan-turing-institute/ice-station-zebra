@@ -1,9 +1,9 @@
+import torch
 import torch.nn as nn
 from torch import Tensor
-import torch
 
-from ice_station_zebra.models.common.convblock import ConvBlock
 from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
+from ice_station_zebra.models.common.convblock import ConvBlock
 from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 

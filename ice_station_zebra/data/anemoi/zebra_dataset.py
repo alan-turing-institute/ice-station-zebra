@@ -3,11 +3,11 @@ import shutil
 from pathlib import Path
 from typing import Type
 
-from anemoi.datasets.commands.create import Create
-from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
+from anemoi.datasets.commands.create import Create
+from anemoi.datasets.commands.inspect import InspectZarr
 from ice_station_zebra.data.anemoi.preprocessors import IPreprocessor
 from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
 

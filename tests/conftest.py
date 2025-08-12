@@ -1,10 +1,12 @@
 import datetime
 from pathlib import Path
+from typing import Any
+
 import pytest
 import xarray as xr
-from typing import Any
-from omegaconf import DictConfig
 from anemoi.datasets.commands.create import Create
+from omegaconf import DictConfig
+
 from ice_station_zebra.types import AnemoiCreateArgs
 
 

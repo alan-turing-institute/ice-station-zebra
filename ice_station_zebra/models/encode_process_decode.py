@@ -4,8 +4,8 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 from ice_station_zebra.models.encoders import BaseEncoder
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 from .zebra_model import ZebraModel
 

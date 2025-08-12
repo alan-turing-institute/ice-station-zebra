@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from ice_station_zebra.types import TensorNCHW
 from torch_ema import ExponentialMovingAverage
-from .diffusion import GaussianDiffusion
+from ice_station_zebra.models.diffusion import GaussianDiffusion
 
 
 class DDPMProcessor(nn.Module):

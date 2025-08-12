@@ -54,13 +54,13 @@ class DDPMProcessor(nn.Module):
             torch.Tensor: Denoised output of shape [B, H, W, C].
         """
         # Start from pure noise
-        y = torch.randn(x.shape)
+        y = torch.rand_like(x)
 
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(0, self.timesteps)):
-                t_batch = torch.full((x.shape[0],), t, dtype=torch.long)
-                pred_v = self.model(y, t_batch, x, sample_weight)
+                t_batch = torch.full_like(x[:, 0, 0, 0], t, dtype=torch.long)
+                pred_v: torch.Tensor = self.model(y, t_batch, x, sample_weight)
                 pred_v = pred_v.squeeze(3) if pred_v.dim() > 3 else pred_v.squeeze()
                 y = self.diffusion.p_sample(y, t_batch, pred_v)
 

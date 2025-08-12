@@ -173,7 +173,9 @@ class UNetDiffusion(nn.Module):
 
         return output
 
-    def _timestep_embedding(self, timesteps, dim=256, max_period=10000):
+    def _timestep_embedding(
+        self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000
+    ):
         """
         Converts timestep integers into sinusoidal positional embeddings.
 
@@ -188,7 +190,9 @@ class UNetDiffusion(nn.Module):
         half = dim // 2
         freqs = torch.exp(
             -math.log(max_period)
-            * torch.arange(start=0, end=half, dtype=torch.float32)
+            * torch.arange(
+                start=0, end=half, dtype=torch.float32, device=timesteps.device
+            )
             / half
         )
         args = timesteps[:, None].float() * freqs[None]

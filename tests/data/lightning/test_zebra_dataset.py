@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from ice_station_zebra.data.lightning.zebra_dataset import ZebraDataset
-from ice_station_zebra.types import ArrayCHW, DataSpace
+from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
 
 
 class TestZebraDataset:
@@ -45,6 +45,20 @@ class TestZebraDataset:
         with pytest.raises(IndexError) as excinfo:
             dataset[5]
         assert "list index out of range" in str(excinfo.value)
+
+    def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        # Check return type and shape
+        data_array = dataset.get_tchw(self.dates_np)
+        assert isinstance(data_array, ArrayTCHW)
+        assert data_array.shape == (3, 1, 2, 2)
+        # Check exception for out of range
+        with pytest.raises(ValueError) as excinfo:
+            dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
+        assert "Date 1970-01-01T00:00:00 not found in the dataset" in str(excinfo.value)
 
     def test_dataset_index_from_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

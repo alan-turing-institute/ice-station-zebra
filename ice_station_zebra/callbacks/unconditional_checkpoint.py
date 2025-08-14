@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from lightning import LightningModule, Trainer
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 
@@ -16,14 +18,15 @@ class UnconditionalCheckpoint(Callback):
         self._on_train_end = on_train_end
 
     @property
-    def dirpath(self) -> str:
+    def dirpath(self) -> str | Path | None:
         """Return the directory path where checkpoints are saved."""
         return self.impl.dirpath
 
     @dirpath.setter
-    def dirpath(self, value) -> None:
+    def dirpath(self, value: str | Path | None) -> None:
         """Set the directory path where checkpoints are saved."""
-        self.impl.dirpath = value
+        if value:
+            self.impl.dirpath = Path(value)
 
     def on_train_end(self, trainer: Trainer, _: LightningModule) -> None:
         """Called when training ends."""

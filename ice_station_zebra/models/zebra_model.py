@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 import hydra
 import torch
 from lightning import LightningModule
+from lightning.pytorch.utilities.types import OptimizerLRScheduler
 from omegaconf import DictConfig
-from torch.optim import Optimizer
 
 from ice_station_zebra.types import DataSpace, TensorNTCHW
 
@@ -50,7 +50,7 @@ class ZebraModel(LightningModule, ABC):
         - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
         """
 
-    def configure_optimizers(self) -> Optimizer:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         """Construct the optimizer from the config"""
         return hydra.utils.instantiate(
             dict(**self.optimizer_cfg)

@@ -1,4 +1,4 @@
 plotting:
-  _target_: ice_station_zebra.evaluation.callbacks.PlottingCallback
+  _target_: ice_station_zebra.callbacks.PlottingCallback
   frequency: 20
   plot_sea_ice_concentration: true

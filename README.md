@@ -5,6 +5,10 @@
 | Name                                                                    |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | ice\_station\_zebra/\_\_init\_\_.py                                     |        0 |        0 |    100% |           |
+| ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        4 |        0 |    100% |           |
+| ice\_station\_zebra/callbacks/metric\_summary\_callback.py              |       20 |       11 |     45% |18-20, 32-33, 38-45 |
+| ice\_station\_zebra/callbacks/plotting\_callback.py                     |       33 |       21 |     36% |27-31, 44-76 |
+| ice\_station\_zebra/callbacks/unconditional\_checkpoint.py              |       21 |       10 |     52% |16-18, 23, 28-29, 33-34, 38-39 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
 | ice\_station\_zebra/cli/hydra.py                                        |       22 |        3 |     86% |     38-40 |
 | ice\_station\_zebra/cli/main.py                                         |       12 |        1 |     92% |        23 |
@@ -21,12 +25,9 @@
 | ice\_station\_zebra/data\_processors/zebra\_data\_processor.py          |       34 |       18 |     47% |22-28, 32-40, 44-46, 55-56 |
 | ice\_station\_zebra/data\_processors/zebra\_data\_processor\_factory.py |       10 |        4 |     60% |     14-21 |
 | ice\_station\_zebra/evaluation/\_\_init\_\_.py                          |        2 |        0 |    100% |           |
-| ice\_station\_zebra/evaluation/callbacks/\_\_init\_\_.py                |        3 |        3 |      0% |       1-4 |
-| ice\_station\_zebra/evaluation/callbacks/metric\_summary\_callback.py   |       20 |       20 |      0% |      1-45 |
-| ice\_station\_zebra/evaluation/callbacks/plotting\_callback.py          |       33 |       33 |      0% |      1-76 |
 | ice\_station\_zebra/evaluation/cli.py                                   |       16 |        3 |     81% | 27-28, 32 |
 | ice\_station\_zebra/evaluation/evaluator.py                             |       34 |       22 |     35% | 21-66, 77 |
-| ice\_station\_zebra/models/\_\_init\_\_.py                              |        3 |        0 |    100% |           |
+| ice\_station\_zebra/models/\_\_init\_\_.py                              |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        3 |        3 |      0% |       1-4 |
 | ice\_station\_zebra/models/decoders/base\_decoder.py                    |        9 |        9 |      0% |      1-24 |
 | ice\_station\_zebra/models/decoders/naive\_latent\_space\_decoder.py    |       20 |       20 |      0% |      1-67 |
@@ -34,19 +35,20 @@
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                     |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/base\_encoder.py                    |       10 |        3 |     70% |     20-22 |
 | ice\_station\_zebra/models/encoders/naive\_latent\_space\_encoder.py    |       20 |       12 |     40% | 25-53, 65 |
+| ice\_station\_zebra/models/persistence.py                               |       16 |        6 |     62% |17-19, 23, 32-33 |
 | ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        3 |        3 |      0% |       1-4 |
 | ice\_station\_zebra/models/processors/null.py                           |        9 |        9 |      0% |      1-28 |
 | ice\_station\_zebra/models/processors/unet.py                           |       44 |       44 |      0% |      1-82 |
 | ice\_station\_zebra/models/zebra\_model.py                              |       39 |       22 |     44% |24-43, 55, 65, 79-82, 96-98, 112-116 |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
-| ice\_station\_zebra/training/trainer.py                                 |       25 |       13 |     48% | 21-81, 84 |
+| ice\_station\_zebra/training/trainer.py                                 |       29 |       15 |     48% | 23-87, 90 |
 | ice\_station\_zebra/types.py                                            |       49 |        2 |     96% |    61, 67 |
 | ice\_station\_zebra/utils.py                                            |       12 |        6 |     50% |9, 13, 18-21 |
-| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        2 |      0% |       1-3 |
-| ice\_station\_zebra/visualisations/convert.py                           |        8 |        8 |      0% |      1-12 |
-| ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       17 |       17 |      0% |      1-28 |
-|                                                               **TOTAL** |  **712** |  **379** | **47%** |           |
+| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        0 |    100% |           |
+| ice\_station\_zebra/visualisations/convert.py                           |        8 |        4 |     50% |      9-12 |
+| ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       20 |       13 |     35% |     17-36 |
+|                                                               **TOTAL** |  **758** |  **363** | **52%** |           |
 
 
 ## Setup coverage badge

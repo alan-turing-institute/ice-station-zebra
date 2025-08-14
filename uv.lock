@@ -1236,6 +1236,7 @@ dependencies = [
     { name = "netcdf4" },
     { name = "pillow" },
     { name = "pydantic" },
+    { name = "torch-ema" },
     { name = "typer" },
     { name = "types-cachetools" },
     { name = "wandb" },
@@ -1265,6 +1266,7 @@ requires-dist = [
     { name = "netcdf4", specifier = ">=1.7.0" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "torch-ema", specifier = ">=0.3" },
     { name = "typer", specifier = ">=0.16.0" },
     { name = "types-cachetools", specifier = ">=6.1.0" },
     { name = "wandb", specifier = ">=0.21.0" },
@@ -3285,6 +3287,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/99/a8/6acf48d48838fb8fe480597d98a0668c2beb02ee4755cc136de92a0a956f/torch-2.8.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:b2aca0939fb7e4d842561febbd4ffda67a8e958ff725c1c27e244e85e982173c", size = 887913624, upload-time = "2025-08-06T14:56:44.33Z" },
     { url = "https://files.pythonhosted.org/packages/af/8a/5c87f08e3abd825c7dfecef5a0f1d9aa5df5dd0e3fd1fa2f490a8e512402/torch-2.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:2f4ac52f0130275d7517b03a33d2493bab3693c83dcfadf4f81688ea82147d2e", size = 241326087, upload-time = "2025-08-06T14:53:46.503Z" },
     { url = "https://files.pythonhosted.org/packages/be/66/5c9a321b325aaecb92d4d1855421e3a055abd77903b7dab6575ca07796db/torch-2.8.0-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:619c2869db3ada2c0105487ba21b5008defcc472d23f8b80ed91ac4a380283b0", size = 73630478, upload-time = "2025-08-06T14:53:57.144Z" },
+]
+
+[[package]]
+name = "torch-ema"
+version = "0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/45/af/db7d0c8b26a13062d9b85bdcf8d977acd8a51057fb6edca9eb30613ef5ef/torch_ema-0.3.tar.gz", hash = "sha256:5a3595405fa311995f01291a1d4a9242d6be08a0fc9db29152ec6cfd586ea414", size = 5486, upload-time = "2021-11-17T20:59:16.265Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/f1/a47c831436595cffbfd69a19ea129a23627120b13f4886499e58775329d1/torch_ema-0.3-py3-none-any.whl", hash = "sha256:823ad8da5c10bc1eebcec739cc3f521aa9573229fe04e5673c304d29f1433279", size = 5475, upload-time = "2021-11-17T20:59:14.73Z" },
 ]
 
 [[package]]

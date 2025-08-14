@@ -1,0 +1,78 @@
+# config/diffusion_config.yaml
+# Configuration for diffusion model training
+
+data:
+  configuration_path: "dataset_config.notebook_api_pytorch_data.json"  
+
+# Model architecture configuration
+model:
+  name: "diffusion_icenet"
+  filter_size: 3                    # Convolution kernel size
+  n_filters_factor: 0.5             # Scaling factor for number of filters
+  timesteps: 1000                   # Number of diffusion steps (T)
+
+# Training configuration
+train:
+  seed: 45                          # Random seed for reproducibility
+  
+  # Optimizer settings
+  optimizer:
+    learning_rate: 5e-4             # Learning rate
+    
+  # DataLoader settings
+  dataloader:
+    batch_size: 8                   # Batch size
+    n_workers: 8                    # Number of data loading workers
+    persistent_workers: true        # Keep workers alive between epochs
+    shuffle: false                  # Shuffle training data
+    
+  # PyTorch Lightning Trainer settings
+  trainer:
+    accelerator: "auto"             # Use auto-detection (GPU if available)
+    devices: -1                     # Use all available devices
+    log_every_n_steps: 5            # Log frequency
+    max_epochs: 75                  # Maximum number of epochs
+    num_sanity_val_steps: 1         # Validation steps before training
+    fast_dev_run: false             # Set to true for quick testing
+    precision: 32                   # Training precision (16, 32, or 64)
+    
+  # Training callbacks
+  callbacks:
+    # Model checkpointing
+    checkpoint:
+      _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      monitor: "val_accuracy"       # Metric to monitor
+      mode: "max"                   # Maximize or minimize the metric
+      save_top_k: 3                 # Save top 3 models
+      filename: "diffusion-{epoch:02d}-{val_accuracy:.4f}"
+      save_last: true               # Also save the last checkpoint
+      
+    # Early stopping
+    early_stopping:
+      _target_: lightning.pytorch.callbacks.EarlyStopping
+      monitor: "val_accuracy"       # Metric to monitor
+      patience: 25                  # Number of epochs to wait
+      verbose: true                 # Print early stopping info
+      mode: "max"                   # Maximize the metric
+
+# Logging configuration (comment out if not needed)
+# loggers:
+  # # TensorBoard logging
+  # tensorboard:
+  #   _target_: lightning.pytorch.loggers.TensorBoardLogger
+  #   save_dir: "./logs"
+  #   name: "diffusion_experiment"
+    
+  # Weights & Biases logging (uncomment if you use wandb)
+  # wandb:
+  #   _target_: lightning.pytorch.loggers.WandbLogger
+  #   project: "diffusion_icenet"
+  #   log_model: true
+  #   offline: false
+
+# Hydra configuration
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: false  # Don't change working directory

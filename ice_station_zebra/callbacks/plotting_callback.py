@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from typing import Any
 
 from lightning import LightningModule, Trainer
@@ -43,18 +44,16 @@ class PlottingCallback(Callback):
         # Run plotting every `frequency` batches
         if batch_idx % self.frequency == 0:
             # Get date for this batch
-            batch_size = outputs.target.shape[0]
-            test_dataloaders: DataLoader | list[DataLoader] | None = (
-                trainer.test_dataloaders
-            )
-            if test_dataloaders is None:
+            dataloaders: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
+            if dataloaders is None:
                 logger.debug("No test dataloaders found, skipping plotting.")
                 return
             dataset: CombinedDataset = (
-                test_dataloaders[dataloader_idx]
-                if isinstance(test_dataloaders, list)
-                else test_dataloaders
-            ).dataset  # type: ignore[assignment]
+                dataloaders[dataloader_idx]
+                if isinstance(dataloaders, Sequence)
+                else dataloaders
+            ).dataset
+            batch_size = outputs.target.shape[0]
             date_ = dataset.date_from_index(batch_size * batch_idx)
 
             # Load the ground truth and prediction

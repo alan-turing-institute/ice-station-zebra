@@ -4,9 +4,9 @@ from torch import Tensor
 
 class UpconvBlock(nn.Module):
     def __init__(
-        self, 
-        in_channels: int, 
-        out_channels: int, 
+        self,
+        in_channels: int,
+        out_channels: int,
         activation: Type[nn.Module] = nn.ReLU,
     ) -> None:
         super().__init__()

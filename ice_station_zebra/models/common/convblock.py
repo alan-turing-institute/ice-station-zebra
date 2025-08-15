@@ -11,7 +11,7 @@ class ConvBlock(nn.Module):
         *,
         filter_size: int,
         final: bool = False,
-        activation: Type[nn.Module] = nn.ReLU,  
+        activation: Type[nn.Module] = nn.ReLU,
     ) -> None:
         super().__init__()
 

@@ -9,7 +9,7 @@ class BottleneckBlock(nn.Module):
         out_channels: int,
         *,
         filter_size: int,
-        activation: Type[nn.Module] = nn.ReLU,  
+        activation: Type[nn.Module] = nn.ReLU,
     ) -> None:
         super().__init__()
 

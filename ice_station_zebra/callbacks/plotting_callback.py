@@ -3,10 +3,10 @@ from typing import Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
-from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
+from ice_station_zebra.types import ModelTestOutput
 from ice_station_zebra.visualisations import plot_sic_comparison
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class PlottingCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: dict[str, Tensor],  # type: ignore[override]
+        outputs: ModelTestOutput,
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,
@@ -43,7 +43,7 @@ class PlottingCallback(Callback):
         # Run plotting every `frequency` batches
         if batch_idx % self.frequency == 0:
             # Get date for this batch
-            batch_size = outputs["target"].shape[0]
+            batch_size = outputs.target.shape[0]
             test_dataloaders: DataLoader | list[DataLoader] | None = (
                 trainer.test_dataloaders
             )
@@ -58,8 +58,8 @@ class PlottingCallback(Callback):
             date_ = dataset.date_from_index(batch_size * batch_idx)
 
             # Load the ground truth and prediction
-            np_ground_truth = outputs["target"].cpu().numpy()[0, 0, 0, :, :]
-            np_prediction = outputs["output"].cpu().numpy()[0, 0, 0, :, :]
+            np_ground_truth = outputs.target.cpu().numpy()[0, 0, 0, :, :]
+            np_prediction = outputs.prediction.cpu().numpy()[0, 0, 0, :, :]
 
             # Create each requested plot
             images = {

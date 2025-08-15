@@ -3,7 +3,8 @@ from typing import Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
-from torch import Tensor
+
+from ice_station_zebra.types import ModelTestOutput
 
 
 class MetricSummaryCallback(Callback):
@@ -23,14 +24,14 @@ class MetricSummaryCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: dict[str, Tensor],  # type: ignore[override]
+        outputs: ModelTestOutput,
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
         """Called when the test batch ends."""
         if "average_loss" in self.metrics:
-            self.metrics["average_loss"].append(outputs["loss"].item())
+            self.metrics["average_loss"].append(outputs.loss.item())
 
     def on_test_epoch_end(self, trainer: Trainer, module: LightningModule) -> None:
         """Called at the end of the test epoch."""

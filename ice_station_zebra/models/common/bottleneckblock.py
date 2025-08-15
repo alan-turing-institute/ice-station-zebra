@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
-
+from typing import Type
 
 class BottleneckBlock(nn.Module):
     def __init__(
@@ -9,6 +9,7 @@ class BottleneckBlock(nn.Module):
         out_channels: int,
         *,
         filter_size: int,
+        activation: Type[nn.Module] = nn.ReLU,  
     ) -> None:
         super().__init__()
 
@@ -16,11 +17,11 @@ class BottleneckBlock(nn.Module):
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation(),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation(),
             nn.BatchNorm2d(num_features=out_channels),
         )
 

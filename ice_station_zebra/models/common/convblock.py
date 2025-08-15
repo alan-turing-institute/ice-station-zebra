@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
-
+from typing import Type
 
 class ConvBlock(nn.Module):
     def __init__(
@@ -10,6 +10,7 @@ class ConvBlock(nn.Module):
         *,
         filter_size: int,
         final: bool = False,
+        activation: Type[nn.Module] = nn.ReLU,  
     ) -> None:
         super().__init__()
 
@@ -17,11 +18,11 @@ class ConvBlock(nn.Module):
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation(),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation(),
         ]
         if final:
             layers += [
@@ -31,7 +32,7 @@ class ConvBlock(nn.Module):
                     kernel_size=filter_size,
                     padding="same",
                 ),
-                nn.ReLU(inplace=True),
+                activation(),
             ]
 
         else:

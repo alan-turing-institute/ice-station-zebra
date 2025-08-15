@@ -1,9 +1,10 @@
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
+from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
@@ -35,44 +36,52 @@ class PlottingCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: ModelTestOutput,
+        outputs: Tensor | Mapping[str, Any] | None,
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
         """Called when the test batch ends."""
-        # Run plotting every `frequency` batches
-        if batch_idx % self.frequency == 0:
-            # Get date for this batch
-            dataloaders: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
-            if dataloaders is None:
-                logger.debug("No test dataloaders found, skipping plotting.")
-                return
-            dataset: CombinedDataset = (
-                dataloaders[dataloader_idx]
-                if isinstance(dataloaders, Sequence)
-                else dataloaders
-            ).dataset
-            batch_size = outputs.target.shape[0]
-            date_ = dataset.date_from_index(batch_size * batch_idx)
+        # Only run plotting every `frequency` batches
+        if batch_idx % self.frequency:
+            return
 
-            # Load the ground truth and prediction
-            # Both prediction and target are TensorNTCHW
-            np_ground_truth = outputs.target.cpu().numpy()[0, 0, 0, :, :]
-            np_prediction = outputs.prediction.cpu().numpy()[0, 0, 0, :, :]
+        # Check that outputs is a ModelTestOutput
+        if not isinstance(outputs, ModelTestOutput):
+            msg = (
+                f"Expected outputs to be of type ModelTestOutput, got {type(outputs)}."
+            )
+            raise TypeError(msg)
 
-            # Create each requested plot
-            images = {
-                name: plot_fn(np_ground_truth, np_prediction, date_)
-                for name, plot_fn in self.plot_fns.items()
-            }
+        # Get date for this batch
+        dl: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
+        if dl is None:
+            logger.debug("No test dataloaders found, skipping plotting.")
+            return
+        dataset = (dl[dataloader_idx] if isinstance(dl, Sequence) else dl).dataset
+        if not isinstance(dataset, CombinedDataset):
+            logger.debug("Dataset is not a CombinedDataset, skipping plotting.")
+            return
+        batch_size = outputs.target.shape[0]
+        date_ = dataset.date_from_index(batch_size * batch_idx)
 
-            # Log images to each logger
-            for lightning_logger in trainer.loggers:
-                for key, image_list in images.items():
-                    if hasattr(lightning_logger, "log_image"):
-                        lightning_logger.log_image(key=key, images=image_list)
-                    else:
-                        logger.debug(
-                            f"Logger {lightning_logger.name} does not support logging images."
-                        )
+        # Load the ground truth and prediction
+        # Both prediction and target are TensorNTCHW
+        np_ground_truth = outputs.target.cpu().numpy()[0, 0, 0, :, :]
+        np_prediction = outputs.prediction.cpu().numpy()[0, 0, 0, :, :]
+
+        # Create each requested plot
+        images = {
+            name: plot_fn(np_ground_truth, np_prediction, date_)
+            for name, plot_fn in self.plot_fns.items()
+        }
+
+        # Log images to each logger
+        for lightning_logger in trainer.loggers:
+            for key, image_list in images.items():
+                if hasattr(lightning_logger, "log_image"):
+                    lightning_logger.log_image(key=key, images=image_list)
+                else:
+                    logger.debug(
+                        f"Logger {lightning_logger.name} does not support logging images."
+                    )

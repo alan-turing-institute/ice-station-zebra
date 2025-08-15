@@ -1,8 +1,10 @@
 import statistics
+from collections.abc import Mapping
 from typing import Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
+from torch import Tensor
 
 from ice_station_zebra.types import ModelTestOutput
 
@@ -24,12 +26,17 @@ class MetricSummaryCallback(Callback):
         self,
         trainer: Trainer,
         module: LightningModule,
-        outputs: ModelTestOutput,
+        outputs: Tensor | Mapping[str, Any] | None,
         batch: Any,
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
         """Called when the test batch ends."""
+        if not isinstance(outputs, ModelTestOutput):
+            msg = (
+                f"Expected outputs to be of type ModelTestOutput, got {type(outputs)}."
+            )
+            raise TypeError(msg)
         if "average_loss" in self.metrics:
             self.metrics["average_loss"].append(outputs.loss.item())
 

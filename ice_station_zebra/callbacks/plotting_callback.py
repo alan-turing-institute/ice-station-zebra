@@ -1,13 +1,15 @@
 import logging
 from typing import Any
 
+import numpy as np
+import io
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
-from ice_station_zebra.visualisations import plot_sic_comparison
+from ice_station_zebra.visualisations import plot_sic_comparison, video_sic_comparison
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +18,35 @@ class PlottingCallback(Callback):
     """A callback to create plots during evaluation."""
 
     def __init__(
-        self, frequency: int = 10, plot_sea_ice_concentration: bool = True
+        self, frequency: int = 10, 
+        plot_sea_ice_concentration: bool = True, 
+        video_sea_ice_concentration: bool = True,
+        video_fps: int = 2,
+        video_format: str = "mp4"
     ) -> None:
         """Create plots during evaluation.
 
         Args:
             frequency: Create a new plot every `frequency` batches.
             plot_sea_ice_concentration: Whether to plot sea ice concentration.
+            video_sea_ice_concentration: Whether to create a video of sea ice concentration.
+            video_fps: The frames per second of the video.
+            video_format: The format of the video.
         """
         super().__init__()
         self.frequency = frequency
+        self.plot_sea_ice_concentration = plot_sea_ice_concentration
+        self.video_sea_ice_concentration = video_sea_ice_concentration
+        self.video_fps = video_fps
+        self.video_format = video_format
+        
+        # Only add STATIC plot functions here
         self.plot_fns = {}
-        if plot_sea_ice_concentration:
+        if self.plot_sea_ice_concentration:
             self.plot_fns["sea-ice-comparison"] = plot_sic_comparison
+        # DON'T add video function here - handle it separately
+
+        
 
     def on_test_batch_end(
         self,
@@ -44,35 +62,122 @@ class PlottingCallback(Callback):
         if batch_idx % self.frequency == 0:
             # Get date for this batch
             batch_size = outputs["target"].shape[0]
+            
             test_dataloaders: DataLoader | list[DataLoader] | None = (
                 trainer.test_dataloaders
             )
             if test_dataloaders is None:
                 logger.debug("No test dataloaders found, skipping plotting.")
                 return
+            
             dataset: CombinedDataset = (
                 test_dataloaders[dataloader_idx]
                 if isinstance(test_dataloaders, list)
                 else test_dataloaders
             ).dataset  # type: ignore[assignment]
-            date_ = dataset.date_from_index(batch_size * batch_idx)
 
-            # Load the ground truth and prediction
-            np_ground_truth = outputs["target"].cpu().numpy()[0, 0, 0, :, :]
-            np_prediction = outputs["output"].cpu().numpy()[0, 0, 0, :, :]
+            start_date = dataset.date_from_index(batch_size * batch_idx)
 
-            # Create each requested plot
-            images = {
-                name: plot_fn(np_ground_truth, np_prediction, date_)
-                for name, plot_fn in self.plot_fns.items()
-            }
+            # ----- Static Image Plots -----
+            images = {}
+            if self.plot_sea_ice_concentration:
+                np_ground_truth, np_prediction = _extract_static_data(outputs)
+                images = {
+                    name: plot_fn(np_ground_truth, np_prediction, start_date)
+                    for name, plot_fn in self.plot_fns.items()
+                }
 
-            # Log images to each logger
+            # ----- Video Plots -----
+            videos = {}
+            if self.video_sea_ice_concentration:
+                ground_truth_stream, prediction_stream = _extract_video_data(outputs)
+                n_timesteps = ground_truth_stream.shape[0]
+                sequence_dates = _generate_sequence_dates(dataset, batch_idx, batch_size, n_timesteps)
+                
+                videos = _create_video_plots(
+                    ground_truth_stream, prediction_stream, 
+                    sequence_dates,
+                    fps=self.video_fps, format=self.video_format
+                )
+
+            # ---- Log all media ----
             for lightning_logger in trainer.loggers:
-                for key, image_list in images.items():
-                    if hasattr(lightning_logger, "log_image"):
-                        lightning_logger.log_image(key=key, images=image_list)
-                    else:
-                        logger.debug(
-                            f"Logger {lightning_logger.name} does not support logging images."
-                        )
+                _log_media_to_wandb(lightning_logger, images, videos, self.video_format)
+            #     for key, image_list in images.items():
+            #         if hasattr(lightning_logger, "log_image"):
+            #             lightning_logger.log_image(key=key, images=image_list)
+            #         else:
+            #             logger.debug(
+            #                 f"Logger {lightning_logger.name} does not support logging images."
+            #             )
+
+
+# -------   Helper Functions -------
+
+def _extract_static_data(outputs: dict[str, Tensor], selected_timestep: int = 0) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Extract the static data from the outputs.
+    """
+    
+    # [batch=0, time=selected_timestep, channels=0, height=:, width=:]
+    np_ground_truth = outputs["target"].cpu().numpy()[0, selected_timestep, 0, :, :]
+    np_prediction = outputs["output"].cpu().numpy()[0, selected_timestep, 0, :, :]
+    return np_ground_truth, np_prediction
+
+def _extract_video_data(outputs: dict[str, Tensor]) -> tuple[np.ndarray, np.ndarray]:
+    """Extract all timesteps data for video plots."""
+
+    # Video: [batch=0, time=:, channels=0, height=:, width=:]  
+    video_ground_truth = outputs["target"].cpu().numpy()[0,:,0,:,:]
+    video_prediction = outputs["output"].cpu().numpy()[0,:,0,:,:]
+    return video_ground_truth, video_prediction
+
+def _generate_sequence_dates(dataset: CombinedDataset, batch_idx: int, 
+                             batch_size: int, n_timesteps: int) -> list:
+    """Generate list of dates for forecast sequence."""
+    return [
+        dataset.date_from_index(batch_size * batch_idx + i) 
+        for i in range(n_timesteps)
+    ]
+def _create_video_plots(
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    dates: list,
+    fps: int = 2,
+    format: str = "mp4"
+) -> dict[str, bytes]:
+    """Create video plots for sea ice concentration."""
+    
+    videos = {}
+    try:
+        videos["sea-ice-comparison-video"] = video_sic_comparison(
+            ground_truth_stream, prediction_stream, dates, fps=fps, format=format
+        )
+    except Exception as e:
+        logger.error(f"Error creating video plots: {e}")
+        return {}
+    return videos
+
+
+def _log_media_to_wandb(lightning_logger, images: dict, videos: dict, video_format: str = "mp4") -> None:
+    """Log both images and videos to lightning loggers."""
+    
+    # Log static images
+    for key, image_list in images.items():
+        if hasattr(lightning_logger, "log_image"):
+            lightning_logger.log_image(key=key, images=image_list)
+        else:
+            logger.debug(f"Logger {lightning_logger.name} does not support logging images.")
+    
+    # Log videos  
+    for key, video_bytes in videos.items():
+        if hasattr(lightning_logger, "experiment"):  # wandb-specific
+            try:
+                import wandb
+                lightning_logger.experiment.log({
+                    key: wandb.Video(io.BytesIO(video_bytes), format=video_format)
+                })
+            except ImportError:
+                logger.debug("wandb not available for video logging")
+        else:
+            logger.debug(f"Logger {lightning_logger.name} does not support video logging.")

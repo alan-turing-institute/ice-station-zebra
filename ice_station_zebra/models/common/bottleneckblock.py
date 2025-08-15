@@ -1,6 +1,6 @@
+from typing import Type
 import torch.nn as nn
 from torch import Tensor
-from typing import Type
 
 class BottleneckBlock(nn.Module):
     def __init__(

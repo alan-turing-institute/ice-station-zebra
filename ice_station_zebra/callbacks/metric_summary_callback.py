@@ -1,3 +1,4 @@
+import logging
 import statistics
 from collections.abc import Mapping
 from typing import Any
@@ -7,6 +8,8 @@ from lightning.pytorch import Callback
 from torch import Tensor
 
 from ice_station_zebra.types import ModelTestOutput
+
+logger = logging.getLogger(__name__)
 
 
 class MetricSummaryCallback(Callback):
@@ -33,10 +36,10 @@ class MetricSummaryCallback(Callback):
     ) -> None:
         """Called when the test batch ends."""
         if not isinstance(outputs, ModelTestOutput):
-            msg = (
-                f"Expected outputs to be of type ModelTestOutput, got {type(outputs)}."
-            )
-            raise TypeError(msg)
+            msg = f"Output is of type {type(outputs)}, skipping metric accumulation."
+            logger.warning(msg)
+            return
+
         if "average_loss" in self.metrics:
             self.metrics["average_loss"].append(outputs.loss.item())
 

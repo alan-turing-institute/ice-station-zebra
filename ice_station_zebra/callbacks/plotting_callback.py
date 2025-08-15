@@ -48,19 +48,18 @@ class PlottingCallback(Callback):
 
         # Check that outputs is a ModelTestOutput
         if not isinstance(outputs, ModelTestOutput):
-            msg = (
-                f"Expected outputs to be of type ModelTestOutput, got {type(outputs)}."
-            )
-            raise TypeError(msg)
+            msg = f"Output is of type {type(outputs)}, skipping plotting."
+            logger.warning(msg)
+            return
 
         # Get date for this batch
         dl: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
         if dl is None:
-            logger.debug("No test dataloaders found, skipping plotting.")
+            logger.warning("No test dataloaders found, skipping plotting.")
             return
         dataset = (dl[dataloader_idx] if isinstance(dl, Sequence) else dl).dataset
         if not isinstance(dataset, CombinedDataset):
-            logger.debug("Dataset is not a CombinedDataset, skipping plotting.")
+            logger.warning("Dataset is not a CombinedDataset, skipping plotting.")
             return
         batch_size = outputs.target.shape[0]
         date_ = dataset.date_from_index(batch_size * batch_idx)

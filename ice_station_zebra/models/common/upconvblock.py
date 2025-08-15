@@ -1,6 +1,8 @@
 from typing import Type
+
 import torch.nn as nn
 from torch import Tensor
+
 
 class UpconvBlock(nn.Module):
     def __init__(

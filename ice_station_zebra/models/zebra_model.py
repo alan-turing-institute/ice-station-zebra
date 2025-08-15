@@ -7,7 +7,7 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace, TensorNTCHW
+from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
 class ZebraModel(LightningModule, ABC):
@@ -66,7 +66,7 @@ class ZebraModel(LightningModule, ABC):
 
     def test_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
-    ) -> dict[str, torch.Tensor]:
+    ) -> ModelTestOutput:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
         A batch contains one tensor for each input dataset and one for the target
@@ -77,9 +77,9 @@ class ZebraModel(LightningModule, ABC):
         - Return the output, target and loss
         """
         target = batch.pop("target")
-        output = self(batch)
-        loss = self.loss(output, target)
-        return {"output": output, "target": target, "loss": loss}
+        prediction = self(batch)
+        loss = self.loss(prediction, target)
+        return ModelTestOutput(prediction, target, loss)
 
     def training_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int

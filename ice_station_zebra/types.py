@@ -67,3 +67,10 @@ class DataSpace:
         return DictConfig(
             {"channels": self.channels, "name": self.name, "shape": self.shape}
         )
+
+
+@dataclass
+class ModelTestOutput:
+    prediction: TensorNTCHW
+    target: TensorNTCHW
+    loss: Tensor

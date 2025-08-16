@@ -2,3 +2,6 @@ plotting:
   _target_: ice_station_zebra.callbacks.PlottingCallback
   frequency: 20
   plot_sea_ice_concentration: true
+  video_sea_ice_concentration: true  # Enable video
+  video_fps: 2
+  video_format: "gif"

@@ -11,7 +11,7 @@ Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
 
 
-def hydra_adaptor(function: Callable[Param, RetType]) -> Callable[Param, RetType]:
+def hydra_adaptor(function: Callable) -> Callable[Param, RetType]:
     """Replace a function that takes a Hydra config with one that takes string arguments.
 
     Args:

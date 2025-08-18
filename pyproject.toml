@@ -94,7 +94,6 @@ ignore = [
     "E501", # line-too-long
     "PLR0913", # too-many-arguments
     "SLF001", # private-member-access
-    "TC001", # typing-only-first-party-import
     "TC002", # typing-only-third-party-import
     "TRY003", # raise-vanilla-args
     "UP006", # non-pep585-annotation

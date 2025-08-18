@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import hydra
 from lightning import Callback, Trainer
@@ -8,9 +9,10 @@ from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.callbacks import UnconditionalCheckpoint
 from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.models import ZebraModel
 from ice_station_zebra.utils import generate_run_name, get_wandb_logger
 
+if TYPE_CHECKING:
+    from ice_station_zebra.models import ZebraModel
 logger = logging.getLogger(__name__)
 
 

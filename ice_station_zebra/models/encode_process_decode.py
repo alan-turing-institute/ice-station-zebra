@@ -1,13 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.models.encoders import BaseEncoder
 from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 from .zebra_model import ZebraModel
+
+if TYPE_CHECKING:
+    from ice_station_zebra.models.encoders import BaseEncoder
 
 
 class EncodeProcessDecode(ZebraModel):

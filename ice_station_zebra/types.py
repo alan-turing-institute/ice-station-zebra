@@ -78,6 +78,7 @@ class ModelTestOutput(Mapping[str, Tensor]):
     loss: Tensor
 
     def __getitem__(self, key: str) -> Tensor:
+        """Get a tensor by key."""
         if key == "prediction":
             return self.prediction
         if key == "target":
@@ -88,9 +89,11 @@ class ModelTestOutput(Mapping[str, Tensor]):
         raise KeyError(msg)
 
     def __iter__(self) -> Iterator[str]:
+        """Iterate over the keys of ModelTestOutput."""
         yield "prediction"
         yield "target"
         yield "loss"
 
     def __len__(self) -> int:
+        """Return ModelTestOutput length."""
         return 3

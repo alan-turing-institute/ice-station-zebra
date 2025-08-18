@@ -14,7 +14,8 @@ class BottleneckBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = lambda: get_activation(activation)
+        def act():
+            return get_activation(activation)
 
         self.model = nn.Sequential(
             nn.Conv2d(

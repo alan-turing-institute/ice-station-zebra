@@ -12,7 +12,8 @@ class UpconvBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = lambda: get_activation(activation)
+        def act():
+            return get_activation(activation)
 
         self.model = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),

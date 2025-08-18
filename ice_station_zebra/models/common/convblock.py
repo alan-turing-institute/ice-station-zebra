@@ -15,7 +15,9 @@ class ConvBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = lambda: get_activation(activation)
+        def act():
+            return get_activation(activation)
+
 
         layers = [
             nn.Conv2d(

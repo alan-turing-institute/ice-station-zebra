@@ -91,7 +91,6 @@ ignore = [
     "D413", # missing-blank-line-after-last-section"
     "D415", # missing-terminal-punctuation
     "D417", # undocumented-param
-    "DTZ001", # call-datetime-without-tzinfo
     "DTZ005", # call-datetime-now-without-tzinfo
     "DTZ007", # call-datetime-strptime-without-zone
     "E501", # line-too-long

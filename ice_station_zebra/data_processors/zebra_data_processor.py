@@ -1,7 +1,6 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Type
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.inspect import InspectZarr
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ZebraDataProcessor:
     def __init__(
-        self, name: str, config: DictConfig, cls_preprocessor: Type[IPreprocessor]
+        self, name: str, config: DictConfig, cls_preprocessor: type[IPreprocessor]
     ) -> None:
         self.name = name
         _data_path = Path(config["base_path"]).resolve() / "data"

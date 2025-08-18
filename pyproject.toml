@@ -94,9 +94,6 @@ ignore = [
     "E501", # line-too-long
     "PLR0913", # too-many-arguments
     "SLF001", # private-member-access
-    "TRY003", # raise-vanilla-args
-    "UP006", # non-pep585-annotation
-    "UP035", # deprecated-import
 ]
 
 [tool.ruff.lint.flake8-annotations]

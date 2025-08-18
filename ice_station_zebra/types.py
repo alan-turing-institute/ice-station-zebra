@@ -84,7 +84,8 @@ class ModelTestOutput(Mapping[str, Tensor]):
             return self.target
         if key == "loss":
             return self.loss
-        raise KeyError(f"Key {key} not found in ModelTestOutput")
+        msg = f"Key {key} not found in ModelTestOutput"
+        raise KeyError(msg)
 
     def __iter__(self) -> Iterator[str]:
         yield "prediction"

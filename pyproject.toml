@@ -92,7 +92,6 @@ ignore = [
     "D415", # missing-terminal-punctuation
     "D417", # undocumented-param
     "E501", # line-too-long
-    "EM102", # f-string-in-exception
     "FBT001", # boolean-type-hint-positional-argument
     "FBT002", # boolean-default-value-positional-argument
     "G004", # logging-f-string

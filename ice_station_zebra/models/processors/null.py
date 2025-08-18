@@ -16,8 +16,7 @@ class NullProcessor(nn.Module):
         self.model = nn.Identity()
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """
-        Forward step: process in latent space.
+        """Forward step: process in latent space.
 
         Args:
             x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)

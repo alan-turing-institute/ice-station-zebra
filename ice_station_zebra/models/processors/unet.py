@@ -54,8 +54,7 @@ class UNetProcessor(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        """
-        Forward step: process in latent space.
+        """Forward step: process in latent space.
 
         Args:
             x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)

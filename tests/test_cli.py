@@ -43,14 +43,14 @@ class TestBaseCLI:
         r"train\s+Train a model",
     ]
 
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["--help"],
             expected_patterns=self.expected_patterns_help,
         )
 
-    def test_short_help(self):
+    def test_short_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["-h"],
@@ -59,7 +59,7 @@ class TestBaseCLI:
 
 
 class TestDatasetsCLI:
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["datasets", "--help"],
@@ -74,7 +74,7 @@ class TestDatasetsCLI:
 
 
 class TestEvaluateCLI:
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["evaluate", "--help"],
@@ -90,7 +90,7 @@ class TestEvaluateCLI:
 
 
 class TestTrainCLI:
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["train", "--help"],

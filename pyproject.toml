@@ -74,7 +74,6 @@ exclude = ["notebooks/*ipynb"]
 # extend-select = ["I"]
 select = ["ALL"]
 ignore = [
-    "ANN201", # missing-return-type-undocumented-public-function
     "ANN204", # missing-return-type-special-method
     "ARG002", # unused-method-argument
     "COM812", # conflicts with formatter

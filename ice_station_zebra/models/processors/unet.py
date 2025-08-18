@@ -75,7 +75,5 @@ class UNetProcessor(nn.Module):
         up8 = self.up8b(torch.cat([bn2, self.up8(up7)], dim=1))
         up9 = self.up9b(torch.cat([bn1, self.up9(up8)], dim=1))
 
-        # Final layer
-        output = self.final_layer(up9)
-
-        return output
+        # Apply final layer and return
+        return self.final_layer(up9)

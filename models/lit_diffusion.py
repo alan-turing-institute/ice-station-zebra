@@ -21,11 +21,12 @@ import lightning.pytorch as pl
 from torchmetrics import MetricCollection
 from torch_ema import ExponentialMovingAverage
 
-# Relative Imports (assuming your project structure)
-from .unet_diffusion import UNetDiffusion  # Your model class
+# Relative Imports
+from .unet_diffusion import UNetDiffusion
 from .gaussian_diffusion import GaussianDiffusion
-from utils import IceNetAccuracy, SIEError  # Custom metrics
-from utils import WeightedMSELoss  # Or your chosen loss
+from utils import IceNetAccuracy, SIEError
+from utils import WeightedMSELoss
+
 
 class LitDiffusion(pl.LightningModule):
     """
@@ -94,31 +95,6 @@ class LitDiffusion(pl.LightningModule):
         device = next(self.model.parameters()).device
         print(f"[LitDiffusion] Moving EMA shadow parameters to device: {device}")
         self.ema.to(device)
-
-    def forward(self, x, sample_weight=None):
-        """
-        Run the model in inference mode.
-
-        Args:
-            x (torch.Tensor or tuple): Either a tensor [B, H, W, C] or a batch from DataLoader.
-
-        Returns:
-            torch.Tensor: Generated sample(s).
-        """
-        if isinstance(x, (list, tuple)):
-            x = x[0]
-        elif not isinstance(x, torch.Tensor):
-            x = torch.tensor(x, device=self.device)
-
-        if sample_weight is None:
-            sample_weight = torch.ones_like(x[..., :1])
-
-        outputs = self.sample(x, sample_weight)
-        
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
-        
-        return y_hat
 
     def training_step(self, batch):
         """

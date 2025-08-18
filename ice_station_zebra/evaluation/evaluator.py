@@ -3,13 +3,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import hydra
-from lightning import Callback, Trainer
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data_loaders import ZebraDataModule
 from ice_station_zebra.utils import get_timestamp
 
 if TYPE_CHECKING:
+    from lightning import Callback, Trainer
+
     from ice_station_zebra.models import ZebraModel
 
 logger = logging.getLogger(__name__)

@@ -1,15 +1,17 @@
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
-from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput
 from ice_station_zebra.visualisations import plot_sic_comparison
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 

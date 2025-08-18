@@ -1,11 +1,14 @@
 from datetime import date
+from typing import TYPE_CHECKING
 
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import Axes, Figure
 from PIL.ImageFile import ImageFile
 
 from .convert import image_from_figure
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes, Figure
 
 
 def plot_sic_comparison(

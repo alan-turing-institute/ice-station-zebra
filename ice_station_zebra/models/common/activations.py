@@ -5,7 +5,7 @@ ACTIVATIONS = {
     "LeakyReLU": nn.LeakyReLU,
     "ELU": nn.ELU,
     "GELU": nn.GELU,
-    "SiLU": nn.SiLU,       
+    "SiLU": nn.SiLU,
     "Sigmoid": nn.Sigmoid,
     "Tanh": nn.Tanh,
 }

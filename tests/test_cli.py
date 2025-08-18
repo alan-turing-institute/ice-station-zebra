@@ -32,7 +32,7 @@ class ZebraCliRunner(CliRunner):
 
 
 class TestBaseCLI:
-    expected_patterns_help = [
+    expected_patterns_help = (
         r"Usage: zebra \[OPTIONS\] COMMAND \[ARGS\]...",
         r"Entrypoint for zebra application commands",
         r"--install-completion\s+Install completion for the current shell.",
@@ -41,7 +41,7 @@ class TestBaseCLI:
         r"datasets\s+Manage datasets",
         r"evaluate\s+Evaluate a model",
         r"train\s+Train a model",
-    ]
+    )
 
     def test_help(self) -> None:
         runner = ZebraCliRunner(app)

@@ -63,8 +63,9 @@ class ZebraModel(LightningModule, ABC):
             }
         )
 
-    def loss(self, output: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
-        return torch.nn.functional.l1_loss(output, target)
+    def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
+        """Calculate the loss given a prediction and target"""
+        return torch.nn.functional.l1_loss(prediction, target)
 
     def test_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
@@ -106,8 +107,8 @@ class ZebraModel(LightningModule, ABC):
             A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
-        output = self(batch)
-        return self.loss(output, target)
+        prediction = self(batch)
+        return self.loss(prediction, target)
 
     def validation_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
@@ -130,7 +131,7 @@ class ZebraModel(LightningModule, ABC):
             A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
-        output = self(batch)
-        loss = self.loss(output, target)
+        prediction = self(batch)
+        loss = self.loss(prediction, target)
         self.log("validation_loss", loss)
         return loss

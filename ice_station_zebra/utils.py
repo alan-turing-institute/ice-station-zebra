@@ -10,6 +10,7 @@ def generate_run_name() -> str:
 
 
 def get_timestamp() -> str:
+    """Return the current time as a string."""
     return datetime.now(tz=UTC).strftime(r"%Y%m%d_%H%M%S")
 
 

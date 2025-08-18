@@ -1,5 +1,3 @@
-from typing import Type
-
 import torch.nn as nn
 from torch import Tensor
 from .activations import get_activation

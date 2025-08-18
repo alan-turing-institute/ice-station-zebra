@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -81,7 +81,7 @@ class CombinedDataset(Dataset):
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep"""
         np_datetime = self.available_dates[idx]
-        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S")
+        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""

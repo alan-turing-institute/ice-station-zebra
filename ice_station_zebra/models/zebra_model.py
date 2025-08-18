@@ -11,6 +11,8 @@ from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
 class ZebraModel(LightningModule, ABC):
+    """A base class for all models used in the Ice Station Zebra project."""
+
     def __init__(
         self,
         *,
@@ -69,12 +71,17 @@ class ZebraModel(LightningModule, ABC):
     ) -> ModelTestOutput:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
-        A batch contains one tensor for each input dataset and one for the target
-        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
-
         - Separate the batch into inputs and target
         - Run inputs through the model
-        - Return the output, target and loss
+        - Return the prediction, target and loss
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A ModelTestOutput containing the prediction, target and loss for the batch.
         """
         target = batch.pop("target")
         prediction = self(batch)
@@ -86,12 +93,17 @@ class ZebraModel(LightningModule, ABC):
     ) -> torch.Tensor:
         """Run the training step
 
-        A batch contains one tensor for each input dataset and one for the target
-        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
-
         - Separate the batch into inputs and target
         - Run inputs through the model
         - Calculate the loss wrt. the target
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
         output = self(batch)
@@ -107,7 +119,15 @@ class ZebraModel(LightningModule, ABC):
 
         - Separate the batch into inputs and target
         - Run inputs through the model
-        - Calculate the loss wrt. the target
+        - Calculate and log the loss wrt. the target
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
         output = self(batch)

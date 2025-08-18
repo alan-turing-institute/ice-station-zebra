@@ -104,7 +104,6 @@ ignore = [
     "FBT002", # boolean-default-value-positional-argument
     "G004", # logging-f-string
     "INP001", # implicit-namespace-package
-    "PERF401", # manual-list-comprehension
     "PLR0402", # manual-from-import
     "PLR0913", # too-many-arguments
     "PLR2004", # magic-value-comparison

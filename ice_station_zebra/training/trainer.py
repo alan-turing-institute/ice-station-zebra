@@ -63,9 +63,10 @@ class ZebraTrainer:
             )
 
         # Add callbacks
-        callbacks: list[Callback] = []
-        for callback_cfg in config["train"].get("callbacks", {}).values():
-            callbacks.append(hydra.utils.instantiate(callback_cfg))
+        callbacks: list[Callback] = [
+            hydra.utils.instantiate(cfg)
+            for cfg in config["train"].get("callbacks", {}).values()
+        ]
 
         # Construct the trainer
         self.trainer: Trainer = hydra.utils.instantiate(

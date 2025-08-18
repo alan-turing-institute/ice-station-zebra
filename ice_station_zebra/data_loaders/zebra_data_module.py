@@ -31,7 +31,7 @@ class ZebraDataModule(LightningDataModule):
                 ).resolve()
             )
         logger.info("Found %d dataset_groups", len(self.dataset_groups))
-        for dataset_group in self.dataset_groups.keys():
+        for dataset_group in self.dataset_groups:
             logger.debug("... %s.", dataset_group)
 
         # Check prediction target

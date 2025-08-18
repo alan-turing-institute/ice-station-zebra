@@ -93,7 +93,6 @@ ignore = [
     "D417", # undocumented-param
     "E501", # line-too-long
     "PLR0913", # too-many-arguments
-    "PTH109", # os-getcwd
     "RET504", # unnecessary-assign
     "RUF012", # mutable-class-default
     "RUF022", # unsorted-dunder-all

@@ -30,7 +30,7 @@ class IceNetSICPreprocessor(IPreprocessor):
         # Change to the output directory before downloading
         icenet_path = preprocessor_path / self.name
         icenet_path.mkdir(parents=True, exist_ok=True)
-        current_directory = os.getcwd()
+        current_directory = Path.cwd()
         os.chdir(icenet_path)
 
         # Generate polar masks: note that only 1979-2015 are available

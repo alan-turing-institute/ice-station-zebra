@@ -19,7 +19,7 @@ class ZebraEvaluator:
         """Initialize the Zebra evaluator."""
         # Verify the checkpoint path
         if checkpoint_path.exists():
-            logger.debug(f"Loaded checkpoint from {checkpoint_path}.")
+            logger.debug("Loaded checkpoint from %s.", checkpoint_path)
         else:
             msg = f"Checkpoint file {checkpoint_path} does not exist."
             raise FileNotFoundError(msg)
@@ -28,11 +28,10 @@ class ZebraEvaluator:
         config_path = checkpoint_path.parent.parent / "model_config.yaml"
         try:
             ckpt_config = OmegaConf.load(config_path)
-            logger.debug(f"Loaded checkpoint config from {ckpt_config}.")
+            logger.debug("Loaded checkpoint config from %s.", ckpt_config)
             config["model"]["_target_"] = ckpt_config["model"]["_target_"]  # type: ignore[index]
         except (NotADirectoryError, FileNotFoundError):
-            msg = f"Could not find model configuration file at {config_path}."
-            logger.debug(msg)
+            logger.debug("Could not find model configuration file at %s.", config_path)
 
         # Load the model from checkpoint
         model_cls: type[ZebraModel] = hydra.utils.get_class(config["model"]["_target_"])
@@ -42,12 +41,12 @@ class ZebraEvaluator:
         self.data_module = ZebraDataModule(config)
 
         # Add callbacks
-        callbacks: list[Callback] = []
-        for callback_cfg in config["evaluate"].get("callbacks", {}).values():
-            callbacks.append(hydra.utils.instantiate(callback_cfg))
-            logger.debug(
-                f"Adding evaluation callback {callbacks[-1].__class__.__name__}."
-            )
+        callbacks: list[Callback] = [
+            hydra.utils.instantiate(cfg)
+            for cfg in config["evaluate"].get("callbacks", {}).values()
+        ]
+        for callback in callbacks:
+            logger.debug("Adding evaluation callback %s.", callback.__class__.__name__)
 
         # Construct lightning loggers
         lightning_loggers = [

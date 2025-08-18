@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 
 from .base import IPreprocessor
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class IceNetSICPreprocessor(IPreprocessor):
@@ -36,10 +36,10 @@ class IceNetSICPreprocessor(IPreprocessor):
         # Generate polar masks: note that only 1979-2015 are available
         masks = Masks(north=self.is_north, south=self.is_south)
         mask_year = max(max(1979, min(date.year, 2015)) for date in self.date_range)
-        log.info(f"Generating polar masks for {mask_year}...")
+        logger.info("Generating polar masks for %s.", mask_year)
         masks.generate(year=mask_year)
 
-        log.info("Downloading sea ice concentration data...")
+        logger.info("Downloading sea ice concentration data.")
         sic = SICDownloader(
             dates=[
                 pd.to_datetime(date).date() for date in self.date_range

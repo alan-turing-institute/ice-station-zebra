@@ -67,6 +67,8 @@ class ZebraTrainer:
             hydra.utils.instantiate(cfg)
             for cfg in config["train"].get("callbacks", {}).values()
         ]
+        for callback in callbacks:
+            logger.debug("Adding training callback %s.", callback.__class__.__name__)
 
         # Construct the trainer
         self.trainer: Trainer = hydra.utils.instantiate(

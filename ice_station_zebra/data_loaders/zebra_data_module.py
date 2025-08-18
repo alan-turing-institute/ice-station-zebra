@@ -30,9 +30,9 @@ class ZebraDataModule(LightningDataModule):
                     self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
                 ).resolve()
             )
-        logger.info(f"Found {len(self.dataset_groups)} dataset_groups")
+        logger.info("Found %d dataset_groups", len(self.dataset_groups))
         for dataset_group in self.dataset_groups.keys():
-            logger.debug(f"... {dataset_group}")
+            logger.debug("... %s.", dataset_group)
 
         # Check prediction target
         self.predict_target = config["predict"]["dataset_group"]

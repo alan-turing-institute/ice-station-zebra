@@ -10,7 +10,7 @@ from .zebra_data_processor_factory import ZebraDataProcessorFactory
 # Create the typer app
 datasets_cli = typer.Typer(help="Manage datasets")
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @datasets_cli.command("create")
@@ -19,7 +19,7 @@ def create(config: DictConfig) -> None:
     """Create all datasets"""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
-        log.info(f"Working on {dataset.name}")
+        logger.info("Working on %s.", dataset.name)
         dataset.create()
 
 
@@ -29,7 +29,7 @@ def inspect(config: DictConfig) -> None:
     """Inspect all datasets"""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
-        log.info(f"Working on {dataset.name}")
+        logger.info("Working on %s.", dataset.name)
         dataset.inspect()
 
 

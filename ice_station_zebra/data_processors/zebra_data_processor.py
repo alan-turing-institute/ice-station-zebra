@@ -12,7 +12,7 @@ from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
 
 from .preprocessors import IPreprocessor
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ZebraDataProcessor:
@@ -31,18 +31,20 @@ class ZebraDataProcessor:
         """Ensure that a single Anemoi dataset exists"""
         try:
             self.inspect()
-            log.info(
-                f"Dataset {self.name} already exists at {self.path_dataset}, no need to download"
+            logger.info(
+                "Dataset %s already exists at %s, no need to download.",
+                self.name,
+                self.path_dataset,
             )
         except (AttributeError, FileNotFoundError, PathNotFoundError):
-            log.info(f"Dataset {self.name} not found at {self.path_dataset}")
+            logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
             shutil.rmtree(self.path_dataset, ignore_errors=True)
             self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset"""
         self.preprocessor.download(self.path_preprocessor)
-        log.info(f"Creating dataset {self.name} at {self.path_dataset}")
+        logger.info("Creating dataset %s at %s.", self.name, self.path_dataset)
         Create().run(
             AnemoiCreateArgs(
                 path=str(self.path_dataset),
@@ -52,7 +54,7 @@ class ZebraDataProcessor:
 
     def inspect(self) -> None:
         """Inspect a single Anemoi dataset"""
-        log.info(f"Inspecting dataset {self.name} at {self.path_dataset}")
+        logger.info("Inspecting dataset %s at %s.", self.name, self.path_dataset)
         InspectZarr().run(
             AnemoiInspectArgs(
                 path=str(self.path_dataset),

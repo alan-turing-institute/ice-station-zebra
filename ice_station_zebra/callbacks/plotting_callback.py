@@ -82,5 +82,6 @@ class PlottingCallback(Callback):
                     lightning_logger.log_image(key=key, images=image_list)
                 else:
                     logger.debug(
-                        f"Logger {lightning_logger.name} does not support logging images."
+                        "Logger %s does not support logging images.",
+                        lightning_logger.name,
                     )

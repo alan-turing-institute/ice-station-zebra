@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 
 class ZebraDataModule(LightningDataModule):
     def __init__(self, config: DictConfig) -> None:
+        """Initialise a ZebraDataModule from a config.
+
+        The config specifies all datasets used and how to group them. Data splits are
+        also determined from the config, and the appropriate data loaders are created.
+        """
         super().__init__()
 
         # Load paths

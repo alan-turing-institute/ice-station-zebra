@@ -47,6 +47,7 @@ class DataSpace:
     shape: tuple[int, int]
 
     def __init__(self, channels: int, name: str, shape: Sequence[int]) -> None:
+        """Initialise a DataSpace from channels, name and shape."""
         self.channels = int(channels)
         self.name = name
         self.shape = (int(shape[0]), int(shape[1]))

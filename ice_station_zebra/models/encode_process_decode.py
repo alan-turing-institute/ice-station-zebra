@@ -22,6 +22,7 @@ class EncodeProcessDecode(ZebraModel):
         latent_space: DictConfig,
         **kwargs: Any,
     ) -> None:
+        """Initialise an EncodeProcessDecode model."""
         super().__init__(**kwargs)
 
         # Construct the latent space

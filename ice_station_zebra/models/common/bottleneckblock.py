@@ -9,6 +9,7 @@ class BottleneckBlock(nn.Module):
         *,
         filter_size: int,
     ) -> None:
+        """Initialise a BottleneckBlock."""
         super().__init__()
 
         self.model = nn.Sequential(

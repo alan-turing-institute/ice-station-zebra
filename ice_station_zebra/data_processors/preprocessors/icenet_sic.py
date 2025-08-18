@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class IceNetSICPreprocessor(IPreprocessor):
     def __init__(self, config: DictConfig) -> None:
+        """Initialise the IceNetSIC preprocessor."""
         super().__init__(config)
         self.date_range = pd.date_range(
             config["dates"]["start"],
@@ -27,6 +28,7 @@ class IceNetSICPreprocessor(IPreprocessor):
         return not self.is_north
 
     def download(self, preprocessor_path: Path) -> None:
+        """Download data to the specified preprocessor path."""
         # Change to the output directory before downloading
         icenet_path = preprocessor_path / self.name
         icenet_path.mkdir(parents=True, exist_ok=True)

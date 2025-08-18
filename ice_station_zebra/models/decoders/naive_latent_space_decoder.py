@@ -21,6 +21,7 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
     def __init__(
         self, *, latent_space: DataSpace, output_space: DataSpace, **kwargs: Any
     ) -> None:
+        """Initialise a NaiveLatentSpaceDecoder."""
         super().__init__(**kwargs)
 
         # List of layers

@@ -10,6 +10,7 @@ class ConvBlock(nn.Module):
         filter_size: int,
         final: bool = False,
     ) -> None:
+        """Initialise a ConvBlock."""
         super().__init__()
 
         layers = [

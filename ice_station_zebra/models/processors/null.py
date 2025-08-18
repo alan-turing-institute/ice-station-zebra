@@ -11,6 +11,7 @@ class NullProcessor(nn.Module):
     """
 
     def __init__(self, n_latent_channels: int) -> None:
+        """Initialise a NullProcessor."""
         super().__init__()
         self.n_latent_channels = n_latent_channels
         self.model = nn.Identity()

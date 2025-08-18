@@ -19,6 +19,7 @@ class UNetProcessor(nn.Module):
         filter_size: int,
         start_out_channels: int,
     ) -> None:
+        """Initialise a UNetProcessor."""
         super().__init__()
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]

@@ -21,6 +21,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
     def __init__(
         self, *, input_space: DataSpace, latent_space: DataSpace, **kwargs: Any
     ) -> None:
+        """Initialise a NaiveLatentSpaceEncoder."""
         super().__init__(name=input_space.name, **kwargs)
 
         # Construct list of layers

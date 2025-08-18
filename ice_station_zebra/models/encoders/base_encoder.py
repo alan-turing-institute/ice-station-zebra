@@ -16,6 +16,7 @@ class BaseEncoder(nn.Module, ABC):
     """
 
     def __init__(self, *, name: str, n_history_steps: int) -> None:
+        """Initialise a BaseEncoder."""
         super().__init__()
         self.name = name
         self.n_history_steps = n_history_steps

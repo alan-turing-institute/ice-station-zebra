@@ -16,6 +16,7 @@ class BaseDecoder(nn.Module, ABC):
     """
 
     def __init__(self, *, n_forecast_steps: int) -> None:
+        """Initialise a BaseDecoder."""
         super().__init__()
         self.n_forecast_steps = n_forecast_steps
 

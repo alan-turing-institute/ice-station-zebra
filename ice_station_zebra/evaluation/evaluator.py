@@ -20,7 +20,7 @@ class ZebraEvaluator:
     """A wrapper for PyTorch evaluation."""
 
     def __init__(self, config: DictConfig, checkpoint_path: Path) -> None:
-        """Initialize the Zebra evaluator."""
+        """Initialize the Zebra evaluator from a config and checkpoint."""
         # Verify the checkpoint path
         if checkpoint_path.exists():
             logger.debug("Loaded checkpoint from %s.", checkpoint_path)

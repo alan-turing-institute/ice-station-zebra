@@ -15,6 +15,7 @@ class ZebraDataProcessorFactory:
     )
 
     def __init__(self, config: DictConfig) -> None:
+        """Initialise a ZebraDataProcessorFactory from a config."""
         self.datasets: list[ZebraDataProcessor] = []
         for dataset_name in config["datasets"]:
             cls_preprocessor = self.preprocessors[

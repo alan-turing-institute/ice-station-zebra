@@ -21,8 +21,8 @@ class ZebraDataset(Dataset):
     ) -> None:
         """A dataset for use by Zebra.
 
-        Dataset shape is: time; variables; ensembles; position
-        We reshape each time point to: variables; pos_x; pos_y
+        The underlying Anemoi dataset has shape [T; C; ensembles; position].
+        We reshape this to CHW before returning.
         """
         super().__init__()
         self._cache: LRUCache = LRUCache(maxsize=128)

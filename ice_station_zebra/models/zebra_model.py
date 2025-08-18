@@ -23,6 +23,13 @@ class ZebraModel(LightningModule, ABC):
         output_space: DictConfig,
         optimizer: DictConfig,
     ) -> None:
+        """Initialise a ZebraModel.
+
+        Input spaces and the desired output space must be specified, as must the number
+        of forecast and history steps.
+
+        Optimizer configuration is also set here.
+        """
         super().__init__()
 
         # Save model name

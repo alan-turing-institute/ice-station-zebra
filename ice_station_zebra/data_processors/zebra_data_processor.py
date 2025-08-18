@@ -18,6 +18,10 @@ class ZebraDataProcessor:
     def __init__(
         self, name: str, config: DictConfig, cls_preprocessor: type[IPreprocessor]
     ) -> None:
+        """Initialise a ZebraDataProcessor from a config.
+
+        Register a preprocessor if appropriate.
+        """
         self.name = name
         _data_path = Path(config["base_path"]).resolve() / "data"
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"

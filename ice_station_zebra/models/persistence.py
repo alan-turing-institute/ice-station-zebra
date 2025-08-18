@@ -14,6 +14,7 @@ class Persistence(ZebraModel):
         self,
         **kwargs: Any,
     ) -> None:
+        """Initialise a Persistence model."""
         super().__init__(**kwargs)
         self.model = nn.Identity()
         self.automatic_optimization = False

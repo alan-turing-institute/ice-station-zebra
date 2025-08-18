@@ -3,6 +3,7 @@ from torch import Tensor, nn
 
 class UpconvBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
+        """Initialise an UpconvBlock."""
         super().__init__()
 
         self.model = nn.Sequential(

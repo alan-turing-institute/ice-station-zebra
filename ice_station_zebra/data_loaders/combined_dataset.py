@@ -18,7 +18,12 @@ class CombinedDataset(Dataset):
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
     ) -> None:
-        """Constructor."""
+        """Initialise a combined dataset from a sequence of ZebraDatasets.
+
+        One of the datasets must be the target and all must have the same frequency. The
+        number of forecast and history steps can be set, which will determine the shape
+        of the NTCHW tensors returned by __getitem__.
+        """
         super().__init__()
 
         # Store the number of forecast and history steps

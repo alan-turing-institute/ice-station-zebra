@@ -29,4 +29,5 @@ class BaseEncoder(nn.Module, ABC):
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
         """

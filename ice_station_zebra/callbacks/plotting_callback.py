@@ -27,6 +27,7 @@ class PlottingCallback(Callback):
         Args:
             frequency: Create a new plot every `frequency` batches.
             plot_sea_ice_concentration: Whether to plot sea ice concentration.
+
         """
         super().__init__()
         self.frequency = frequency

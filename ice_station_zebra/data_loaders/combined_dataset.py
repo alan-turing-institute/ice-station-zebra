@@ -68,6 +68,7 @@ class CombinedDataset(Dataset):
             The shape of each array is:
             - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
             - target dataset: [n_forecast_steps, C_target, H_target, W_target]
+
         """
         return {
             ds.name: ds.get_tchw(self.get_history_steps(self.available_dates[idx]))

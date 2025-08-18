@@ -19,6 +19,7 @@ def hydra_adaptor(function: Callable[Param, RetType]) -> Callable[Param, RetType
 
     Returns:
         Callable(*args, config_name: str, **kwargs, overrides: list[str])
+
     """
 
     def wrapper(

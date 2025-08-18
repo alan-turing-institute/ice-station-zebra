@@ -20,6 +20,7 @@ class MetricSummaryCallback(Callback):
 
         Args:
             average_loss: Whether to log average loss
+
         """
         self.metrics: dict[str, list[float]] = {}
         if average_loss:

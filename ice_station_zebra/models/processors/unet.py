@@ -62,6 +62,7 @@ class UNetProcessor(nn.Module):
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
         """
         # Encoder
         bn1 = self.conv1(x)

@@ -12,6 +12,7 @@ class UnconditionalCheckpoint(Callback):
 
         Args:
             on_train_end: Whether to save a checkpoint at the end of training
+
         """
         super().__init__()
         self.impl = ModelCheckpoint()

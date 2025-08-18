@@ -85,8 +85,6 @@ ignore = [
     "D203", # one-blank-line-before-class [conflicts with D211]
     "D213", # multi-line-summary-second-line [conflicts with D212]
     "D401", # non-imperative-mood
-    "D413", # missing-blank-line-after-last-section"
-    "D417", # undocumented-param
     "E501", # line-too-long
     "SLF001", # private-member-access
 ]

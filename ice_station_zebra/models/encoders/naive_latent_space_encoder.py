@@ -59,5 +59,6 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
         """
         return self.model(x)

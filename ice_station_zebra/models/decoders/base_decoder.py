@@ -28,4 +28,5 @@ class BaseDecoder(nn.Module, ABC):
 
         Returns:
             TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+
         """

@@ -61,5 +61,6 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
 
         Returns:
             TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+
         """
         return self.model(x)

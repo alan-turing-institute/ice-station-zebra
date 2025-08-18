@@ -85,6 +85,7 @@ class ZebraModel(LightningModule, ABC):
 
         Returns:
             A ModelTestOutput containing the prediction, target and loss for the batch.
+
         """
         target = batch.pop("target")
         prediction = self(batch)
@@ -109,6 +110,7 @@ class ZebraModel(LightningModule, ABC):
 
         Returns:
             A Tensor containing the loss for the batch.
+
         """
         target = batch.pop("target")
         prediction = self(batch)
@@ -135,6 +137,7 @@ class ZebraModel(LightningModule, ABC):
 
         Returns:
             A Tensor containing the loss for the batch.
+
         """
         target = batch.pop("target")
         prediction = self(batch)

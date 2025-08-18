@@ -19,7 +19,7 @@ class ZebraDataset(Dataset):
         start: str | None = None,
         end: str | None = None,
     ) -> None:
-        """A dataset for use by Zebra
+        """A dataset for use by Zebra.
 
         Dataset shape is: time; variables; ensembles; position
         We reshape each time point to: variables; pos_x; pos_y
@@ -67,15 +67,15 @@ class ZebraDataset(Dataset):
         return self.dataset.start_date
 
     def __len__(self) -> int:
-        """Return the total length of the dataset"""
+        """Return the total length of the dataset."""
         return len(self.dataset)
 
     def __getitem__(self, idx: int) -> ArrayCHW:
-        """Return the data for a single timestep in [C, H, W] format"""
+        """Return the data for a single timestep in [C, H, W] format."""
         return self.dataset[idx].reshape(self.space.chw)
 
     def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
-        """Return the data for a series of timesteps in [T, C, H, W] format"""
+        """Return the data for a series of timesteps in [T, C, H, W] format."""
         return np.stack(
             [self[self.index_from_date(target_date)] for target_date in dates], axis=0
         )

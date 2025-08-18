@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ZebraTrainer:
-    """A wrapper for PyTorch training"""
+    """A wrapper for PyTorch training."""
 
     def __init__(self, config: DictConfig) -> None:
         """Initialize the Zebra trainer."""

@@ -18,7 +18,7 @@ class CombinedDataset(Dataset):
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
     ) -> None:
-        """Constructor"""
+        """Constructor."""
         super().__init__()
 
         # Store the number of forecast and history steps
@@ -57,11 +57,11 @@ class CombinedDataset(Dataset):
         ]
 
     def __len__(self) -> int:
-        """Return the total length of the dataset"""
+        """Return the total length of the dataset."""
         return len(self.available_dates)
 
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
-        """Return the data for a single timestep as a dictionary
+        """Return the data for a single timestep as a dictionary.
 
         Returns:
             A dictionary with dataset names as keys and a numpy array as the value.
@@ -79,7 +79,7 @@ class CombinedDataset(Dataset):
         }
 
     def date_from_index(self, idx: int) -> datetime:
-        """Return the date of the timestep"""
+        """Return the date of the timestep."""
         np_datetime = self.available_dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 

@@ -30,14 +30,14 @@ class ZebraDataModule(LightningDataModule):
                     self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
                 ).resolve()
             )
-        logger.info("Found %d dataset_groups", len(self.dataset_groups))
+        logger.info("Found %d dataset_groups.", len(self.dataset_groups))
         for dataset_group in self.dataset_groups:
             logger.debug("... %s.", dataset_group)
 
         # Check prediction target
         self.predict_target = config["predict"]["dataset_group"]
         if self.predict_target not in self.dataset_groups:
-            msg = f"Could not find prediction target {self.predict_target}"
+            msg = f"Could not find prediction target {self.predict_target}."
             raise ValueError(msg)
 
         # Set periods for train, validation, and test
@@ -68,7 +68,7 @@ class ZebraDataModule(LightningDataModule):
 
     @cached_property
     def input_spaces(self) -> list[DataSpace]:
-        """Return the data space for each input"""
+        """Return the data space for each input."""
         return [
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
@@ -77,7 +77,7 @@ class ZebraDataModule(LightningDataModule):
 
     @cached_property
     def output_space(self) -> DataSpace:
-        """Return the data space of the desired output"""
+        """Return the data space of the desired output."""
         return next(
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
@@ -87,7 +87,7 @@ class ZebraDataModule(LightningDataModule):
     def train_dataloader(
         self,
     ) -> DataLoader[dict[str, ArrayTCHW]]:
-        """Construct train dataloader"""
+        """Construct train dataloader."""
         dataset = CombinedDataset(
             [
                 ZebraDataset(
@@ -103,7 +103,7 @@ class ZebraDataModule(LightningDataModule):
             target=self.predict_target,
         )
         logger.info(
-            "Loaded training dataset with %d samples between %s and %s",
+            "Loaded training dataset with %d samples between %s and %s.",
             len(dataset),
             dataset.start_date,
             dataset.end_date,
@@ -113,7 +113,7 @@ class ZebraDataModule(LightningDataModule):
     def val_dataloader(
         self,
     ) -> DataLoader[dict[str, ArrayTCHW]]:
-        """Construct validation dataloader"""
+        """Construct validation dataloader."""
         dataset = CombinedDataset(
             [
                 ZebraDataset(
@@ -129,7 +129,7 @@ class ZebraDataModule(LightningDataModule):
             target=self.predict_target,
         )
         logger.info(
-            "Loaded validation dataset with %d samples between %s and %s",
+            "Loaded validation dataset with %d samples between %s and %s.",
             len(dataset),
             dataset.start_date,
             dataset.end_date,
@@ -139,7 +139,7 @@ class ZebraDataModule(LightningDataModule):
     def test_dataloader(
         self,
     ) -> DataLoader[dict[str, ArrayTCHW]]:
-        """Construct test dataloader"""
+        """Construct test dataloader."""
         dataset = CombinedDataset(
             [
                 ZebraDataset(
@@ -155,7 +155,7 @@ class ZebraDataModule(LightningDataModule):
             target=self.predict_target,
         )
         logger.info(
-            "Loaded test dataset with %d samples between %s and %s",
+            "Loaded test dataset with %d samples between %s and %s.",
             len(dataset),
             dataset.start_date,
             dataset.end_date,

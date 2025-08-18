@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class ZebraEvaluator:
-    """A wrapper for PyTorch evaluation"""
+    """A wrapper for PyTorch evaluation."""
 
     def __init__(self, config: DictConfig, checkpoint_path: Path) -> None:
         """Initialize the Zebra evaluator."""

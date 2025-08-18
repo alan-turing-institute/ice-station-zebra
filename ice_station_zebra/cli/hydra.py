@@ -12,7 +12,7 @@ RetType = TypeVar("RetType")
 
 
 def hydra_adaptor(function: Callable[Param, RetType]) -> Callable[Param, RetType]:
-    """Replace a function that takes a Hydra config with one that takes string arguments
+    """Replace a function that takes a Hydra config with one that takes string arguments.
 
     Args:
         function: Callable(*args, config: DictConfig, **kwargs)

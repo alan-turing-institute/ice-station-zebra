@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @datasets_cli.command("create")
 @hydra_adaptor
 def create(config: DictConfig) -> None:
-    """Create all datasets"""
+    """Create all datasets."""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
@@ -26,7 +26,7 @@ def create(config: DictConfig) -> None:
 @datasets_cli.command("inspect")
 @hydra_adaptor
 def inspect(config: DictConfig) -> None:
-    """Inspect all datasets"""
+    """Inspect all datasets."""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)

@@ -46,14 +46,14 @@ class ZebraModel(LightningModule, ABC):
 
     @abstractmethod
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Forward step of the model
+        """Forward step of the model.
 
         - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
         - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
         """
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        """Construct the optimizer from the config"""
+        """Construct the optimizer from the config."""
         return hydra.utils.instantiate(
             dict(**self.optimizer_cfg)
             | {
@@ -64,7 +64,7 @@ class ZebraModel(LightningModule, ABC):
         )
 
     def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
-        """Calculate the loss given a prediction and target"""
+        """Calculate the loss given a prediction and target."""
         return torch.nn.functional.l1_loss(prediction, target)
 
     def test_step(
@@ -72,7 +72,7 @@ class ZebraModel(LightningModule, ABC):
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,  # noqa: PT019
     ) -> ModelTestOutput:
-        """Run the test step, in PyTorch eval model (i.e. no gradients)
+        """Run the test step, in PyTorch eval model (i.e. no gradients).
 
         - Separate the batch into inputs and target
         - Run inputs through the model
@@ -96,7 +96,7 @@ class ZebraModel(LightningModule, ABC):
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,
     ) -> torch.Tensor:
-        """Run the training step
+        """Run the training step.
 
         - Separate the batch into inputs and target
         - Run inputs through the model
@@ -119,7 +119,7 @@ class ZebraModel(LightningModule, ABC):
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,
     ) -> torch.Tensor:
-        """Run the validation step
+        """Run the validation step.
 
         A batch contains one tensor for each input dataset and one for the target
         These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)

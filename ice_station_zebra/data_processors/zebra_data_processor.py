@@ -27,7 +27,7 @@ class ZebraDataProcessor:
         self.preprocessor = cls_preprocessor(self.config)
 
     def create(self) -> None:
-        """Ensure that a single Anemoi dataset exists"""
+        """Ensure that a single Anemoi dataset exists."""
         try:
             self.inspect()
             logger.info(
@@ -41,7 +41,7 @@ class ZebraDataProcessor:
             self.download()
 
     def download(self) -> None:
-        """Download a single Anemoi dataset"""
+        """Download a single Anemoi dataset."""
         self.preprocessor.download(self.path_preprocessor)
         logger.info("Creating dataset %s at %s.", self.name, self.path_dataset)
         Create().run(
@@ -52,7 +52,7 @@ class ZebraDataProcessor:
         )
 
     def inspect(self) -> None:
-        """Inspect a single Anemoi dataset"""
+        """Inspect a single Anemoi dataset."""
         logger.info("Inspecting dataset %s at %s.", self.name, self.path_dataset)
         InspectZarr().run(
             AnemoiInspectArgs(

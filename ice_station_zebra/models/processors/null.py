@@ -4,7 +4,7 @@ from ice_station_zebra.types import TensorNCHW
 
 
 class NullProcessor(nn.Module):
-    """Null model that simply returns input
+    """Null model that simply returns input.
 
     Operations all occur in latent space:
         TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
@@ -17,7 +17,7 @@ class NullProcessor(nn.Module):
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """
-        Transformation summary
+        Forward step: process in latent space.
 
         Args:
             x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)

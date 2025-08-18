@@ -7,7 +7,7 @@ from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 
 class UNetProcessor(nn.Module):
-    """UNet model that processes input through a UNet architecture
+    """UNet model that processes input through a UNet architecture.
 
     Structure based on Andersson et al. (2021) Nature Communications
     https://doi.org/10.1038/s41467-021-25257-4"""
@@ -54,8 +54,15 @@ class UNetProcessor(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
+        """
+        Forward step: process in latent space.
 
+        Args:
+            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
+        Returns:
+            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        """
         # Encoder
         bn1 = self.conv1(x)
         conv1 = self.maxpool1(bn1)

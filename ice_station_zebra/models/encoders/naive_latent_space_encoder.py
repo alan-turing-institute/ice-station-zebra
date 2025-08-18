@@ -10,7 +10,7 @@ from .base_encoder import BaseEncoder
 
 class NaiveLatentSpaceEncoder(BaseEncoder):
     """
-    Naive, linear encoder that takes data in an input space and translates it to a smaller latent space
+    Naive, linear encoder that takes data in an input space and translates it to a smaller latent space.
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -54,7 +54,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
 
     def forward(self, x: TensorNTCHW) -> TensorNCHW:
         """
-        Transformation summary
+        Forward step: encode input space into latent space.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)

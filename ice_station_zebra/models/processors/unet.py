@@ -10,7 +10,8 @@ class UNetProcessor(nn.Module):
     """UNet model that processes input through a UNet architecture.
 
     Structure based on Andersson et al. (2021) Nature Communications
-    https://doi.org/10.1038/s41467-021-25257-4"""
+    https://doi.org/10.1038/s41467-021-25257-4
+    """
 
     def __init__(
         self,

@@ -83,7 +83,6 @@ ignore = [
     "D105", # undocumented-magic-method
     "D107", # undocumented-public-init
     "D203", # one-blank-line-before-class [conflicts with D211]
-    "D209", # new-line-after-last-paragraph
     "D213", # multi-line-summary-second-line [conflicts with D212]
     "D401", # non-imperative-mood
     "D413", # missing-blank-line-after-last-section"

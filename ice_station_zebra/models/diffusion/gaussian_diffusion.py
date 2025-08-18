@@ -82,9 +82,8 @@ class GaussianDiffusion:
         Returns:
             torch.Tensor: Beta values of shape (timesteps,).
         """
-        steps = timesteps + 1
-        x = torch.linspace(0, timesteps, steps)
-        alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
+        t = torch.linspace(0, 1, timesteps + 1)
+        alphas_cumprod = torch.cos((t + s) / (1 + s) * math.pi * 0.5) ** 2
         alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
         betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
 

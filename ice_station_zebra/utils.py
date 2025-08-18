@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
@@ -10,7 +10,7 @@ def generate_run_name() -> str:
 
 
 def get_timestamp() -> str:
-    return datetime.now().strftime(r"%Y%m%d_%H%M%S")
+    return datetime.now(tz=UTC).strftime(r"%Y%m%d_%H%M%S")
 
 
 def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:

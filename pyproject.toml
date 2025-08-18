@@ -92,7 +92,6 @@ ignore = [
     "D415", # missing-terminal-punctuation
     "D417", # undocumented-param
     "E501", # line-too-long
-    "INP001", # implicit-namespace-package
     "PLR0913", # too-many-arguments
     "PLR2004", # magic-value-comparison
     "PT011", # pytest-raises-too-broad

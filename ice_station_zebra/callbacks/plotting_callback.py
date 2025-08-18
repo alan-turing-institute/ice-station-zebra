@@ -35,9 +35,9 @@ class PlottingCallback(Callback):
     def on_test_batch_end(
         self,
         trainer: Trainer,
-        module: LightningModule,
+        _module: LightningModule,
         outputs: Tensor | Mapping[str, Any] | None,
-        batch: Any,  # noqa: ANN401
+        _batch: Any,  # noqa: ANN401
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:

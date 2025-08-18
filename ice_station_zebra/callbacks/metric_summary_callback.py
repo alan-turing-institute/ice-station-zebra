@@ -27,12 +27,12 @@ class MetricSummaryCallback(Callback):
 
     def on_test_batch_end(
         self,
-        trainer: Trainer,
-        module: LightningModule,
+        _trainer: Trainer,
+        _module: LightningModule,
         outputs: Tensor | Mapping[str, Any] | None,
-        batch: Any,  # noqa: ANN401
-        batch_idx: int,
-        dataloader_idx: int = 0,
+        _batch: Any,  # noqa: ANN401
+        _batch_idx: int,
+        _dataloader_idx: int = 0,
     ) -> None:
         """Called when the test batch ends."""
         if not isinstance(outputs, ModelTestOutput):
@@ -43,7 +43,11 @@ class MetricSummaryCallback(Callback):
         if "average_loss" in self.metrics:
             self.metrics["average_loss"].append(outputs.loss.item())
 
-    def on_test_epoch_end(self, trainer: Trainer, module: LightningModule) -> None:
+    def on_test_epoch_end(
+        self,
+        trainer: Trainer,
+        _module: LightningModule,
+    ) -> None:
         """Called at the end of the test epoch."""
         # Post-process accumulated metrics into a single value
         metrics_: dict[str, float] = {}

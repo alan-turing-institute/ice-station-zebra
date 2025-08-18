@@ -68,7 +68,9 @@ class ZebraModel(LightningModule, ABC):
         return torch.nn.functional.l1_loss(prediction, target)
 
     def test_step(
-        self, batch: dict[str, TensorNTCHW], batch_idx: int
+        self,
+        batch: dict[str, TensorNTCHW],
+        _batch_idx: int,  # noqa: PT019
     ) -> ModelTestOutput:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
 
@@ -90,7 +92,9 @@ class ZebraModel(LightningModule, ABC):
         return ModelTestOutput(prediction, target, loss)
 
     def training_step(
-        self, batch: dict[str, TensorNTCHW], batch_idx: int
+        self,
+        batch: dict[str, TensorNTCHW],
+        _batch_idx: int,
     ) -> torch.Tensor:
         """Run the training step
 
@@ -111,7 +115,9 @@ class ZebraModel(LightningModule, ABC):
         return self.loss(prediction, target)
 
     def validation_step(
-        self, batch: dict[str, TensorNTCHW], batch_idx: int
+        self,
+        batch: dict[str, TensorNTCHW],
+        _batch_idx: int,
     ) -> torch.Tensor:
         """Run the validation step
 

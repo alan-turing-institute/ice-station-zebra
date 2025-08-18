@@ -27,7 +27,7 @@ class CombinedDataset(Dataset):
 
         # Define target and input datasets
         self.target = next(ds for ds in datasets if ds.name == target)
-        self.inputs = [ds for ds in datasets]
+        self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
         frequencies = sorted({ds.dataset.frequency for ds in datasets})

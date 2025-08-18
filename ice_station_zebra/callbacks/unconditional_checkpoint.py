@@ -7,7 +7,7 @@ from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 class UnconditionalCheckpoint(Callback):
     """A callback to summarise metrics during evaluation."""
 
-    def __init__(self, on_train_end: bool = False) -> None:
+    def __init__(self, *, on_train_end: bool = False) -> None:
         """Save a checkpoint unconditionally.
 
         Args:

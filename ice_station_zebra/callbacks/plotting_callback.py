@@ -18,7 +18,7 @@ class PlottingCallback(Callback):
     """A callback to create plots during evaluation."""
 
     def __init__(
-        self, frequency: int = 10, plot_sea_ice_concentration: bool = True
+        self, *, frequency: int = 10, plot_sea_ice_concentration: bool = True
     ) -> None:
         """Create plots during evaluation.
 

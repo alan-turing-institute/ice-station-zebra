@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MetricSummaryCallback(Callback):
     """A callback to summarise metrics during evaluation."""
 
-    def __init__(self, average_loss: bool = True) -> None:
+    def __init__(self, *, average_loss: bool = True) -> None:
         """Summarise metrics during evaluation.
 
         Args:

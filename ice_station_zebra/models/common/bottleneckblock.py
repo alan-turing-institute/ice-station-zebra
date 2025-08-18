@@ -2,6 +2,7 @@ from typing import Type
 
 import torch.nn as nn
 from torch import Tensor
+from .activations import get_activation
 
 
 class BottleneckBlock(nn.Module):
@@ -11,19 +12,21 @@ class BottleneckBlock(nn.Module):
         out_channels: int,
         *,
         filter_size: int,
-        activation: Type[nn.Module] = nn.ReLU,
+        activation: str = "ReLU",
     ) -> None:
         super().__init__()
+
+        act = lambda: get_activation(activation)
 
         self.model = nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            activation(),
+            act(),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            activation(),
+            act(),
             nn.BatchNorm2d(num_features=out_channels),
         )
 

@@ -2,6 +2,7 @@ from typing import Type
 
 import torch.nn as nn
 from torch import Tensor
+from .activations import get_activation
 
 
 class ConvBlock(nn.Module):
@@ -12,19 +13,21 @@ class ConvBlock(nn.Module):
         *,
         filter_size: int,
         final: bool = False,
-        activation: Type[nn.Module] = nn.ReLU,
+        activation: str = "ReLU",
     ) -> None:
         super().__init__()
+
+        act = lambda: get_activation(activation)
 
         layers = [
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            activation(),
+            act(),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            activation(),
+            act(),
         ]
         if final:
             layers += [
@@ -34,7 +37,7 @@ class ConvBlock(nn.Module):
                     kernel_size=filter_size,
                     padding="same",
                 ),
-                activation(),
+                act(),
             ]
 
         else:

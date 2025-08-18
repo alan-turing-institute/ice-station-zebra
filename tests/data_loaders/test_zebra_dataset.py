@@ -59,9 +59,10 @@ class TestZebraDataset:
         assert isinstance(data_array, np.ndarray)
         assert data_array.shape == (3, 1, 2, 2)
         # Check exception for out of range
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(
+            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+        ):
             dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
-        assert "Date 1970-01-01T00:00:00 not found in the dataset" in str(excinfo.value)
 
     def test_dataset_index_from_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -71,9 +72,10 @@ class TestZebraDataset:
         # Check type
         assert dataset.index_from_date(self.dates_np[0]) == 0
         # Check exception for out of range
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(
+            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+        ):
             dataset.index_from_date(np.datetime64("1970-01-01"))
-        assert "Date 1970-01-01T00:00:00 not found in the dataset" in str(excinfo.value)
 
     def test_dataset_len(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

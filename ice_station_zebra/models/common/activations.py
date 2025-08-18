@@ -10,6 +10,7 @@ ACTIVATIONS = {
     "Tanh": nn.Tanh,
 }
 
+
 def get_activation(name: str) -> nn.Module:
     if name not in ACTIVATIONS:
         raise ValueError(f"Unsupported activation: {name}")

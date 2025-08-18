@@ -1,5 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
+
 from .activations import get_activation
 
 
@@ -17,7 +18,6 @@ class ConvBlock(nn.Module):
 
         def act():
             return get_activation(activation)
-
 
         layers = [
             nn.Conv2d(

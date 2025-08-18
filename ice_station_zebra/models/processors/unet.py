@@ -21,7 +21,7 @@ class UNetProcessor(nn.Module):
     ) -> None:
         super().__init__()
 
-        channels = [start_out_channels * 2**pow for pow in range(4)]
+        channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)

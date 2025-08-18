@@ -30,7 +30,7 @@ class CombinedDataset(Dataset):
         self.inputs = [ds for ds in datasets]
 
         # Require that all datasets have the same frequency
-        frequencies = sorted(set(ds.dataset.frequency for ds in datasets))
+        frequencies = sorted({ds.dataset.frequency for ds in datasets})
         if len(frequencies) != 1:
             msg = f"Cannot combine datasets with different frequencies: {frequencies}."
             raise ValueError(msg)
@@ -99,7 +99,7 @@ class CombinedDataset(Dataset):
     @property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""
-        end_date = set(dataset.end_date for dataset in self.inputs)
+        end_date = {dataset.end_date for dataset in self.inputs}
         if len(end_date) != 1:
             msg = f"Datasets have {len(end_date)} different end dates"
             raise ValueError(msg)
@@ -108,7 +108,7 @@ class CombinedDataset(Dataset):
     @property
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
-        start_date = set(dataset.start_date for dataset in self.inputs)
+        start_date = {dataset.start_date for dataset in self.inputs}
         if len(start_date) != 1:
             msg = f"Datasets have {len(start_date)} different start dates"
             raise ValueError(msg)

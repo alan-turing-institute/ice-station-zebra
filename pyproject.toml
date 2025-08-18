@@ -78,7 +78,6 @@ ignore = [
     "ANN201", # missing-return-type-undocumented-public-function
     "ANN204", # missing-return-type-special-method
     "ARG002", # unused-method-argument
-    "C401", # unnecessary-generator-set
     "C416", # unnecessary-comprehension
     "COM812", # conflicts with formatter
     "D100", # undocumented-public-module

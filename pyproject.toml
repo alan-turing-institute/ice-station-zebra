@@ -91,7 +91,8 @@ allow-star-arg-any = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-    "S101", # asserts allowed in tests...
+    "DTZ001", # allow unlocalised datetimes in tests
+    "S101", # allow asserts in tests
     "INP001", # allow implicit namespace in tests
     "PLR2004", # allow magic-number comparison in tests
 ]

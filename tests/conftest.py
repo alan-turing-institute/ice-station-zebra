@@ -29,9 +29,9 @@ def mock_data() -> dict[str, dict[str, Any]]:
                 "dims": ("time",),
                 "attrs": {"standard_name": "time"},
                 "data": [
-                    datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.UTC),
-                    datetime.datetime(2020, 1, 2, 0, 0, 0, tzinfo=datetime.UTC),
-                    datetime.datetime(2020, 1, 3, 0, 0, 0, tzinfo=datetime.UTC),
+                    datetime.datetime(2020, 1, 1, 0, 0, 0),
+                    datetime.datetime(2020, 1, 2, 0, 0, 0),
+                    datetime.datetime(2020, 1, 3, 0, 0, 0),
                 ],
             },
         },

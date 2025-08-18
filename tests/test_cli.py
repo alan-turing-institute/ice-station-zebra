@@ -91,7 +91,6 @@ class TestEvaluateCLI:
 
 class TestTrainCLI:
     def test_help(self):
-        # found_match = runner.invoke(app, ["train", "--help"])
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["train", "--help"],

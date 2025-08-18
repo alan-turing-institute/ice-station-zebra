@@ -100,7 +100,6 @@ ignore = [
     "DTZ007", # call-datetime-strptime-without-zone
     "E501", # line-too-long
     "EM102", # f-string-in-exception
-    "ERA001", # commented-out-code
     "FBT001", # boolean-type-hint-positional-argument
     "FBT002", # boolean-default-value-positional-argument
     "G004", # logging-f-string

@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Self, TypedDict
 
@@ -67,3 +67,29 @@ class DataSpace:
         return DictConfig(
             {"channels": self.channels, "name": self.name, "shape": self.shape}
         )
+
+
+@dataclass
+class ModelTestOutput(Mapping[str, Tensor]):
+    """Output of a model test step."""
+
+    prediction: TensorNTCHW
+    target: TensorNTCHW
+    loss: Tensor
+
+    def __getitem__(self, key: str) -> Tensor:
+        if key == "prediction":
+            return self.prediction
+        if key == "target":
+            return self.target
+        if key == "loss":
+            return self.loss
+        raise KeyError(f"Key {key} not found in ModelTestOutput")
+
+    def __iter__(self) -> Iterator[str]:
+        yield "prediction"
+        yield "target"
+        yield "loss"
+
+    def __len__(self) -> int:
+        return 3

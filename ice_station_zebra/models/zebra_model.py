@@ -7,10 +7,12 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace, TensorNTCHW
+from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
 class ZebraModel(LightningModule, ABC):
+    """A base class for all models used in the Ice Station Zebra project."""
+
     def __init__(
         self,
         *,
@@ -61,41 +63,52 @@ class ZebraModel(LightningModule, ABC):
             }
         )
 
-    def loss(self, output: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
-        return torch.nn.functional.l1_loss(output, target)
+    def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
+        """Calculate the loss given a prediction and target"""
+        return torch.nn.functional.l1_loss(prediction, target)
 
     def test_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
-    ) -> dict[str, torch.Tensor]:
+    ) -> ModelTestOutput:
         """Run the test step, in PyTorch eval model (i.e. no gradients)
-
-        A batch contains one tensor for each input dataset and one for the target
-        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
 
         - Separate the batch into inputs and target
         - Run inputs through the model
-        - Return the output, target and loss
+        - Return the prediction, target and loss
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A ModelTestOutput containing the prediction, target and loss for the batch.
         """
         target = batch.pop("target")
-        output = self(batch)
-        loss = self.loss(output, target)
-        return {"output": output, "target": target, "loss": loss}
+        prediction = self(batch)
+        loss = self.loss(prediction, target)
+        return ModelTestOutput(prediction, target, loss)
 
     def training_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
     ) -> torch.Tensor:
         """Run the training step
 
-        A batch contains one tensor for each input dataset and one for the target
-        These are [NTCHW] tensors with (batch_size, n_history_steps, C, H, W)
-
         - Separate the batch into inputs and target
         - Run inputs through the model
         - Calculate the loss wrt. the target
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
-        output = self(batch)
-        return self.loss(output, target)
+        prediction = self(batch)
+        return self.loss(prediction, target)
 
     def validation_step(
         self, batch: dict[str, TensorNTCHW], batch_idx: int
@@ -107,10 +120,18 @@ class ZebraModel(LightningModule, ABC):
 
         - Separate the batch into inputs and target
         - Run inputs through the model
-        - Calculate the loss wrt. the target
+        - Calculate and log the loss wrt. the target
+
+        Args:
+            batch: Dictionary mapping dataset name to its contents. There is one entry
+                   for each input dataset and one for the target. Each of these is a
+                   TensorNTCHW with (batch_size, n_history_steps, C, H, W).
+
+        Returns:
+            A Tensor containing the loss for the batch.
         """
         target = batch.pop("target")
-        output = self(batch)
-        loss = self.loss(output, target)
+        prediction = self(batch)
+        loss = self.loss(prediction, target)
         self.log("validation_loss", loss)
         return loss

@@ -1,4 +1,5 @@
 import re
+from collections.abc import Sequence
 
 from typer import Typer
 from typer.testing import CliRunner
@@ -13,7 +14,7 @@ class ZebraCliRunner(CliRunner):
         self.app = app
         self.colorstrip = re.compile(r"\x1b\[[0-9;]*m")
 
-    def output(self, commands: list[str]) -> list[str]:
+    def output(self, commands: Sequence[str]) -> list[str]:
         """Invoke the CLI commands and return the output as a list of strings."""
         result = super().invoke(self.app, commands, prog_name="zebra")
         assert result.exit_code == 0, (
@@ -23,7 +24,9 @@ class ZebraCliRunner(CliRunner):
             raise result.exception
         return [self.colorstrip.sub("", line) for line in result.output.split("\n")]
 
-    def check_output(self, commands: list[str], expected_patterns: list[str]) -> None:
+    def check_output(
+        self, commands: Sequence[str], expected_patterns: Sequence[str]
+    ) -> None:
         """Check if the output contains all expected patterns."""
         output = self.output(commands)
         for pattern in expected_patterns:

@@ -89,7 +89,6 @@ ignore = [
     "D413", # missing-blank-line-after-last-section"
     "D417", # undocumented-param
     "E501", # line-too-long
-    "PLR0913", # too-many-arguments
     "SLF001", # private-member-access
 ]
 
@@ -102,6 +101,9 @@ allow-star-arg-any = true
     "INP001", # allow implicit namespace in tests
     "PLR2004", # allow magic-number comparison in tests
 ]
+
+[tool.ruff.lint.pylint]
+max-args = 6
 
 [tool.uv.build-backend]
 module-root = ""

@@ -37,7 +37,7 @@ class PlottingCallback(Callback):
         trainer: Trainer,
         module: LightningModule,
         outputs: Tensor | Mapping[str, Any] | None,
-        batch: Any,
+        batch: Any,  # noqa: ANN401
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:

@@ -1,5 +1,4 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 
 class BottleneckBlock(nn.Module):

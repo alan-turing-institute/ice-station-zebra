@@ -1,7 +1,7 @@
 import math
 from typing import Any
 
-import torch.nn as nn
+from torch import nn
 
 from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 

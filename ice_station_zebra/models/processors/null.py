@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch import nn
 
 from ice_station_zebra.types import TensorNCHW
 

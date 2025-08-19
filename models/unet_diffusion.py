@@ -17,33 +17,8 @@ import torch.nn.functional as F
 import math
 from typing import Tuple
 
-class Interpolate(nn.Module):
-    """
-    Interpolation module used in the U-Net decoder.
+from .common import BottleneckBlock, ConvBlock, TimeEmbed, UpconvBlock
 
-    Description:
-        Lightweight wrapper around `torch.nn.functional.interpolate` for use in `nn.Sequential`.
-        Enables spatial upsampling during the decoder stages of the U-Net.
-        Commonly used to avoid artifacts from transposed convolutions.
-
-    Args:
-        scale_factor (float or tuple): Multiplier for spatial resolution (e.g., 2 for 2x upsampling).
-        mode (str): Interpolation mode (e.g., 'nearest', 'bilinear').
-
-    Example:
-        upsample = Interpolate(scale_factor=2, mode='nearest')
-        output = upsample(input_tensor)
-    """
-    
-    def __init__(self, scale_factor, mode):
-        super().__init__()
-        self.interp = F.interpolate
-        self.scale_factor = scale_factor
-        self.mode = mode
-
-    def forward(self, x):
-        x = self.interp(x, scale_factor=self.scale_factor, mode=self.mode)
-        return x
         
 class UNetDiffusion(nn.Module):
     """
@@ -55,10 +30,12 @@ class UNetDiffusion(nn.Module):
     def __init__(self,
                  input_channels,
                  filter_size=3,
-                 n_filters_factor=1,
+                 # n_filters_factor=1,
                  n_forecast_days=7,
                  n_output_classes=1,
                  timesteps=1000,
+                 start_out_channels=32,
+                 activation: str = "SiLU",
                  **kwargs):
         """
         Initialize the U-Net diffusion model.
@@ -76,51 +53,60 @@ class UNetDiffusion(nn.Module):
 
         self.input_channels = input_channels
         self.filter_size = filter_size
-        self.n_filters_factor = n_filters_factor
+        # self.n_filters_factor = n_filters_factor
         self.n_forecast_days = n_forecast_days
         self.n_output_classes = n_output_classes
         self.timesteps = timesteps
+        self.activation = activation
         
         # Time embedding
         self.time_embed_dim = 256
-        self.time_embed = nn.Sequential(
-            nn.Linear(self.time_embed_dim, self.time_embed_dim * 4),
-            nn.SiLU(),
-            nn.Linear(self.time_embed_dim * 4, self.time_embed_dim),
-        )
-        
-        # Channel calculations
-        start_out_channels = 64
-        reduced_channels = self._make_divisible(int(start_out_channels * n_filters_factor), 8)
-        channels = {
-            start_out_channels * 2**pow: self._make_divisible(reduced_channels * 2**pow, 8)
-            for pow in range(4)
-        }
+        self.time_embed = TimeEmbed(self.time_embed_dim)
+      
+        channels = [start_out_channels * 2**pow for pow in range(4)]
 
         self.initial_conv_channels = (n_output_classes * n_forecast_days) + input_channels
         
         # Encoder
-        self.conv1 = self.conv_block(self.initial_conv_channels, channels[64])
-        self.conv2 = self.conv_block(channels[64], channels[128])
-        self.conv3 = self.conv_block(channels[128], channels[256])
-        self.conv4 = self.conv_block(channels[256], channels[256])
+        self.conv1 = ConvBlock(self.initial_conv_channels, channels[0], filter_size=filter_size, activation=self.activation)
+        self.maxpool1 = nn.MaxPool2d(2)
+        self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size, activation=self.activation)
+        self.maxpool2 = nn.MaxPool2d(2)
+        self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size, activation=self.activation)
+        self.maxpool3 = nn.MaxPool2d(2)
+        self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size, activation=self.activation)
+        self.maxpool4 = nn.MaxPool2d(2)
 
         # Bottleneck
-        self.conv5 = self.bottleneck_block(channels[256], channels[512])
+        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size, activation=self.activation)
 
         # Decoder
-        self.up6 = self.upconv_block(channels[512], channels[256])
-        self.up7 = self.upconv_block(channels[256], channels[256])
-        self.up8 = self.upconv_block(channels[256], channels[128])
-        self.up9 = self.upconv_block(channels[128], channels[64])
+        self.up6 = UpconvBlock(channels[3], channels[2], activation=self.activation)
+        self.up7 = UpconvBlock(channels[2], channels[2], activation=self.activation)
+        self.up8 = UpconvBlock(channels[2], channels[1], activation=self.activation)
+        self.up9 = UpconvBlock(channels[1], channels[0], activation=self.activation)
 
-        self.up6b = self.conv_block(channels[512] + self.time_embed_dim, channels[256])
-        self.up7b = self.conv_block(channels[512] + self.time_embed_dim, channels[256])
-        self.up8b = self.conv_block(channels[256] + self.time_embed_dim, channels[128])
-        self.up9b = self.conv_block(channels[128] + self.time_embed_dim, channels[64], final=True)
+        self.up6b = ConvBlock(
+            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size, activation=self.activation
+        )
+        self.up7b = ConvBlock(
+            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size, activation=self.activation
+        )
+        self.up8b = ConvBlock(
+            channels[2] + self.time_embed_dim, channels[1], filter_size=filter_size, activation=self.activation
+        )
+        self.up9b = ConvBlock(
+            channels[1] + self.time_embed_dim,
+            channels[0],
+            filter_size=filter_size,
+            activation=self.activation,
+            final=True,
+        )
 
         # Final layer
-        self.final_layer = nn.Conv2d(channels[64], n_output_classes * n_forecast_days, kernel_size=1, padding="same")
+        self.final_layer = nn.Conv2d(
+            channels[0], n_output_classes * n_forecast_days, kernel_size=1, padding="same"
+        )
 
     def forward(self, x, t, y, sample_weight):
         """
@@ -150,13 +136,13 @@ class UNetDiffusion(nn.Module):
 
         # Encoder pathway
         bn1 = self.conv1(x)
-        conv1 = F.max_pool2d(bn1, kernel_size=2)
+        conv1 = self.maxpool1(bn1)
         bn2 = self.conv2(conv1)
-        conv2 = F.max_pool2d(bn2, kernel_size=2)
+        conv2 = self.maxpool2(bn2)
         bn3 = self.conv3(conv2)
-        conv3 = F.max_pool2d(bn3, kernel_size=2)
+        conv3 = self.maxpool3(bn3)
         bn4 = self.conv4(conv3)
-        conv4 = F.max_pool2d(bn4, kernel_size=2)
+        conv4 = self.maxpool4(bn4)
 
         # Bottleneck
         bn5 = self.conv5(conv4)
@@ -191,36 +177,6 @@ class UNetDiffusion(nn.Module):
 
         return output
         
-    def _make_divisible(self, v, divisor):
-        """
-        Ensures a value is divisible by a specified divisor.
-
-        Args:
-            v (int): Value to adjust.
-            divisor (int): Value to divide by.
-
-        Returns:
-            int: Adjusted value divisible by divisor.
-        """
-        return max(divisor, (v // divisor) * divisor)
-
-    def _get_num_groups(self, channels):
-        """
-        Determines the maximum number of groups that divide `channels` for GroupNorm.
-
-        Args:
-            channels (int): Number of feature channels.
-
-        Returns:
-            int: Optimal number of groups.
-        """
-        num_groups = 8  # Start with preferred group count
-        while num_groups > 1:
-            if channels % num_groups == 0:
-                return num_groups
-            num_groups -= 1
-        return 1  # Fallback to GroupNorm(1,...) which is equivalent to LayerNorm
-
     def _timestep_embedding(self, timesteps, dim=256, max_period=10000):
         """
         Converts timestep integers into sinusoidal positional embeddings.
@@ -258,75 +214,4 @@ class UNetDiffusion(nn.Module):
         t = t.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, h, w)
         return torch.cat([x, t], dim=1)
     
-    def conv_block(self, in_channels, out_channels, final=False):
-        """
-        Standard convolutional block with GroupNorm and SiLU activation.
-
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
-            final (bool): Whether to add an extra conv layer at the end.
-
-        Returns:
-            nn.Sequential: Conv block.
-        """
-        num_groups = self._get_num_groups(out_channels)
-        
-        layers = [
-            nn.Conv2d(in_channels, out_channels, kernel_size=self.filter_size, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            nn.SiLU(),
-            nn.Conv2d(out_channels, out_channels, kernel_size=self.filter_size, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            nn.SiLU(),
-        ]
-        if not final:
-            return nn.Sequential(*layers)
-        else:
-            final_layers = [
-                nn.Conv2d(out_channels, out_channels, kernel_size=self.filter_size, padding="same"),
-                nn.GroupNorm(num_groups, out_channels),
-                nn.SiLU(),
-            ]
-            return nn.Sequential(*(layers + final_layers))
-
-    def bottleneck_block(self, in_channels, out_channels):
-        """
-        Bottleneck block at the center of the U-Net.
-
-        Args:
-            in_channels (int): Input channel size.
-            out_channels (int): Output channel size.
-
-        Returns:
-            nn.Sequential: Bottleneck block.
-        """
-        num_groups = self._get_num_groups(out_channels)
-        return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=self.filter_size, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            nn.SiLU(),
-            nn.Dropout2d(0.1), 
-            nn.Conv2d(out_channels, out_channels, kernel_size=self.filter_size, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            nn.SiLU(),
-        )
-
-    def upconv_block(self, in_channels, out_channels):
-        """
-        Upsampling block with interpolation and convolution.
-
-        Args:
-            in_channels (int): Input channel size.
-            out_channels (int): Output channel size.
-
-        Returns:
-            nn.Sequential: Upsampling block.
-        """
-        num_groups = self._get_num_groups(out_channels)
-        return nn.Sequential(
-            Interpolate(scale_factor=2, mode='nearest'),
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            nn.SiLU()
-        )
+  

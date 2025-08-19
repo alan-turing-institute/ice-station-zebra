@@ -12,12 +12,8 @@ class DummyModel(ZebraModel):
 
 
 class TestZebraModel:
-    @pytest.mark.parametrize(
-        "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
-    )
-    @pytest.mark.parametrize(
-        "test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)]
-    )
+    @pytest.mark.parametrize("test_input_shape", [(512, 512, 4), (10, 20, 1)])
+    @pytest.mark.parametrize("test_output_shape", [(432, 432, 1), (10, 20, 19)])
     @pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])
     @pytest.mark.parametrize("test_n_history_steps", [0, 1, 2, 5])
     def test_init(

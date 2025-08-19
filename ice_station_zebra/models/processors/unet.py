@@ -1,9 +1,7 @@
 import torch
 from torch import Tensor, nn
 
-from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
-from ice_station_zebra.models.common.convblock import ConvBlock
-from ice_station_zebra.models.common.upconvblock import UpconvBlock
+from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
 
 
 class UNetProcessor(nn.Module):

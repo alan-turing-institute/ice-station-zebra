@@ -38,7 +38,7 @@ class TestNullProcessor:
 )
 @pytest.mark.parametrize("test_batch_size", [0, 1, 2])
 @pytest.mark.parametrize("test_filter_size", [-1, 0, 1, 3])
-@pytest.mark.parametrize("test_start_out_channels", [7, 32, 64])
+@pytest.mark.parametrize("test_start_out_channels", [-1, 0, 7, 32])
 class TestUNetProcessor:
     def test_forward_shape(
         self,
@@ -51,6 +51,7 @@ class TestUNetProcessor:
             name="latent", shape=test_latent_shape[0:2], channels=test_latent_shape[2]
         )
 
+        # Catch invalid filter size
         if test_filter_size <= 0:
             with pytest.raises(ValueError, match="Filter size must be greater than 0."):
                 UNetProcessor(
@@ -59,6 +60,19 @@ class TestUNetProcessor:
                     start_out_channels=test_start_out_channels,
                 )
             return
+
+        # Catch invalid start out channels
+        if test_start_out_channels <= 0:
+            with pytest.raises(
+                ValueError, match="Start out channels must be greater than 0."
+            ):
+                UNetProcessor(
+                    filter_size=test_filter_size,
+                    n_latent_channels=test_latent_shape[2],
+                    start_out_channels=test_start_out_channels,
+                )
+            return
+
         processor = UNetProcessor(
             filter_size=test_filter_size,
             n_latent_channels=test_latent_shape[2],

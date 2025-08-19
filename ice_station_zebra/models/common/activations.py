@@ -1,6 +1,6 @@
-import torch.nn as nn
+from torch import nn
 
-ACTIVATIONS = {
+ACTIVATION_FROM_NAME: dict[str, type[nn.Module]] = {
     "ReLU": nn.ReLU,
     "LeakyReLU": nn.LeakyReLU,
     "ELU": nn.ELU,
@@ -9,9 +9,3 @@ ACTIVATIONS = {
     "Sigmoid": nn.Sigmoid,
     "Tanh": nn.Tanh,
 }
-
-
-def get_activation(name: str) -> nn.Module:
-    if name not in ACTIVATIONS:
-        raise ValueError(f"Unsupported activation: {name}")
-    return ACTIVATIONS[name]()

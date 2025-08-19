@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch import Tensor
 
-from .activations import get_activation
+from .activations import ACTIVATION_FROM_NAME
 
 
 class UpconvBlock(nn.Module):
@@ -13,13 +13,12 @@ class UpconvBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        def act():
-            return get_activation(activation)
+        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         self.model = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),
             nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
-            act(),
+            activation_layer(inplace=True),
         )
 
     def forward(self, x: Tensor) -> Tensor:

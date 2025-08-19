@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch import Tensor
 
-from .activations import get_activation
+from .activations import ACTIVATION_FROM_NAME
 
 
 class BottleneckBlock(nn.Module):
@@ -15,18 +15,17 @@ class BottleneckBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        def act():
-            return get_activation(activation)
+        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         self.model = nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            act(),
+            activation_layer(inplace=True),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            act(),
+            activation_layer(inplace=True),
             nn.BatchNorm2d(num_features=out_channels),
         )
 

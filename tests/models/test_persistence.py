@@ -4,14 +4,16 @@ import torch
 from ice_station_zebra.models import Persistence
 
 
-@pytest.mark.parametrize(
-    "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
-)
-@pytest.mark.parametrize("test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)])
-@pytest.mark.parametrize("test_batch_size", [1, 2, 5])
-@pytest.mark.parametrize("test_n_forecast_steps", [1, 2, 5])
-@pytest.mark.parametrize("test_n_history_steps", [1, 2, 5])
-class TestNullProcessor:
+class TestPersistence:
+    @pytest.mark.parametrize(
+        "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
+    )
+    @pytest.mark.parametrize(
+        "test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)]
+    )
+    @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
+    @pytest.mark.parametrize("test_n_forecast_steps", [1, 2, 5])
+    @pytest.mark.parametrize("test_n_history_steps", [1, 2, 5])
     def test_forward_shape(
         self,
         test_batch_size: int,
@@ -56,3 +58,26 @@ class TestNullProcessor:
         }
         result: torch.Tensor = model(batch)
         assert result.shape == batch["target"].shape
+
+    def test_optimizer(self) -> None:
+        model = Persistence(
+            name="persistence",
+            input_spaces=[
+                {
+                    "channels": 1,
+                    "name": "input",
+                    "shape": (1, 1),
+                }
+            ],
+            n_forecast_steps=1,
+            n_history_steps=1,
+            output_space={
+                "channels": 1,
+                "name": "target",
+                "shape": (1, 1),
+            },
+            optimizer={},
+        )
+        assert model.configure_optimizers() is None, (
+            "No optimizer should be initialized"
+        )

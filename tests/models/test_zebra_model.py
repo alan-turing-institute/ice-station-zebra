@@ -9,8 +9,8 @@ from ice_station_zebra.types import TensorNTCHW
     "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
 )
 @pytest.mark.parametrize("test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)])
-@pytest.mark.parametrize("test_n_forecast_steps", [1, 2, 5])
-@pytest.mark.parametrize("test_n_history_steps", [1, 2, 5])
+@pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])
+@pytest.mark.parametrize("test_n_history_steps", [0, 1, 2, 5])
 class TestZebraModel:
     def test_init(
         self,
@@ -38,13 +38,43 @@ class TestZebraModel:
             }
         )
 
+        # Catch invalid n_forecast_steps
+        if test_n_forecast_steps <= 0:
+            with pytest.raises(
+                ValueError, match="Number of forecast steps must be greater than 0."
+            ):
+                DummyModel(
+                    name="dummy",
+                    input_spaces=[input_space],
+                    n_forecast_steps=test_n_forecast_steps,
+                    n_history_steps=test_n_history_steps,
+                    output_space=output_space,
+                    optimizer=DictConfig({}),
+                )
+            return
+
+        # Catch invalid n_history_steps
+        if test_n_history_steps <= 0:
+            with pytest.raises(
+                ValueError, match="Number of history steps must be greater than 0."
+            ):
+                DummyModel(
+                    name="dummy",
+                    input_spaces=[input_space],
+                    n_forecast_steps=test_n_forecast_steps,
+                    n_history_steps=test_n_history_steps,
+                    output_space=output_space,
+                    optimizer=DictConfig({}),
+                )
+            return
+
         model = DummyModel(
             name="dummy",
             input_spaces=[input_space],
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
             output_space=output_space,
-            optimizer={},
+            optimizer=DictConfig({}),
         )
 
         assert model.name == "dummy"

@@ -36,7 +36,13 @@ class ZebraModel(LightningModule, ABC):
         self.name = name
 
         # Save history and forecast steps
+        if n_forecast_steps <= 0:
+            msg = "Number of forecast steps must be greater than 0."
+            raise ValueError(msg)
         self.n_forecast_steps = n_forecast_steps
+        if n_history_steps <= 0:
+            msg = "Number of history steps must be greater than 0."
+            raise ValueError(msg)
         self.n_history_steps = n_history_steps
 
         # Construct the input and output spaces

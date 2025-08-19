@@ -6,7 +6,7 @@ from ice_station_zebra.types import DataSpace
 
 
 @pytest.mark.parametrize(
-    "test_latent_shape", [(32, 32, 128), (100, 200, 3), (10, 10, 100)]
+    "test_latent_shape", [(32, 32, 128), (100, 200, 3), (256, 512, 10)]
 )
 @pytest.mark.parametrize("test_batch_size", [0, 1, 2])
 class TestNullProcessor:
@@ -34,11 +34,11 @@ class TestNullProcessor:
 
 
 @pytest.mark.parametrize(
-    "test_latent_shape", [(128, 128, 20), (256, 512, 3), (64, 64, 100)]
+    "test_latent_shape", [(32, 32, 128), (100, 200, 3), (256, 512, 10)]
 )
-@pytest.mark.parametrize("test_batch_size", [1, 2, 3])
+@pytest.mark.parametrize("test_batch_size", [0, 1, 2])
 @pytest.mark.parametrize("test_filter_size", [1, 3])
-@pytest.mark.parametrize("test_start_out_channels", [32, 64])
+@pytest.mark.parametrize("test_start_out_channels", [7, 32, 64])
 class TestUNetProcessor:
     def test_forward_shape(
         self,
@@ -55,15 +55,20 @@ class TestUNetProcessor:
             n_latent_channels=test_latent_shape[2],
             start_out_channels=test_start_out_channels,
         )
-        result: torch.Tensor = processor(
-            torch.randn(
+
+        # Create a tensor with the expected shape
+        x = torch.randn(test_batch_size, latent_space.channels, *latent_space.shape)
+        _, _, height, width = x.shape
+
+        # We will either catch an error or see a successful run
+        if height % 16 != 0 or width % 16 != 0:
+            msg = f"Latent space height and width must be divisible by 16, got {height} and {width}."
+            with pytest.raises(ValueError, match=msg):
+                processor(x)
+        else:
+            result: torch.Tensor = processor(x)
+            assert result.shape == (
                 test_batch_size,
                 latent_space.channels,
                 *latent_space.shape,
             )
-        )
-        assert result.shape == (
-            test_batch_size,
-            latent_space.channels,
-            *latent_space.shape,
-        )

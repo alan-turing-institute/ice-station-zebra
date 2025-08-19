@@ -37,7 +37,7 @@ class TestNullProcessor:
     "test_latent_shape", [(32, 32, 128), (100, 200, 3), (256, 512, 10)]
 )
 @pytest.mark.parametrize("test_batch_size", [0, 1, 2])
-@pytest.mark.parametrize("test_filter_size", [1, 3])
+@pytest.mark.parametrize("test_filter_size", [-1, 0, 1, 3])
 @pytest.mark.parametrize("test_start_out_channels", [7, 32, 64])
 class TestUNetProcessor:
     def test_forward_shape(
@@ -50,6 +50,15 @@ class TestUNetProcessor:
         latent_space = DataSpace(
             name="latent", shape=test_latent_shape[0:2], channels=test_latent_shape[2]
         )
+
+        if test_filter_size <= 0:
+            with pytest.raises(ValueError, match="Filter size must be greater than 0."):
+                UNetProcessor(
+                    filter_size=test_filter_size,
+                    n_latent_channels=test_latent_shape[2],
+                    start_out_channels=test_start_out_channels,
+                )
+            return
         processor = UNetProcessor(
             filter_size=test_filter_size,
             n_latent_channels=test_latent_shape[2],
@@ -61,7 +70,7 @@ class TestUNetProcessor:
         _, _, height, width = x.shape
 
         # We will either catch an error or see a successful run
-        if height % 16 != 0 or width % 16 != 0:
+        if height % 16 or width % 16:
             msg = f"Latent space height and width must be divisible by 16, got {height} and {width}."
             with pytest.raises(ValueError, match=msg):
                 processor(x)

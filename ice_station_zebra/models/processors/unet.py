@@ -23,6 +23,10 @@ class UNetProcessor(nn.Module):
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
+        if filter_size <= 0:
+            msg = "Filter size must be greater than 0."
+            raise ValueError(msg)
+
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)

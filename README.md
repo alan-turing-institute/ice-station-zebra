@@ -29,9 +29,10 @@
 | ice\_station\_zebra/evaluation/evaluator.py                             |       31 |       20 |     35% | 25-69, 80 |
 | ice\_station\_zebra/models/\_\_init\_\_.py                              |        4 |        4 |      0% |       1-5 |
 | ice\_station\_zebra/models/common/\_\_init\_\_.py                       |        4 |        4 |      0% |       1-5 |
-| ice\_station\_zebra/models/common/bottleneckblock.py                    |        7 |        7 |      0% |      1-28 |
-| ice\_station\_zebra/models/common/convblock.py                          |       11 |       11 |      0% |      1-45 |
-| ice\_station\_zebra/models/common/upconvblock.py                        |        7 |        7 |      0% |      1-16 |
+| ice\_station\_zebra/models/common/activations.py                        |        2 |        2 |      0% |       1-3 |
+| ice\_station\_zebra/models/common/bottleneckblock.py                    |        9 |        9 |      0% |      1-33 |
+| ice\_station\_zebra/models/common/convblock.py                          |       13 |       13 |      0% |      1-50 |
+| ice\_station\_zebra/models/common/upconvblock.py                        |        9 |        9 |      0% |      1-25 |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        3 |        3 |      0% |       1-4 |
 | ice\_station\_zebra/models/decoders/base\_decoder.py                    |        9 |        9 |      0% |      1-24 |
 | ice\_station\_zebra/models/decoders/naive\_latent\_space\_decoder.py    |       20 |       20 |      0% |      1-67 |
@@ -52,7 +53,7 @@
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |        8 |        4 |     50% |      9-12 |
 | ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       20 |       13 |     35% |     20-39 |
-|                                                               **TOTAL** |  **815** |  **468** | **43%** |           |
+|                                                               **TOTAL** |  **823** |  **476** | **42%** |           |
 
 
 ## Setup coverage badge

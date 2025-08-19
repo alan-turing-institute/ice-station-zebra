@@ -1,17 +1,25 @@
 import pytest
+import torch
 from omegaconf import DictConfig
 
 from ice_station_zebra.models import ZebraModel
 from ice_station_zebra.types import TensorNTCHW
 
 
-@pytest.mark.parametrize(
-    "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
-)
-@pytest.mark.parametrize("test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)])
-@pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])
-@pytest.mark.parametrize("test_n_history_steps", [0, 1, 2, 5])
+class DummyModel(ZebraModel):
+    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
+        return next(iter(inputs.values()))
+
+
 class TestZebraModel:
+    @pytest.mark.parametrize(
+        "test_input_shape", [(512, 512, 4), (1000, 200, 1), (1, 1, 20)]
+    )
+    @pytest.mark.parametrize(
+        "test_output_shape", [(432, 432, 1), (10, 20, 19), (1, 1, 1)]
+    )
+    @pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])
+    @pytest.mark.parametrize("test_n_history_steps", [0, 1, 2, 5])
     def test_init(
         self,
         test_input_shape: tuple[int, int, int],
@@ -19,10 +27,6 @@ class TestZebraModel:
         test_n_forecast_steps: int,
         test_n_history_steps: int,
     ) -> None:
-        class DummyModel(ZebraModel):
-            def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-                return next(iter(inputs.values()))
-
         input_space = DictConfig(
             {
                 "channels": test_input_shape[2],
@@ -86,3 +90,31 @@ class TestZebraModel:
         assert model.output_space.channels == test_output_shape[2]
         assert model.output_space.name == "target"
         assert model.output_space.shape == test_output_shape[0:2]
+
+    def test_loss(self) -> None:
+        model = DummyModel(
+            name="dummy",
+            input_spaces=[
+                DictConfig(
+                    {
+                        "channels": 1,
+                        "name": "input",
+                        "shape": (1, 1),
+                    }
+                )
+            ],
+            n_forecast_steps=1,
+            n_history_steps=1,
+            output_space=DictConfig(
+                {
+                    "channels": 1,
+                    "name": "target",
+                    "shape": (1, 1),
+                }
+            ),
+            optimizer=DictConfig({}),
+        )
+        # Test loss
+        prediction = torch.zeros(1, 1, 1, 1)
+        target = torch.ones(1, 1, 1, 1)
+        assert model.loss(prediction, target) == torch.tensor(1.0)

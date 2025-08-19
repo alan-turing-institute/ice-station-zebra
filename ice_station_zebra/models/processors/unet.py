@@ -81,7 +81,7 @@ class UNetProcessor(nn.Module):
         bn1 = self.conv1(x)
         conv1 = self.maxpool1(bn1)
         bn2 = self.conv2(conv1)
-        conv2 = self.maxpool1(bn2)
+        conv2 = self.maxpool2(bn2)
         bn3 = self.conv3(conv2)
         conv3 = self.maxpool3(bn3)
         bn4 = self.conv4(conv3)

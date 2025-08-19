@@ -47,6 +47,7 @@ class DataSpace:
     shape: tuple[int, int]
 
     def __init__(self, channels: int, name: str, shape: Sequence[int]) -> None:
+        """Initialise a DataSpace from channels, name and shape."""
         self.channels = int(channels)
         self.name = name
         self.shape = (int(shape[0]), int(shape[1]))
@@ -78,18 +79,22 @@ class ModelTestOutput(Mapping[str, Tensor]):
     loss: Tensor
 
     def __getitem__(self, key: str) -> Tensor:
+        """Get a tensor by key."""
         if key == "prediction":
             return self.prediction
         if key == "target":
             return self.target
         if key == "loss":
             return self.loss
-        raise KeyError(f"Key {key} not found in ModelTestOutput")
+        msg = f"Key {key} not found in ModelTestOutput"
+        raise KeyError(msg)
 
     def __iter__(self) -> Iterator[str]:
+        """Iterate over the keys of ModelTestOutput."""
         yield "prediction"
         yield "target"
         yield "loss"
 
     def __len__(self) -> int:
+        """Return ModelTestOutput length."""
         return 3

@@ -1,4 +1,5 @@
 import re
+from collections.abc import Sequence
 
 from typer import Typer
 from typer.testing import CliRunner
@@ -8,12 +9,12 @@ from ice_station_zebra.cli import app
 
 class ZebraCliRunner(CliRunner):
     def __init__(self, app: Typer) -> None:
-        """A custom CLI runner for Zebra tests"""
+        """A custom CLI runner for Zebra tests."""
         super().__init__()
         self.app = app
         self.colorstrip = re.compile(r"\x1b\[[0-9;]*m")
 
-    def output(self, commands: list[str]) -> list[str]:
+    def output(self, commands: Sequence[str]) -> list[str]:
         """Invoke the CLI commands and return the output as a list of strings."""
         result = super().invoke(self.app, commands, prog_name="zebra")
         assert result.exit_code == 0, (
@@ -23,7 +24,9 @@ class ZebraCliRunner(CliRunner):
             raise result.exception
         return [self.colorstrip.sub("", line) for line in result.output.split("\n")]
 
-    def check_output(self, commands: list[str], expected_patterns: list[str]) -> None:
+    def check_output(
+        self, commands: Sequence[str], expected_patterns: Sequence[str]
+    ) -> None:
         """Check if the output contains all expected patterns."""
         output = self.output(commands)
         for pattern in expected_patterns:
@@ -32,7 +35,7 @@ class ZebraCliRunner(CliRunner):
 
 
 class TestBaseCLI:
-    expected_patterns_help = [
+    expected_patterns_help = (
         r"Usage: zebra \[OPTIONS\] COMMAND \[ARGS\]...",
         r"Entrypoint for zebra application commands",
         r"--install-completion\s+Install completion for the current shell.",
@@ -41,16 +44,16 @@ class TestBaseCLI:
         r"datasets\s+Manage datasets",
         r"evaluate\s+Evaluate a model",
         r"train\s+Train a model",
-    ]
+    )
 
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["--help"],
             expected_patterns=self.expected_patterns_help,
         )
 
-    def test_short_help(self):
+    def test_short_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["-h"],
@@ -59,7 +62,7 @@ class TestBaseCLI:
 
 
 class TestDatasetsCLI:
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["datasets", "--help"],
@@ -74,7 +77,7 @@ class TestDatasetsCLI:
 
 
 class TestEvaluateCLI:
-    def test_help(self):
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["evaluate", "--help"],
@@ -90,8 +93,7 @@ class TestEvaluateCLI:
 
 
 class TestTrainCLI:
-    def test_help(self):
-        # found_match = runner.invoke(app, ["train", "--help"])
+    def test_help(self) -> None:
         runner = ZebraCliRunner(app)
         runner.check_output(
             ["train", "--help"],

@@ -1,15 +1,17 @@
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
-from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput
 from ice_station_zebra.visualisations import plot_sic_comparison
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +20,14 @@ class PlottingCallback(Callback):
     """A callback to create plots during evaluation."""
 
     def __init__(
-        self, frequency: int = 10, plot_sea_ice_concentration: bool = True
+        self, *, frequency: int = 10, plot_sea_ice_concentration: bool = True
     ) -> None:
         """Create plots during evaluation.
 
         Args:
             frequency: Create a new plot every `frequency` batches.
             plot_sea_ice_concentration: Whether to plot sea ice concentration.
+
         """
         super().__init__()
         self.frequency = frequency
@@ -35,9 +38,9 @@ class PlottingCallback(Callback):
     def on_test_batch_end(
         self,
         trainer: Trainer,
-        module: LightningModule,
+        _module: LightningModule,
         outputs: Tensor | Mapping[str, Any] | None,
-        batch: Any,
+        _batch: Any,  # noqa: ANN401
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
@@ -82,5 +85,6 @@ class PlottingCallback(Callback):
                     lightning_logger.log_image(key=key, images=image_list)
                 else:
                     logger.debug(
-                        f"Logger {lightning_logger.name} does not support logging images."
+                        "Logger %s does not support logging images.",
+                        lightning_logger.name,
                     )

@@ -4,11 +4,12 @@ from omegaconf import DictConfig
 
 
 class IPreprocessor:
-    def __init__(self, config: DictConfig):
-        self.name = config.get("preprocessor", {}).get("type", "None")
+    def __init__(self, config: DictConfig) -> None:
+        """Initialise the IPreprocessor base class."""
+        self.name = str(config.get("preprocessor", {}).get("type", "None"))
 
     def download(self, preprocessor_path: Path) -> None:
-        pass
+        """Download data to the specified preprocessor path."""
 
 
 class NullPreprocessor(IPreprocessor):

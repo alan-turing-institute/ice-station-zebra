@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_82def633c86328a7___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.3">coverage.py v7.10.3</a>,
-            created at 2025-08-18 10:25 +0000
+            created at 2025-08-19 10:46 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -101,10 +101,10 @@
     <p class="run run2"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">        <span class="nam">start</span><span class="op">:</span> <span class="nam">str</span> <span class="op">|</span> <span class="key">None</span> <span class="op">=</span> <span class="key">None</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t">        <span class="nam">end</span><span class="op">:</span> <span class="nam">str</span> <span class="op">|</span> <span class="key">None</span> <span class="op">=</span> <span class="key">None</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t21" href="#t21">21</a></span><span class="t">    <span class="op">)</span> <span class="op">-></span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t22" href="#t22">22</a></span><span class="t">        <span class="str">"""A dataset for use by Zebra</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t22" href="#t22">22</a></span><span class="t">        <span class="str">"""A dataset for use by Zebra.</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t23" href="#t23">23</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t24" href="#t24">24</a></span><span class="t"><span class="str">        Dataset shape is: time; variables; ensembles; position</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t25" href="#t25">25</a></span><span class="t"><span class="str">        We reshape each time point to: variables; pos_x; pos_y</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t24" href="#t24">24</a></span><span class="t"><span class="str">        The underlying Anemoi dataset has shape [T; C; ensembles; position].</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t25" href="#t25">25</a></span><span class="t"><span class="str">        We reshape this to CHW before returning.</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t26" href="#t26">26</a></span><span class="t"><span class="str">        """</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t27" href="#t27">27</a></span><span class="t">        <span class="nam">super</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">__init__</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t28" href="#t28">28</a></span><span class="t">        <span class="nam">self</span><span class="op">.</span><span class="nam">_cache</span><span class="op">:</span> <span class="nam">LRUCache</span> <span class="op">=</span> <span class="nam">LRUCache</span><span class="op">(</span><span class="nam">maxsize</span><span class="op">=</span><span class="num">128</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -149,15 +149,15 @@
     <p class="run"><span class="n"><a id="t67" href="#t67">67</a></span><span class="t">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">dataset</span><span class="op">.</span><span class="nam">start_date</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t68" href="#t68">68</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t69" href="#t69">69</a></span><span class="t">    <span class="key">def</span> <span class="nam">__len__</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span> <span class="op">-></span> <span class="nam">int</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t">        <span class="str">"""Return the total length of the dataset"""</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t">        <span class="str">"""Return the total length of the dataset."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">        <span class="key">return</span> <span class="nam">len</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">dataset</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">    <span class="key">def</span> <span class="nam">__getitem__</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">idx</span><span class="op">:</span> <span class="nam">int</span><span class="op">)</span> <span class="op">-></span> <span class="nam">ArrayCHW</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="str">"""Return the data for a single timestep in [C, H, W] format"""</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="str">"""Return the data for a single timestep in [C, H, W] format."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">dataset</span><span class="op">[</span><span class="nam">idx</span><span class="op">]</span><span class="op">.</span><span class="nam">reshape</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">space</span><span class="op">.</span><span class="nam">chw</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t77" href="#t77">77</a></span><span class="t">    <span class="key">def</span> <span class="nam">get_tchw</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">dates</span><span class="op">:</span> <span class="nam">Sequence</span><span class="op">[</span><span class="nam">np</span><span class="op">.</span><span class="nam">datetime64</span><span class="op">]</span><span class="op">)</span> <span class="op">-></span> <span class="nam">ArrayTCHW</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t78" href="#t78">78</a></span><span class="t">        <span class="str">"""Return the data for a series of timesteps in [T, C, H, W] format"""</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t78" href="#t78">78</a></span><span class="t">        <span class="str">"""Return the data for a series of timesteps in [T, C, H, W] format."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t79" href="#t79">79</a></span><span class="t">        <span class="key">return</span> <span class="nam">np</span><span class="op">.</span><span class="nam">stack</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t80" href="#t80">80</a></span><span class="t">            <span class="op">[</span><span class="nam">self</span><span class="op">[</span><span class="nam">self</span><span class="op">.</span><span class="nam">index_from_date</span><span class="op">(</span><span class="nam">target_date</span><span class="op">)</span><span class="op">]</span> <span class="key">for</span> <span class="nam">target_date</span> <span class="key">in</span> <span class="nam">dates</span><span class="op">]</span><span class="op">,</span> <span class="nam">axis</span><span class="op">=</span><span class="num">0</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t81" href="#t81">81</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -176,7 +176,7 @@
             <a class="nav" href="z_82def633c86328a7___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.3">coverage.py v7.10.3</a>,
-            created at 2025-08-18 10:25 +0000
+            created at 2025-08-19 10:46 +0000
         </p>
     </div>
 </footer>

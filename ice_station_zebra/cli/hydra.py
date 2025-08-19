@@ -11,14 +11,15 @@ Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
 
 
-def hydra_adaptor(function) -> Callable[Param, RetType]:
-    """Replace a function that takes a Hydra config with one that takes string arguments
+def hydra_adaptor(function: Callable) -> Callable[Param, RetType]:
+    """Replace a function that takes a Hydra config with one that takes string arguments.
 
     Args:
         function: Callable(*args, config: DictConfig, **kwargs)
 
     Returns:
         Callable(*args, config_name: str, **kwargs, overrides: list[str])
+
     """
 
     def wrapper(

@@ -1,13 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.models.encoders import BaseEncoder
 from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 from .zebra_model import ZebraModel
+
+if TYPE_CHECKING:
+    from ice_station_zebra.models.encoders import BaseEncoder
 
 
 class EncodeProcessDecode(ZebraModel):
@@ -20,6 +22,7 @@ class EncodeProcessDecode(ZebraModel):
         latent_space: DictConfig,
         **kwargs: Any,
     ) -> None:
+        """Initialise an EncodeProcessDecode model."""
         super().__init__(**kwargs)
 
         # Construct the latent space
@@ -61,7 +64,7 @@ class EncodeProcessDecode(ZebraModel):
         )
 
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Forward step of the model
+        """Forward step of the model.
 
         - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
         - encode inputs to [NCHW] latent space [batch, C_input_kprime, H_latent, W_latent]

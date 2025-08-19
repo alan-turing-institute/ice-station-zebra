@@ -1,5 +1,4 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 from .activations import ACTIVATION_FROM_NAME
 
@@ -11,6 +10,7 @@ class UpconvBlock(nn.Module):
         out_channels: int,
         activation: str = "ReLU",
     ) -> None:
+        """Initialise an UpconvBlock."""
         super().__init__()
 
         activation_layer = ACTIVATION_FROM_NAME[activation]

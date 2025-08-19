@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 @training_cli.command()
 @hydra_adaptor
 def train(config: DictConfig) -> None:
-    """Train a model"""
+    """Train a model."""
     trainer = ZebraTrainer(config)
     trainer.train()
 

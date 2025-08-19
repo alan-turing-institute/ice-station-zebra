@@ -1,5 +1,4 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 from .activations import ACTIVATION_FROM_NAME
 
@@ -13,6 +12,7 @@ class BottleneckBlock(nn.Module):
         filter_size: int,
         activation: str = "ReLU",
     ) -> None:
+        """Initialise a BottleneckBlock."""
         super().__init__()
 
         activation_layer = ACTIVATION_FROM_NAME[activation]

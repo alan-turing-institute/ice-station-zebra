@@ -1,7 +1,7 @@
 import math
 from typing import Any
 
-import torch.nn as nn
+from torch import nn
 
 from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
@@ -9,8 +9,7 @@ from .base_encoder import BaseEncoder
 
 
 class NaiveLatentSpaceEncoder(BaseEncoder):
-    """
-    Naive, linear encoder that takes data in an input space and translates it to a smaller latent space
+    """Naive, linear encoder that takes data in an input space and translates it to a smaller latent space.
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -22,6 +21,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
     def __init__(
         self, *, input_space: DataSpace, latent_space: DataSpace, **kwargs: Any
     ) -> None:
+        """Initialise a NaiveLatentSpaceEncoder."""
         super().__init__(name=input_space.name, **kwargs)
 
         # Construct list of layers
@@ -53,13 +53,13 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: TensorNTCHW) -> TensorNCHW:
-        """
-        Transformation summary
+        """Forward step: encode input space into latent space.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
         """
         return self.model(x)

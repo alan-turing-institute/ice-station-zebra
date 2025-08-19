@@ -1,5 +1,7 @@
 from torch import Tensor, nn
 
+from .activations import ACTIVATION_FROM_NAME
+
 
 class BottleneckBlock(nn.Module):
     def __init__(
@@ -8,19 +10,22 @@ class BottleneckBlock(nn.Module):
         out_channels: int,
         *,
         filter_size: int,
+        activation: str = "ReLU",
     ) -> None:
         """Initialise a BottleneckBlock."""
         super().__init__()
+
+        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         self.model = nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation_layer(inplace=True),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation_layer(inplace=True),
             nn.BatchNorm2d(num_features=out_channels),
         )
 

@@ -59,6 +59,44 @@ def compute_difference(
         raise ValueError(f"Invalid difference mode: {diff_mode}")
 
 
+def compute_difference_stream(
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    diff_mode: DiffMode,
+) -> np.ndarray:
+    """Vectorised difference for a full stream [T,H,W]."""
+    return compute_difference(ground_truth_stream, prediction_stream, diff_mode)
+
+
+def max_abs_difference_over_time(
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    diff_mode: DiffMode = "signed",
+) -> float:
+    """Return max |diff| across all frames (ignores NaNs)."""
+    n_timesteps = ground_truth_stream.shape[0]
+    if diff_mode == "signed":
+        max_abs = 0.0
+        for tt in range(n_timesteps):
+            d = compute_difference(
+                ground_truth_stream[tt], prediction_stream[tt], "signed"
+            )
+            local = float(np.nanmax(np.abs(d)) or 0.0)
+            if local > max_abs:
+                max_abs = local
+        return max(1.0, max_abs)
+    else:
+        max_val = 0.0
+        for tt in range(n_timesteps):
+            d = compute_difference(
+                ground_truth_stream[tt], prediction_stream[tt], diff_mode
+            )
+            local = float(np.nanmax(d) or 0.0)
+            if local > max_val:
+                max_val = local
+        return max(1.0, max_val)
+
+
 # --- Validation ---
 
 
@@ -115,4 +153,4 @@ def validate_3d_streams(
         raise InvalidArrayError(
             f"Shape mismatch: ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
         )
-    return ground_truth_stream.shape  # (T,H,W)
+    return ground_truth_stream.shape  # type: ignore[return-value]

@@ -1,9 +1,7 @@
 defaults:
   - datasets:
-    - era5-0d5-south-2019-12-24h-v1
-    - era5-0d5-south-2020-01-24h-v1
-    - osisaf-sic-south-2019-12-24h-v1
-    - osisaf-sic-south-2020-01-24h-v1
+    - samp-era5-0d5-2020-24h-01-04-south-v1
+    - samp-osisaf-sic-2020-24h-01-04-south-v1
   - evaluate: default
   - loggers:
     - wandb

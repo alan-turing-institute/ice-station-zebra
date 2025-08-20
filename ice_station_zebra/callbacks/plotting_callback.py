@@ -12,6 +12,17 @@ from torch.utils.data import DataLoader
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.visualisations import plot_sic_comparison, video_sic_comparison
 
+
+# ---- Domain exceptions ----
+class PlottingError(RuntimeError): ...
+
+
+class VideoRenderError(PlottingError): ...
+
+
+class InvalidArrayError(PlottingError, ValueError): ...
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,11 +53,9 @@ class PlottingCallback(Callback):
         self.video_fps = video_fps
         self.video_format = video_format
 
-        # Only add STATIC plot functions here
         self.plot_fns = {}
         if self.plot_sea_ice_concentration:
             self.plot_fns["sea-ice-comparison"] = plot_sic_comparison
-        # DON'T add video function here - handle it separately
 
     def on_test_batch_end(
         self,
@@ -124,18 +133,43 @@ def _extract_static_data(
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Extract the static data from the outputs.
-    """
 
-    # [batch=0, time=selected_timestep, channels=0, height=:, width=:]
+    Args:
+        outputs: The outputs of the model. Shape: [batch, time, channels, height, width]
+        selected_timestep: The timestep to extract.
+
+    Returns:
+        A tuple of (ground truth, prediction) arrays.
+
+    Raises:
+        InvalidArrayError: If the arrays are not valid in shape.
+
+    """
+    # Check shape of arrays
+    _validate_static_arrays(outputs, selected_timestep)
+
     np_ground_truth = outputs["target"].cpu().numpy()[0, selected_timestep, 0, :, :]
     np_prediction = outputs["output"].cpu().numpy()[0, selected_timestep, 0, :, :]
+
     return np_ground_truth, np_prediction
 
 
 def _extract_video_data(outputs: dict[str, Tensor]) -> tuple[np.ndarray, np.ndarray]:
-    """Extract all timesteps data for video plots."""
+    """Extract all timesteps data for video plots.
 
-    # Video: [batch=0, time=:, channels=0, height=:, width=:]
+    Args:
+        outputs: The outputs of the model. Shape: [batch, time, channels, height, width]
+
+    Returns:
+        A tuple of (ground truth, prediction) arrays.
+
+    Raises:
+        InvalidArrayError: If the arrays are not valid in shape.
+    """
+
+    # Check shape of the first timestep array
+    _validate_static_arrays(outputs, 0)
+
     video_ground_truth = outputs["target"].cpu().numpy()[0, :, 0, :, :]
     video_prediction = outputs["output"].cpu().numpy()[0, :, 0, :, :]
     return video_ground_truth, video_prediction
@@ -157,16 +191,36 @@ def _create_video_plots(
     fps: int = 2,
     format: Literal["mp4", "gif"] = "mp4",
 ) -> dict[str, bytes]:
-    """Create video plots for sea ice concentration."""
+    """Create video plots for sea ice concentration.
+
+    Args:
+        ground_truth_stream: Ground truth array with shape [T,H,W]
+        prediction_stream: Prediction array with shape [T,H,W]
+        dates: List of dates corresponding to each timestep
+        fps: The frames per second of the video.
+        format: The format of the video.
+
+    Returns:
+        A dictionary of video bytes.
+
+    Raises:
+        VideoRenderError: If the video cannot be rendered.
+        InvalidArrayError: If the arrays are not valid in shape.
+
+    """
+
+    # Check shape of arrays
+    _validate_video_arrays(ground_truth_stream, prediction_stream, dates)
 
     videos = {}
     try:
         videos["sea-ice-comparison-video"] = video_sic_comparison(
             ground_truth_stream, prediction_stream, dates, fps=fps, format=format
         )
-    except Exception as e:
-        logger.error(f"Error creating video plots: {e}")
-        return {}
+    except (OSError, MemoryError) as err:
+        raise VideoRenderError(f"System/encoder error: {err!s}") from err
+    except (ValueError, TypeError) as err:
+        raise InvalidArrayError(f"Invalid values for video render: {err!s}") from err
     return videos
 
 
@@ -197,3 +251,105 @@ def _log_media_to_wandb(
             logger.debug(
                 f"Logger {lightning_logger.name} does not support video logging."
             )
+
+
+# ---- Validation ----
+
+EXPECTED_MIN_BATCHES = 1
+
+
+def _validate_array_shape(
+    array: Tensor, name: str, expected_ndim: int = 5
+) -> tuple[int, int]:
+    """Validate shape of a single array and return batch size and timesteps."""
+    if array.ndim != expected_ndim:
+        raise InvalidArrayError(
+            f"Expected {expected_ndim}D tensor for {name}, got shape {array.shape}"
+        )
+
+    n_batches, n_timesteps, *_ = array.shape
+    if n_batches < EXPECTED_MIN_BATCHES:
+        raise InvalidArrayError(f"Too few batches in {name}: {n_batches}")
+
+    return n_batches, n_timesteps
+
+
+def _validate_timestep(array: Tensor, name: str, selected_timestep: int) -> None:
+    """Validate timestep of a single array."""
+    n_timesteps, *_ = array.shape
+    if not (0 <= selected_timestep < n_timesteps):
+        raise InvalidArrayError(
+            f"Invalid timestep: {selected_timestep} outside range [0, {n_timesteps})"
+        )
+
+
+def _validate_static_arrays(
+    outputs: dict[str, Tensor], selected_timestep: int = 0
+) -> None:
+    """Raise InvalidArrayError if arrays are not valid."""
+
+    try:
+        target = outputs["target"]
+        output = outputs["output"]
+    except KeyError as err:
+        raise InvalidArrayError(f"Missing key in outputs: {err!s}") from err
+
+    if target.shape != output.shape:
+        raise InvalidArrayError(
+            "The target and output arrays must have the same shape."
+        )
+
+    # Validate both arrays
+    # -- Checks the Tensor size and at least multiple batches
+    _validate_array_shape(target, "target")
+    _validate_array_shape(output, "output")
+
+    # -- Checks the timestep is within the range of the array
+    _validate_timestep(target, "target", selected_timestep)
+    _validate_timestep(output, "output", selected_timestep)
+
+
+def _validate_video_array_shape(
+    array: np.ndarray, name: str, expected_ndim: int = 3
+) -> int:
+    """Validate shape of a single video array and return number of timesteps."""
+    if array.ndim != expected_ndim:
+        raise InvalidArrayError(
+            f"Expected {expected_ndim}D array ([T,H,W]) for {name}, got shape {array.shape}"
+        )
+
+    n_timesteps, *_ = array.shape
+    return n_timesteps
+
+
+def _validate_video_arrays(
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    dates: list,
+) -> None:
+    """Raise InvalidArrayError if arrays or dates are inconsistent.
+
+    Args:
+        ground_truth_stream: Ground truth array with shape [T,H,W]
+        prediction_stream: Prediction array with shape [T,H,W]
+        dates: List of dates corresponding to each timestep
+
+    Raises:
+        InvalidArrayError: If arrays or dates are inconsistent
+    """
+    # Validate array shapes
+    gt_timesteps = _validate_video_array_shape(ground_truth_stream, "ground_truth")
+    pred_timesteps = _validate_video_array_shape(prediction_stream, "prediction")
+
+    # Check arrays have matching shapes
+    if ground_truth_stream.shape != prediction_stream.shape:
+        raise InvalidArrayError(
+            f"Shape mismatch: ground_truth={ground_truth_stream.shape}, "
+            f"prediction={prediction_stream.shape}"
+        )
+
+    # Check dates list matches timesteps
+    if len(dates) != gt_timesteps or len(dates) != pred_timesteps:
+        raise InvalidArrayError(
+            f"Dates length {len(dates)} != timesteps {gt_timesteps}"
+        )

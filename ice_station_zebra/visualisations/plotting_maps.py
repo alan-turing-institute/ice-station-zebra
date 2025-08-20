@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import io
+import os
+import tempfile
 from datetime import date, datetime
-from typing import Sequence
+from typing import Literal, Sequence
 
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
@@ -13,9 +16,12 @@ from PIL import Image
 from PIL.ImageFile import ImageFile
 
 from .plotting_core import (
+    InvalidArrayError,
     PlotSpec,
+    VideoRenderError,
     compute_difference,
     validate_2d_pair,
+    validate_3d_streams,
 )
 
 # -- Constants --
@@ -36,6 +42,8 @@ DEFAULT_SIC_SPEC = PlotSpec(
     vmax=1.0,
     colourbar_location="vertical",
 )
+
+DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
 
 # ---- Main functions ----
 
@@ -78,6 +86,102 @@ def plot_maps(
 
     try:
         return [_image_from_figure(fig)]
+    finally:
+        plt.close(fig)
+
+
+# - Video -
+def video_maps(
+    plot_spec: PlotSpec,
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    dates: list[date | datetime],
+    include_difference: bool = True,
+    fps: int = 2,
+    format: Literal["mp4", "gif"] = "gif",
+    diff_strategy: DiffStrategy = "precompute",
+) -> bytes:
+    # Check the shapes of the arrays
+    n_timesteps, height, width = validate_3d_streams(
+        ground_truth_stream, prediction_stream
+    )
+    if len(dates) != n_timesteps:
+        raise InvalidArrayError(
+            f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
+        )
+
+    # Initialise the figure and axes
+    fig, axs = _init_axes(include_difference, width, height, plot_spec)
+    levels = _levels_from_spec(plot_spec)
+
+    # Prepare the difference array according to the strategy
+    difference_stream, diff_colour_norm = _prepare_difference_stream(
+        include_difference=include_difference,
+        plot_spec=plot_spec,
+        ground_truth_stream=ground_truth_stream,
+        prediction_stream=prediction_stream,
+        diff_strategy=diff_strategy,
+    )
+    precomputed_diff_0 = (
+        difference_stream[0]
+        if (include_difference and difference_stream is not None)
+        else None
+    )
+
+    # Initial frame
+    image_groundtruth, image_prediction, image_difference, diff_colour_norm = (
+        _draw_frame(
+            axs,
+            ground_truth=ground_truth_stream[0],
+            prediction=prediction_stream[0],
+            plot_spec=plot_spec,
+            include_difference=include_difference,
+            diff_colour_norm=diff_colour_norm,
+            precomputed_difference=precomputed_diff_0,
+        )
+    )
+    # Colourbars and title
+    _add_colourbars(
+        axs, image_groundtruth, image_difference, plot_spec, include_difference
+    )
+    _set_axes_limits(axs, width, height)
+    fig.suptitle(_format_date_to_string(dates[0]))
+
+    # Animation function
+    def animate(tt: int):
+        precomputed_diff_tt = (
+            difference_stream[tt]
+            if (include_difference and difference_stream is not None)
+            else None
+        )
+        _draw_frame(
+            axs,
+            ground_truth_stream[tt],
+            prediction_stream[tt],
+            dates[tt],
+            plot_spec,
+            include_difference,
+            diff_colour_norm,
+            precomputed_difference=precomputed_diff_tt,
+            levels_override=levels,
+        )
+
+        fig.suptitle(_format_date_to_string(dates[tt]))
+        return ()
+
+    # Create the animation object
+    animation_object = animation.FuncAnimation(
+        fig,
+        animate,
+        frames=n_timesteps,
+        interval=1000 // fps,
+        blit=False,
+        repeat=True,
+    )
+
+    # Save -> bytes and clean up temp file
+    try:
+        return _save_animation(animation_object, fps=fps, format=format)
     finally:
         plt.close(fig)
 
@@ -216,6 +320,68 @@ def _clear_contours(ax) -> None:
         coll.remove()
 
 
+def _prepare_difference_stream(
+    *,
+    include_difference: bool,
+    plot_spec: PlotSpec,
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    diff_strategy: DiffStrategy,
+) -> tuple[np.ndarray | None, TwoSlopeNorm | None]:
+    """Prepare the difference stream according to the strategy."""
+    if not include_difference:
+        return None, None
+
+    if diff_strategy == "precompute":
+        from .plotting_core import compute_difference_stream
+
+        diff_stream = compute_difference_stream(
+            ground_truth_stream, prediction_stream, plot_spec.diff_mode
+        )
+        if plot_spec.diff_mode == "signed":
+            norm = _get_diff_colour_norm(diff_stream)
+        else:
+            norm = None
+        return diff_stream, norm
+
+    if diff_strategy == "two-pass":
+        from .plotting_core import max_abs_difference_over_time
+
+        if plot_spec.diff_mode == "signed":
+            max_abs = max_abs_difference_over_time(
+                ground_truth_stream, prediction_stream, "signed"
+            )
+            return None, _get_diff_colour_norm(max_abs)  # build norm from scalar
+        return None, None
+
+    if diff_strategy == "per-frame":
+        return None, None
+
+    raise ValueError(f"Unknown diff_strategy: {diff_strategy}")
+
+
+def _get_diff_colour_norm(
+    difference: np.ndarray,
+    existing_norm: TwoSlopeNorm | None = None,
+) -> TwoSlopeNorm | None:
+    """
+    Returns a color normalisation object for visualising signed differences.
+
+    If an existing normalisation is provided, reuse it to keep color scales consistent.
+    Otherwise, create a new symmetric normalisation centered at zero.
+    """
+    if existing_norm is not None:
+        return existing_norm
+
+    if isinstance(difference, (float, int)):
+        max_abs = float(difference)
+    else:
+        max_abs = float(np.nanmax(np.abs(difference)) or 1.0)
+
+    max_abs = max(1.0, max_abs)
+    return TwoSlopeNorm(vmin=-max_abs, vcenter=0.0, vmax=max_abs)
+
+
 def _add_colourbars(
     axs: list,
     *,
@@ -244,3 +410,51 @@ def _add_colourbars(
             ax=[axs[0], axs[1]],
             orientation=plot_spec.colourbar_location,
         )
+
+
+def _image_from_array(a: np.ndarray) -> ImageFile:
+    """(Optional spare) Convert a single array to an image — not used, kept for future."""
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(a)
+    ax.axis("off")
+    try:
+        return _image_from_figure(fig)
+    finally:
+        plt.close(fig)
+
+
+def _save_animation(
+    anim: animation.FuncAnimation,
+    *,
+    fps: int,
+    format: Literal["mp4", "gif"] = "gif",
+) -> bytes:
+    """Save an animation to a temporary file and return bytes (with cleanup)."""
+    suffix = ".gif" if format.lower() == "gif" else ".mp4"
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp_path = tmp.name
+
+        if format.lower() == "gif":
+            writer = animation.PillowWriter(fps=fps)
+            anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
+        else:
+            writer = animation.FFMpegWriter(
+                fps=fps,
+                codec="libx264",
+                bitrate=1800,
+                extra_args=["-pix_fmt", "yuv420p"],
+            )
+            anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
+
+        with open(tmp_path, "rb") as fh:
+            return fh.read()
+    except (OSError, MemoryError) as err:
+        raise VideoRenderError(f"Video encoding failed: {err!s}") from err
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass

@@ -1,5 +1,4 @@
-"""
-GaussianDiffusion: Gaussian Diffusion Process Implementation.
+"""GaussianDiffusion: Gaussian Diffusion Process Implementation.
 
 Author: Maria Carolina Novitasari
 
@@ -23,15 +22,13 @@ import torch.nn.functional as f
 
 
 class GaussianDiffusion:
-    """
-    Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
+    """Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
     including support for cosine and linear beta schedules.
     """
     
 
     def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
-        """
-        Initialize diffusion parameters and precompute useful constants.
+        """Initialize diffusion parameters and precompute useful constants.
 
         Args:
             timesteps (int): Total number of diffusion steps.
@@ -71,8 +68,7 @@ class GaussianDiffusion:
         )
 
     def _cosine_beta_schedule(self, timesteps: int, s: float = 0.008) -> torch.Tensor:
-        """
-        Compute beta schedule using a cosine function.
+        """Compute beta schedule using a cosine function.
 
         Args:
             timesteps (int): Total number of timesteps.
@@ -93,8 +89,7 @@ class GaussianDiffusion:
     def q_sample(
         self, x_start: torch.Tensor, t: torch.Tensor, noise: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """
-        Add noise to x_start at timestep t, using the forward diffusion process.
+        """Add noise to x_start at timestep t, using the forward diffusion process.
 
         Args:
             x_start (torch.Tensor): Original input tensor (clean image).
@@ -130,8 +125,7 @@ class GaussianDiffusion:
     def p_sample(
         self, x: torch.Tensor, t: torch.Tensor, pred_v: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Perform a single reverse diffusion (denoising) step using the v-prediction parameterization.
+        """Perform a single reverse diffusion (denoising) step using the v-prediction parameterization.
 
         This method implements the reverse process using v-prediction rather than epsilon-prediction,
         where the model predicts velocity v_t instead of noise epsilon.
@@ -169,8 +163,7 @@ class GaussianDiffusion:
     def _extract(
         self, a: torch.Tensor, t: torch.Tensor, x_shape: Tuple[int]
     ) -> torch.Tensor:
-        """
-        Extract values from a tensor at specific timesteps t and reshape for broadcasting.
+        """Extract values from a tensor at specific timesteps t and reshape for broadcasting.
 
         Args:
             a (torch.Tensor): 1D tensor containing precomputed values (e.g., alpha or beta schedule).
@@ -188,8 +181,7 @@ class GaussianDiffusion:
     def calculate_v(
         self, x_start: torch.Tensor, noise: torch.Tensor, t: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute the velocity variable v_t used in v-prediction.
+        """Compute the velocity variable v_t used in v-prediction.
 
         This function calculates the target v_t given the clean input x_start,
         the noise ε, and the timestep t, based on the formulation:

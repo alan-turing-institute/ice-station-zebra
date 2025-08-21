@@ -207,3 +207,38 @@ class TestZebraModel:
         output = model.training_step(batch, 0)
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([])
+
+    def test_validation_step(
+        self,
+        cfg_input_space: DictConfig,
+        cfg_output_space: DictConfig,
+        cfg_optimizer: DictConfig,
+    ) -> None:
+        batch_size = n_history_steps = n_forecast_steps = 1
+        batch = {
+            cfg_input_space["name"]: torch.randn(
+                batch_size,
+                n_history_steps,
+                cfg_input_space["channels"],
+                cfg_input_space["shape"][0],
+                cfg_input_space["shape"][1],
+            ),
+            cfg_output_space["name"]: torch.randn(
+                batch_size,
+                n_forecast_steps,
+                cfg_output_space["channels"],
+                cfg_output_space["shape"][0],
+                cfg_output_space["shape"][1],
+            ),
+        }
+        model = DummyModel(
+            name="dummy",
+            input_spaces=[cfg_input_space],
+            n_forecast_steps=n_forecast_steps,
+            n_history_steps=n_history_steps,
+            output_space=cfg_output_space,
+            optimizer=cfg_optimizer,
+        )
+        output = model.validation_step(batch, 0)
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([])

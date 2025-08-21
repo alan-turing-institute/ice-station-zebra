@@ -1,13 +1,12 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 from .activations import ACTIVATION_FROM_NAME
 
 
 class TimeEmbed(nn.Module):
     def __init__(
-        self, 
-        dim: int = 256, 
+        self,
+        dim: int = 256,
         activation: str = "SiLU",
     ) -> None:
         super().__init__()

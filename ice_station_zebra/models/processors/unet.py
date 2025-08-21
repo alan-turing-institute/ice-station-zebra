@@ -1,7 +1,8 @@
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
+from ice_station_zebra.types import TensorNCHW
 
 
 class UNetProcessor(nn.Module):
@@ -53,7 +54,7 @@ class UNetProcessor(nn.Module):
             channels[0], n_latent_channels, kernel_size=1, padding="same"
         )
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: process in latent space.
 
         Args:

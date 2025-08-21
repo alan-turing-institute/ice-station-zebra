@@ -1,22 +1,22 @@
 import torch.nn as nn
 from torch import Tensor
 
-from .activations import get_activation
+from .activations import ACTIVATION_FROM_NAME
 
 
 class TimeEmbed(nn.Module):
-    def __init__(self, 
-                 dim: int = 256, 
-                 activation: str = "SiLU",
+    def __init__(
+        self, 
+        dim: int = 256, 
+        activation: str = "SiLU",
     ) -> None:
         super().__init__()
 
-        def act():
-            return get_activation(activation)
+        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         self.model = nn.Sequential(
             nn.Linear(dim, dim * 4),
-            act(),
+            activation_layer(inplace=True),
             nn.Linear(dim * 4, dim),
         )
 

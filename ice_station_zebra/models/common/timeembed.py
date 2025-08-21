@@ -5,8 +5,10 @@ from .activations import get_activation
 
 
 class TimeEmbed(nn.Module):
-    def __init__(self, dim: int = 256, 
-                 activation: str = "SiLU",) -> None:
+    def __init__(self, 
+                 dim: int = 256, 
+                 activation: str = "SiLU",
+    ) -> None:
         super().__init__()
 
         def act():

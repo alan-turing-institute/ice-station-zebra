@@ -51,6 +51,12 @@ def cfg_latent_space() -> DictConfig:
 
 
 @pytest.fixture
+def cfg_optimizer() -> DictConfig:
+    """Test configuration for an optimizer."""
+    return DictConfig({"_target_": "torch.optim.AdamW", "lr": 5e-4})
+
+
+@pytest.fixture
 def cfg_output_space() -> DictConfig:
     """Test configuration for an output space."""
     return DictConfig(

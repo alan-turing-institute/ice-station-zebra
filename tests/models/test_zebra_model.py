@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 import torch
 from omegaconf import DictConfig
@@ -7,8 +9,14 @@ from ice_station_zebra.types import TensorNTCHW
 
 
 class DummyModel(ZebraModel):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialise a dummy model for testing purposes."""
+        super().__init__(*args, **kwargs)
+        self.model = torch.nn.Linear(1, 1)
+
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        return next(iter(inputs.values()))
+        """Dummy forward method."""
+        return self.model(next(iter(inputs.values())))
 
 
 class TestZebraModel:
@@ -87,30 +95,37 @@ class TestZebraModel:
         assert model.output_space.name == "target"
         assert model.output_space.shape == test_output_shape[0:2]
 
-    def test_loss(self) -> None:
+    def test_loss(
+        self, cfg_input_space: DictConfig, cfg_output_space: DictConfig
+    ) -> None:
         model = DummyModel(
             name="dummy",
-            input_spaces=[
-                DictConfig(
-                    {
-                        "channels": 1,
-                        "name": "input",
-                        "shape": (1, 1),
-                    }
-                )
-            ],
+            input_spaces=[cfg_input_space],
             n_forecast_steps=1,
             n_history_steps=1,
-            output_space=DictConfig(
-                {
-                    "channels": 1,
-                    "name": "target",
-                    "shape": (1, 1),
-                }
-            ),
+            output_space=cfg_output_space,
             optimizer=DictConfig({}),
         )
         # Test loss
         prediction = torch.zeros(1, 1, 1, 1)
         target = torch.ones(1, 1, 1, 1)
         assert model.loss(prediction, target) == torch.tensor(1.0)
+
+    def test_optimizer(
+        self,
+        cfg_input_space: DictConfig,
+        cfg_optimizer: DictConfig,
+        cfg_output_space: DictConfig,
+    ) -> None:
+        model = DummyModel(
+            name="dummy",
+            input_spaces=[cfg_input_space],
+            n_forecast_steps=1,
+            n_history_steps=1,
+            output_space=cfg_output_space,
+            optimizer=cfg_optimizer,
+        )
+        optimizer = model.configure_optimizers()
+        assert isinstance(optimizer, torch.optim.Optimizer)
+        assert isinstance(optimizer, torch.optim.AdamW)
+        assert optimizer.defaults["lr"] == 5e-4

@@ -1,6 +1,21 @@
-from .sea_ice_concentration import plot_sic_comparison, video_sic_comparison
+# ice_station_zebra/visualisations/__init__.py
+
+from __future__ import annotations
+
+from .plotting_core import InvalidArrayError, PlotSpec, VideoRenderError
+from .plotting_maps import (
+    DEFAULT_SIC_SPEC,
+    DiffStrategy,
+    plot_maps,
+    video_maps,
+)
 
 __all__ = [
-    "plot_sic_comparison",
-    "video_sic_comparison",
+    "PlotSpec",
+    "InvalidArrayError",
+    "VideoRenderError",
+    "plot_maps",
+    "video_maps",
+    "DEFAULT_SIC_SPEC",
+    "DiffStrategy",
 ]

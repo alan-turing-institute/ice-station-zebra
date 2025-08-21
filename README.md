@@ -23,7 +23,26 @@ defaults:
 base_path: /local/path/to/my/data
 ```
 
-Alternatively, you can apply overrides at the command line like this:
+You can then run this with, e.g.:
+
+```bash
+uv run zebra datasets create --config-name <your local config>.yaml
+```
+You can also use this config to override other options in the `zebra.yaml` file, as shown below:
+
+```yaml
+defaults:
+  - zebra
+  - override /model: encode_unet_decode # Use this format if you want to use a different config
+
+# Override specific model parameters
+model:
+  processor:
+    start_out_channels: 37 # Use this format to override specific model parameters in the named configs
+
+base_path: /local/path/to/my/data
+```
+Alternatively, you can apply overrides to specific options at the command line like this:
 
 ```bash
 uv run zebra datasets create ++base_path=/local/path/to/my/data

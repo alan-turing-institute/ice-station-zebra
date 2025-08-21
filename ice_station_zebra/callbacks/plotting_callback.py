@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import logging
+from datetime import date
 from typing import Any, Literal
 
 import numpy as np
@@ -162,7 +163,7 @@ def _extract_static_data(
     selected_timestep: int,
     dataset: CombinedDataset,
     batch_idx: int,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, date]:
     """
     Extract the static data from the outputs.
 

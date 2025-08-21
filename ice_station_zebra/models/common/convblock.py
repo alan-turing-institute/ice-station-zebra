@@ -1,5 +1,6 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
+
+from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvBlock(nn.Module):
@@ -10,18 +11,22 @@ class ConvBlock(nn.Module):
         *,
         filter_size: int,
         final: bool = False,
+        activation: str = "ReLU",
     ) -> None:
+        """Initialise a ConvBlock."""
         super().__init__()
+
+        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         layers = [
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation_layer(inplace=True),
             nn.Conv2d(
                 out_channels, out_channels, kernel_size=filter_size, padding="same"
             ),
-            nn.ReLU(inplace=True),
+            activation_layer(inplace=True),
         ]
         if final:
             layers += [
@@ -31,7 +36,7 @@ class ConvBlock(nn.Module):
                     kernel_size=filter_size,
                     padding="same",
                 ),
-                nn.ReLU(inplace=True),
+                activation_layer(inplace=True),
             ]
 
         else:

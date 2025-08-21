@@ -10,26 +10,26 @@ from .zebra_data_processor_factory import ZebraDataProcessorFactory
 # Create the typer app
 datasets_cli = typer.Typer(help="Manage datasets")
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @datasets_cli.command("create")
 @hydra_adaptor
 def create(config: DictConfig) -> None:
-    """Create all datasets"""
+    """Create all datasets."""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
-        log.info(f"Working on {dataset.name}")
+        logger.info("Working on %s.", dataset.name)
         dataset.create()
 
 
 @datasets_cli.command("inspect")
 @hydra_adaptor
 def inspect(config: DictConfig) -> None:
-    """Inspect all datasets"""
+    """Inspect all datasets."""
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
-        log.info(f"Working on {dataset.name}")
+        logger.info("Working on %s.", dataset.name)
         dataset.inspect()
 
 

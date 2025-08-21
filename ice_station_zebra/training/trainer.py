@@ -1,19 +1,26 @@
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import hydra
-from lightning import Callback, Trainer
+from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
 
+from ice_station_zebra.callbacks import UnconditionalCheckpoint
 from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.models import ZebraModel
 from ice_station_zebra.utils import generate_run_name, get_wandb_logger
+
+if TYPE_CHECKING:
+    from lightning import Callback, Trainer
+
+    from ice_station_zebra.models import ZebraModel
+
 
 logger = logging.getLogger(__name__)
 
 
 class ZebraTrainer:
-    """A wrapper for PyTorch training"""
+    """A wrapper for PyTorch training."""
 
     def __init__(self, config: DictConfig) -> None:
         """Initialize the Zebra trainer."""
@@ -61,9 +68,12 @@ class ZebraTrainer:
             )
 
         # Add callbacks
-        callbacks: list[Callback] = []
-        for callback_cfg in config["train"].get("callbacks", {}).values():
-            callbacks.append(hydra.utils.instantiate(callback_cfg))
+        callbacks: list[Callback] = [
+            hydra.utils.instantiate(cfg)
+            for cfg in config["train"].get("callbacks", {}).values()
+        ]
+        for callback in callbacks:
+            logger.debug("Adding training callback %s.", callback.__class__.__name__)
 
         # Construct the trainer
         self.trainer: Trainer = hydra.utils.instantiate(
@@ -75,7 +85,11 @@ class ZebraTrainer:
                 **config["train"]["trainer"],
             )
         )
-        self.trainer.checkpoint_callback.dirpath = run_directory / "checkpoints"
+
+        # Set properties for checkpoint callbacks
+        for callback in self.trainer.callbacks:
+            if isinstance(callback, (ModelCheckpoint, UnconditionalCheckpoint)):
+                callback.dirpath = run_directory / "checkpoints"
 
         # Save config to the output directory
         OmegaConf.save(config, run_directory / "model_config.yaml")

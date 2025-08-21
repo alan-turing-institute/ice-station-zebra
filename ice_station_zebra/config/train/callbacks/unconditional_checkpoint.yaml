@@ -1,0 +1,3 @@
+unconditional_checkpoint:
+  _target_: ice_station_zebra.callbacks.UnconditionalCheckpoint
+  on_train_end: true

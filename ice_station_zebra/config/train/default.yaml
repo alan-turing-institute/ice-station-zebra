@@ -1,6 +1,7 @@
 defaults:
   - callbacks:
     - device_stats
+    - unconditional_checkpoint
   - optimizer: default
   - trainer: default
   - _self_

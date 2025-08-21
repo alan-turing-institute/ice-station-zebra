@@ -1,5 +1,5 @@
 """
-GaussianDiffusion: Gaussian Diffusion Process Implementation
+GaussianDiffusion: Gaussian Diffusion Process Implementation.
 
 Author: Maria Carolina Novitasari
 
@@ -19,7 +19,7 @@ import math
 from typing import Tuple
 
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as f
 
 
 class GaussianDiffusion:
@@ -27,8 +27,9 @@ class GaussianDiffusion:
     Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
     including support for cosine and linear beta schedules.
     """
+    
 
-    def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine"):
+    def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
         """
         Initialize diffusion parameters and precompute useful constants.
 
@@ -45,7 +46,7 @@ class GaussianDiffusion:
 
         self.alphas = 1.0 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
-        self.alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1, 0), value=1.0)
+        self.alphas_cumprod_prev = f.pad(self.alphas_cumprod[:-1], (1, 0), value=1.0)
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - self.alphas_cumprod)
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
@@ -69,7 +70,7 @@ class GaussianDiffusion:
             / (1.0 - self.alphas_cumprod)
         )
 
-    def _cosine_beta_schedule(self, timesteps, s=0.008):
+    def _cosine_beta_schedule(self, timesteps: int, s: float = 0.008) -> torch.Tensor:
         """
         Compute beta schedule using a cosine function.
 

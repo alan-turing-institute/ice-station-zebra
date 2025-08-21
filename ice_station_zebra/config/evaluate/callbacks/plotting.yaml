@@ -1,7 +1,11 @@
 plotting:
-  _target_: ice_station_zebra.callbacks.PlottingCallback
+  _target_: ice_station_zebra.callbacks.plotting_callback.PlottingCallback
   frequency: 20
-  plot_sea_ice_concentration: true
-  video_sea_ice_concentration: true  # Enable video
+  make_static_plots: true
+  make_video_plots: true
+  include_difference: true
+  diff_strategy: precompute     # precompute | two-pass | per-frame
   video_fps: 2
-  video_format: "gif"
+  video_format: gif             # mp4 or gif
+  selected_timestep: 0          # which T to render for the static map
+  # plot_spec:  # omit to use DEFAULT_SIC_SPEC from plotting_maps

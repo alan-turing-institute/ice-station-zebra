@@ -1,0 +1,4 @@
+ema_weight_averaging:
+  _target_: ice_station_zebra.callbacks.EMAWeightAveragingCallback
+  every_n_epochs: 1
+  every_n_steps: 100

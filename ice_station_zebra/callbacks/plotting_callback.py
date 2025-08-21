@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import logging
 from typing import Any, Literal
@@ -6,22 +8,20 @@ import numpy as np
 import wandb
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
+from PIL.ImageFile import ImageFile
 from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
-from ice_station_zebra.visualisations import plot_sic_comparison, video_sic_comparison
-
-
-# ---- Domain exceptions ----
-class PlottingError(RuntimeError): ...
-
-
-class VideoRenderError(PlottingError): ...
-
-
-class InvalidArrayError(PlottingError, ValueError): ...
-
+from ice_station_zebra.visualisations import (
+    DEFAULT_SIC_SPEC,
+    DiffStrategy,
+    InvalidArrayError,
+    PlotSpec,
+    VideoRenderError,
+    plot_maps,
+    video_maps,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +31,16 @@ class PlottingCallback(Callback):
 
     def __init__(
         self,
+        *,
         frequency: int = 10,
-        plot_sea_ice_concentration: bool = True,
-        video_sea_ice_concentration: bool = True,
+        make_static_plots: bool = True,
+        make_video_plots: bool = True,
+        include_difference: bool = True,
+        diff_strategy: DiffStrategy = "precompute",
         video_fps: int = 2,
         video_format: Literal["mp4", "gif"] = "mp4",
+        plot_spec: PlotSpec | None = None,
+        selected_timestep: int = 0,
     ) -> None:
         """Create plots during evaluation.
 
@@ -47,16 +52,17 @@ class PlottingCallback(Callback):
             video_format: The format of the video.
         """
         super().__init__()
-        self.frequency = frequency
-        self.plot_sea_ice_concentration = plot_sea_ice_concentration
-        self.video_sea_ice_concentration = video_sea_ice_concentration
+        self.frequency = int(max(1, frequency))
+        self.make_static_plots = make_static_plots
+        self.make_video_plots = make_video_plots
+        self.include_difference = include_difference
+        self.diff_strategy = diff_strategy
         self.video_fps = video_fps
         self.video_format = video_format
+        self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
+        self.selected_timestep = int(max(0, selected_timestep))
 
-        self.plot_fns = {}
-        if self.plot_sea_ice_concentration:
-            self.plot_fns["sea-ice-comparison"] = plot_sic_comparison
-
+    # --- Lightning Hook ---
     def on_test_batch_end(
         self,
         trainer: Trainer,
@@ -69,9 +75,7 @@ class PlottingCallback(Callback):
         """Called when the test batch ends."""
         # Run plotting every `frequency` batches
         if batch_idx % self.frequency == 0:
-            # Get date for this batch
-            batch_size = outputs["target"].shape[0]
-
+            # Resolve dataset
             test_dataloaders: DataLoader | list[DataLoader] | None = (
                 trainer.test_dataloaders
             )
@@ -79,57 +83,85 @@ class PlottingCallback(Callback):
                 logger.debug("No test dataloaders found, skipping plotting.")
                 return
 
-            dataset: CombinedDataset = (
+            loader = (
                 test_dataloaders[dataloader_idx]
                 if isinstance(test_dataloaders, list)
                 else test_dataloaders
-            ).dataset  # type: ignore[assignment]
-
-            start_date = dataset.date_from_index(batch_size * batch_idx)
+            )
+            dataset: CombinedDataset = loader.dataset  # type: ignore[assignment]
 
             # ----- Static Image Plots -----
-            images = {}
-            if self.plot_sea_ice_concentration:
-                np_ground_truth, np_prediction = _extract_static_data(outputs)
-                images = {
-                    name: plot_fn(np_ground_truth, np_prediction, start_date)
-                    for name, plot_fn in self.plot_fns.items()
-                }
+            images: dict[str, list[ImageFile]] = {}
+            if self.make_static_plots:
+                try:
+                    np_ground_truth, np_prediction, date = _extract_static_data(
+                        outputs,
+                        self.selected_timestep,
+                        dataset=dataset,
+                        batch_idx=batch_idx,
+                    )
+                    image_list = plot_maps(
+                        self.plot_spec,
+                        np_ground_truth,
+                        np_prediction,
+                        date,
+                        self.include_difference,
+                    )
+                    images["sea-ice_concentration-static-maps"] = image_list
+                except InvalidArrayError as err:
+                    logger.warning(
+                        f"Static plotting skipped due to invalid arrays: {err}"
+                    )
+                except (InvalidArrayError, ValueError, MemoryError, OSError) as err:
+                    logger.exception(f"Static plotting failed: {err}")
 
             # ----- Video Plots -----
-            videos = {}
-            if self.video_sea_ice_concentration:
-                ground_truth_stream, prediction_stream = _extract_video_data(outputs)
-                n_timesteps = ground_truth_stream.shape[0]
-                sequence_dates = _generate_sequence_dates(
-                    dataset, batch_idx, batch_size, n_timesteps
-                )
+            videos: dict[str, bytes] = {}
+            if self.make_video_plots:
+                try:
+                    ground_truth_stream, prediction_stream, dates = _extract_video_data(
+                        outputs, dataset, batch_idx
+                    )
+                    video_bytes = video_maps(
+                        self.plot_spec,
+                        ground_truth_stream,
+                        prediction_stream,
+                        dates,
+                        include_difference=self.include_difference,
+                        fps=self.video_fps,
+                        format=self.video_format,
+                        diff_strategy=self.diff_strategy,
+                    )
+                    videos["sea-ice_concentration-video-maps"] = video_bytes
+                except (InvalidArrayError, VideoRenderError) as err:
+                    logger.warning(f"Video plotting skipped: {err}")
+                except (
+                    InvalidArrayError,
+                    VideoRenderError,
+                    ValueError,
+                    MemoryError,
+                    OSError,
+                ) as err:
+                    logger.exception(f"Video plotting failed: {err}")
 
-                videos = _create_video_plots(
-                    ground_truth_stream,
-                    prediction_stream,
-                    sequence_dates,
-                    fps=self.video_fps,
-                    format=self.video_format,
-                )
-
-            # ---- Log all media ----
+            # ----- Log all media -----
             for lightning_logger in trainer.loggers:
-                _log_media_to_wandb(lightning_logger, images, videos, self.video_format)
-            #     for key, image_list in images.items():
-            #         if hasattr(lightning_logger, "log_image"):
-            #             lightning_logger.log_image(key=key, images=image_list)
-            #         else:
-            #             logger.debug(
-            #                 f"Logger {lightning_logger.name} does not support logging images."
-            #             )
+                _log_media_to_wandb(
+                    lightning_logger,
+                    images,
+                    videos,
+                    self.video_format,
+                )
 
 
 # -------   Helper Functions -------
 
 
 def _extract_static_data(
-    outputs: dict[str, Tensor], selected_timestep: int = 0
+    outputs: dict[str, Tensor],
+    selected_timestep: int,
+    dataset: CombinedDataset,
+    batch_idx: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Extract the static data from the outputs.
@@ -146,82 +178,99 @@ def _extract_static_data(
 
     """
     # Check shape of arrays
-    _validate_static_arrays(outputs, selected_timestep)
+    target, output = _require_tensors(outputs, keys=("target", "output"))
+    _assert_same_shape(target, output, name_a="target", name_b="output")
 
-    np_ground_truth = outputs["target"].cpu().numpy()[0, selected_timestep, 0, :, :]
-    np_prediction = outputs["output"].cpu().numpy()[0, selected_timestep, 0, :, :]
+    if not (0 <= selected_timestep < target.shape[1]):
+        raise InvalidArrayError(
+            f"Invalid timestep: {selected_timestep} outside range [0, {target.shape[1]})"
+        )
 
-    return np_ground_truth, np_prediction
+    # Use the first batch, first channel -> [H,W]
+    np_ground_truth = target[0, selected_timestep, 0].detach().cpu().numpy()
+    np_prediction = output[0, selected_timestep, 0].detach().cpu().numpy()
+
+    # Get the date from the dataset
+    batch_size = int(target.shape[0])
+    date = dataset.date_from_index(batch_size * batch_idx + selected_timestep)
+
+    return np_ground_truth, np_prediction, date
 
 
-def _extract_video_data(outputs: dict[str, Tensor]) -> tuple[np.ndarray, np.ndarray]:
+def _extract_video_data(
+    outputs: dict[str, Tensor], dataset: CombinedDataset, batch_idx: int
+) -> tuple[np.ndarray, np.ndarray, list]:
     """Extract all timesteps data for video plots.
 
     Args:
         outputs: The outputs of the model. Shape: [batch, time, channels, height, width]
+        dataset: The dataset to get dates from
+        batch_idx: The batch index
 
     Returns:
-        A tuple of (ground truth, prediction) arrays.
+        A tuple of (ground truth, prediction, dates) arrays.
 
     Raises:
         InvalidArrayError: If the arrays are not valid in shape.
-    """
-
-    # Check shape of the first timestep array
-    _validate_static_arrays(outputs, 0)
-
-    video_ground_truth = outputs["target"].cpu().numpy()[0, :, 0, :, :]
-    video_prediction = outputs["output"].cpu().numpy()[0, :, 0, :, :]
-    return video_ground_truth, video_prediction
-
-
-def _generate_sequence_dates(
-    dataset: CombinedDataset, batch_idx: int, batch_size: int, n_timesteps: int
-) -> list:
-    """Generate list of dates for forecast sequence."""
-    return [
-        dataset.date_from_index(batch_size * batch_idx + i) for i in range(n_timesteps)
-    ]
-
-
-def _create_video_plots(
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
-    dates: list,
-    fps: int = 2,
-    format: Literal["mp4", "gif"] = "mp4",
-) -> dict[str, bytes]:
-    """Create video plots for sea ice concentration.
-
-    Args:
-        ground_truth_stream: Ground truth array with shape [T,H,W]
-        prediction_stream: Prediction array with shape [T,H,W]
-        dates: List of dates corresponding to each timestep
-        fps: The frames per second of the video.
-        format: The format of the video.
-
-    Returns:
-        A dictionary of video bytes.
-
-    Raises:
-        VideoRenderError: If the video cannot be rendered.
-        InvalidArrayError: If the arrays are not valid in shape.
-
     """
 
     # Check shape of arrays
-    _validate_video_arrays(ground_truth_stream, prediction_stream, dates)
+    target, output = _require_tensors(outputs, keys=("target", "output"))
+    _assert_same_shape(target, output, name_a="target", name_b="output")
 
-    videos = {}
+    # Use the first batch, first channel -> [T,H,W]
+    ground_truth_stream = target[0, :, 0].detach().cpu().numpy()
+    prediction_stream = output[0, :, 0].detach().cpu().numpy()
+
+    # Generate dates for the sequence
+    batch_size = int(target.shape[0])
+    n_timesteps = int(target.shape[1])
+    dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
+
+    return ground_truth_stream, prediction_stream, dates
+
+
+def _generate_sequence_dates(
+    dataset: CombinedDataset, batch_idx: int, n_timesteps: int, batch_size: int
+) -> list:
+    """Generate dates for a [T] sequence anchored to this batch."""
+    base = batch_size * batch_idx
+    return [dataset.date_from_index(base + tt) for tt in range(n_timesteps)]
+
+
+def _require_tensors(
+    outputs: dict[str, Tensor], keys: tuple[str, ...]
+) -> tuple[Tensor, ...]:
+    """Require tensors from outputs."""
     try:
-        videos["sea-ice-comparison-video"] = video_sic_comparison(
-            ground_truth_stream, prediction_stream, dates, fps=fps, format=format
+        a = outputs[keys[0]]
+        b = outputs[keys[1]]
+    except KeyError as err:
+        raise InvalidArrayError(f"Missing key in outputs: {err!s}") from err
+    return a, b
+
+
+def _assert_same_shape(
+    a: Tensor, b: Tensor, name_a: str, name_b: str, expected_ndim: int = 5
+) -> None:
+    """Assert that two tensors have the same shape."""
+
+    if expected_ndim == 5:
+        expected_str = "5D tensors [B,T,C,H,W]"
+    elif expected_ndim == 3:
+        expected_str = "3D tensors [T,H,W]"
+    else:
+        raise ValueError(f"Expected 3D or 5D tensors; got {expected_ndim}D")
+
+    if a.ndim != expected_ndim or b.ndim != expected_ndim:
+        raise InvalidArrayError(
+            f"Expected {expected_ndim}D {expected_str}; got {name_a}={tuple(a.shape)}, {name_b}={tuple(b.shape)}"
         )
-    except (OSError, MemoryError) as err:
-        raise VideoRenderError(f"System/encoder error: {err!s}") from err
-    except (ValueError, TypeError) as err:
-        raise InvalidArrayError(f"Invalid values for video render: {err!s}") from err
-    return videos
+
+    if a.shape != b.shape:
+        raise InvalidArrayError(
+            f"Shape mismatch: {name_a}={tuple(a.shape)}, {name_b}={tuple(b.shape)}"
+        )
 
 
 def _log_media_to_wandb(
@@ -229,16 +278,16 @@ def _log_media_to_wandb(
 ) -> None:
     """Log both images and videos to lightning loggers."""
 
-    # Log static images
+    # Static images
     for key, image_list in images.items():
         if hasattr(lightning_logger, "log_image"):
             lightning_logger.log_image(key=key, images=image_list)
         else:
             logger.debug(
-                f"Logger {lightning_logger.name} does not support logging images."
+                f"Logger {getattr(lightning_logger, 'name', 'unknown')} does not support logging images."
             )
 
-    # Log videos
+    # Videos
     for key, video_bytes in videos.items():
         if hasattr(lightning_logger, "experiment"):  # wandb-specific
             try:
@@ -246,110 +295,8 @@ def _log_media_to_wandb(
                     {key: wandb.Video(io.BytesIO(video_bytes), format=video_format)}
                 )
             except ImportError:
-                logger.debug("wandb not available for video logging")
+                logger.debug("wandb not available for video logging.")
         else:
             logger.debug(
-                f"Logger {lightning_logger.name} does not support video logging."
+                f"Logger {getattr(lightning_logger, 'name', 'unknown')} does not support video logging."
             )
-
-
-# ---- Validation ----
-
-EXPECTED_MIN_BATCHES = 1
-
-
-def _validate_array_shape(
-    array: Tensor, name: str, expected_ndim: int = 5
-) -> tuple[int, int]:
-    """Validate shape of a single array and return batch size and timesteps."""
-    if array.ndim != expected_ndim:
-        raise InvalidArrayError(
-            f"Expected {expected_ndim}D tensor for {name}, got shape {array.shape}"
-        )
-
-    n_batches, n_timesteps, *_ = array.shape
-    if n_batches < EXPECTED_MIN_BATCHES:
-        raise InvalidArrayError(f"Too few batches in {name}: {n_batches}")
-
-    return n_batches, n_timesteps
-
-
-def _validate_timestep(array: Tensor, name: str, selected_timestep: int) -> None:
-    """Validate timestep of a single array."""
-    n_timesteps, *_ = array.shape
-    if not (0 <= selected_timestep < n_timesteps):
-        raise InvalidArrayError(
-            f"Invalid timestep: {selected_timestep} outside range [0, {n_timesteps})"
-        )
-
-
-def _validate_static_arrays(
-    outputs: dict[str, Tensor], selected_timestep: int = 0
-) -> None:
-    """Raise InvalidArrayError if arrays are not valid."""
-
-    try:
-        target = outputs["target"]
-        output = outputs["output"]
-    except KeyError as err:
-        raise InvalidArrayError(f"Missing key in outputs: {err!s}") from err
-
-    if target.shape != output.shape:
-        raise InvalidArrayError(
-            "The target and output arrays must have the same shape."
-        )
-
-    # Validate both arrays
-    # -- Checks the Tensor size and at least multiple batches
-    _validate_array_shape(target, "target")
-    _validate_array_shape(output, "output")
-
-    # -- Checks the timestep is within the range of the array
-    _validate_timestep(target, "target", selected_timestep)
-    _validate_timestep(output, "output", selected_timestep)
-
-
-def _validate_video_array_shape(
-    array: np.ndarray, name: str, expected_ndim: int = 3
-) -> int:
-    """Validate shape of a single video array and return number of timesteps."""
-    if array.ndim != expected_ndim:
-        raise InvalidArrayError(
-            f"Expected {expected_ndim}D array ([T,H,W]) for {name}, got shape {array.shape}"
-        )
-
-    n_timesteps, *_ = array.shape
-    return n_timesteps
-
-
-def _validate_video_arrays(
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
-    dates: list,
-) -> None:
-    """Raise InvalidArrayError if arrays or dates are inconsistent.
-
-    Args:
-        ground_truth_stream: Ground truth array with shape [T,H,W]
-        prediction_stream: Prediction array with shape [T,H,W]
-        dates: List of dates corresponding to each timestep
-
-    Raises:
-        InvalidArrayError: If arrays or dates are inconsistent
-    """
-    # Validate array shapes
-    gt_timesteps = _validate_video_array_shape(ground_truth_stream, "ground_truth")
-    pred_timesteps = _validate_video_array_shape(prediction_stream, "prediction")
-
-    # Check arrays have matching shapes
-    if ground_truth_stream.shape != prediction_stream.shape:
-        raise InvalidArrayError(
-            f"Shape mismatch: ground_truth={ground_truth_stream.shape}, "
-            f"prediction={prediction_stream.shape}"
-        )
-
-    # Check dates list matches timesteps
-    if len(dates) != gt_timesteps or len(dates) != pred_timesteps:
-        raise InvalidArrayError(
-            f"Dates length {len(dates)} != timesteps {gt_timesteps}"
-        )

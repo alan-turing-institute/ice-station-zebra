@@ -1,5 +1,4 @@
-"""
-UNetDiffusion: Conditional U-Net for DDPM-based Forecasting
+"""UNetDiffusion: Conditional U-Net for DDPM-based Forecasting.
 
 Author: Maria Carolina Novitasari
 
@@ -23,8 +22,7 @@ from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 
 class UNetDiffusion(nn.Module):
-    """
-    U-Net architecture for conditional DDPM-based forecasting.
+    """U-Net architecture for conditional DDPM-based forecasting.
     Inputs include noisy predictions, time step embeddings, and conditioning inputs.
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
@@ -37,8 +35,7 @@ class UNetDiffusion(nn.Module):
         start_out_channels=64,
         **kwargs,
     ):
-        """
-        Initialize the U-Net diffusion model.
+        """Initialize the U-Net diffusion model.
 
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
@@ -108,8 +105,7 @@ class UNetDiffusion(nn.Module):
         )
 
     def forward(self, noise, t, conditioning, sample_weight):
-        """
-        Forward pass of the U-Net diffusion model.
+        """Forward pass of the U-Net diffusion model.
 
         Args:
             noise (torch.Tensor): Noisy forecast tensor of shape [B, H, W, n_classes, n_forecast_days].
@@ -176,8 +172,7 @@ class UNetDiffusion(nn.Module):
     def _timestep_embedding(
         self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000
     ):
-        """
-        Converts timestep integers into sinusoidal positional embeddings.
+        """Converts timestep integers into sinusoidal positional embeddings.
 
         Args:
             timesteps (torch.Tensor): Timestep tensor [B].
@@ -204,8 +199,7 @@ class UNetDiffusion(nn.Module):
         return embedding
 
     def _add_time_embedding(self, x, t):
-        """
-        Concatenates time embedding across spatial dimensions.
+        """Concatenates time embedding across spatial dimensions.
 
         Args:
             x (torch.Tensor): Feature map tensor [B, C, H, W].

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
+from matplotlib.colors import Normalize, TwoSlopeNorm
 
 
 # -- Exceptions shared by all plotting functions --
@@ -16,7 +17,41 @@ class VideoRenderError(PlottingError): ...
 class InvalidArrayError(PlottingError, ValueError): ...
 
 
+# -------- Concepts --------
+# DiffMode → what you compute
+# - "signed": target - prediction (can be ±, so symmetric colour scale around 0)
+# - "absolute": |target - prediction| (≥ 0, sequential scale)
+# - "smape": |pred - target| / ((|pred|+|target|)/2) (≥ 0, sequential scale)
 DiffMode = Literal["signed", "absolute", "smape"]
+
+# DiffStrategy → when you compute (for animations)
+# - "precompute": compute full diff stream once (fast playback, more RAM)
+# - "two-pass": scan once to figure the scale, compute per-frame (balanced)
+# - "per-frame": compute per-frame (low RAM, more CPU)
+DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
+
+
+class DiffColourmapSpec(NamedTuple):
+    """
+    Colour scale specification for visualising a difference panel.
+
+    Attributes:
+        norm: Normalisation object for mapping data values to colours.
+              Typically TwoSlopeNorm for signed differences (centred at 0).
+              None for non-signed modes (absolute, smape).
+        vmin: Lower bound for colour scale (used if norm is None).
+        vmax: Upper bound for colour scale (used if norm is None).
+        cmap: Name of the matplotlib colormap to use.
+    """
+
+    norm: Normalize | None
+    vmin: float | None
+    vmax: float | None
+    cmap: str
+
+
+# -- Constants --
+N_CONTOUR_LEVELS = 100
 
 
 @dataclass(frozen=True)
@@ -25,11 +60,33 @@ class PlotSpec:
     title_groundtruth: str = "Ground Truth"
     title_prediction: str = "Prediction"
     title_difference: str = "Difference"
+    n_contour_levels: int = N_CONTOUR_LEVELS
     colourmap: str = "viridis"
     diff_mode: DiffMode = "signed"
     vmin: float | None = 0.0
     vmax: float | None = 1.0
     colourbar_location: Literal["vertical", "horizontal"] = "vertical"
+
+
+def levels_from_spec(spec: PlotSpec) -> np.ndarray:
+    """
+    Generate contour levels from a plotting specification.
+
+    Creates evenly-spaced contour levels based on the minimum and maximum values
+    specified in the PlotSpec. If vmin or vmax are not specified, defaults to
+    0.0 and 1.0.
+
+    Args:
+        spec: PlotSpec object containing vmin and vmax parameters.
+
+    Returns:
+        NumPy array of contour levels spanning from vmin to vmax with
+        N_CONTOUR_LEVELS steps.
+    """
+
+    vmin = 0.0 if spec.vmin is None else spec.vmin
+    vmax = 1.0 if spec.vmax is None else spec.vmax
+    return np.linspace(vmin, vmax, N_CONTOUR_LEVELS)
 
 
 def compute_difference(
@@ -59,42 +116,140 @@ def compute_difference(
         raise ValueError(f"Invalid difference mode: {diff_mode}")
 
 
-def compute_difference_stream(
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
+def make_diff_colourmap(
+    sample: np.ndarray | float,
+    *,
+    mode: DiffMode,
+) -> DiffColourmapSpec:
+    """
+    Construct colour mapping settings for a difference panel.
+
+    Behaviour depends on the difference mode:
+
+    - "signed": symmetric diverging scale centred on 0,
+      useful for showing positive vs negative bias.
+    - "absolute" / "smape": sequential scale from 0 to max,
+      useful for showing error magnitude.
+
+    Args:
+        sample: Either a full array of differences (for precompute mode)
+                or a scalar maximum difference (for two-pass mode).
+        mode: Difference mode ("signed", "absolute", or "smape").
+
+    Returns:
+        DiffRenderParams: Normalisation, colour limits, and colormap.
+    """
+
+    if mode == "signed":
+        # Use actual data range centred on zero
+        if isinstance(sample, (float, int)):
+            # For scalar input (two-pass strategy), make symmetric
+            max_abs = max(1.0, float(abs(sample)))
+            vmin, vmax = -max_abs, max_abs
+        else:
+            # For array input (precompute strategy), use actual data range
+            vmin = float(np.nanmin(sample) or -1.0)
+            vmax = float(np.nanmax(sample) or 1.0)
+            # Ensure we span at least -1 to 1 for meaningful visualization
+            vmin = min(vmin, -1.0)
+            vmax = max(vmax, 1.0)
+
+        return DiffColourmapSpec(
+            norm=TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax),
+            vmin=None,
+            vmax=None,
+            cmap="RdBu_r",
+        )
+
+    if mode in ("absolute", "smape"):
+        # Positive-only scale
+        if isinstance(sample, (float, int)):
+            vmax = max(1e-6, float(sample))
+        else:
+            vmax = max(1e-6, float(np.nanmax(sample) or 0.0))
+
+        return DiffColourmapSpec(
+            norm=None,
+            vmin=0.0,
+            vmax=vmax,
+            cmap="magma",
+        )
+
+    raise ValueError(f"Unknown difference mode: {mode}")
+
+
+# ---- Handling the difference stream ----
+
+
+def prepare_difference_stream(
+    include_difference: bool,
     diff_mode: DiffMode,
-) -> np.ndarray:
-    """Vectorised difference for a full stream [T,H,W]."""
-    return compute_difference(ground_truth_stream, prediction_stream, diff_mode)
-
-
-def max_abs_difference_over_time(
+    strategy: DiffStrategy,
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
-    diff_mode: DiffMode = "signed",
-) -> float:
-    """Return max |diff| across all frames (ignores NaNs)."""
+) -> tuple[np.ndarray | None, DiffColourmapSpec | None]:
+    """
+    General, reusable planner for animations (maps or time-series).
+
+    This function implements three different strategies for handling
+    difference between ground truth and prediction in animations, each with
+    different memory and computational trade-offs. The choice of strategy affects
+    both memory usage and animation performance.
+
+    Args:
+        include_difference: Whether difference visualisation is requested.
+        diff_mode: Type of difference computation (signed/absolute/smape).
+        strategy: Strategy for difference computation:
+            - "precompute": Calculate all differences upfront
+            - "two-pass": Scan data to determine colour scale, then compute per-frame
+            - "per-frame": Compute differences on-demand
+        ground_truth_stream: 3D array of ground truth data over time.
+        prediction_stream: 3D array of prediction data over time.
+
+    Returns:
+        Tuple of (difference_stream, colour_scale):
+        - difference_stream: None unless strategy == 'precompute'
+        - colour_scale: DiffColourmapSpec describing colormap/norm/range
+    """
+    if not include_difference:
+        return None, None
+
     n_timesteps = ground_truth_stream.shape[0]
-    if diff_mode == "signed":
-        max_abs = 0.0
-        for tt in range(n_timesteps):
-            d = compute_difference(
-                ground_truth_stream[tt], prediction_stream[tt], "signed"
-            )
-            local = float(np.nanmax(np.abs(d)) or 0.0)
-            if local > max_abs:
-                max_abs = local
-        return max(1.0, max_abs)
-    else:
-        max_val = 0.0
-        for tt in range(n_timesteps):
-            d = compute_difference(
-                ground_truth_stream[tt], prediction_stream[tt], diff_mode
-            )
-            local = float(np.nanmax(d) or 0.0)
-            if local > max_val:
-                max_val = local
-        return max(1.0, max_val)
+    if strategy == "precompute":
+        difference_stream = compute_difference(
+            ground_truth_stream, prediction_stream, diff_mode
+        )
+        colour_scale = make_diff_colourmap(difference_stream, mode=diff_mode)
+        return difference_stream, colour_scale
+
+    if strategy == "two-pass":
+        if diff_mode == "signed":
+            # find max |diff| without storing full stream
+            max_abs = 0.0
+            for tt in range(n_timesteps):
+                difference = compute_difference(
+                    ground_truth_stream[tt], prediction_stream[tt], "signed"
+                )
+                max_abs = max(max_abs, float(np.nanmax(np.abs(difference)) or 0.0))
+            colour_scale = make_diff_colourmap(max_abs, mode="signed")
+            return None, colour_scale
+        else:
+            # find max diff for sequential scale without storing full stream
+            max_val = 0.0
+            for tt in range(n_timesteps):
+                difference = compute_difference(
+                    ground_truth_stream[tt], prediction_stream[tt], diff_mode
+                )
+                max_val = max(max_val, float(np.nanmax(difference) or 0.0))
+            colour_scale = make_diff_colourmap(max_val, mode=diff_mode)
+            return None, colour_scale
+
+    if strategy == "per-frame":
+        # no precomputation; each frame will call compute_difference and
+        # may choose to infer its own params if desired (less consistent look)
+        return None, None
+
+    raise ValueError(f"Unknown DiffStrategy: {strategy}")
 
 
 # --- Validation ---

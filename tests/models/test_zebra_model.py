@@ -5,18 +5,23 @@ import torch
 from omegaconf import DictConfig
 
 from ice_station_zebra.models import ZebraModel
-from ice_station_zebra.types import TensorNTCHW
+from ice_station_zebra.types import ModelTestOutput, TensorNTCHW
 
 
 class DummyModel(ZebraModel):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialise a dummy model for testing purposes."""
         super().__init__(*args, **kwargs)
+        self.t = kwargs["n_forecast_steps"]
+        self.c = kwargs["output_space"]["channels"]
+        self.h = kwargs["output_space"]["shape"][0]
+        self.w = kwargs["output_space"]["shape"][1]
         self.model = torch.nn.Linear(1, 1)
 
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Dummy forward method."""
-        return self.model(next(iter(inputs.values())))
+        b = next(iter(inputs.values())).shape[0]
+        return torch.randn(b, self.t, self.c, self.h, self.w)
 
 
 class TestZebraModel:
@@ -129,3 +134,41 @@ class TestZebraModel:
         assert isinstance(optimizer, torch.optim.Optimizer)
         assert isinstance(optimizer, torch.optim.AdamW)
         assert optimizer.defaults["lr"] == 5e-4
+
+    def test_test_step(
+        self,
+        cfg_input_space: DictConfig,
+        cfg_output_space: DictConfig,
+        cfg_optimizer: DictConfig,
+    ) -> None:
+        batch_size = n_history_steps = n_forecast_steps = 1
+        batch = {
+            cfg_input_space["name"]: torch.randn(
+                batch_size,
+                n_history_steps,
+                cfg_input_space["channels"],
+                cfg_input_space["shape"][0],
+                cfg_input_space["shape"][1],
+            ),
+            cfg_output_space["name"]: torch.randn(
+                batch_size,
+                n_forecast_steps,
+                cfg_output_space["channels"],
+                cfg_output_space["shape"][0],
+                cfg_output_space["shape"][1],
+            ),
+        }
+        model = DummyModel(
+            name="dummy",
+            input_spaces=[cfg_input_space],
+            n_forecast_steps=n_forecast_steps,
+            n_history_steps=n_history_steps,
+            output_space=cfg_output_space,
+            optimizer=cfg_optimizer,
+        )
+        output_shape = batch["target"].shape
+        output = model.test_step(batch, 0)
+        assert isinstance(output, ModelTestOutput)
+        assert output.prediction.shape == output_shape
+        assert output.target.shape == output_shape
+        assert output.loss.shape == torch.Size([])

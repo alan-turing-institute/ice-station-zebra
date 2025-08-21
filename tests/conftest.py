@@ -62,7 +62,7 @@ def cfg_output_space() -> DictConfig:
     return DictConfig(
         {
             "channels": 1,
-            "name": "latent",
+            "name": "target",
             "shape": (432, 432),
         }
     )

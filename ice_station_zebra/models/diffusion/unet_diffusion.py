@@ -107,7 +107,6 @@ class UNetDiffusion(nn.Module):
         noise: torch.Tensor,
         t: torch.Tensor,
         conditioning: torch.Tensor,
-        sample_weight: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """Forward pass of the U-Net diffusion model.
 
@@ -115,7 +114,6 @@ class UNetDiffusion(nn.Module):
             noise (torch.Tensor): Noisy forecast tensor of shape [B, H, W, n_classes, n_forecast_days].
             t (torch.Tensor): Diffusion timestep tensor of shape [B].
             conditioning (torch.Tensor): Conditioning input tensor of shape [B, H, W, input_channels].
-            sample_weight (torch.Tensor or None): Optional weighting mask [B, H, W, n_classes, n_forecast_days].
 
         Returns:
             torch.Tensor: Predicted denoised forecast of shape [B, H, W, n_classes, n_forecast_days].
@@ -169,13 +167,13 @@ class UNetDiffusion(nn.Module):
 
         # Final output
         output = self.final_layer(up9)  # [b, c_out, h, w]
-        output = torch.movedim(output, 1, -1)  # [b, h, w, c_out]
 
-        return output
+        return torch.movedim(output, 1, -1)  # [b, h, w, c_out]
 
     def _timestep_embedding(
         self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000
-    ):
+    ) -> torch.Tensor:
+
         """Converts timestep integers into sinusoidal positional embeddings.
 
         Args:
@@ -200,9 +198,11 @@ class UNetDiffusion(nn.Module):
             embedding = torch.cat(
                 [embedding, torch.zeros_like(embedding[:, :1])], dim=-1
             )
+            
         return embedding
 
-    def _add_time_embedding(self, x, t):
+    def _add_time_embedding(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+
         """Concatenates time embedding across spatial dimensions.
 
         Args:
@@ -214,4 +214,5 @@ class UNetDiffusion(nn.Module):
         """
         b, c, h, w = x.shape
         t = t.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, h, w)
+        
         return torch.cat([x, t], dim=1)

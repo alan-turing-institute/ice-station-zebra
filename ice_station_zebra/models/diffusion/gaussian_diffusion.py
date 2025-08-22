@@ -24,6 +24,7 @@ import torch.nn.functional as f
 class GaussianDiffusion:
     """Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
     including support for cosine and linear beta schedules.
+    
     """
     
     def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:

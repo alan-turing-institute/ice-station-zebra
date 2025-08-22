@@ -23,10 +23,11 @@ from .convert import _image_from_figure, _save_animation
 from .layout import _add_colourbars, _init_axes, _set_axes_limits
 from .plotting_core import (
     DiffColourmapSpec,
-    DiffStrategy,
     InvalidArrayError,
     PlotSpec,
     compute_difference,
+    compute_display_ranges,
+    compute_display_ranges_stream,
     levels_from_spec,
     make_diff_colourmap,
     prepare_difference_stream,
@@ -44,7 +45,8 @@ DEFAULT_SIC_SPEC = PlotSpec(
     diff_mode="signed",
     vmin=0.0,
     vmax=1.0,
-    colourbar_location="vertical",
+    colourbar_location="horizontal",
+    colourbar_strategy="shared",
 )
 
 
@@ -57,7 +59,6 @@ def plot_maps(
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     date: date | datetime,
-    include_difference: bool = True,
 ) -> list[ImageFile]:
     """
     Create static maps comparing ground truth and prediction sea ice concentration data
@@ -87,14 +88,12 @@ def plot_maps(
     height, width = validate_2d_pair(ground_truth, prediction)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(
-        include_difference=include_difference, plot_spec=plot_spec, H=height, W=width
-    )
+    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, H=height, W=width)
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
     diff_colour_scale = None
-    if include_difference:
+    if plot_spec.include_difference:
         difference = compute_difference(ground_truth, prediction, plot_spec.diff_mode)
         diff_colour_scale = make_diff_colourmap(difference, mode=plot_spec.diff_mode)
 
@@ -104,9 +103,8 @@ def plot_maps(
         ground_truth,
         prediction,
         plot_spec,
-        include_difference,
         diff_colour_scale,
-        precomputed_difference=difference if include_difference else None,
+        precomputed_difference=difference if plot_spec.include_difference else None,
         levels_override=levels,
     )
 
@@ -114,9 +112,9 @@ def plot_maps(
     _add_colourbars(
         axs,
         image_groundtruth=image_groundtruth,
+        image_prediction=image_prediction,
         image_difference=image_difference,
         plot_spec=plot_spec,
-        include_difference=include_difference,
         cbar_axes=cbar_axes,
     )
 
@@ -135,10 +133,8 @@ def video_maps(
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
     dates: list[date | datetime],
-    include_difference: bool = True,
     fps: int = 2,
     format: Literal["mp4", "gif"] = "gif",
-    diff_strategy: DiffStrategy = "precompute",
 ) -> bytes:
     """
     Generates animated visualisations showing the temporal evolution of sea ice concentration
@@ -183,22 +179,25 @@ def video_maps(
         )
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(
-        include_difference=include_difference, plot_spec=plot_spec, H=height, W=width
-    )
+    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, H=height, W=width)
     levels = levels_from_spec(plot_spec)
+
+    # Stable ranges for the whole animation
+    display_ranges = compute_display_ranges_stream(
+        ground_truth_stream, prediction_stream, plot_spec
+    )
 
     # Prepare the difference array according to the strategy
     difference_stream, diff_colour_scale = prepare_difference_stream(
-        include_difference,
+        plot_spec.include_difference,
         plot_spec.diff_mode,
-        diff_strategy,
+        plot_spec.diff_strategy,
         ground_truth_stream,
         prediction_stream,
     )
     precomputed_diff_0 = (
         difference_stream[0]
-        if (include_difference and difference_stream is not None)
+        if (plot_spec.include_difference and difference_stream is not None)
         else None
     )
 
@@ -208,17 +207,19 @@ def video_maps(
         ground_truth_stream[0],
         prediction_stream[0],
         plot_spec,
-        include_difference,
         diff_colour_scale,
         precomputed_diff_0,
+        levels,
+        display_ranges_override=display_ranges,
     )
     # Colourbars and title
     _add_colourbars(
         axs,
         image_groundtruth=image_groundtruth,
+        image_prediction=image_prediction,
         image_difference=image_difference,
         plot_spec=plot_spec,
-        include_difference=include_difference,
+        diff_colour_scale=diff_colour_scale,
         cbar_axes=cbar_axes,
     )
     _set_axes_limits(axs, width=width, height=height)
@@ -228,7 +229,7 @@ def video_maps(
     def animate(tt: int):
         precomputed_diff_tt = (
             difference_stream[tt]
-            if (include_difference and difference_stream is not None)
+            if (plot_spec.include_difference and difference_stream is not None)
             else None
         )
         _draw_frame(
@@ -236,10 +237,10 @@ def video_maps(
             ground_truth_stream[tt],
             prediction_stream[tt],
             plot_spec,
-            include_difference,
             diff_colour_scale,
             precomputed_diff_tt,
             levels,
+            display_ranges_override=display_ranges,
         )
 
         fig.suptitle(_format_date_to_string(dates[tt]))
@@ -270,10 +271,11 @@ def _draw_frame(
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     plot_spec: PlotSpec = DEFAULT_SIC_SPEC,
-    include_difference: bool = True,
     diff_colour_scale: DiffColourmapSpec | None = None,
     precomputed_difference: np.ndarray | None = None,
     levels_override: np.ndarray | None = None,
+    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
+    | None = None,
 ) -> tuple:
     """
     Draw a complete visualisation frame with ground truth, prediction, and optional difference.
@@ -307,26 +309,61 @@ def _draw_frame(
     for ax in axs:
         _clear_contours(ax)
 
+    # Compute display ranges - use override if provided for stable animation
+    if display_ranges_override is not None:
+        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
+            display_ranges_override
+        )
+    else:
+        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
+            compute_display_ranges(ground_truth, prediction, plot_spec)
+        )
+
     # Use PlotSpec levels for ground_truth and prediction unless overridden
     levels = levels_from_spec(plot_spec) if levels_override is None else levels_override
 
-    image_groundtruth = axs[0].contourf(
-        ground_truth,
-        levels=levels,
-        cmap=plot_spec.colourmap,
-        vmin=plot_spec.vmin,
-        vmax=plot_spec.vmax,
-    )
-    image_prediction = axs[1].contourf(
-        prediction,
-        levels=levels,
-        cmap=plot_spec.colourmap,
-        vmin=plot_spec.vmin,
-        vmax=plot_spec.vmax,
-    )
+    if plot_spec.colourbar_strategy == "separate":
+        # For separate strategy, use explicit levels to prevent breathing
+        groundtruth_levels = np.linspace(
+            groundtruth_vmin, groundtruth_vmax, plot_spec.n_contour_levels
+        )
+        prediction_levels = np.linspace(
+            prediction_vmin, prediction_vmax, plot_spec.n_contour_levels
+        )
+
+        image_groundtruth = axs[0].contourf(
+            ground_truth,
+            levels=groundtruth_levels,
+            cmap=plot_spec.colourmap,
+            vmin=groundtruth_vmin,
+            vmax=groundtruth_vmax,
+        )
+        image_prediction = axs[1].contourf(
+            prediction,
+            levels=prediction_levels,
+            cmap=plot_spec.colourmap,
+            vmin=prediction_vmin,
+            vmax=prediction_vmax,
+        )
+    else:
+        # For shared strategy, use same levels for both panels
+        image_groundtruth = axs[0].contourf(
+            ground_truth,
+            levels=levels,
+            cmap=plot_spec.colourmap,
+            vmin=groundtruth_vmin,
+            vmax=groundtruth_vmax,
+        )
+        image_prediction = axs[1].contourf(
+            prediction,
+            levels=levels,
+            cmap=plot_spec.colourmap,
+            vmin=prediction_vmin,
+            vmax=prediction_vmax,
+        )
 
     image_difference = None
-    if include_difference:
+    if plot_spec.include_difference:
         difference = (
             precomputed_difference
             if precomputed_difference is not None
@@ -341,18 +378,29 @@ def _draw_frame(
             )
 
         if diff_colour_scale.norm is not None:
-            # Signed differences with TwoSlopeNorm
+            # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
+            diff_vmin = diff_colour_scale.norm.vmin
+            diff_vmax = diff_colour_scale.norm.vmax
+            diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
+
             image_difference = axs[2].contourf(
                 difference,
-                levels=plot_spec.n_contour_levels,
+                levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
-                norm=diff_colour_scale.norm,
+                vmin=diff_vmin,
+                vmax=diff_vmax,
             )
         else:
             # Non-negative differences with vmin/vmax
+            diff_levels = np.linspace(
+                diff_colour_scale.vmin,
+                diff_colour_scale.vmax,
+                plot_spec.n_contour_levels,
+            )
+
             image_difference = axs[2].contourf(
                 difference,
-                levels=plot_spec.n_contour_levels,
+                levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
                 vmin=diff_colour_scale.vmin,
                 vmax=diff_colour_scale.vmax,

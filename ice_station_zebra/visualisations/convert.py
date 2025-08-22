@@ -1,11 +1,12 @@
 import io
-import os
 import tempfile
+from contextlib import suppress
+from pathlib import Path
 from typing import Literal
 
-import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import animation
 from matplotlib.figure import Figure
 from PIL import Image, ImageFile
 
@@ -37,16 +38,16 @@ def _save_animation(
     anim: animation.FuncAnimation,
     *,
     fps: int,
-    format: Literal["mp4", "gif"] = "gif",
+    video_format: Literal["mp4", "gif"] = "gif",
 ) -> bytes:
     """Save an animation to a temporary file and return bytes (with cleanup)."""
-    suffix = ".gif" if format.lower() == "gif" else ".mp4"
+    suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp_path = tmp.name
 
-        if format.lower() == "gif":
+        if video_format.lower() == "gif":
             writer = animation.PillowWriter(fps=fps)
             anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
         else:
@@ -58,13 +59,12 @@ def _save_animation(
             )
             anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
 
-        with open(tmp_path, "rb") as fh:
+        with Path(tmp_path).open("rb") as fh:
             return fh.read()
     except (OSError, MemoryError) as err:
-        raise VideoRenderError(f"Video encoding failed: {err!s}") from err
+        msg = f"Video encoding failed: {err!s}"
+        raise VideoRenderError(msg) from err
     finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
+        if tmp_path and Path(tmp_path).exists():
+            with suppress(OSError):
+                Path(tmp_path).unlink()

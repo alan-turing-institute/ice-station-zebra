@@ -71,7 +71,34 @@ line-length = 88
 exclude = ["notebooks/*ipynb"]
 
 [tool.ruff.lint]
-extend-select = ["I"]
+# extend-select = ["I"]
+select = ["ALL"]
+ignore = [
+    "COM812", # conflicts with formatter
+    "D100", # undocumented-public-module
+    "D101", # undocumented-public-class
+    "D102", # undocumented-public-method
+    "D104", # undocumented-public-package
+    "D203", # one-blank-line-before-class [conflicts with D211]
+    "D213", # multi-line-summary-second-line [conflicts with D212]
+    "D401", # non-imperative-mood
+    "E501", # line-too-long
+    "SLF001", # private-member-access
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "DTZ001", # allow unlocalised datetimes in tests
+    "S101", # allow asserts in tests
+    "INP001", # allow implicit namespace in tests
+    "PLR2004", # allow magic-number comparison in tests
+]
+
+[tool.ruff.lint.pylint]
+max-args = 6
 
 [tool.uv.build-backend]
 module-root = ""

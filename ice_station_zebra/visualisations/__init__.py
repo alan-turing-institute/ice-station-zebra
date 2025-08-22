@@ -10,11 +10,11 @@ from .plotting_maps import (
 )
 
 __all__ = [
-    "PlotSpec",
+    "DEFAULT_SIC_SPEC",
+    "DiffStrategy",
     "InvalidArrayError",
+    "PlotSpec",
     "VideoRenderError",
     "plot_maps",
     "video_maps",
-    "DEFAULT_SIC_SPEC",
-    "DiffStrategy",
 ]

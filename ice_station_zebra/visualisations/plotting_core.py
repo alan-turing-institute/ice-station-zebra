@@ -6,6 +6,10 @@ from typing import Literal, NamedTuple
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
 
+# Constants for array dimensions
+DIM_2D = 2
+DIM_3D = 3
+
 
 # -- Exceptions shared by all plotting functions --
 class PlottingError(RuntimeError): ...
@@ -32,8 +36,7 @@ DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
 
 
 class DiffColourmapSpec(NamedTuple):
-    """
-    Colour scale specification for visualising a difference panel.
+    """Colour scale specification for visualising a difference panel.
 
     Attributes:
         norm: Normalisation object for mapping data values to colours.
@@ -42,6 +45,7 @@ class DiffColourmapSpec(NamedTuple):
         vmin: Lower bound for colour scale (used if norm is None).
         vmax: Upper bound for colour scale (used if norm is None).
         cmap: Name of the matplotlib colourmap to use.
+
     """
 
     norm: Normalize | None
@@ -73,8 +77,7 @@ class PlotSpec:
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
-    """
-    Generate contour levels from a plotting specification.
+    """Generate contour levels from a plotting specification.
 
     Creates evenly-spaced contour levels based on the minimum and maximum values
     specified in the PlotSpec. If vmin or vmax are not specified, defaults to
@@ -86,8 +89,8 @@ def levels_from_spec(spec: PlotSpec) -> np.ndarray:
     Returns:
         NumPy array of contour levels spanning from vmin to vmax with
         N_CONTOUR_LEVELS steps.
-    """
 
+    """
     vmin = 0.0 if spec.vmin is None else spec.vmin
     vmax = 1.0 if spec.vmax is None else spec.vmax
     return np.linspace(vmin, vmax, N_CONTOUR_LEVELS)
@@ -108,16 +111,17 @@ def compute_difference(
 
     Raises:
         ValueError: If the difference mode is invalid.
+
     """
     if diff_mode == "signed":
         return ground_truth - prediction
-    elif diff_mode == "absolute":
+    if diff_mode == "absolute":
         return np.abs(ground_truth - prediction)
-    elif diff_mode == "smape":
+    if diff_mode == "smape":
         denom = np.clip((np.abs(ground_truth) + np.abs(prediction)) / 2.0, 1e-6, None)
         return np.abs(prediction - ground_truth) / denom
-    else:
-        raise ValueError(f"Invalid difference mode: {diff_mode}")
+    msg = f"Invalid difference mode: {diff_mode}"
+    raise ValueError(msg)
 
 
 def make_diff_colourmap(
@@ -125,8 +129,7 @@ def make_diff_colourmap(
     *,
     mode: DiffMode,
 ) -> DiffColourmapSpec:
-    """
-    Construct colour mapping settings for a difference panel.
+    """Construct colour mapping settings for a difference panel.
 
     Behaviour depends on the difference mode:
 
@@ -142,8 +145,8 @@ def make_diff_colourmap(
 
     Returns:
         DiffRenderParams: Normalisation, colour limits, and colourmap.
-    """
 
+    """
     if mode == "signed":
         # Use actual data range centred on zero
         if isinstance(sample, (float, int)):
@@ -179,21 +182,22 @@ def make_diff_colourmap(
             cmap="magma",
         )
 
-    raise ValueError(f"Unknown difference mode: {mode}")
+    msg = f"Unknown difference mode: {mode}"
+    raise ValueError(msg)
 
 
 # ---- Handling the difference stream ----
 
 
 def prepare_difference_stream(
+    *,
     include_difference: bool,
     diff_mode: DiffMode,
     strategy: DiffStrategy,
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
 ) -> tuple[np.ndarray | None, DiffColourmapSpec | None]:
-    """
-    General, reusable planner for animations (maps or time-series).
+    """General, reusable planner for animations (maps or time-series).
 
     This function implements three different strategies for handling
     difference between ground truth and prediction in animations, each with
@@ -214,6 +218,7 @@ def prepare_difference_stream(
         Tuple of (difference_stream, colour_scale):
         - difference_stream: None unless strategy == 'precompute'
         - colour_scale: DiffColourmapSpec describing colourmap/norm/range
+
     """
     if not include_difference:
         return None, None
@@ -237,23 +242,23 @@ def prepare_difference_stream(
                 max_abs = max(max_abs, float(np.nanmax(np.abs(difference)) or 0.0))
             colour_scale = make_diff_colourmap(max_abs, mode="signed")
             return None, colour_scale
-        else:
-            # find max diff for sequential scale without storing full stream
-            max_val = 0.0
-            for tt in range(n_timesteps):
-                difference = compute_difference(
-                    ground_truth_stream[tt], prediction_stream[tt], diff_mode
-                )
-                max_val = max(max_val, float(np.nanmax(difference) or 0.0))
-            colour_scale = make_diff_colourmap(max_val, mode=diff_mode)
-            return None, colour_scale
+        # find max diff for sequential scale without storing full stream
+        max_val = 0.0
+        for tt in range(n_timesteps):
+            difference = compute_difference(
+                ground_truth_stream[tt], prediction_stream[tt], diff_mode
+            )
+            max_val = max(max_val, float(np.nanmax(difference) or 0.0))
+        colour_scale = make_diff_colourmap(max_val, mode=diff_mode)
+        return None, colour_scale
 
     if strategy == "per-frame":
         # no precomputation; each frame will call compute_difference and
         # may choose to infer its own params if desired (less consistent look)
         return None, None
 
-    raise ValueError(f"Unknown DiffStrategy: {strategy}")
+    msg = f"Unknown DiffStrategy: {strategy}"
+    raise ValueError(msg)
 
 
 # --- Validation ---
@@ -263,8 +268,7 @@ def validate_2d_pair(
     ground_truth: np.ndarray,
     prediction: np.ndarray,
 ) -> tuple[int, int]:
-    """
-    Validate that both arrays are 2D [H,W] and have the same shape.
+    """Validate that both arrays are 2D [H,W] and have the same shape.
 
     Args:
         ground_truth: The ground truth array. [H,W]
@@ -275,15 +279,14 @@ def validate_2d_pair(
 
     Raises:
         InvalidArrayError: If the arrays are not 2D or have different shapes.
+
     """
-    if ground_truth.ndim != 2 or prediction.ndim != 2:
-        raise InvalidArrayError(
-            f"Expected 2D [H,W]; got ground truth={ground_truth.shape}, prediction={prediction.shape}"
-        )
+    if ground_truth.ndim != DIM_2D or prediction.ndim != DIM_2D:
+        msg = f"Expected 2D [H,W]; got ground truth={ground_truth.shape}, prediction={prediction.shape}"
+        raise InvalidArrayError(msg)
     if ground_truth.shape != prediction.shape:
-        raise InvalidArrayError(
-            f"Shape mismatch: ground truth={ground_truth.shape}, prediction={prediction.shape}"
-        )
+        msg = f"Shape mismatch: ground truth={ground_truth.shape}, prediction={prediction.shape}"
+        raise InvalidArrayError(msg)
     return ground_truth.shape  # (H, W)
 
 
@@ -291,8 +294,7 @@ def validate_3d_streams(
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
 ) -> tuple[int, int]:
-    """
-    Validate that both arrays are 3D [T,H,W] and have the same shape.
+    """Validate that both arrays are 3D [T,H,W] and have the same shape.
 
     Args:
         ground_truth_stream: The ground truth array. [T,H,W]
@@ -303,15 +305,14 @@ def validate_3d_streams(
 
     Raises:
         InvalidArrayError: If the arrays are not 2D or have different shapes.
+
     """
-    if ground_truth_stream.ndim != 3 or prediction_stream.ndim != 3:
-        raise InvalidArrayError(
-            f"Expected 3D [T,H,W]; got ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
-        )
+    if ground_truth_stream.ndim != DIM_3D or prediction_stream.ndim != DIM_3D:
+        msg = f"Expected 3D [T,H,W]; got ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
+        raise InvalidArrayError(msg)
     if ground_truth_stream.shape != prediction_stream.shape:
-        raise InvalidArrayError(
-            f"Shape mismatch: ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
-        )
+        msg = f"Shape mismatch: ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
+        raise InvalidArrayError(msg)
     return ground_truth_stream.shape  # type: ignore[return-value]
 
 
@@ -319,31 +320,35 @@ def compute_display_ranges(
     ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
     """Compute vmin/vmax for ground truth and prediction based on strategy."""
-
     if plot_spec.colourbar_strategy == "shared":
         # Both panels use spec vmin/vmax (current behavior)
         spec_range = (plot_spec.vmin, plot_spec.vmax)
         return spec_range, spec_range
 
-    elif plot_spec.colourbar_strategy == "separate":
+    if plot_spec.colourbar_strategy == "separate":
         # Each panel uses its own data range
-        gt_range = (float(np.nanmin(ground_truth)), float(np.nanmax(ground_truth)))
-        pred_range = (float(np.nanmin(prediction)), float(np.nanmax(prediction)))
-        return gt_range, pred_range
+        groundtruth_range = (
+            float(np.nanmin(ground_truth)),
+            float(np.nanmax(ground_truth)),
+        )
+        prediction_range = (float(np.nanmin(prediction)), float(np.nanmax(prediction)))
+        return groundtruth_range, prediction_range
+
+    # Fallback - should not reach here but required for type checking
+    spec_range = (plot_spec.vmin, plot_spec.vmax)
+    return spec_range, spec_range
 
 
 def compute_display_ranges_stream(
     ground_truth_stream: np.ndarray, prediction_stream: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    """
-    Compute stable vmin/vmax for GT and Prediction over the entire video.
-    """
+    """Compute stable vmin/vmax for GT and Prediction over the entire video."""
     if plot_spec.colourbar_strategy == "shared":
         spec_range = (plot_spec.vmin, plot_spec.vmax)
         return spec_range, spec_range
-    else:  # "separate"
-        gt_min = float(np.nanmin(ground_truth_stream))
-        gt_max = float(np.nanmax(ground_truth_stream))
-        pred_min = float(np.nanmin(prediction_stream))
-        pred_max = float(np.nanmax(prediction_stream))
-        return (gt_min, gt_max), (pred_min, pred_max)
+    # "separate"
+    groundtruth_min = float(np.nanmin(ground_truth_stream))
+    groundtruth_max = float(np.nanmax(ground_truth_stream))
+    prediction_min = float(np.nanmin(prediction_stream))
+    prediction_max = float(np.nanmax(prediction_stream))
+    return (groundtruth_min, groundtruth_max), (prediction_min, prediction_max)

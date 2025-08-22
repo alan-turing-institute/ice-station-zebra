@@ -1,5 +1,4 @@
-"""
-Sea ice concentration visualisation module for creating static maps and animations.
+"""Sea ice concentration visualisation module for creating static maps and animations.
 
 - Static map plotting with optional difference visualisation
 - Animated video generation (MP4/GIF formats)
@@ -12,12 +11,16 @@ Sea ice concentration visualisation module for creating static maps and animatio
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL.ImageFile import ImageFile
+from matplotlib import animation
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from PIL.ImageFile import ImageFile
 
 from .convert import _image_from_figure, _save_animation
 from .layout import _add_colourbars, _init_axes, _set_axes_limits
@@ -60,9 +63,9 @@ def plot_maps(
     prediction: np.ndarray,
     date: date | datetime,
 ) -> list[ImageFile]:
-    """
-    Create static maps comparing ground truth and prediction sea ice concentration data
-    and (optional) the difference. The plots use contour mapping with customisable colour
+    """Create static maps comparing ground truth and prediction sea ice concentration data.
+
+    Create static maps and (optional) the difference. The plots use contour mapping with customisable colour
     schemes and include proper axis scaling and colourbars.
 
     Args:
@@ -88,7 +91,7 @@ def plot_maps(
     height, width = validate_2d_pair(ground_truth, prediction)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, H=height, W=width)
+    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -134,11 +137,11 @@ def video_maps(
     prediction_stream: np.ndarray,
     dates: list[date | datetime],
     fps: int = 2,
-    format: Literal["mp4", "gif"] = "gif",
+    video_format: Literal["mp4", "gif"] = "gif",
 ) -> bytes:
-    """
-    Generates animated visualisations showing the temporal evolution of sea ice concentration
-    comparing ground truth data with model predictions. Supports multiple video formats and
+    """Generate animated visualisations showing the temporal evolution of sea ice concentration.
+
+    Compares ground truth data with model predictions. Supports multiple video formats and
     difference computation strategies for optimal performance with large datasets.
 
     Args:
@@ -154,7 +157,7 @@ def video_maps(
         include_difference: Whether to include difference visualisation in the animation.
         fps: Frames per second for the output video. Higher values create smoother
             but larger animations.
-        format: Output video format, either "mp4" or "gif".
+        video_format: Output video format, either "mp4" or "gif".
         diff_strategy: Strategy for computing differences over time:
             - "precompute": Calculate all differences upfront (memory intensive)
             - "two-pass": Scan data to determine colour scale, compute per-frame
@@ -168,18 +171,20 @@ def video_maps(
         InvalidArrayError: If arrays have incompatible shapes or if the number of
             dates doesn't match the number of timesteps.
         VideoRenderError: If video encoding fails.
+
     """
     # Check the shapes of the arrays
     n_timesteps, height, width = validate_3d_streams(
         ground_truth_stream, prediction_stream
     )
     if len(dates) != n_timesteps:
-        raise InvalidArrayError(
+        error_msg = (
             f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         )
+        raise InvalidArrayError(error_msg)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, H=height, W=width)
+    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation
@@ -189,11 +194,11 @@ def video_maps(
 
     # Prepare the difference array according to the strategy
     difference_stream, diff_colour_scale = prepare_difference_stream(
-        plot_spec.include_difference,
-        plot_spec.diff_mode,
-        plot_spec.diff_strategy,
-        ground_truth_stream,
-        prediction_stream,
+        include_difference=plot_spec.include_difference,
+        diff_mode=plot_spec.diff_mode,
+        strategy=plot_spec.diff_strategy,
+        ground_truth_stream=ground_truth_stream,
+        prediction_stream=prediction_stream,
     )
     precomputed_diff_0 = (
         difference_stream[0]
@@ -226,7 +231,7 @@ def video_maps(
     fig.suptitle(_format_date_to_string(dates[0]))
 
     # Animation function
-    def animate(tt: int):
+    def animate(tt: int) -> tuple[()]:
         precomputed_diff_tt = (
             difference_stream[tt]
             if (plot_spec.include_difference and difference_stream is not None)
@@ -258,7 +263,7 @@ def video_maps(
 
     # Save -> bytes and clean up temp file
     try:
-        return _save_animation(animation_object, fps=fps, format=format)
+        return _save_animation(animation_object, fps=fps, video_format=video_format)
     finally:
         plt.close(fig)
 
@@ -266,19 +271,18 @@ def video_maps(
 # ---- Helper functions ----
 
 
-def _draw_frame(
+def _draw_frame(  # noqa: PLR0913
     axs: list,
     ground_truth: np.ndarray,
     prediction: np.ndarray,
-    plot_spec: PlotSpec = DEFAULT_SIC_SPEC,
+    plot_spec: PlotSpec,
     diff_colour_scale: DiffColourmapSpec | None = None,
     precomputed_difference: np.ndarray | None = None,
     levels_override: np.ndarray | None = None,
     display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
     | None = None,
 ) -> tuple:
-    """
-    Draw a complete visualisation frame with ground truth, prediction, and optional difference.
+    """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
 
     Creates contour plots for ground truth and prediction data, and optionally computes
     and displays their difference. It handles colour normalisation, contour levels, and
@@ -299,13 +303,15 @@ def _draw_frame(
             difference is included, the difference will be computed on-demand.
         levels_override: Optional custom contour levels. If None, levels are derived
             from plot_spec.
+        display_ranges_override: Optional custom display ranges for stable animation.
+            If None, ranges are computed from the data.
 
     Returns:
         Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
         The image objects are matplotlib contour collections, and image_difference may be None
         if include_difference is False. diff_colour_scale is returned for reuse in animations.
-    """
 
+    """
     for ax in axs:
         _clear_contours(ax)
 
@@ -410,8 +416,7 @@ def _draw_frame(
 
 
 def _format_date_to_string(date: date | datetime) -> str:
-    """
-    Format a date or datetime object to a standardised string representation for plot titles.
+    """Format a date or datetime object to a standardised string representation for plot titles.
 
     Args:
         date: Date or datetime object to format.
@@ -426,6 +431,7 @@ def _format_date_to_string(date: date | datetime) -> str:
         '2023-12-25'
         >>> _format_date_to_string(datetime(2023, 12, 25, 14, 30))
         '2023-12-25 14:30'
+
     """
     return (
         date.strftime(r"%Y-%m-%d %H:%M")
@@ -434,13 +440,14 @@ def _format_date_to_string(date: date | datetime) -> str:
     )
 
 
-def _clear_contours(ax) -> None:
-    """
-    Remove all contour collections from a matplotlib axes object to prevent
-    overlapping plots in an animation loop.
+def _clear_contours(ax: Any) -> None:  # noqa: ANN401
+    """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
+
+    Prevents overlapping plots in an animation loop.
 
     Args:
         ax: Matplotlib axes object to clear.
+
     """
     for coll in ax.collections[:]:
         coll.remove()

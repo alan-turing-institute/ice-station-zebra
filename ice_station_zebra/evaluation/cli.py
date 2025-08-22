@@ -23,7 +23,7 @@ def evaluate(
         str, typer.Option(help="Specify the path to a trained model checkpoint")
     ],
 ) -> None:
-    """Evaluate a model"""
+    """Evaluate a model."""
     evaluator = ZebraEvaluator(config, Path(checkpoint).resolve())
     evaluator.evaluate()
 

@@ -14,16 +14,17 @@ class Persistence(ZebraModel):
         self,
         **kwargs: Any,
     ) -> None:
+        """Initialise a Persistence model."""
         super().__init__(**kwargs)
         self.model = nn.Identity()
         self.automatic_optimization = False
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        """Persistence model does not need an optimizer"""
+        """Persistence model does not need an optimizer."""
         return None
 
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Forward step of the model
+        """Forward step of the model.
 
         - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
         - find the input with the same name as the output space

@@ -9,11 +9,12 @@ from omegaconf import DictConfig
 
 from .base import IPreprocessor
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class IceNetSICPreprocessor(IPreprocessor):
-    def __init__(self, config: DictConfig):
+    def __init__(self, config: DictConfig) -> None:
+        """Initialise the IceNetSIC preprocessor."""
         super().__init__(config)
         self.date_range = pd.date_range(
             config["dates"]["start"],
@@ -27,19 +28,20 @@ class IceNetSICPreprocessor(IPreprocessor):
         return not self.is_north
 
     def download(self, preprocessor_path: Path) -> None:
+        """Download data to the specified preprocessor path."""
         # Change to the output directory before downloading
         icenet_path = preprocessor_path / self.name
         icenet_path.mkdir(parents=True, exist_ok=True)
-        current_directory = os.getcwd()
+        current_directory = Path.cwd()
         os.chdir(icenet_path)
 
         # Generate polar masks: note that only 1979-2015 are available
         masks = Masks(north=self.is_north, south=self.is_south)
         mask_year = max(max(1979, min(date.year, 2015)) for date in self.date_range)
-        log.info(f"Generating polar masks for {mask_year}...")
+        logger.info("Generating polar masks for %s.", mask_year)
         masks.generate(year=mask_year)
 
-        log.info("Downloading sea ice concentration data...")
+        logger.info("Downloading sea ice concentration data.")
         sic = SICDownloader(
             dates=[
                 pd.to_datetime(date).date() for date in self.date_range

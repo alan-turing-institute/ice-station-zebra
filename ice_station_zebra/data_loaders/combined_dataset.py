@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -18,7 +18,12 @@ class CombinedDataset(Dataset):
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
     ) -> None:
-        """Constructor"""
+        """Initialise a combined dataset from a sequence of ZebraDatasets.
+
+        One of the datasets must be the target and all must have the same frequency. The
+        number of forecast and history steps can be set, which will determine the shape
+        of the NTCHW tensors returned by __getitem__.
+        """
         super().__init__()
 
         # Store the number of forecast and history steps
@@ -27,10 +32,10 @@ class CombinedDataset(Dataset):
 
         # Define target and input datasets
         self.target = next(ds for ds in datasets if ds.name == target)
-        self.inputs = [ds for ds in datasets]
+        self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
-        frequencies = sorted(set(ds.dataset.frequency for ds in datasets))
+        frequencies = sorted({ds.dataset.frequency for ds in datasets})
         if len(frequencies) != 1:
             msg = f"Cannot combine datasets with different frequencies: {frequencies}."
             raise ValueError(msg)
@@ -57,17 +62,18 @@ class CombinedDataset(Dataset):
         ]
 
     def __len__(self) -> int:
-        """Return the total length of the dataset"""
+        """Return the total length of the dataset."""
         return len(self.available_dates)
 
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
-        """Return the data for a single timestep as a dictionary
+        """Return the data for a single timestep as a dictionary.
 
         Returns:
             A dictionary with dataset names as keys and a numpy array as the value.
             The shape of each array is:
             - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
             - target dataset: [n_forecast_steps, C_target, H_target, W_target]
+
         """
         return {
             ds.name: ds.get_tchw(self.get_history_steps(self.available_dates[idx]))
@@ -79,9 +85,9 @@ class CombinedDataset(Dataset):
         }
 
     def date_from_index(self, idx: int) -> datetime:
-        """Return the date of the timestep"""
+        """Return the date of the timestep."""
         np_datetime = self.available_dates[idx]
-        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S")
+        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""
@@ -99,7 +105,7 @@ class CombinedDataset(Dataset):
     @property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""
-        end_date = set(dataset.end_date for dataset in self.inputs)
+        end_date = {dataset.end_date for dataset in self.inputs}
         if len(end_date) != 1:
             msg = f"Datasets have {len(end_date)} different end dates"
             raise ValueError(msg)
@@ -108,7 +114,7 @@ class CombinedDataset(Dataset):
     @property
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
-        start_date = set(dataset.start_date for dataset in self.inputs)
+        start_date = {dataset.start_date for dataset in self.inputs}
         if len(start_date) != 1:
             msg = f"Datasets have {len(start_date)} different start dates"
             raise ValueError(msg)

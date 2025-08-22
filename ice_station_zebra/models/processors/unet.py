@@ -1,17 +1,16 @@
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import nn
 
-from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
-from ice_station_zebra.models.common.convblock import ConvBlock
-from ice_station_zebra.models.common.upconvblock import UpconvBlock
+from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
+from ice_station_zebra.types import TensorNCHW
 
 
 class UNetProcessor(nn.Module):
-    """UNet model that processes input through a UNet architecture
+    """UNet model that processes input through a UNet architecture.
 
     Structure based on Andersson et al. (2021) Nature Communications
-    https://doi.org/10.1038/s41467-021-25257-4"""
+    https://doi.org/10.1038/s41467-021-25257-4
+    """
 
     def __init__(
         self,
@@ -19,9 +18,10 @@ class UNetProcessor(nn.Module):
         filter_size: int,
         start_out_channels: int,
     ) -> None:
+        """Initialise a UNetProcessor."""
         super().__init__()
 
-        channels = [start_out_channels * 2**pow for pow in range(4)]
+        channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
@@ -54,9 +54,16 @@ class UNetProcessor(nn.Module):
             channels[0], n_latent_channels, kernel_size=1, padding="same"
         )
 
-    def forward(self, x: Tensor) -> Tensor:
-        # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: process in latent space.
 
+        Args:
+            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
+        Returns:
+            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
+        """
         # Encoder
         bn1 = self.conv1(x)
         conv1 = self.maxpool1(bn1)
@@ -76,7 +83,5 @@ class UNetProcessor(nn.Module):
         up8 = self.up8b(torch.cat([bn2, self.up8(up7)], dim=1))
         up9 = self.up9b(torch.cat([bn1, self.up9(up8)], dim=1))
 
-        # Final layer
-        output = self.final_layer(up9)
-
-        return output
+        # Apply final layer and return
+        return self.final_layer(up9)

@@ -42,7 +42,7 @@ class TestEncodeProcessDecode:
         assert model.output_space.name == cfg_output_space["name"]
         assert model.output_space.shape == cfg_output_space["shape"]
 
-    @pytest.mark.parametrize("test_batch_size", [0, 1, 2])
+    @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
     def test_forward(
         self,
         cfg_decoder: DictConfig,

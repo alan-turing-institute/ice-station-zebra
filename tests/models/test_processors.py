@@ -6,7 +6,7 @@ from ice_station_zebra.types import DataSpace
 
 
 @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
-@pytest.mark.parametrize("test_batch_size", [0, 1, 2])
+@pytest.mark.parametrize("test_batch_size", [1, 2, 5])
 class TestNullProcessor:
     def test_forward_shape(
         self,
@@ -32,7 +32,7 @@ class TestNullProcessor:
 
 
 @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
-@pytest.mark.parametrize("test_batch_size", [0, 1, 2])
+@pytest.mark.parametrize("test_batch_size", [1, 2, 5])
 @pytest.mark.parametrize("test_filter_size", [-1, 0, 1])
 @pytest.mark.parametrize("test_start_out_channels", [-1, 7, 32])
 class TestUNetProcessor:

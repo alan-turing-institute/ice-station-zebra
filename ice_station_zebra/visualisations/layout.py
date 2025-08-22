@@ -21,12 +21,12 @@ from typing import Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import Normalize, TwoSlopeNorm
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
-from .plotting_core import PlotSpec
+from .plotting_core import DiffColourmapSpec, PlotSpec
 
 #
 # --- LAYOUT CONFIGURATION CONSTANTS ---
@@ -36,9 +36,9 @@ from .plotting_core import PlotSpec
 
 # Spacing and margin constants (as fractions of figure dimensions)
 DEFAULT_OUTER_MARGIN = 0.05  # Outer margin around entire figure (prevents clipping)
-DEFAULT_GUTTER = 0.03  # Horizontal gap between panels (fraction of panel width)
+DEFAULT_GUTTER = 0.05  # Horizontal gap between panels (fraction of panel width)
 DEFAULT_CBAR_WIDTH = (
-    0.06  # Width allocated for colorbar slots (fraction of panel width)
+    0.06  # Width allocated for colourbar slots (fraction of panel width)
 )
 DEFAULT_TITLE_SPACE = (
     0.08  # Vertical space reserved for figure title (prevents overlap)
@@ -54,7 +54,6 @@ DEFAULT_FIGSIZE_THREE_PANELS = (18, 6)  # Ground truth + Prediction + Difference
 
 def _init_axes(
     *,
-    include_difference: bool,
     plot_spec: PlotSpec,
     H: int | None = None,
     W: int | None = None,
@@ -77,18 +76,17 @@ def _init_axes(
     consistent scaling across different figure sizes and data aspect ratios.
 
     Args:
-        include_difference: If True, creates a 3-panel layout with difference comparison.
-                          If False, creates a 2-panel layout (ground truth + prediction).
-        plot_spec: PlotSpec object containing colorbar orientation ('vertical'/'horizontal')
-                  and other formatting preferences.
+        plot_spec: PlotSpec object containing whether to include a difference panel,
+                   colourbar orientation ('vertical'/'horizontal'),
+                   colourbar strategy ('shared'/'separate'), and other formatting preferences.
         H: Optional data height for aspect-ratio-aware figure sizing. If provided with W,
            the figure dimensions will be calculated to maintain proper data aspect ratios.
         W: Optional data width for aspect-ratio-aware figure sizing.
         outer_margin: Fraction of figure dimensions reserved for outer margins (prevents
                      plot elements from being clipped at figure edges).
         gutter: Fraction of panel width used as horizontal spacing between panel groups.
-               Only applied between prediction+colorbar and difference panel.
-        cbar_width: Fraction of panel width allocated for each colorbar slot.
+               Only applied between prediction+colourbar and difference panel.
+        cbar_width: Fraction of panel width allocated for each colourbar slot.
         title_space: Fraction of figure height reserved at the top for figure title
                     (prevents title from overlapping with plot content).
 
@@ -96,14 +94,14 @@ def _init_axes(
         tuple containing:
             - Figure: The matplotlib Figure object with GridSpec layout applied
             - list[Axes]: List of main plot axes [ground_truth, prediction, difference*]
-                         (*difference only present if include_difference=True)
-            - dict[str, Axes | None]: Dictionary with dedicated colorbar axes:
+                         (*difference only present if plot_spec.include_difference=True)
+            - dict[str, Axes | None]: Dictionary with dedicated colourbar axes:
                 {"prediction": Axes | None, "difference": Axes | None}
 
     Raises:
         InvalidArrayError: If the arrays are not 2D or have different shapes.
     """
-    n_panels = 3 if include_difference else 2
+    n_panels = 3 if plot_spec.include_difference else 2
     orientation = plot_spec.colourbar_location
 
     # Calculate figure size based on data aspect ratio or use defaults
@@ -128,7 +126,7 @@ def _init_axes(
         # Use predefined sizes when data dimensions are unknown
         fig_size = (
             DEFAULT_FIGSIZE_THREE_PANELS
-            if include_difference
+            if plot_spec.include_difference
             else DEFAULT_FIGSIZE_TWO_PANELS
         )
 
@@ -144,19 +142,32 @@ def _init_axes(
         # This creates columns for each element with appropriate relative widths
 
         col_specs: list[float] = []
-        for ii in range(n_panels):
-            col_specs.append(1.0)  # Main panel: full relative width
+        separate_colorbars = plot_spec.colourbar_strategy == "separate"
 
-            # Add colourbar columns after prediction and difference panels
-            if ii == 1:  # After prediction panel
-                col_specs.append(cbar_width)
-            if ii == 2:  # After difference panel (if present)
-                col_specs.append(cbar_width)
+        if separate_colorbars:
+            # Each panel gets its own colourbar: [GT][cbar][gutter][Pred][cbar][gutter][Diff][cbar]
+            for ii in range(n_panels):
+                col_specs.append(1.0)  # Main panel
+                col_specs.append(cbar_width)  # Its colourbar
 
-            # Add gutter spacing, but only between panel groups (not after ground truth)
-            if ii != n_panels - 1:  # Not the last panel
-                if ii > 0:  # Not the first panel (ground truth)
+                # Add gutter after each panel+colourbar group (except the last)
+                if ii < n_panels - 1:
                     col_specs.append(gutter)
+        else:
+            # Shared colourbar logic
+            for ii in range(n_panels):
+                col_specs.append(1.0)  # Main panel: full relative width
+
+                # Add colourbar columns after prediction and difference panels
+                if ii == 1:  # After prediction panel
+                    col_specs.append(cbar_width)
+                if ii == 2:  # After difference panel (if present)
+                    col_specs.append(cbar_width)
+
+                # Add gutter spacing, but only between panel groups (not after ground truth)
+                if ii != n_panels - 1:  # Not the last panel
+                    if ii > 0:  # Not the first panel (ground truth)
+                        col_specs.append(gutter)
 
         gs = GridSpec(
             nrows=1,
@@ -172,7 +183,16 @@ def _init_axes(
 
         # Create axes and colourbar axes
         axs: list[Axes] = []
-        caxes: dict[str, Axes | None] = {"prediction": None, "difference": None}
+        separate_colorbars = plot_spec.colourbar_strategy == "separate"
+
+        if separate_colorbars:
+            caxes: dict[str, Axes | None] = {
+                "groundtruth": None,
+                "prediction": None,
+                "difference": None,
+            }
+        else:
+            caxes: dict[str, Axes | None] = {"prediction": None, "difference": None}
         col_idx = 0
 
         for ii in range(n_panels):
@@ -182,16 +202,26 @@ def _init_axes(
             col_idx += 1
 
             # Create dedicated colourbar axes adjacent to certain panels
-            if ii == 1:  # After prediction panel: shared GT/prediction colorbar
-                caxes["prediction"] = fig.add_subplot(gs[0, col_idx])
+            if separate_colorbars:
+                # Each panel gets its own colourbar
+                panel_names = ["groundtruth", "prediction", "difference"]
+                if ii < len(panel_names):
+                    caxes[panel_names[ii]] = fig.add_subplot(gs[0, col_idx])
                 col_idx += 1
-            if ii == 2:  # After difference panel: difference colorbar
-                caxes["difference"] = fig.add_subplot(gs[0, col_idx])
-                col_idx += 1
-
-            # Skip over gutter columns (spacing between panel groups)
-            if ii == 1 and ii != n_panels - 1:  # After pred+cbar group, before diff
-                col_idx += 1
+                # Skip gutter after each panel+colourbar group (except the last)
+                if ii < n_panels - 1:
+                    col_idx += 1
+            else:
+                # Shared colourbar logic
+                if ii == 1:  # After prediction panel: shared GT/prediction colorbar
+                    caxes["prediction"] = fig.add_subplot(gs[0, col_idx])
+                    col_idx += 1
+                if ii == 2:  # After difference panel: difference colorbar
+                    caxes["difference"] = fig.add_subplot(gs[0, col_idx])
+                    col_idx += 1
+                # Skip over gutter columns (spacing between panel groups)
+                if ii == 1 and ii != n_panels - 1:  # After pred+cbar group, before diff
+                    col_idx += 1
 
     else:
         # HORIZONTAL COLOURBAR LAYOUT
@@ -217,20 +247,39 @@ def _init_axes(
 
         # Create main plot axes in top row
         axs = []
-        caxes = {"prediction": None, "difference": None}
+        separate_colorbars = plot_spec.colourbar_strategy == "separate"
+
+        if separate_colorbars:
+            caxes = {"groundtruth": None, "prediction": None, "difference": None}
+        else:
+            caxes = {"prediction": None, "difference": None}
+
         for i in range(n_panels):
             panel_col = 2 * i  # Skip gutter columns: 0, 2, 4, ...
             axs.append(fig.add_subplot(gs[0, panel_col]))
 
         # Create colorbar axes in bottom row at specific column positions
-        caxes["prediction"] = (
-            fig.add_subplot(gs[1, 2]) if n_panels >= 2 else None
-        )  # Under prediction
-        caxes["difference"] = (
-            fig.add_subplot(gs[1, 4]) if n_panels >= 3 else None
-        )  # Under difference
+        if separate_colorbars:
+            # Each panel gets its own colourbar
+            caxes["groundtruth"] = (
+                fig.add_subplot(gs[1, 0]) if n_panels >= 1 else None
+            )  # Under ground truth
+            caxes["prediction"] = (
+                fig.add_subplot(gs[1, 2]) if n_panels >= 2 else None
+            )  # Under prediction
+            caxes["difference"] = (
+                fig.add_subplot(gs[1, 4]) if n_panels >= 3 else None
+            )  # Under difference
+        else:
+            # Original shared colourbar logic
+            caxes["prediction"] = (
+                fig.add_subplot(gs[1, 2]) if n_panels >= 2 else None
+            )  # Under prediction
+            caxes["difference"] = (
+                fig.add_subplot(gs[1, 4]) if n_panels >= 3 else None
+            )  # Under difference
 
-    _set_titles(axs, plot_spec, include_difference)
+    _set_titles(axs, plot_spec)
     _style_axes(axs)
 
     fig._zebra_layout = {
@@ -245,7 +294,7 @@ def _init_axes(
 # --- Helper Functions ---
 
 
-def _set_titles(axs: list[Axes], plot_spec: PlotSpec, include_difference: bool) -> None:
+def _set_titles(axs: list[Axes], plot_spec: PlotSpec) -> None:
     """
     Set titles for each plot panel based on the PlotSpec configuration.
 
@@ -255,12 +304,13 @@ def _set_titles(axs: list[Axes], plot_spec: PlotSpec, include_difference: bool) 
 
     Args:
         axs: List of matplotlib Axes objects to title (in order: GT, pred, diff)
-        plot_spec: PlotSpec containing title strings and difference mode configuration
-        include_difference: Whether a difference panel is present (affects title list length)
+        plot_spec: PlotSpec containing title strings, whether to include a difference panel,
+                   and difference mode configuration.
     """
+    # If difference panel is included, append the difference mode to the title
     title_difference = (
         plot_spec.title_difference + f" ({plot_spec.diff_mode})"
-        if include_difference
+        if plot_spec.include_difference
         else None
     )
 
@@ -308,9 +358,10 @@ def _add_colourbars(
     axs: list,
     *,
     image_groundtruth,  # QuadContourSet
+    image_prediction=None,  # QuadContourSet | None
     image_difference=None,  # QuadContourSet | None
     plot_spec: PlotSpec,
-    include_difference: bool = True,
+    diff_colour_scale: DiffColourmapSpec | None = None,
     cbar_axes: dict[str, Axes | None] | None = None,
 ) -> None:
     """
@@ -347,34 +398,70 @@ def _add_colourbars(
     """
     orientation = plot_spec.colourbar_location
     is_vertical = orientation == "vertical"
+    separate_colorbars = plot_spec.colourbar_strategy == "separate"
 
-    # Create shared colourbar for ground truth and prediction panels
-    if cbar_axes is not None and cbar_axes.get("prediction") is not None:
-        # Use dedicated colourbar axis (preferred - better layout control)
-        colourbar_truth = plt.colorbar(
-            image_groundtruth, cax=cbar_axes["prediction"], orientation=orientation
-        )
+    if separate_colorbars:
+        # Create individual colorbars for each panel
+
+        # Ground truth colourbar
+        if cbar_axes and cbar_axes.get("groundtruth"):
+            colourbar_gt = plt.colorbar(
+                image_groundtruth, cax=cbar_axes["groundtruth"], orientation=orientation
+            )
+            _format_truth_prediction_ticks(colourbar_gt, plot_spec, is_vertical)
+
+        # Prediction colourbar
+        if image_prediction and cbar_axes and cbar_axes.get("prediction"):
+            colourbar_pred = plt.colorbar(
+                image_prediction, cax=cbar_axes["prediction"], orientation=orientation
+            )
+            _format_prediction_ticks(colourbar_pred, image_prediction, is_vertical)
     else:
-        # Fallback: automatic positioning across both panels
-        colourbar_truth = plt.colorbar(
-            image_groundtruth, ax=[axs[0], axs[1]], orientation=orientation
-        )
+        # Create shared colourbar for ground truth and prediction panels
+        if cbar_axes is not None and cbar_axes.get("prediction") is not None:
+            # Use dedicated colourbar axis (preferred - better layout control)
+            colourbar_truth = plt.colorbar(
+                image_groundtruth, cax=cbar_axes["prediction"], orientation=orientation
+            )
+        else:
+            # Fallback: automatic positioning across both panels
+            colourbar_truth = plt.colorbar(
+                image_groundtruth, ax=[axs[0], axs[1]], orientation=orientation
+            )
 
-    # Tick formatting
-    _format_truth_prediction_ticks(colourbar_truth, plot_spec, is_vertical)
+        # Tick formatting
+        _format_truth_prediction_ticks(colourbar_truth, plot_spec, is_vertical)
 
     # Create separate colourbar for difference panel (if present)
     # Difference data often has different scale and symmetric range around zero
-    if include_difference and image_difference is not None:
+    if plot_spec.include_difference and image_difference is not None:
+        # Build a fixed ScalarMappable so the colourbar never depends on per-frame QuadContourSet
+        sm = None
+        if diff_colour_scale is not None:
+            if diff_colour_scale.norm is not None:
+                sm = plt.cm.ScalarMappable(
+                    norm=diff_colour_scale.norm, cmap=diff_colour_scale.cmap
+                )
+            else:
+                sm = plt.cm.ScalarMappable(
+                    norm=Normalize(
+                        vmin=diff_colour_scale.vmin, vmax=diff_colour_scale.vmax
+                    ),
+                    cmap=diff_colour_scale.cmap,
+                )
+            sm.set_array([])
+
         if cbar_axes is not None and cbar_axes.get("difference") is not None:
-            # Use dedicated colorbar axis (preferred)
             colourbar_diff = plt.colorbar(
-                image_difference, cax=cbar_axes["difference"], orientation=orientation
+                sm if sm is not None else image_difference,
+                cax=cbar_axes["difference"],
+                orientation=orientation,
             )
         else:
-            # Fallback: automatic positioning next to difference panel
             colourbar_diff = plt.colorbar(
-                image_difference, ax=axs[2], orientation=orientation
+                sm if sm is not None else image_difference,
+                ax=axs[2],
+                orientation=orientation,
             )
 
         # Tick formatting, ensures zero tick is always present and often symmetric
@@ -425,6 +512,25 @@ def _format_truth_prediction_ticks(
         # For arbitrary ranges: let matplotlib choose ~5 good tick positions
         target_axis.set_major_locator(MaxNLocator(5))
         target_axis.set_major_formatter(FuncFormatter(lambda x, pos: f"{x:.1f}"))
+
+
+def _format_prediction_ticks(colourbar, image_prediction, is_vertical: bool) -> None:
+    """
+    Tick formatting for prediction colourbar when using separate strategy.
+
+    Uses automatic tick placement for data-driven ranges rather than
+    the spec vmin/vmax range.
+
+    Args:
+        colourbar: matplotlib Colorbar object
+        image_prediction: ContourSet containing the prediction data range
+        is_vertical: Whether the colourbar is oriented vertically
+    """
+    target_axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
+
+    # Use automatic tick placement for data-driven ranges
+    target_axis.set_major_locator(MaxNLocator(5))
+    target_axis.set_major_formatter(FuncFormatter(lambda x, pos: f"{x:.1f}"))
 
 
 def _format_difference_ticks(colourbar, image_difference, is_vertical: bool) -> None:

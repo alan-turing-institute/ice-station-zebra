@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from typing import Any
 
-import wandb
 from lightning.pytorch import Callback
 
 if TYPE_CHECKING:
@@ -159,7 +158,6 @@ class PlottingCallback(Callback):
                 lightning_logger,
                 images,
                 videos,
-                self.video_format,
             )
 
 
@@ -167,7 +165,7 @@ class PlottingCallback(Callback):
 
 
 def _extract_static_data(
-    outputs: dict[str, Tensor],
+    outputs: ModelTestOutput,
     selected_timestep: int,
     dataset: CombinedDataset,
     batch_idx: int,
@@ -199,15 +197,17 @@ def _extract_static_data(
     np_ground_truth = target[0, selected_timestep, 0].detach().cpu().numpy()
     np_prediction = prediction[0, selected_timestep, 0].detach().cpu().numpy()
 
-    # Get the date from the dataset
+    # Get the date from the dataset using sequence date generation
     batch_size = int(target.shape[0])
-    date = dataset.date_from_index(batch_size * batch_idx + selected_timestep)
+    n_timesteps = int(target.shape[1])
+    dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
+    date = dates[selected_timestep]
 
     return np_ground_truth, np_prediction, date
 
 
 def _extract_video_data(
-    outputs: dict[str, Tensor], dataset: CombinedDataset, batch_idx: int
+    outputs: ModelTestOutput, dataset: CombinedDataset, batch_idx: int
 ) -> tuple[np.ndarray, np.ndarray, list]:
     """Extract all timesteps data for video plots.
 
@@ -248,7 +248,7 @@ def _generate_sequence_dates(
 
 
 def _require_tensors(
-    outputs: dict[str, Tensor], keys: tuple[str, ...]
+    outputs: ModelTestOutput, keys: tuple[str, ...]
 ) -> tuple[Tensor, ...]:
     """Require tensors from outputs."""
     try:
@@ -285,7 +285,6 @@ def _log_media_to_wandb(
     lightning_logger: Any,  # noqa: ANN401
     images: dict,
     videos: dict,
-    video_format: Literal["mp4", "gif"],
 ) -> None:
     """Log both images and videos to lightning loggers."""
     # Static images
@@ -298,13 +297,8 @@ def _log_media_to_wandb(
 
     # Videos
     for key, video_bytes in videos.items():
-        if hasattr(lightning_logger, "experiment"):  # wandb-specific
-            try:
-                lightning_logger.experiment.log(
-                    {key: wandb.Video(io.BytesIO(video_bytes), format=video_format)}
-                )
-            except ImportError:
-                logger.debug("wandb not available for video logging.")
+        if hasattr(lightning_logger, "log_video"):
+            lightning_logger.log_video(key=key, videos=[io.BytesIO(video_bytes)])
         else:
             logger_name = getattr(lightning_logger, "name", "unknown")
             logger.debug("Logger %s does not support video logging.", logger_name)

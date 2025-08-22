@@ -174,9 +174,8 @@ def video_maps(
 
     """
     # Check the shapes of the arrays
-    n_timesteps, height, width = validate_3d_streams(
-        ground_truth_stream, prediction_stream
-    )
+    shape = validate_3d_streams(ground_truth_stream, prediction_stream)
+    n_timesteps, height, width = shape
     if len(dates) != n_timesteps:
         error_msg = (
             f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
@@ -385,8 +384,8 @@ def _draw_frame(  # noqa: PLR0913
 
         if diff_colour_scale.norm is not None:
             # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
-            diff_vmin = diff_colour_scale.norm.vmin
-            diff_vmax = diff_colour_scale.norm.vmax
+            diff_vmin = diff_colour_scale.norm.vmin or 0.0
+            diff_vmax = diff_colour_scale.norm.vmax or 1.0
             diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
 
             image_difference = axs[2].contourf(
@@ -398,9 +397,11 @@ def _draw_frame(  # noqa: PLR0913
             )
         else:
             # Non-negative differences with vmin/vmax
+            vmin = diff_colour_scale.vmin or 0.0
+            vmax = diff_colour_scale.vmax or 1.0
             diff_levels = np.linspace(
-                diff_colour_scale.vmin,
-                diff_colour_scale.vmax,
+                vmin,
+                vmax,
                 plot_spec.n_contour_levels,
             )
 
@@ -408,8 +409,8 @@ def _draw_frame(  # noqa: PLR0913
                 difference,
                 levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
-                vmin=diff_colour_scale.vmin,
-                vmax=diff_colour_scale.vmax,
+                vmin=vmin,
+                vmax=vmax,
             )
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale

@@ -293,7 +293,7 @@ def validate_2d_pair(
 def validate_3d_streams(
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
-) -> tuple[int, int]:
+) -> tuple[int, int, int]:
     """Validate that both arrays are 3D [T,H,W] and have the same shape.
 
     Args:
@@ -322,7 +322,9 @@ def compute_display_ranges(
     """Compute vmin/vmax for ground truth and prediction based on strategy."""
     if plot_spec.colourbar_strategy == "shared":
         # Both panels use spec vmin/vmax (current behavior)
-        spec_range = (plot_spec.vmin, plot_spec.vmax)
+        vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
+        vmax = plot_spec.vmax if plot_spec.vmax is not None else 1.0
+        spec_range = (vmin, vmax)
         return spec_range, spec_range
 
     if plot_spec.colourbar_strategy == "separate":
@@ -335,7 +337,9 @@ def compute_display_ranges(
         return groundtruth_range, prediction_range
 
     # Fallback - should not reach here but required for type checking
-    spec_range = (plot_spec.vmin, plot_spec.vmax)
+    vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
+    vmax = plot_spec.vmax if plot_spec.vmax is not None else 1.0
+    spec_range = (vmin, vmax)
     return spec_range, spec_range
 
 
@@ -344,7 +348,9 @@ def compute_display_ranges_stream(
 ) -> tuple[tuple[float, float], tuple[float, float]]:
     """Compute stable vmin/vmax for GT and Prediction over the entire video."""
     if plot_spec.colourbar_strategy == "shared":
-        spec_range = (plot_spec.vmin, plot_spec.vmax)
+        vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
+        vmax = plot_spec.vmax if plot_spec.vmax is not None else 1.0
+        spec_range = (vmin, vmax)
         return spec_range, spec_range
     # "separate"
     groundtruth_min = float(np.nanmin(ground_truth_stream))

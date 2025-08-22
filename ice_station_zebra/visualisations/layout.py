@@ -204,7 +204,7 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
                 "difference": None,
             }
         else:
-            caxes: dict[str, Axes | None] = {"prediction": None, "difference": None}
+            caxes = {"prediction": None, "difference": None}
         col_idx = 0
 
         for ii in range(n_panels):
@@ -308,6 +308,7 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
     _set_titles(axs, plot_spec)
     _style_axes(axs)
 
+    # Store layout parameters on the figure for potential future use
     fig._zebra_layout = {
         "outer_margin": outer_margin,
         "gutter": gutter,
@@ -342,7 +343,8 @@ def _set_titles(axs: list[Axes], plot_spec: PlotSpec) -> None:
 
     titles = [plot_spec.title_groundtruth, plot_spec.title_prediction, title_difference]
     for ax, title in zip(axs, titles, strict=False):
-        ax.set_title(title)
+        if title is not None:
+            ax.set_title(title)
 
 
 def _style_axes(axs: Sequence[Axes]) -> None:
@@ -607,8 +609,8 @@ def _format_difference_ticks(
     # Handle symmetric normalisation (common for difference plots)
     if isinstance(image_difference.norm, TwoSlopeNorm):
         # Extract actual data range from the normalization
-        vmin_actual = float(image_difference.norm.vmin)
-        vmax_actual = float(image_difference.norm.vmax)
+        vmin_actual = float(image_difference.norm.vmin or 0.0)
+        vmax_actual = float(image_difference.norm.vmax or 1.0)
 
         # Create 5 evenly spaced ticks across the range
         ticks = np.linspace(vmin_actual, vmax_actual, 5)

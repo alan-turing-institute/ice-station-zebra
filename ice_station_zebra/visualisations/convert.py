@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
 from matplotlib.figure import Figure
-from PIL import Image, ImageFile
+from PIL import Image
+from PIL.ImageFile import ImageFile
 
 from .plotting_core import VideoRenderError
 
@@ -51,13 +52,13 @@ def _save_animation(
             writer = animation.PillowWriter(fps=fps)
             anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
         else:
-            writer = animation.FFMpegWriter(
+            ffmpeg_writer = animation.FFMpegWriter(
                 fps=fps,
                 codec="libx264",
                 bitrate=1800,
                 extra_args=["-pix_fmt", "yuv420p"],
             )
-            anim.save(tmp_path, writer=writer, dpi=DEFAULT_DPI)
+            anim.save(tmp_path, writer=ffmpeg_writer, dpi=DEFAULT_DPI)
 
         with Path(tmp_path).open("rb") as fh:
             return fh.read()

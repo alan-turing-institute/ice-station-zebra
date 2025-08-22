@@ -41,7 +41,7 @@ class DiffColourmapSpec(NamedTuple):
               None for non-signed modes (absolute, smape).
         vmin: Lower bound for colour scale (used if norm is None).
         vmax: Upper bound for colour scale (used if norm is None).
-        cmap: Name of the matplotlib colormap to use.
+        cmap: Name of the matplotlib colourmap to use.
     """
 
     norm: Normalize | None
@@ -62,10 +62,14 @@ class PlotSpec:
     title_difference: str = "Difference"
     n_contour_levels: int = N_CONTOUR_LEVELS
     colourmap: str = "viridis"
+    include_difference: bool = True
     diff_mode: DiffMode = "signed"
+    diff_strategy: DiffStrategy = "precompute"
+    selected_timestep: int = 0
     vmin: float | None = 0.0
     vmax: float | None = 1.0
     colourbar_location: Literal["vertical", "horizontal"] = "vertical"
+    colourbar_strategy: Literal["shared", "separate"] = "shared"
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
@@ -137,7 +141,7 @@ def make_diff_colourmap(
         mode: Difference mode ("signed", "absolute", or "smape").
 
     Returns:
-        DiffRenderParams: Normalisation, colour limits, and colormap.
+        DiffRenderParams: Normalisation, colour limits, and colourmap.
     """
 
     if mode == "signed":
@@ -209,7 +213,7 @@ def prepare_difference_stream(
     Returns:
         Tuple of (difference_stream, colour_scale):
         - difference_stream: None unless strategy == 'precompute'
-        - colour_scale: DiffColourmapSpec describing colormap/norm/range
+        - colour_scale: DiffColourmapSpec describing colourmap/norm/range
     """
     if not include_difference:
         return None, None
@@ -309,3 +313,37 @@ def validate_3d_streams(
             f"Shape mismatch: ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
         )
     return ground_truth_stream.shape  # type: ignore[return-value]
+
+
+def compute_display_ranges(
+    ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Compute vmin/vmax for ground truth and prediction based on strategy."""
+
+    if plot_spec.colourbar_strategy == "shared":
+        # Both panels use spec vmin/vmax (current behavior)
+        spec_range = (plot_spec.vmin, plot_spec.vmax)
+        return spec_range, spec_range
+
+    elif plot_spec.colourbar_strategy == "separate":
+        # Each panel uses its own data range
+        gt_range = (float(np.nanmin(ground_truth)), float(np.nanmax(ground_truth)))
+        pred_range = (float(np.nanmin(prediction)), float(np.nanmax(prediction)))
+        return gt_range, pred_range
+
+
+def compute_display_ranges_stream(
+    ground_truth_stream: np.ndarray, prediction_stream: np.ndarray, plot_spec: PlotSpec
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """
+    Compute stable vmin/vmax for GT and Prediction over the entire video.
+    """
+    if plot_spec.colourbar_strategy == "shared":
+        spec_range = (plot_spec.vmin, plot_spec.vmax)
+        return spec_range, spec_range
+    else:  # "separate"
+        gt_min = float(np.nanmin(ground_truth_stream))
+        gt_max = float(np.nanmax(ground_truth_stream))
+        pred_min = float(np.nanmin(prediction_stream))
+        pred_max = float(np.nanmax(prediction_stream))
+        return (gt_min, gt_max), (pred_min, pred_max)

@@ -36,7 +36,13 @@ class ZebraModel(LightningModule, ABC):
         self.name = name
 
         # Save history and forecast steps
+        if n_forecast_steps <= 0:
+            msg = "Number of forecast steps must be greater than 0."
+            raise ValueError(msg)
         self.n_forecast_steps = n_forecast_steps
+        if n_history_steps <= 0:
+            msg = "Number of history steps must be greater than 0."
+            raise ValueError(msg)
         self.n_history_steps = n_history_steps
 
         # Construct the input and output spaces
@@ -51,14 +57,6 @@ class ZebraModel(LightningModule, ABC):
         # Note that W&B will log all hyperparameters
         self.save_hyperparameters()
 
-    @abstractmethod
-    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Forward step of the model.
-
-        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
-        - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
-        """
-
     def configure_optimizers(self) -> OptimizerLRScheduler:
         """Construct the optimizer from the config."""
         return hydra.utils.instantiate(
@@ -69,6 +67,14 @@ class ZebraModel(LightningModule, ABC):
                 )
             }
         )
+
+    @abstractmethod
+    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
+        """Forward step of the model.
+
+        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
+        - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
+        """
 
     def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
         """Calculate the loss given a prediction and target."""

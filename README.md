@@ -5,10 +5,12 @@
 | Name                                                                    |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | ice\_station\_zebra/\_\_init\_\_.py                                     |        0 |        0 |    100% |           |
-| ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        4 |        0 |    100% |           |
+| ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        5 |        0 |    100% |           |
+| ice\_station\_zebra/callbacks/ema\_weight\_averaging\_callback.py       |       13 |        8 |     38% |24-28, 34-40 |
 | ice\_station\_zebra/callbacks/metric\_summary\_callback.py              |       28 |       15 |     46% |25-27, 39-45, 54-61 |
 | ice\_station\_zebra/callbacks/plotting\_callback.py                     |       42 |       29 |     31% |32-36, 49-87 |
 | ice\_station\_zebra/callbacks/unconditional\_checkpoint.py              |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
+| ice\_station\_zebra/callbacks/weight\_averaging.py                      |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
 | ice\_station\_zebra/cli/hydra.py                                        |       22 |        3 |     86% |     39-41 |
 | ice\_station\_zebra/cli/main.py                                         |       12 |        1 |     92% |        23 |
@@ -53,7 +55,7 @@
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |        8 |        4 |     50% |      9-12 |
 | ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       20 |       13 |     35% |     20-39 |
-|                                                               **TOTAL** |  **824** |  **477** | **42%** |           |
+|                                                               **TOTAL** |  **933** |  **545** | **42%** |           |
 
 
 ## Setup coverage badge

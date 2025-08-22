@@ -39,11 +39,10 @@ class UNetDiffusion(nn.Module):
 
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
-            filter_size (int): Convolution kernel size for all conv layers.
-            n_filters_factor (float): Scaling factor for channel depth across the network.
-            n_forecast_days (int): Number of days to forecast.
-            n_output_classes (int): Number of output regression targets per forecast day.
             timesteps (int): Number of diffusion timesteps.
+            filter_size (int): Convolution kernel size for all conv layers.
+            start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
+            
         """
         super().__init__()
 
@@ -103,7 +102,13 @@ class UNetDiffusion(nn.Module):
             channels[0], output_channels, kernel_size=1, padding="same"
         )
 
-    def forward(self, noise, t, conditioning, sample_weight):
+    def forward(
+        self,
+        noise: torch.Tensor,
+        t: torch.Tensor,
+        conditioning: torch.Tensor,
+        sample_weight: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         """Forward pass of the U-Net diffusion model.
 
         Args:

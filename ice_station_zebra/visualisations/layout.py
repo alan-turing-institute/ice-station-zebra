@@ -21,7 +21,7 @@ from typing import Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colours import Normalize, TwoSlopeNorm
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FuncFormatter, MaxNLocator
@@ -142,9 +142,9 @@ def _init_axes(
         # This creates columns for each element with appropriate relative widths
 
         col_specs: list[float] = []
-        separate_colorbars = plot_spec.colourbar_strategy == "separate"
+        separate_colourbars = plot_spec.colourbar_strategy == "separate"
 
-        if separate_colorbars:
+        if separate_colourbars:
             # Each panel gets its own colourbar: [GT][cbar][gutter][Pred][cbar][gutter][Diff][cbar]
             for ii in range(n_panels):
                 col_specs.append(1.0)  # Main panel
@@ -183,9 +183,9 @@ def _init_axes(
 
         # Create axes and colourbar axes
         axs: list[Axes] = []
-        separate_colorbars = plot_spec.colourbar_strategy == "separate"
+        separate_colourbars = plot_spec.colourbar_strategy == "separate"
 
-        if separate_colorbars:
+        if separate_colourbars:
             caxes: dict[str, Axes | None] = {
                 "groundtruth": None,
                 "prediction": None,
@@ -202,7 +202,7 @@ def _init_axes(
             col_idx += 1
 
             # Create dedicated colourbar axes adjacent to certain panels
-            if separate_colorbars:
+            if separate_colourbars:
                 # Each panel gets its own colourbar
                 panel_names = ["groundtruth", "prediction", "difference"]
                 if ii < len(panel_names):
@@ -213,10 +213,10 @@ def _init_axes(
                     col_idx += 1
             else:
                 # Shared colourbar logic
-                if ii == 1:  # After prediction panel: shared GT/prediction colorbar
+                if ii == 1:  # After prediction panel: shared GT/prediction colourbar
                     caxes["prediction"] = fig.add_subplot(gs[0, col_idx])
                     col_idx += 1
-                if ii == 2:  # After difference panel: difference colorbar
+                if ii == 2:  # After difference panel: difference colourbar
                     caxes["difference"] = fig.add_subplot(gs[0, col_idx])
                     col_idx += 1
                 # Skip over gutter columns (spacing between panel groups)
@@ -247,9 +247,9 @@ def _init_axes(
 
         # Create main plot axes in top row
         axs = []
-        separate_colorbars = plot_spec.colourbar_strategy == "separate"
+        separate_colourbars = plot_spec.colourbar_strategy == "separate"
 
-        if separate_colorbars:
+        if separate_colourbars:
             caxes = {"groundtruth": None, "prediction": None, "difference": None}
         else:
             caxes = {"prediction": None, "difference": None}
@@ -258,8 +258,8 @@ def _init_axes(
             panel_col = 2 * i  # Skip gutter columns: 0, 2, 4, ...
             axs.append(fig.add_subplot(gs[0, panel_col]))
 
-        # Create colorbar axes in bottom row at specific column positions
-        if separate_colorbars:
+        # Create colourbar axes in bottom row at specific column positions
+        if separate_colourbars:
             # Each panel gets its own colourbar
             caxes["groundtruth"] = (
                 fig.add_subplot(gs[1, 0]) if n_panels >= 1 else None
@@ -398,10 +398,10 @@ def _add_colourbars(
     """
     orientation = plot_spec.colourbar_location
     is_vertical = orientation == "vertical"
-    separate_colorbars = plot_spec.colourbar_strategy == "separate"
+    separate_colourbars = plot_spec.colourbar_strategy == "separate"
 
-    if separate_colorbars:
-        # Create individual colorbars for each panel
+    if separate_colourbars:
+        # Create individual colourbars for each panel
 
         # Ground truth colourbar
         if cbar_axes and cbar_axes.get("groundtruth"):
@@ -484,13 +484,13 @@ def _format_truth_prediction_ticks(
         - Other ranges: 5 automatically positioned ticks using MaxNLocator
         - All values: 1 decimal place precision for readability
 
-    The formatting adapts to colorbar orientation, applying tick formatting to the
-    appropriate axis (y-axis for vertical, x-axis for horizontal colorbars).
+    The formatting adapts to colourbar orientation, applying tick formatting to the
+    appropriate axis (y-axis for vertical, x-axis for horizontal colourbars).
 
     Args:
-        colourbar: matplotlib Colorbar object
+        colourbar: matplotlib colourbar object
         plot_spec: PlotSpec containing vmin/vmax for range detection and formatting context
-        is_vertical: Whether the colorbar is oriented vertically (affects which axis to format)
+        is_vertical: Whether the colourbar is oriented vertically (affects which axis to format)
 
     """
     # Check if data is in the standard [0,1] range (e.g. for concentrations/probabilities)
@@ -501,7 +501,7 @@ def _format_truth_prediction_ticks(
         and 0.0 <= plot_spec.vmax <= 1.0
     )
 
-    # Get appropriate axis based on colorbar orientation
+    # Get appropriate axis based on colourbar orientation
     target_axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
 
     if is_unit_range:
@@ -522,7 +522,7 @@ def _format_prediction_ticks(colourbar, image_prediction, is_vertical: bool) -> 
     the spec vmin/vmax range.
 
     Args:
-        colourbar: matplotlib Colorbar object
+        colourbar: matplotlib colourbar object
         image_prediction: ContourSet containing the prediction data range
         is_vertical: Whether the colourbar is oriented vertically
     """
@@ -537,7 +537,7 @@ def _format_difference_ticks(colourbar, image_difference, is_vertical: bool) -> 
     """
     Tick formatting for difference/comparison colourbars.
 
-    Difference colourbars often use symmetric color scales (e.g., blue-white-red) to
+    Difference colourbars often use symmetric colour scales (e.g., blue-white-red) to
     highlight positive and negative deviations from zero. This function ensures that
     zero is prominently displayed and that tick values provide meaningful context
     for the magnitude of differences.
@@ -549,10 +549,10 @@ def _format_difference_ticks(colourbar, image_difference, is_vertical: bool) -> 
         - Zero-centered: Middle tick is always exactly 0.0 for symmetric scales
 
     Args:
-        colourbar: matplotlib Colorbar object
+        colourbar: matplotlib colourbar object
         image_difference: ContourSet or QuadMesh containing the normalization object
                          used for the difference plot (checked for TwoSlopeNorm)
-        is_vertical: Whether the colorbar is oriented vertically (affects axis selection)
+        is_vertical: Whether the colourbar is oriented vertically (affects axis selection)
 
     Example:
         For a difference range [-0.15, +0.15]:

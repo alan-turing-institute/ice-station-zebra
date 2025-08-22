@@ -9,6 +9,14 @@ class TimeEmbed(nn.Module):
         dim: int = 256,
         activation: str = "SiLU",
     ) -> None:
+        """Initialize the time embedding module.
+
+        Args:
+            dim (int, optional): Size of the input and output embedding dimension.
+                Defaults to 256.
+            activation (str, optional): Name of the activation function to use
+                (e.g., "SiLU", "ReLU"). Defaults to "SiLU".
+        """
         super().__init__()
 
         activation_layer = ACTIVATION_FROM_NAME[activation]

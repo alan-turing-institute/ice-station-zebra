@@ -13,7 +13,7 @@ Description:
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
 from ice_station_zebra.models.common.convblock import ConvBlock
@@ -23,18 +23,18 @@ from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 class UNetDiffusion(nn.Module):
     """U-Net architecture for conditional DDPM-based forecasting.
-    
+
     Inputs include noisy predictions, time step embeddings, and conditioning inputs.
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
-    
+
     def __init__(
         self,
         input_channels: int,
         timesteps: int = 1000,
         filter_size: int = 3,
         start_out_channels: int = 64,
-) -> None:
+    ) -> None:
         """Initialize the U-Net diffusion model.
 
         Args:
@@ -42,7 +42,7 @@ class UNetDiffusion(nn.Module):
             timesteps (int): Number of diffusion timesteps.
             filter_size (int): Convolution kernel size for all conv layers.
             start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
-            
+
         """
         super().__init__()
 
@@ -117,6 +117,7 @@ class UNetDiffusion(nn.Module):
 
         Returns:
             torch.Tensor: Predicted denoised forecast of shape [B, H, W, n_classes, n_forecast_days].
+
         """
         noise = 2.0 * noise - 1.0
         conditioning = 2.0 * conditioning - 1.0
@@ -173,7 +174,6 @@ class UNetDiffusion(nn.Module):
     def _timestep_embedding(
         self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000
     ) -> torch.Tensor:
-
         """Converts timestep integers into sinusoidal positional embeddings.
 
         Args:
@@ -183,6 +183,7 @@ class UNetDiffusion(nn.Module):
 
         Returns:
             torch.Tensor: Embedding tensor of shape [B, dim].
+
         """
         half = dim // 2
         freqs = torch.exp(
@@ -198,11 +199,10 @@ class UNetDiffusion(nn.Module):
             embedding = torch.cat(
                 [embedding, torch.zeros_like(embedding[:, :1])], dim=-1
             )
-            
+
         return embedding
 
     def _add_time_embedding(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
-
         """Concatenates time embedding across spatial dimensions.
 
         Args:
@@ -211,8 +211,9 @@ class UNetDiffusion(nn.Module):
 
         Returns:
             torch.Tensor: Time-conditioned feature map [B, C+D, H, W].
+
         """
         b, c, h, w = x.shape
         t = t.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, h, w)
-        
+
         return torch.cat([x, t], dim=1)

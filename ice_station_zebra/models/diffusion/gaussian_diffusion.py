@@ -15,24 +15,24 @@ Description:
 """
 
 import math
-from typing import Tuple
 
 import torch
 import torch.nn.functional as f
 
 
 class GaussianDiffusion:
-    """Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
-    including support for cosine and linear beta schedules.
-    
+    """Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM).
+
+    It includes support for cosine and linear beta schedules.
     """
-    
+
     def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
         """Initialize diffusion parameters and precompute useful constants.
 
         Args:
             timesteps (int): Total number of diffusion steps.
             beta_schedule (str): Type of beta schedule to use. Options: 'linear', 'cosine'.
+
         """
         self.timesteps = timesteps
 
@@ -78,6 +78,7 @@ class GaussianDiffusion:
 
         Returns:
             torch.Tensor: Beta values of shape (timesteps,).
+
         """
         t = torch.linspace(0, 1, timesteps + 1)
         alphas_cumprod = torch.cos((t + s) / (1 + s) * math.pi * 0.5) ** 2
@@ -98,6 +99,7 @@ class GaussianDiffusion:
 
         Returns:
             torch.Tensor: Noisy sample at timestep t.
+
         """
         if noise is None:
             noise = torch.randn_like(x_start)
@@ -137,6 +139,7 @@ class GaussianDiffusion:
 
         Returns:
             torch.Tensor: Sample from the previous timestep x_{t-1}.
+
         """
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x.shape)
         sqrt_one_minus_alpha_t = self._extract(
@@ -161,7 +164,7 @@ class GaussianDiffusion:
         return model_mean + nonzero_mask * torch.sqrt(posterior_variance_t) * noise
 
     def _extract(
-        self, a: torch.Tensor, t: torch.Tensor, x_shape: Tuple[int]
+        self, a: torch.Tensor, t: torch.Tensor, x_shape: tuple[int]
     ) -> torch.Tensor:
         """Extract values from a tensor at specific timesteps t and reshape for broadcasting.
 
@@ -172,6 +175,7 @@ class GaussianDiffusion:
 
         Returns:
             torch.Tensor: Extracted and reshaped values for each timestep in the batch.
+
         """
         a = a.to(t.device)
         out = a[t]  # (batch_size,) # Reshape for broadcasting: [batch_size, 1, 1, 1, 1]
@@ -195,6 +199,7 @@ class GaussianDiffusion:
 
         Returns:
             torch.Tensor: Velocity v_t at each timestep, same shape as x_start.
+
         """
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x_start.shape)
         sqrt_one_minus_alpha_t = self._extract(

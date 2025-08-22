@@ -16,6 +16,7 @@ class TimeEmbed(nn.Module):
                 Defaults to 256.
             activation (str, optional): Name of the activation function to use
                 (e.g., "SiLU", "ReLU"). Defaults to "SiLU".
+
         """
         super().__init__()
 

@@ -7,7 +7,7 @@ from ice_station_zebra.types import TensorNCHW
 
 
 class DDPMProcessor(nn.Module):
-    """Denoising Diffusion Probabilistic Model (DDPM)
+    """Denoising Diffusion Probabilistic Model (DDPM).
 
     Operations all occur in latent space:
         TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
@@ -21,13 +21,14 @@ class DDPMProcessor(nn.Module):
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Transformation summary
+        """Transformation summary.
 
         Args:
             x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
         """
         x_bhwc = x.movedim(1, -1)
         sample_weight = torch.ones_like(x_bhwc[..., :1])
@@ -36,12 +37,10 @@ class DDPMProcessor(nn.Module):
 
         y_bchw = y_bhwc.movedim(-1, 1)
         y_hat = (y_bchw + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
 
-        return y_hat
+        return torch.clamp(y_hat, 0, 1)
 
     def sample(self, x, sample_weight, num_samples=1):
-
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
@@ -51,6 +50,7 @@ class DDPMProcessor(nn.Module):
 
         Returns:
             torch.Tensor: Denoised output of shape [B, H, W, C].
+
         """
         # Start from pure noise
         y = torch.rand_like(x)

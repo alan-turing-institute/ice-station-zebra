@@ -36,12 +36,12 @@ class PlottingCallback(Callback):
         frequency: int = 10,
         make_static_plots: bool = True,
         make_video_plots: bool = True,
+        selected_timestep: int = 0,
         include_difference: bool = True,
         diff_strategy: DiffStrategy = "precompute",
         video_fps: int = 2,
         video_format: Literal["mp4", "gif"] = "mp4",
         plot_spec: PlotSpec | None = None,
-        selected_timestep: int = 0,
     ) -> None:
         """Create plots during evaluation.
 
@@ -56,12 +56,12 @@ class PlottingCallback(Callback):
         self.frequency = int(max(1, frequency))
         self.make_static_plots = make_static_plots
         self.make_video_plots = make_video_plots
+        self.selected_timestep = int(max(0, selected_timestep))
         self.include_difference = include_difference
         self.diff_strategy = diff_strategy
         self.video_fps = video_fps
         self.video_format = video_format
         self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
-        self.selected_timestep = int(max(0, selected_timestep))
 
     # --- Lightning Hook ---
     def on_test_batch_end(
@@ -97,7 +97,7 @@ class PlottingCallback(Callback):
                 try:
                     np_ground_truth, np_prediction, date = _extract_static_data(
                         outputs,
-                        self.selected_timestep,
+                        self.plot_spec.selected_timestep,
                         dataset=dataset,
                         batch_idx=batch_idx,
                     )
@@ -106,7 +106,6 @@ class PlottingCallback(Callback):
                         np_ground_truth,
                         np_prediction,
                         date,
-                        self.include_difference,
                     )
                     images["sea-ice_concentration-static-maps"] = image_list
                 except InvalidArrayError as err:
@@ -128,10 +127,8 @@ class PlottingCallback(Callback):
                         ground_truth_stream,
                         prediction_stream,
                         dates,
-                        include_difference=self.include_difference,
                         fps=self.video_fps,
                         format=self.video_format,
-                        diff_strategy=self.diff_strategy,
                     )
                     videos["sea-ice_concentration-video-maps"] = video_bytes
                 except (InvalidArrayError, VideoRenderError) as err:

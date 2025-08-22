@@ -43,7 +43,7 @@
 | ice\_station\_zebra/models/persistence.py                               |       16 |       16 |      0% |      1-34 |
 | ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        3 |        3 |      0% |       1-4 |
 | ice\_station\_zebra/models/processors/null.py                           |        9 |        9 |      0% |      1-29 |
-| ice\_station\_zebra/models/processors/unet.py                           |       40 |       40 |      0% |      1-86 |
+| ice\_station\_zebra/models/processors/unet.py                           |       41 |       41 |      0% |      1-87 |
 | ice\_station\_zebra/models/zebra\_model.py                              |       39 |       39 |      0% |     1-153 |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
@@ -53,7 +53,7 @@
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |        8 |        4 |     50% |      9-12 |
 | ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       20 |       13 |     35% |     20-39 |
-|                                                               **TOTAL** |  **823** |  **476** | **42%** |           |
+|                                                               **TOTAL** |  **824** |  **477** | **42%** |           |
 
 
 ## Setup coverage badge

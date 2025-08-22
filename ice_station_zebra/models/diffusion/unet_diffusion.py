@@ -26,7 +26,7 @@ class UNetDiffusion(nn.Module):
     Inputs include noisy predictions, time step embeddings, and conditioning inputs.
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
-
+    
     def __init__(
         self,
         input_channels,

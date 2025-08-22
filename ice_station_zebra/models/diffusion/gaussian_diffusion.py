@@ -26,7 +26,6 @@ class GaussianDiffusion:
     including support for cosine and linear beta schedules.
     """
     
-
     def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
         """Initialize diffusion parameters and precompute useful constants.
 

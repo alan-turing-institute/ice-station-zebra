@@ -309,7 +309,7 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
     _style_axes(axs)
 
     # Store layout parameters on the figure for potential future use
-    fig._zebra_layout = {
+    fig._zebra_layout = {  # type: ignore[attr-defined]
         "outer_margin": outer_margin,
         "gutter": gutter,
         "cbar_width": cbar_width,

@@ -1,11 +1,24 @@
 plotting:
+  # Callback behaviour
   _target_: ice_station_zebra.callbacks.plotting_callback.PlottingCallback
   frequency: 20
   make_static_plots: true
   make_video_plots: true
-  include_difference: true
-  diff_strategy: precompute     # precompute | two-pass | per-frame
   video_fps: 2
   video_format: gif             # mp4 or gif
-  selected_timestep: 0          # which T to render for the static map
-  # plot_spec:  # omit to use DEFAULT_SIC_SPEC from plotting_maps
+  plot_spec:
+    # Plot specification
+    variable: "sea_ice_concentration"
+    selected_timestep: 0          # which T to render for the static map
+    title_groundtruth: "Ground Truth"
+    title_prediction: "Prediction"
+    title_difference: "Difference"
+    n_contour_levels: 51
+    colourmap: "viridis"
+    include_difference: true
+    diff_mode: "signed"
+    diff_strategy: "precompute"     # precompute | two-pass | per-frame
+    vmin: 0.0
+    vmax: 1.0
+    colourbar_location: "vertical"
+    colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)

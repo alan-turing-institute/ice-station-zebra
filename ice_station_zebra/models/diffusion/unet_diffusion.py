@@ -23,18 +23,18 @@ from ice_station_zebra.models.common.upconvblock import UpconvBlock
 
 class UNetDiffusion(nn.Module):
     """U-Net architecture for conditional DDPM-based forecasting.
+    
     Inputs include noisy predictions, time step embeddings, and conditioning inputs.
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
     
     def __init__(
         self,
-        input_channels,
-        timesteps=1000,
-        filter_size=3,
-        start_out_channels=64,
-        **kwargs,
-    ):
+        input_channels: int,
+        timesteps: int = 1000,
+        filter_size: int = 3,
+        start_out_channels: int = 64,
+) -> None:
         """Initialize the U-Net diffusion model.
 
         Args:
@@ -44,9 +44,8 @@ class UNetDiffusion(nn.Module):
             n_forecast_days (int): Number of days to forecast.
             n_output_classes (int): Number of output regression targets per forecast day.
             timesteps (int): Number of diffusion timesteps.
-            **kwargs: Additional arguments (ignored).
         """
-        super(UNetDiffusion, self).__init__()
+        super().__init__()
 
         self.filter_size = filter_size
         self.start_out_channels = start_out_channels
@@ -57,7 +56,7 @@ class UNetDiffusion(nn.Module):
         self.time_embed = TimeEmbed(self.time_embed_dim)
 
         # Channel calculations
-        channels = [start_out_channels * 2**pow for pow in range(4)]
+        channels = [start_out_channels * 2**i for i in range(4)]
 
         output_channels = input_channels
         self.initial_conv_channels = input_channels + output_channels

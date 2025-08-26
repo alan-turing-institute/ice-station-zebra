@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from torch_ema import ExponentialMovingAverage
+from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 from ice_station_zebra.types import TensorNCHW

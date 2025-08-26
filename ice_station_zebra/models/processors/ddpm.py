@@ -19,6 +19,7 @@ class DDPMProcessor(nn.Module):
         Args:
             n_latent_channels: Num latent channels used in UNetDiffusion.
             timesteps: Num diffusion timesteps (default=1000).
+
         """
         super().__init__()
         self.model = UNetDiffusion(n_latent_channels, timesteps)
@@ -64,14 +65,18 @@ class DDPMProcessor(nn.Module):
         # Start from pure noise
         y = torch.rand_like(x)
 
-        DIM_THRESHOLD = 3
+        dim_threshold = 3
 
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(self.timesteps)):
                 t_batch = torch.full_like(x[:, 0, 0, 0], t, dtype=torch.long)
                 pred_v: torch.Tensor = self.model(y, t_batch, x, sample_weight)
-                pred_v = pred_v.squeeze(3) if pred_v.dim() > DIM_THRESHOLD else pred_v.squeeze()
+                pred_v = (
+                    pred_v.squeeze(3)
+                    if pred_v.dim() > dim_threshold
+                    else pred_v.squeeze()
+                )
                 y = self.diffusion.p_sample(y, t_batch, pred_v)
 
         return y

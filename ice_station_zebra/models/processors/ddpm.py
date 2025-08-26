@@ -14,6 +14,12 @@ class DDPMProcessor(nn.Module):
     """
 
     def __init__(self, n_latent_channels: int, timesteps: int = 1000) -> None:
+        """Initialize the DDPM processor.
+
+        Args:
+            n_latent_channels: Num latent channels used in UNetDiffusion.
+            timesteps: Num diffusion timesteps (default=1000).
+        """
         super().__init__()
         self.model = UNetDiffusion(n_latent_channels, timesteps)
         self.timesteps = timesteps
@@ -40,13 +46,16 @@ class DDPMProcessor(nn.Module):
 
         return torch.clamp(y_hat, 0, 1)
 
-    def sample(self, x, sample_weight, num_samples=1):
+    def sample(
+        self,
+        x: torch.Tensor,
+        sample_weight: torch.Tensor | None,
+    ) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
             x (torch.Tensor): Conditioning input [B, H, W, C].
             sample_weight (torch.Tensor or None): Optional weights.
-            num_samples (int): Not used (for future batching).
 
         Returns:
             torch.Tensor: Denoised output of shape [B, H, W, C].
@@ -55,12 +64,14 @@ class DDPMProcessor(nn.Module):
         # Start from pure noise
         y = torch.rand_like(x)
 
+        DIM_THRESHOLD = 3
+
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(self.timesteps)):
                 t_batch = torch.full_like(x[:, 0, 0, 0], t, dtype=torch.long)
                 pred_v: torch.Tensor = self.model(y, t_batch, x, sample_weight)
-                pred_v = pred_v.squeeze(3) if pred_v.dim() > 3 else pred_v.squeeze()
+                pred_v = pred_v.squeeze(3) if pred_v.dim() > DIM_THRESHOLD else pred_v.squeeze()
                 y = self.diffusion.p_sample(y, t_batch, pred_v)
 
         return y

@@ -42,7 +42,7 @@ class GaussianDiffusion:
             self.betas = self._cosine_beta_schedule(timesteps)
 
         self.alphas = 1.0 - self.betas
-        self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
+        self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
         self.alphas_cumprod_prev = f.pad(self.alphas_cumprod[:-1], (1, 0), value=1.0)
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - self.alphas_cumprod)
@@ -164,7 +164,7 @@ class GaussianDiffusion:
         return model_mean + nonzero_mask * torch.sqrt(posterior_variance_t) * noise
 
     def _extract(
-        self, a: torch.Tensor, t: torch.Tensor, x_shape: tuple[int]
+        self, a: torch.Tensor, t: torch.Tensor, x_shape: tuple[int, ...]
     ) -> torch.Tensor:
         """Extract values from a tensor at specific timesteps t and reshape for broadcasting.
 

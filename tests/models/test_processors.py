@@ -81,7 +81,7 @@ class TestUNetProcessor:
 
         # We will either catch an error or see a successful run
         if height % 16 or width % 16:
-            msg = f"Latent space height and width must be divisible by 16, got {height} and {width}."
+            msg = f"Latent space height and width must be divisible by 16 with a factor more than 1, got {height} and {width}."
             with pytest.raises(ValueError, match=msg):
                 processor(x)
         else:

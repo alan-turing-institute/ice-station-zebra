@@ -23,6 +23,14 @@ class UNetProcessor(nn.Module):
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
+        if filter_size <= 0:
+            msg = "Filter size must be greater than 0."
+            raise ValueError(msg)
+
+        if start_out_channels <= 0:
+            msg = "Start out channels must be greater than 0."
+            raise ValueError(msg)
+
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
@@ -64,11 +72,16 @@ class UNetProcessor(nn.Module):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
+        _, _, h, w = x.shape
+        if h % 16 or h <= 16 or w % 16 or w <= 16:  # noqa: PLR2004
+            msg = f"Latent space height and width must be divisible by 16 with a factor more than 1, got {h} and {w}."
+            raise ValueError(msg)
+
         # Encoder
         bn1 = self.conv1(x)
         conv1 = self.maxpool1(bn1)
         bn2 = self.conv2(conv1)
-        conv2 = self.maxpool1(bn2)
+        conv2 = self.maxpool2(bn2)
         bn3 = self.conv3(conv2)
         conv3 = self.maxpool3(bn3)
         bn4 = self.conv4(conv3)

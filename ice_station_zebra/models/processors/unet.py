@@ -1,7 +1,8 @@
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
+from ice_station_zebra.types import TensorNCHW
 
 
 class UNetProcessor(nn.Module):
@@ -21,6 +22,14 @@ class UNetProcessor(nn.Module):
         super().__init__()
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]
+
+        if filter_size <= 0:
+            msg = "Filter size must be greater than 0."
+            raise ValueError(msg)
+
+        if start_out_channels <= 0:
+            msg = "Start out channels must be greater than 0."
+            raise ValueError(msg)
 
         # Encoder
         self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
@@ -53,7 +62,7 @@ class UNetProcessor(nn.Module):
             channels[0], n_latent_channels, kernel_size=1, padding="same"
         )
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: process in latent space.
 
         Args:
@@ -63,6 +72,11 @@ class UNetProcessor(nn.Module):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
+        _, _, h, w = x.shape
+        if h % 16 or h <= 16 or w % 16 or w <= 16:  # noqa: PLR2004
+            msg = f"Latent space height and width must be divisible by 16 with a factor more than 1, got {h} and {w}."
+            raise ValueError(msg)
+
         # Encoder
         bn1 = self.conv1(x)
         conv1 = self.maxpool1(bn1)

@@ -95,6 +95,7 @@ allow-star-arg-any = true
     "DTZ001", # allow unlocalised datetimes in tests
     "S101", # allow asserts in tests
     "INP001", # allow implicit namespace in tests
+    "PLR0913", # allow unlimited arguments in tests
     "PLR2004", # allow magic-number comparison in tests
 ]
 

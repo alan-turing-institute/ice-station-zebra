@@ -1,9 +1,8 @@
-from itertools import cycle
 from typing import Any
 
-from torch import nn, stack
+from torch import nn
 
-from ice_station_zebra.types import TensorNTCHW
+from ice_station_zebra.types import TensorNCHW, TensorNTCHW
 
 from .base_processor import BaseProcessor
 
@@ -23,8 +22,13 @@ class NullProcessor(BaseProcessor):
         super().__init__(**kwargs)
         self.model = nn.Identity()
 
+    def forward_nchw(self, x: TensorNCHW) -> TensorNCHW:
+        return self.model(x)
+
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: process in latent space.
+
+        Uses the default timestep-by-timestep implementation to iterate over NCHW input.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -33,10 +37,4 @@ class NullProcessor(BaseProcessor):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
-        return stack(
-            [
-                self.model(x[:, next(cycle(range(self.n_history_steps))), :, :, :])
-                for _ in range(self.n_forecast_steps)
-            ],
-            dim=1,
-        )
+        return self.forward_ntchw(x)

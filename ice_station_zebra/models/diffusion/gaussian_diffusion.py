@@ -87,43 +87,6 @@ class GaussianDiffusion:
 
         return torch.clip(betas, 0, 0.999)
 
-    def q_sample(
-        self, x_start: torch.Tensor, t: torch.Tensor, noise: torch.Tensor | None = None
-    ) -> torch.Tensor:
-        """Add noise to x_start at timestep t, using the forward diffusion process.
-
-        Args:
-            x_start (torch.Tensor): Original input tensor (clean image).
-            t (torch.Tensor): Timesteps for each sample in the batch (shape: [B]).
-            noise (torch.Tensor, optional): Noise to add. If None, standard Gaussian noise is used.
-
-        Returns:
-            torch.Tensor: Noisy sample at timestep t.
-
-        """
-        if noise is None:
-            noise = torch.randn_like(x_start)
-
-        sqrt_alphas_cumprod_t = self._extract(
-            self.sqrt_alphas_cumprod, t, x_start.shape
-        )
-        sqrt_one_minus_alphas_cumprod_t = self._extract(
-            self.sqrt_one_minus_alphas_cumprod, t, x_start.shape
-        )
-
-        # For t=0, return exactly x_start (no noise)
-        is_t0 = (
-            (t == 0)
-            .to(dtype=x_start.dtype, device=x_start.device)
-            .view(-1, *([1] * (len(x_start.shape) - 1)))
-        )
-
-        noisy = (
-            sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
-        )
-
-        return noisy * (1 - is_t0) + x_start * is_t0
-
     def p_sample(
         self, x: torch.Tensor, t: torch.Tensor, pred_v: torch.Tensor
     ) -> torch.Tensor:

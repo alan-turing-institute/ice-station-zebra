@@ -1,6 +1,7 @@
+from itertools import cycle
 from typing import Any
 
-from torch import nn
+from torch import nn, stack
 
 from ice_station_zebra.types import TensorNTCHW
 
@@ -32,4 +33,10 @@ class NullProcessor(BaseProcessor):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
-        return self.model(x)
+        return stack(
+            [
+                self.model(x[:, next(cycle(range(self.n_history_steps))), :, :, :])
+                for _ in range(self.n_forecast_steps)
+            ],
+            dim=1,
+        )

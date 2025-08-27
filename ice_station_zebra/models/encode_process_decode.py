@@ -9,7 +9,9 @@ from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 from .zebra_model import ZebraModel
 
 if TYPE_CHECKING:
+    from ice_station_zebra.models.decoders import BaseDecoder
     from ice_station_zebra.models.encoders import BaseEncoder
+    from ice_station_zebra.models.processors import BaseProcessor
 
 
 class EncodeProcessDecode(ZebraModel):
@@ -48,13 +50,17 @@ class EncodeProcessDecode(ZebraModel):
             self.add_module(f"encoder_{idx}", module)
 
         # Add a processor
-        self.processor = hydra.utils.instantiate(
+        self.processor: BaseProcessor = hydra.utils.instantiate(
             dict(**processor)
-            | {"n_latent_channels": latent_space_.channels * len(self.encoders)}
+            | {
+                "n_forecast_steps": self.n_forecast_steps,
+                "n_history_steps": self.n_history_steps,
+                "n_latent_channels": latent_space_.channels * len(self.encoders),
+            }
         )
 
         # Add a decoder
-        self.decoder = hydra.utils.instantiate(
+        self.decoder: BaseDecoder = hydra.utils.instantiate(
             dict(**decoder)
             | {
                 "latent_space": latent_space_,

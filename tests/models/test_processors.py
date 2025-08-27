@@ -5,18 +5,26 @@ from ice_station_zebra.models.processors import NullProcessor, UNetProcessor
 from ice_station_zebra.types import DataSpace
 
 
-@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
+@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
+@pytest.mark.parametrize("test_n_forecast_steps", [1, 2])
+@pytest.mark.parametrize("test_n_history_steps", [1, 2])
 class TestNullProcessor:
     def test_forward_shape(
         self,
         test_batch_size: int,
         test_latent_shape: tuple[int, int, int],
+        test_n_forecast_steps: int,
+        test_n_history_steps: int,
     ) -> None:
         latent_space = DataSpace(
             name="latent", shape=test_latent_shape[0:2], channels=test_latent_shape[2]
         )
-        processor = NullProcessor(n_latent_channels=latent_space.channels)
+        processor = NullProcessor(
+            n_forecast_steps=test_n_forecast_steps,
+            n_history_steps=test_n_history_steps,
+            n_latent_channels=latent_space.channels,
+        )
         result: torch.Tensor = processor(
             torch.randn(
                 test_batch_size,
@@ -31,9 +39,11 @@ class TestNullProcessor:
         )
 
 
-@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
 @pytest.mark.parametrize("test_filter_size", [-1, 0, 1])
+@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
+@pytest.mark.parametrize("test_n_forecast_steps", [1, 2])
+@pytest.mark.parametrize("test_n_history_steps", [1, 2])
 @pytest.mark.parametrize("test_start_out_channels", [-1, 7, 32])
 class TestUNetProcessor:
     def test_forward_shape(
@@ -41,6 +51,8 @@ class TestUNetProcessor:
         test_batch_size: int,
         test_filter_size: int,
         test_latent_shape: tuple[int, int, int],
+        test_n_forecast_steps: int,
+        test_n_history_steps: int,
         test_start_out_channels: int,
     ) -> None:
         latent_space = DataSpace(
@@ -52,6 +64,8 @@ class TestUNetProcessor:
             with pytest.raises(ValueError, match="Filter size must be greater than 0."):
                 UNetProcessor(
                     filter_size=test_filter_size,
+                    n_forecast_steps=test_n_forecast_steps,
+                    n_history_steps=test_n_history_steps,
                     n_latent_channels=test_latent_shape[2],
                     start_out_channels=test_start_out_channels,
                 )
@@ -64,6 +78,8 @@ class TestUNetProcessor:
             ):
                 UNetProcessor(
                     filter_size=test_filter_size,
+                    n_forecast_steps=test_n_forecast_steps,
+                    n_history_steps=test_n_history_steps,
                     n_latent_channels=test_latent_shape[2],
                     start_out_channels=test_start_out_channels,
                 )
@@ -71,6 +87,8 @@ class TestUNetProcessor:
 
         processor = UNetProcessor(
             filter_size=test_filter_size,
+            n_forecast_steps=test_n_forecast_steps,
+            n_history_steps=test_n_history_steps,
             n_latent_channels=test_latent_shape[2],
             start_out_channels=test_start_out_channels,
         )

@@ -3,7 +3,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNTCHW
 
 from .base_encoder import BaseEncoder
 
@@ -15,7 +15,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
     Latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
     def __init__(
@@ -52,14 +52,14 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNTCHW) -> TensorNCHW:
+    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: encode input space into latent space.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
         Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
 
         """
         return self.model(x)

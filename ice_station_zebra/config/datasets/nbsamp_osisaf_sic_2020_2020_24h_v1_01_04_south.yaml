@@ -1,5 +1,5 @@
-samp-osisaf-sic-2020-24h-01-04-south-v1:
-  name: samp-osisaf-sic-2020-24h-01-04-south-v1
+nbsamp-osisaf-sic-2020-2020-24h-v1-01-04-south:
+  name: nbsamp-osisaf-sic-2020-2020-24h-v1-01-04-south
   group_as: osisaf-south
   description: OSISAF sea ice concentration for southern hemisphere
   attribution: EUMETSAT

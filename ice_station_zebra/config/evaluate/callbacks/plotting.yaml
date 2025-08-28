@@ -1,6 +1,6 @@
 plotting:
   # Callback behaviour
-  _target_: ice_station_zebra.callbacks.plotting_callback.PlottingCallback
+  _target_: ice_station_zebra.callbacks.PlottingCallback
   frequency: 20
   make_static_plots: true
   make_video_plots: true

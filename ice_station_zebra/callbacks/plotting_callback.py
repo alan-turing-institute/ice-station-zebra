@@ -71,8 +71,45 @@ class PlottingCallback(Callback):
         self.video_format = video_format
         self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
 
+    # --- Helper Methods ---
+
+    def _log_media_to_logger(
+        self,
+        lightning_logger: Any,  # noqa: ANN401
+        images: dict[str, list[ImageFile]],
+        video_data: dict[str, io.BytesIO] | None,
+    ) -> None:
+        """Log images and videos to a specific logger instance.
+
+        Handles logger-specific formatting and API differences while keeping
+        the main plotting logic clean.
+        """
+        # Log static images
+        for key, image_list in images.items():
+            if hasattr(lightning_logger, "log_image"):
+                lightning_logger.log_image(key=key, images=image_list)
+            else:
+                logger_name = getattr(lightning_logger, "name", "unknown")
+                logger.debug("Logger %s does not support logging images.", logger_name)
+
+        # Log videos with logger-specific handling
+        if video_data:
+            for key, video_buffer in video_data.items():
+                if isinstance(lightning_logger, WandbLogger) and wandb is not None:
+                    # WandB requires special Video object with format parameter
+                    video_obj = wandb.Video(video_buffer, format=self.video_format)
+                    lightning_logger.experiment.log({key: video_obj})
+                elif hasattr(lightning_logger, "log_video"):
+                    # Generic Lightning logger video API
+                    lightning_logger.log_video(key=key, videos=[video_buffer])
+                else:
+                    logger_name = getattr(lightning_logger, "name", "unknown")
+                    logger.debug(
+                        "Logger %s does not support video logging.", logger_name
+                    )
+
     # --- Lightning Hook ---
-    def on_test_batch_end(  # noqa: C901, PLR0912  # Complex method with multiple validation/error handling branches
+    def on_test_batch_end(  # noqa: C901
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -152,30 +189,7 @@ class PlottingCallback(Callback):
 
         # ----- Log all media -----
         for lightning_logger in trainer.loggers:
-            # Log static images
-            for key, image_list in images.items():
-                if hasattr(lightning_logger, "log_image"):
-                    lightning_logger.log_image(key=key, images=image_list)
-                else:
-                    logger_name = getattr(lightning_logger, "name", "unknown")
-                    logger.debug(
-                        "Logger %s does not support logging images.", logger_name
-                    )
-
-            # Log videos
-            if video_data:
-                for key, video_buffer in video_data.items():
-                    if isinstance(lightning_logger, WandbLogger) and wandb is not None:
-                        # For wandb, use the BytesIO buffer directly with format parameter
-                        video_obj = wandb.Video(video_buffer, format=self.video_format)
-                        lightning_logger.experiment.log({key: video_obj})
-                    elif hasattr(lightning_logger, "log_video"):
-                        lightning_logger.log_video(key=key, videos=[video_buffer])
-                    else:
-                        logger_name = getattr(lightning_logger, "name", "unknown")
-                        logger.debug(
-                            "Logger %s does not support video logging.", logger_name
-                        )
+            self._log_media_to_logger(lightning_logger, images, video_data)
 
 
 # -------   Helper Functions -------

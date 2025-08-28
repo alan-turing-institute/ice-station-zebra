@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
-from ice_station_zebra.types import ModelTestOutput
+from ice_station_zebra.types import ModelTestOutput, TensorDimensions
 from ice_station_zebra.visualisations import (
     DEFAULT_SIC_SPEC,
     InvalidArrayError,
@@ -30,10 +30,6 @@ from ice_station_zebra.visualisations import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Constants for tensor dimensions
-TENSOR_5D = 5
-TENSOR_3D = 3
 
 
 class PlottingCallback(Callback):
@@ -256,12 +252,16 @@ def _require_tensors(
 
 
 def _assert_same_shape(
-    a: Tensor, b: Tensor, name_a: str, name_b: str, expected_ndim: int = TENSOR_5D
+    a: Tensor,
+    b: Tensor,
+    name_a: str,
+    name_b: str,
+    expected_ndim: TensorDimensions = TensorDimensions.BTCHW,
 ) -> None:
     """Assert that two tensors have the same shape."""
-    if expected_ndim == TENSOR_5D:
+    if expected_ndim == TensorDimensions.BTCHW:
         expected_str = "5D tensors [B,T,C,H,W]"
-    elif expected_ndim == TENSOR_3D:
+    elif expected_ndim == TensorDimensions.THW:
         expected_str = "3D tensors [T,H,W]"
     else:
         msg = f"Expected 3D or 5D tensors; got {expected_ndim}D"

@@ -1,5 +1,6 @@
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any, Self, TypedDict
 
 from jaxtyping import Float
@@ -12,6 +13,13 @@ ArrayCHW = Float[NDArray[float32], "channels height width"]
 ArrayTCHW = Float[NDArray[float32], "time channels height width"]
 TensorNCHW = Float[Tensor, "batch channels height width"]
 TensorNTCHW = Float[Tensor, "batch time channels height width"]
+
+
+class TensorDimensions(IntEnum):
+    """Enum for tensor dimensions used throughout the codebase."""
+
+    THW = 3  # Time, Height, Width
+    BTCHW = 5  # Batch, Time, Channels, Height, Width
 
 
 @dataclass

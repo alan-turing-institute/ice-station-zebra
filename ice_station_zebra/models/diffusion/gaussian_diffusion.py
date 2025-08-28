@@ -15,15 +15,11 @@ Description:
 """
 
 import math
-from enum import Enum
 
 import torch
 import torch.nn.functional as f
 
-
-class BetaSchedule(str, Enum):
-    LINEAR = "linear"
-    COSINE = "cosine"
+from ice_station_zebra.types import BetaSchedule
 
 
 class GaussianDiffusion:
@@ -32,7 +28,6 @@ class GaussianDiffusion:
     It includes support for cosine and linear beta schedules.
     """
 
-    # def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
     def __init__(
         self, timesteps: int = 1000, beta_schedule: BetaSchedule = BetaSchedule.COSINE
     ) -> None:

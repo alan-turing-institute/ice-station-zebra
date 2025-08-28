@@ -1,6 +1,6 @@
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from typing import Any, Literal, NamedTuple, Self, TypedDict
 
 from jaxtyping import Float
@@ -26,6 +26,11 @@ DiffMode = Literal["signed", "absolute", "smape"]
 # - "two-pass": scan once to figure the scale, compute per-frame (balanced)
 # - "per-frame": compute per-frame (low RAM, more CPU)
 DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
+
+
+class BetaSchedule(StrEnum):
+    LINEAR = "linear"
+    COSINE = "cosine"
 
 
 class TensorDimensions(IntEnum):

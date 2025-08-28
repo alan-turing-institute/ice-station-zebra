@@ -139,6 +139,12 @@ class PlottingCallback(Callback):
             logger.warning("Dataset is not a CombinedDataset, skipping plotting.")
             return
 
+        # Get sequence dates for static and video plots
+        target, prediction = _require_tensors(outputs, keys=("target", "prediction"))
+        batch_size = int(target.shape[0])
+        n_timesteps = int(target.shape[1])
+        dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
+
         # ----- Static Image Plots -----
         images: dict[str, list[ImageFile]] = {}
         if self.make_static_plots:
@@ -146,8 +152,7 @@ class PlottingCallback(Callback):
                 np_ground_truth, np_prediction, date = _extract_static_data(
                     outputs,
                     self.plot_spec.selected_timestep,
-                    dataset=dataset,
-                    batch_idx=batch_idx,
+                    dates,
                 )
                 image_maps = plot_maps(
                     self.plot_spec,
@@ -167,9 +172,7 @@ class PlottingCallback(Callback):
         video_data: dict[str, io.BytesIO] | None = None
         if self.make_video_plots:
             try:
-                ground_truth_stream, prediction_stream, dates = _extract_video_data(
-                    outputs, dataset, batch_idx
-                )
+                ground_truth_stream, prediction_stream = _extract_video_data(outputs)
                 video_data = video_maps(
                     self.plot_spec,
                     ground_truth_stream,
@@ -198,16 +201,14 @@ class PlottingCallback(Callback):
 def _extract_static_data(
     outputs: ModelTestOutput,
     selected_timestep: int,
-    dataset: CombinedDataset,
-    batch_idx: int,
+    dates: list,
 ) -> tuple[np.ndarray, np.ndarray, date]:
     """Extract the static data from the outputs.
 
     Args:
         outputs: The outputs of the model. Shape: [batch, time, channels, height, width]
         selected_timestep: The timestep to extract.
-        dataset: The dataset to get dates from.
-        batch_idx: The batch index.
+        dates: Pre-generated list of dates for the sequence.
 
     Returns:
         A tuple of (ground truth, prediction) arrays.
@@ -228,27 +229,20 @@ def _extract_static_data(
     np_ground_truth = target[0, selected_timestep, 0].detach().cpu().numpy()
     np_prediction = prediction[0, selected_timestep, 0].detach().cpu().numpy()
 
-    # Get the date from the dataset using sequence date generation
-    batch_size = int(target.shape[0])
-    n_timesteps = int(target.shape[1])
-    dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
+    # Get the date from the pre-generated dates list
     date = dates[selected_timestep]
 
     return np_ground_truth, np_prediction, date
 
 
-def _extract_video_data(
-    outputs: ModelTestOutput, dataset: CombinedDataset, batch_idx: int
-) -> tuple[np.ndarray, np.ndarray, list]:
+def _extract_video_data(outputs: ModelTestOutput) -> tuple[np.ndarray, np.ndarray]:
     """Extract all timesteps data for video plots.
 
     Args:
         outputs: The outputs of the model. Shape: [batch, time, channels, height, width]
-        dataset: The dataset to get dates from
-        batch_idx: The batch index
 
     Returns:
-        A tuple of (ground truth, prediction, dates) arrays.
+        A tuple of (ground truth, prediction) arrays.
 
     Raises:
         InvalidArrayError: If the arrays are not valid in shape.
@@ -262,12 +256,7 @@ def _extract_video_data(
     ground_truth_stream = target[0, :, 0].detach().cpu().numpy()
     prediction_stream = prediction[0, :, 0].detach().cpu().numpy()
 
-    # Generate dates for the sequence
-    batch_size = int(target.shape[0])
-    n_timesteps = int(target.shape[1])
-    dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
-
-    return ground_truth_stream, prediction_stream, dates
+    return ground_truth_stream, prediction_stream
 
 
 def _generate_sequence_dates(

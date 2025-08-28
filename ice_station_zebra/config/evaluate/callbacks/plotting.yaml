@@ -16,8 +16,8 @@ plotting:
     n_contour_levels: 51
     colourmap: "viridis"
     include_difference: true
-    diff_mode: "signed"
-    diff_strategy: "precompute"     # precompute | two-pass | per-frame
+    diff_mode: "signed"             # "signed" | "absolute" | "smape"
+    diff_strategy: "precompute"     # "precompute" | "two-pass" | "per-frame"
     vmin: 0.0
     vmax: 1.0
     colourbar_location: "vertical"

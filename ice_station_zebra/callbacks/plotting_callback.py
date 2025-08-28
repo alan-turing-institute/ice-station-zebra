@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import importlib
-import importlib.util
 import logging
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
 from lightning.pytorch import Callback
-from lightning.pytorch.loggers import WandbLogger
 
 if TYPE_CHECKING:
     import io
@@ -17,11 +14,10 @@ if TYPE_CHECKING:
 
     import numpy as np
     from lightning import LightningModule, Trainer
+    from lightning.pytorch.loggers import Logger as LightningLogger
     from PIL.ImageFile import ImageFile
     from torch import Tensor
     from torch.utils.data import DataLoader
-
-# Optional dependency: import locally where needed
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
@@ -74,7 +70,7 @@ class PlottingCallback(Callback):
 
     def _log_media_to_logger(
         self,
-        lightning_logger: Any,  # noqa: ANN401
+        lightning_logger: LightningLogger,
         images: dict[str, list[ImageFile]],
         video_data: dict[str, io.BytesIO] | None,
     ) -> None:
@@ -83,33 +79,28 @@ class PlottingCallback(Callback):
         Handles logger-specific formatting and API differences while keeping
         the main plotting logic clean.
         """
+        logger_name = lightning_logger.name if lightning_logger.name else "unknown"
+
         # Log static images
         for key, image_list in images.items():
             if hasattr(lightning_logger, "log_image"):
                 lightning_logger.log_image(key=key, images=image_list)
             else:
                 logger_name = getattr(lightning_logger, "name", "unknown")
-                logger.debug("Logger %s does not support logging images.", logger_name)
+                logger.debug("Logger %s does not support images.", logger_name)
 
-        # Log videos with logger-specific handling
+        # Log videos
         if video_data:
             for key, video_buffer in video_data.items():
-                if isinstance(lightning_logger, WandbLogger):
-                    # Use importlib to keep optional dependency without local import statements
-                    if importlib.util.find_spec("wandb") is not None:
-                        wandb = importlib.import_module("wandb")
-                        video_obj = wandb.Video(video_buffer, format=self.video_format)
-                        lightning_logger.experiment.log({key: video_obj})
-                    else:
-                        logger.debug("wandb not installed; skipping video logging.")
-                elif hasattr(lightning_logger, "log_video"):
-                    # Generic Lightning logger video API
-                    lightning_logger.log_video(key=key, videos=[video_buffer])
-                else:
-                    logger_name = getattr(lightning_logger, "name", "unknown")
-                    logger.debug(
-                        "Logger %s does not support video logging.", logger_name
+                if hasattr(lightning_logger, "log_video"):
+                    video_buffer.seek(0)
+                    lightning_logger.log_video(
+                        key=key,
+                        videos=[video_buffer],
+                        format=[self.video_format],
                     )
+                else:
+                    logger.debug("Logger %s does not support videos.", logger_name)
 
     # --- Lightning Hook ---
     def on_test_batch_end(  # noqa: C901

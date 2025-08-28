@@ -34,6 +34,7 @@ class UNetDiffusion(nn.Module):
         timesteps: int = 1000,
         filter_size: int = 3,
         start_out_channels: int = 64,
+        time_embed_dim: int = 256,
     ) -> None:
         """Initialize the U-Net diffusion model.
 
@@ -42,6 +43,7 @@ class UNetDiffusion(nn.Module):
             timesteps (int): Number of diffusion timesteps.
             filter_size (int): Convolution kernel size for all conv layers.
             start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
+            time_embed_dim (int): Size of time embedding dimension.
 
         """
         super().__init__()
@@ -51,8 +53,7 @@ class UNetDiffusion(nn.Module):
         self.timesteps = timesteps
 
         # Time embedding
-        self.time_embed_dim = 256
-        self.time_embed = TimeEmbed(self.time_embed_dim)
+        self.time_embed = TimeEmbed(time_embed_dim)
 
         # Channel calculations
         channels = [start_out_channels * 2**i for i in range(4)]
@@ -82,16 +83,16 @@ class UNetDiffusion(nn.Module):
         self.up9 = UpconvBlock(channels[1], channels[0])
 
         self.up6b = ConvBlock(
-            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size
+            channels[3] + time_embed_dim, channels[2], filter_size=filter_size
         )
         self.up7b = ConvBlock(
-            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size
+            channels[3] + time_embed_dim, channels[2], filter_size=filter_size
         )
         self.up8b = ConvBlock(
-            channels[2] + self.time_embed_dim, channels[1], filter_size=filter_size
+            channels[2] + time_embed_dim, channels[1], filter_size=filter_size
         )
         self.up9b = ConvBlock(
-            channels[1] + self.time_embed_dim,
+            channels[1] + time_embed_dim,
             channels[0],
             filter_size=filter_size,
             final=True,

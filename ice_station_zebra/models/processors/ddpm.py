@@ -43,9 +43,7 @@ class DDPMProcessor(nn.Module):
         y_bhwc = self.sample(x_bhwc, sample_weight)
 
         y_bchw = y_bhwc.movedim(-1, 1)
-        y_hat = (y_bchw + 1.0) / 2.0
-
-        return torch.clamp(y_hat, 0, 1)
+        return (y_bchw + 1.0) / 2.0
 
     def sample(
         self,

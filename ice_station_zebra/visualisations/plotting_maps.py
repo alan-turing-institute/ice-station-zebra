@@ -62,7 +62,7 @@ def plot_maps(
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     date: date | datetime,
-) -> list[ImageFile]:
+) -> dict[str, list[ImageFile]]:
     """Create static maps comparing ground truth and prediction sea ice concentration data.
 
     Create static maps and (optional) the difference. The plots use contour mapping with customisable colour
@@ -75,13 +75,11 @@ def plot_maps(
         prediction: 2D array of predicted sea ice concentration values. Must have
             the same shape as ground_truth.
         date: Date/datetime for the data being visualised, used in the plot title.
-        include_difference: Whether to generate and display a difference plot
-            alongside ground truth and prediction plots.
 
     Returns:
-        List containing a single PIL ImageFile object representing the generated plot.
-        The list format maintains consistency with other plotting functions that may
-        return multiple images.
+        Dictionary mapping plot names to lists of PIL ImageFile objects. Currently
+        returns a single key "sea-ice_concentration-static-maps" containing a list
+        with one image representing the generated plot.
 
     Raises:
         InvalidArrayError: If ground_truth and prediction arrays have incompatible shapes.
@@ -125,7 +123,7 @@ def plot_maps(
     fig.suptitle(_format_date_to_string(date))
 
     try:
-        return [_image_from_figure(fig)]
+        return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
     finally:
         plt.close(fig)
 

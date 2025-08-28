@@ -106,13 +106,12 @@ class PlottingCallback(Callback):
                     dataset=dataset,
                     batch_idx=batch_idx,
                 )
-                image_list = plot_maps(
+                images.update(plot_maps(
                     self.plot_spec,
                     np_ground_truth,
                     np_prediction,
                     date,
-                )
-                images["sea-ice_concentration-static-maps"] = image_list
+                ))
             except InvalidArrayError as err:
                 logger.warning("Static plotting skipped due to invalid arrays: %s", err)
             except (ValueError, MemoryError, OSError):

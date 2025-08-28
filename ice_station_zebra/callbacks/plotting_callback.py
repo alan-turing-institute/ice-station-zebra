@@ -7,15 +7,12 @@ from typing import TYPE_CHECKING, Literal
 from lightning.pytorch import Callback
 
 if TYPE_CHECKING:
-    import io
     from collections.abc import Mapping
     from datetime import date
     from typing import Any
 
     import numpy as np
     from lightning import LightningModule, Trainer
-    from lightning.pytorch.loggers import Logger as LightningLogger
-    from PIL.ImageFile import ImageFile
     from torch import Tensor
     from torch.utils.data import DataLoader
 
@@ -66,44 +63,8 @@ class PlottingCallback(Callback):
         self.video_format = video_format
         self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
 
-    # --- Helper Methods ---
-
-    def _log_media_to_logger(
-        self,
-        lightning_logger: LightningLogger,
-        images: dict[str, list[ImageFile]],
-        video_data: dict[str, io.BytesIO] | None,
-    ) -> None:
-        """Log images and videos to a specific logger instance.
-
-        Handles logger-specific formatting and API differences while keeping
-        the main plotting logic clean.
-        """
-        logger_name = lightning_logger.name if lightning_logger.name else "unknown"
-
-        # Log static images
-        for key, image_list in images.items():
-            if hasattr(lightning_logger, "log_image"):
-                lightning_logger.log_image(key=key, images=image_list)
-            else:
-                logger_name = getattr(lightning_logger, "name", "unknown")
-                logger.debug("Logger %s does not support images.", logger_name)
-
-        # Log videos
-        if video_data:
-            for key, video_buffer in video_data.items():
-                if hasattr(lightning_logger, "log_video"):
-                    video_buffer.seek(0)
-                    lightning_logger.log_video(
-                        key=key,
-                        videos=[video_buffer],
-                        format=[self.video_format],
-                    )
-                else:
-                    logger.debug("Logger %s does not support videos.", logger_name)
-
     # --- Lightning Hook ---
-    def on_test_batch_end(  # noqa: C901
+    def on_test_batch_end(  # noqa: C901, PLR0912
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -140,7 +101,6 @@ class PlottingCallback(Callback):
         dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
 
         # ----- Static Image Plots -----
-        images: dict[str, list[ImageFile]] = {}
         if self.make_static_plots:
             try:
                 np_ground_truth, np_prediction, date = _extract_static_data(
@@ -148,22 +108,30 @@ class PlottingCallback(Callback):
                     self.plot_spec.selected_timestep,
                     dates,
                 )
-                image_maps = plot_maps(
+                images = plot_maps(
                     self.plot_spec,
                     np_ground_truth,
                     np_prediction,
                     date,
                 )
-                images["sea-ice_concentration-static-maps"] = image_maps[
-                    "sea-ice_concentration-static-maps"
-                ]
+                # Log static images
+                for lightning_logger in trainer.loggers:
+                    if hasattr(lightning_logger, "log_image"):
+                        for key, image_list in images.items():
+                            lightning_logger.log_image(key=key, images=image_list)
+                    else:
+                        logger.debug(
+                            "Logger %s does not support images.",
+                            lightning_logger.name
+                            if lightning_logger.name
+                            else "unknown",
+                        )
             except InvalidArrayError as err:
                 logger.warning("Static plotting skipped due to invalid arrays: %s", err)
             except (ValueError, MemoryError, OSError):
                 logger.exception("Static plotting failed")
 
         # ----- Video Plots -----
-        video_data: dict[str, io.BytesIO] | None = None
         if self.make_video_plots:
             try:
                 ground_truth_stream, prediction_stream = _extract_video_data(outputs)
@@ -175,6 +143,22 @@ class PlottingCallback(Callback):
                     fps=self.video_fps,
                     video_format=self.video_format,
                 )
+                for lightning_logger in trainer.loggers:
+                    if hasattr(lightning_logger, "log_video"):
+                        for key, video_buffer in video_data.items():
+                            video_buffer.seek(0)
+                            lightning_logger.log_video(
+                                key=key,
+                                videos=[video_buffer],
+                                format=[self.video_format],
+                            )
+                    else:
+                        logger.debug(
+                            "Logger %s does not support videos.",
+                            lightning_logger.name
+                            if lightning_logger.name
+                            else "unknown",
+                        )
             except (InvalidArrayError, VideoRenderError) as err:
                 logger.warning("Video plotting skipped: %s", err)
             except (
@@ -183,10 +167,6 @@ class PlottingCallback(Callback):
                 OSError,
             ):
                 logger.exception("Video plotting failed")
-
-        # ----- Log all media -----
-        for lightning_logger in trainer.loggers:
-            self._log_media_to_logger(lightning_logger, images, video_data)
 
 
 # -------   Helper Functions -------

@@ -24,11 +24,12 @@ if TYPE_CHECKING:
 
     from PIL.ImageFile import ImageFile
 
+from ice_station_zebra.exceptions import InvalidArrayError
+
 from .convert import _image_from_figure, _save_animation
 from .layout import _add_colourbars, _init_axes, _set_axes_limits
 from .plotting_core import (
     DiffColourmapSpec,
-    InvalidArrayError,
     PlotSpec,
     compute_difference,
     compute_display_ranges,

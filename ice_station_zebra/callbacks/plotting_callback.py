@@ -18,12 +18,11 @@ if TYPE_CHECKING:
     from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
+from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
 from ice_station_zebra.visualisations import (
     DEFAULT_SIC_SPEC,
-    InvalidArrayError,
     PlotSpec,
-    VideoRenderError,
     plot_maps,
     video_maps,
 )

@@ -1,4 +1,4 @@
-from .plotting_core import InvalidArrayError, PlotSpec, VideoRenderError
+from .plotting_core import PlotSpec
 from .plotting_maps import (
     DEFAULT_SIC_SPEC,
     plot_maps,
@@ -7,9 +7,7 @@ from .plotting_maps import (
 
 __all__ = [
     "DEFAULT_SIC_SPEC",
-    "InvalidArrayError",
     "PlotSpec",
-    "VideoRenderError",
     "plot_maps",
     "video_maps",
 ]

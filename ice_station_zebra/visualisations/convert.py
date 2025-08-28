@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 from PIL.ImageFile import ImageFile
 
-from .plotting_core import VideoRenderError
+from ice_station_zebra.exceptions import VideoRenderError
 
 DEFAULT_DPI = 200
 

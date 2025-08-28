@@ -1,24 +1,14 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Literal, NamedTuple
 
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
 
+from ice_station_zebra.exceptions import InvalidArrayError
+
 # Constants for array dimensions
 DIM_2D = 2
 DIM_3D = 3
-
-
-# -- Exceptions shared by all plotting functions --
-class PlottingError(RuntimeError): ...
-
-
-class VideoRenderError(PlottingError): ...
-
-
-class InvalidArrayError(PlottingError, ValueError): ...
 
 
 # -------- Concepts --------

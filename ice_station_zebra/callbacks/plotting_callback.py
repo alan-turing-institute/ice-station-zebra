@@ -2,23 +2,21 @@ from __future__ import annotations
 
 import io
 import logging
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
-
-if TYPE_CHECKING:
-    from typing import Any
 
 from lightning.pytorch import Callback
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from datetime import date
+    from typing import Any
 
     import numpy as np
     from lightning import LightningModule, Trainer
     from PIL.ImageFile import ImageFile
     from torch import Tensor
-
-from collections.abc import Sequence
+    from torch.utils.data import DataLoader
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput
@@ -30,9 +28,6 @@ from ice_station_zebra.visualisations import (
     plot_maps,
     video_maps,
 )
-
-if TYPE_CHECKING:
-    from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 

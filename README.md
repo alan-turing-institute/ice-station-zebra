@@ -8,7 +8,7 @@
 | ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        5 |        0 |    100% |           |
 | ice\_station\_zebra/callbacks/ema\_weight\_averaging\_callback.py       |       13 |        8 |     38% |24-28, 34-40 |
 | ice\_station\_zebra/callbacks/metric\_summary\_callback.py              |       28 |       15 |     46% |25-27, 39-45, 54-61 |
-| ice\_station\_zebra/callbacks/plotting\_callback.py                     |       42 |       29 |     31% |32-36, 49-87 |
+| ice\_station\_zebra/callbacks/plotting\_callback.py                     |      102 |       80 |     22% |53-59, 73-103, 112-132, 141-170, 193-208, 225-233, 244-258 |
 | ice\_station\_zebra/callbacks/unconditional\_checkpoint.py              |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
 | ice\_station\_zebra/callbacks/weight\_averaging.py                      |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
@@ -29,6 +29,7 @@
 | ice\_station\_zebra/evaluation/\_\_init\_\_.py                          |        2 |        0 |    100% |           |
 | ice\_station\_zebra/evaluation/cli.py                                   |       16 |        3 |     81% | 27-28, 32 |
 | ice\_station\_zebra/evaluation/evaluator.py                             |       31 |       20 |     35% | 25-69, 80 |
+| ice\_station\_zebra/exceptions.py                                       |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/\_\_init\_\_.py                              |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/\_\_init\_\_.py                       |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/activations.py                        |        2 |        0 |    100% |           |
@@ -50,12 +51,14 @@
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                                 |       28 |       15 |     46% | 28-95, 98 |
-| ice\_station\_zebra/types.py                                            |       69 |       13 |     81% |68, 83-90, 94-96, 100 |
+| ice\_station\_zebra/types.py                                            |       97 |       13 |     87% |89, 123-130, 134-136, 140 |
 | ice\_station\_zebra/utils.py                                            |       12 |        6 |     50% |9, 14, 19-22 |
-| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        2 |        0 |    100% |           |
-| ice\_station\_zebra/visualisations/convert.py                           |        8 |        4 |     50% |      9-12 |
-| ice\_station\_zebra/visualisations/sea\_ice\_concentration.py           |       20 |       13 |     35% |     20-39 |
-|                                                               **TOTAL** |  **949** |  **308** | **68%** |           |
+| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        3 |        0 |    100% |           |
+| ice\_station\_zebra/visualisations/convert.py                           |       37 |       22 |     41% |20-23, 28-34, 44-66 |
+| ice\_station\_zebra/visualisations/layout.py                            |      158 |      132 |     16% |115-318, 338-347, 363-365, 379-381, 430-503, 536-553, 571-575, 610-626 |
+| ice\_station\_zebra/visualisations/plotting\_core.py                    |      102 |       90 |     12% |23-25, 45-53, 79-115, 152-190, 213-219, 239-245, 252-272, 279-289 |
+| ice\_station\_zebra/visualisations/plotting\_maps.py                    |       88 |       69 |     22% |82-121, 169-262, 307-409, 430, 446-447 |
+|                                                               **TOTAL** | **1398** |  **655** | **53%** |           |
 
 
 ## Setup coverage badge

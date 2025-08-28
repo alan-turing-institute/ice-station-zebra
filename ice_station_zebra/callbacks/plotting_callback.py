@@ -99,7 +99,10 @@ class PlottingCallback(Callback):
         # Get sequence dates for static and video plots
         batch_size = int(outputs.target.shape[0])
         n_timesteps = int(outputs.target.shape[1])
-        dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
+        dates = [
+            dataset.date_from_index(batch_size * batch_idx + tt)
+            for tt in range(n_timesteps)
+        ]
 
         # Log static and video plots
         self.log_static_plots(outputs, dates, trainer.loggers)
@@ -173,9 +176,6 @@ class PlottingCallback(Callback):
             logger.exception("Video plotting failed")
 
 
-# -------   Helper Functions -------
-
-
 def _extract_static_data(
     outputs: ModelTestOutput,
     selected_timestep: int,
@@ -237,14 +237,6 @@ def _extract_video_data(outputs: ModelTestOutput) -> tuple[np.ndarray, np.ndarra
     prediction_stream = outputs.prediction[0, :, 0].detach().cpu().numpy()
 
     return ground_truth_stream, prediction_stream
-
-
-def _generate_sequence_dates(
-    dataset: CombinedDataset, batch_idx: int, n_timesteps: int, batch_size: int
-) -> list[datetime]:
-    """Generate dates for a [T] sequence anchored to this batch."""
-    base = batch_size * batch_idx
-    return [dataset.date_from_index(base + tt) for tt in range(n_timesteps)]
 
 
 def _assert_same_shape(

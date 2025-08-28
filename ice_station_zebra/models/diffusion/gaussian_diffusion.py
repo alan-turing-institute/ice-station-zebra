@@ -15,9 +15,15 @@ Description:
 """
 
 import math
+from enum import Enum
 
 import torch
 import torch.nn.functional as f
+
+
+class BetaSchedule(str, Enum):
+    LINEAR = "linear"
+    COSINE = "cosine"
 
 
 class GaussianDiffusion:
@@ -26,20 +32,29 @@ class GaussianDiffusion:
     It includes support for cosine and linear beta schedules.
     """
 
-    def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
+    # def __init__(self, timesteps: int = 1000, beta_schedule: str = "cosine") -> None:
+    def __init__(
+        self, timesteps: int = 1000, beta_schedule: BetaSchedule = BetaSchedule.COSINE
+    ) -> None:
         """Initialize diffusion parameters and precompute useful constants.
 
         Args:
             timesteps (int): Total number of diffusion steps.
-            beta_schedule (str): Type of beta schedule to use. Options: 'linear', 'cosine'.
+            beta_schedule (BetaSchedule): Type of beta schedule to use. Options: BetaSchedule.LINEAR or BetaSchedule.COSINE.
 
         """
         self.timesteps = timesteps
 
-        if beta_schedule == "linear":
+        if beta_schedule == BetaSchedule.LINEAR:
             self.betas = torch.linspace(1e-4, 0.02, timesteps)
-        elif beta_schedule == "cosine":
+        elif beta_schedule == BetaSchedule.COSINE:
             self.betas = self._cosine_beta_schedule(timesteps)
+        else:
+            msg = (
+                f"Unsupported beta_schedule: {beta_schedule}. "
+                f"Supported schedules: {list(BetaSchedule)}"
+            )
+            raise ValueError(msg)
 
         self.alphas = 1.0 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)

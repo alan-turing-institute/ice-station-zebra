@@ -18,6 +18,7 @@ import numpy as np
 from matplotlib import animation
 
 if TYPE_CHECKING:
+    import io
     from typing import Any
 
     from PIL.ImageFile import ImageFile
@@ -136,7 +137,7 @@ def video_maps(
     dates: list[date | datetime],
     fps: int = 2,
     video_format: Literal["mp4", "gif"] = "gif",
-) -> bytes:
+) -> dict[str, io.BytesIO]:
     """Generate animated visualisations showing the temporal evolution of sea ice concentration.
 
     Compares ground truth data with model predictions. Supports multiple video formats and
@@ -162,8 +163,9 @@ def video_maps(
             - "per-frame": Compute differences on-demand (memory efficient)
 
     Returns:
-        Bytes object containing the encoded video data in the specified format suitable for
-        wandb.Video.
+        Dictionary mapping video names to BytesIO objects containing the encoded video data.
+        Currently returns a single key "sea-ice_concentration-video-maps" containing the video
+        data suitable for direct wandb.Video logging.
 
     Raises:
         InvalidArrayError: If arrays have incompatible shapes or if the number of
@@ -258,9 +260,12 @@ def video_maps(
         repeat=True,
     )
 
-    # Save -> bytes and clean up temp file
+    # Save -> BytesIO and clean up temp file
     try:
-        return _save_animation(animation_object, fps=fps, video_format=video_format)
+        video_buffer = _save_animation(
+            animation_object, fps=fps, video_format=video_format
+        )
+        return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
         plt.close(fig)
 

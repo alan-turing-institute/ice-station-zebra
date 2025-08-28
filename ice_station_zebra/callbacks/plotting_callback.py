@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import io
 import logging
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
@@ -9,6 +8,7 @@ from lightning.pytorch import Callback
 from lightning.pytorch.loggers import WandbLogger
 
 if TYPE_CHECKING:
+    import io
     from collections.abc import Mapping
     from datetime import date
     from typing import Any
@@ -72,7 +72,7 @@ class PlottingCallback(Callback):
         self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
 
     # --- Lightning Hook ---
-    def on_test_batch_end(  # noqa: C901
+    def on_test_batch_end(  # noqa: C901, PLR0912  # Complex method with multiple validation/error handling branches
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -112,27 +112,28 @@ class PlottingCallback(Callback):
                     dataset=dataset,
                     batch_idx=batch_idx,
                 )
-                images.update(
-                    plot_maps(
-                        self.plot_spec,
-                        np_ground_truth,
-                        np_prediction,
-                        date,
-                    )
+                image_maps = plot_maps(
+                    self.plot_spec,
+                    np_ground_truth,
+                    np_prediction,
+                    date,
                 )
+                images["sea-ice_concentration-static-maps"] = image_maps[
+                    "sea-ice_concentration-static-maps"
+                ]
             except InvalidArrayError as err:
                 logger.warning("Static plotting skipped due to invalid arrays: %s", err)
             except (ValueError, MemoryError, OSError):
                 logger.exception("Static plotting failed")
 
         # ----- Video Plots -----
-        videos: dict[str, bytes] = {}
+        video_data: dict[str, io.BytesIO] | None = None
         if self.make_video_plots:
             try:
                 ground_truth_stream, prediction_stream, dates = _extract_video_data(
                     outputs, dataset, batch_idx
                 )
-                video_bytes = video_maps(
+                video_data = video_maps(
                     self.plot_spec,
                     ground_truth_stream,
                     prediction_stream,
@@ -140,7 +141,6 @@ class PlottingCallback(Callback):
                     fps=self.video_fps,
                     video_format=self.video_format,
                 )
-                videos["sea-ice_concentration-video-maps"] = video_bytes
             except (InvalidArrayError, VideoRenderError) as err:
                 logger.warning("Video plotting skipped: %s", err)
             except (
@@ -152,12 +152,30 @@ class PlottingCallback(Callback):
 
         # ----- Log all media -----
         for lightning_logger in trainer.loggers:
-            _log_media_to_wandb(
-                lightning_logger,
-                images,
-                videos,
-                video_format=self.video_format,
-            )
+            # Log static images
+            for key, image_list in images.items():
+                if hasattr(lightning_logger, "log_image"):
+                    lightning_logger.log_image(key=key, images=image_list)
+                else:
+                    logger_name = getattr(lightning_logger, "name", "unknown")
+                    logger.debug(
+                        "Logger %s does not support logging images.", logger_name
+                    )
+
+            # Log videos
+            if video_data:
+                for key, video_buffer in video_data.items():
+                    if isinstance(lightning_logger, WandbLogger) and wandb is not None:
+                        # For wandb, use the BytesIO buffer directly with format parameter
+                        video_obj = wandb.Video(video_buffer, format=self.video_format)
+                        lightning_logger.experiment.log({key: video_obj})
+                    elif hasattr(lightning_logger, "log_video"):
+                        lightning_logger.log_video(key=key, videos=[video_buffer])
+                    else:
+                        logger_name = getattr(lightning_logger, "name", "unknown")
+                        logger.debug(
+                            "Logger %s does not support video logging.", logger_name
+                        )
 
 
 # -------   Helper Functions -------
@@ -282,39 +300,3 @@ def _assert_same_shape(
     if a.shape != b.shape:
         msg = f"Shape mismatch: {name_a}={tuple(a.shape)}, {name_b}={tuple(b.shape)}"
         raise InvalidArrayError(msg)
-
-
-def _log_media_to_wandb(
-    lightning_logger: Any,  # noqa: ANN401
-    images: dict,
-    videos: dict,
-    video_format: str,
-) -> None:
-    """Log both images and videos to lightning loggers.
-
-    Args:
-        lightning_logger: The lightning logger instance.
-        images: Dictionary of image data to log.
-        videos: Dictionary of video data to log.
-        video_format: Format of the video data ("mp4" or "gif").
-
-    """
-    # Static images
-    for key, image_list in images.items():
-        if hasattr(lightning_logger, "log_image"):
-            lightning_logger.log_image(key=key, images=image_list)
-        else:
-            logger_name = getattr(lightning_logger, "name", "unknown")
-            logger.debug("Logger %s does not support logging images.", logger_name)
-
-    # Videos
-    for key, video_bytes in videos.items():
-        if isinstance(lightning_logger, WandbLogger) and wandb is not None:
-            # For wandb, manually create Video object with format parameter to avoid warning
-            video_obj = wandb.Video(io.BytesIO(video_bytes), format=video_format)
-            lightning_logger.experiment.log({key: video_obj})
-        elif hasattr(lightning_logger, "log_video"):
-            lightning_logger.log_video(key=key, videos=[io.BytesIO(video_bytes)])
-        else:
-            logger_name = getattr(lightning_logger, "name", "unknown")
-            logger.debug("Logger %s does not support video logging.", logger_name)

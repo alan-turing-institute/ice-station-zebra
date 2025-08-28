@@ -40,8 +40,8 @@ def _save_animation(
     *,
     fps: int,
     video_format: Literal["mp4", "gif"] = "gif",
-) -> bytes:
-    """Save an animation to a temporary file and return bytes (with cleanup)."""
+) -> io.BytesIO:
+    """Save an animation to a temporary file and return BytesIO (with cleanup)."""
     suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
     tmp_path = None
     try:
@@ -61,7 +61,9 @@ def _save_animation(
             anim.save(tmp_path, writer=ffmpeg_writer, dpi=DEFAULT_DPI)
 
         with Path(tmp_path).open("rb") as fh:
-            return fh.read()
+            buffer = io.BytesIO(fh.read())
+            buffer.seek(0)  # Reset to beginning
+            return buffer
     except (OSError, MemoryError) as err:
         msg = f"Video encoding failed: {err!s}"
         raise VideoRenderError(msg) from err

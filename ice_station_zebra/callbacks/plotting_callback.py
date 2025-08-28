@@ -97,9 +97,8 @@ class PlottingCallback(Callback):
             return
 
         # Get sequence dates for static and video plots
-        target, prediction = _require_tensors(outputs, keys=("target", "prediction"))
-        batch_size = int(target.shape[0])
-        n_timesteps = int(target.shape[1])
+        batch_size = int(outputs.target.shape[0])
+        n_timesteps = int(outputs.target.shape[1])
         dates = _generate_sequence_dates(dataset, batch_idx, n_timesteps, batch_size)
 
         # Log static and video plots
@@ -197,16 +196,17 @@ def _extract_static_data(
 
     """
     # Check shape of arrays
-    target, prediction = _require_tensors(outputs, keys=("target", "prediction"))
-    _assert_same_shape(target, prediction, name_a="target", name_b="prediction")
+    _assert_same_shape(
+        outputs.target, outputs.prediction, name_a="target", name_b="prediction"
+    )
 
-    if not (0 <= selected_timestep < target.shape[1]):
-        error_msg = f"Invalid timestep: {selected_timestep} outside range [0, {target.shape[1]})"
+    if not (0 <= selected_timestep < outputs.target.shape[1]):
+        error_msg = f"Invalid timestep: {selected_timestep} outside range [0, {outputs.target.shape[1]})"
         raise InvalidArrayError(error_msg)
 
     # Use the first batch, first channel -> [H,W]
-    np_ground_truth = target[0, selected_timestep, 0].detach().cpu().numpy()
-    np_prediction = prediction[0, selected_timestep, 0].detach().cpu().numpy()
+    np_ground_truth = outputs.target[0, selected_timestep, 0].detach().cpu().numpy()
+    np_prediction = outputs.prediction[0, selected_timestep, 0].detach().cpu().numpy()
 
     # Get the date from the pre-generated dates list
     date = dates[selected_timestep]
@@ -228,12 +228,13 @@ def _extract_video_data(outputs: ModelTestOutput) -> tuple[np.ndarray, np.ndarra
 
     """
     # Check shape of arrays
-    target, prediction = _require_tensors(outputs, keys=("target", "prediction"))
-    _assert_same_shape(target, prediction, name_a="target", name_b="prediction")
+    _assert_same_shape(
+        outputs.target, outputs.prediction, name_a="target", name_b="prediction"
+    )
 
     # Use the first batch, first channel -> [T,H,W]
-    ground_truth_stream = target[0, :, 0].detach().cpu().numpy()
-    prediction_stream = prediction[0, :, 0].detach().cpu().numpy()
+    ground_truth_stream = outputs.target[0, :, 0].detach().cpu().numpy()
+    prediction_stream = outputs.prediction[0, :, 0].detach().cpu().numpy()
 
     return ground_truth_stream, prediction_stream
 
@@ -244,19 +245,6 @@ def _generate_sequence_dates(
     """Generate dates for a [T] sequence anchored to this batch."""
     base = batch_size * batch_idx
     return [dataset.date_from_index(base + tt) for tt in range(n_timesteps)]
-
-
-def _require_tensors(
-    outputs: ModelTestOutput, keys: tuple[str, ...]
-) -> tuple[Tensor, ...]:
-    """Require tensors from outputs."""
-    try:
-        a = outputs[keys[0]]
-        b = outputs[keys[1]]
-    except KeyError as err:
-        msg = f"Missing key in outputs: {err!s}"
-        raise InvalidArrayError(msg) from err
-    return a, b
 
 
 def _assert_same_shape(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import logging
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
@@ -19,10 +21,7 @@ if TYPE_CHECKING:
     from torch import Tensor
     from torch.utils.data import DataLoader
 
-try:
-    import wandb
-except ImportError:
-    wandb = None
+# Optional dependency: import locally where needed
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
@@ -95,10 +94,14 @@ class PlottingCallback(Callback):
         # Log videos with logger-specific handling
         if video_data:
             for key, video_buffer in video_data.items():
-                if isinstance(lightning_logger, WandbLogger) and wandb is not None:
-                    # WandB requires special Video object with format parameter
-                    video_obj = wandb.Video(video_buffer, format=self.video_format)
-                    lightning_logger.experiment.log({key: video_obj})
+                if isinstance(lightning_logger, WandbLogger):
+                    # Use importlib to keep optional dependency without local import statements
+                    if importlib.util.find_spec("wandb") is not None:
+                        wandb = importlib.import_module("wandb")
+                        video_obj = wandb.Video(video_buffer, format=self.video_format)
+                        lightning_logger.experiment.log({key: video_obj})
+                    else:
+                        logger.debug("wandb not installed; skipping video logging.")
                 elif hasattr(lightning_logger, "log_video"):
                     # Generic Lightning logger video API
                     lightning_logger.log_video(key=key, videos=[video_buffer])

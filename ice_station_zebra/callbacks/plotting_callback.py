@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
 from lightning.pytorch import Callback
+from lightning.pytorch.loggers import WandbLogger
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -17,6 +18,11 @@ if TYPE_CHECKING:
     from PIL.ImageFile import ImageFile
     from torch import Tensor
     from torch.utils.data import DataLoader
+
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
@@ -106,12 +112,14 @@ class PlottingCallback(Callback):
                     dataset=dataset,
                     batch_idx=batch_idx,
                 )
-                images.update(plot_maps(
-                    self.plot_spec,
-                    np_ground_truth,
-                    np_prediction,
-                    date,
-                ))
+                images.update(
+                    plot_maps(
+                        self.plot_spec,
+                        np_ground_truth,
+                        np_prediction,
+                        date,
+                    )
+                )
             except InvalidArrayError as err:
                 logger.warning("Static plotting skipped due to invalid arrays: %s", err)
             except (ValueError, MemoryError, OSError):
@@ -148,6 +156,7 @@ class PlottingCallback(Callback):
                 lightning_logger,
                 images,
                 videos,
+                video_format=self.video_format,
             )
 
 
@@ -279,8 +288,17 @@ def _log_media_to_wandb(
     lightning_logger: Any,  # noqa: ANN401
     images: dict,
     videos: dict,
+    video_format: str,
 ) -> None:
-    """Log both images and videos to lightning loggers."""
+    """Log both images and videos to lightning loggers.
+
+    Args:
+        lightning_logger: The lightning logger instance.
+        images: Dictionary of image data to log.
+        videos: Dictionary of video data to log.
+        video_format: Format of the video data ("mp4" or "gif").
+
+    """
     # Static images
     for key, image_list in images.items():
         if hasattr(lightning_logger, "log_image"):
@@ -291,7 +309,11 @@ def _log_media_to_wandb(
 
     # Videos
     for key, video_bytes in videos.items():
-        if hasattr(lightning_logger, "log_video"):
+        if isinstance(lightning_logger, WandbLogger) and wandb is not None:
+            # For wandb, manually create Video object with format parameter to avoid warning
+            video_obj = wandb.Video(io.BytesIO(video_bytes), format=video_format)
+            lightning_logger.experiment.log({key: video_obj})
+        elif hasattr(lightning_logger, "log_video"):
             lightning_logger.log_video(key=key, videos=[io.BytesIO(video_bytes)])
         else:
             logger_name = getattr(lightning_logger, "name", "unknown")

@@ -8,7 +8,7 @@ from lightning.pytorch import Callback
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from datetime import date
+    from datetime import date, datetime
     from typing import Any
 
     import numpy as np
@@ -235,7 +235,7 @@ def _extract_video_data(outputs: ModelTestOutput) -> tuple[np.ndarray, np.ndarra
 
 def _generate_sequence_dates(
     dataset: CombinedDataset, batch_idx: int, n_timesteps: int, batch_size: int
-) -> list:
+) -> list[datetime]:
     """Generate dates for a [T] sequence anchored to this batch."""
     base = batch_size * batch_idx
     return [dataset.date_from_index(base + tt) for tt in range(n_timesteps)]

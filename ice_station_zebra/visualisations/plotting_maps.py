@@ -19,6 +19,7 @@ from matplotlib import animation
 
 if TYPE_CHECKING:
     import io
+    from collections.abc import Sequence
     from typing import Any
 
     from PIL.ImageFile import ImageFile
@@ -134,7 +135,7 @@ def video_maps(
     plot_spec: PlotSpec,
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,
-    dates: list[date | datetime],
+    dates: Sequence[date | datetime],
     fps: int = 2,
     video_format: Literal["mp4", "gif"] = "gif",
 ) -> dict[str, io.BytesIO]:

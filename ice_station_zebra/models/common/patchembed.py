@@ -9,10 +9,10 @@ class PatchEmbedding(nn.Module):
         Initialize patch embedding layer that converts image patches into embeddings.
         
         Args:
-            in_channels (int): Number of input channels in the image
+            in_channels (int): Number of latent channels
             patch_size (int): Size of each square patch
             emb_dim (int): Embedding dimension for each patch
-            img_size (int): Size of input image (assume 432)
+            img_size (int): Size of input image
         """
         super().__init__()
         self.patch_size = patch_size

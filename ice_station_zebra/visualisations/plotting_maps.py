@@ -8,29 +8,22 @@
 
 """
 
-from __future__ import annotations
-
+import io
+from collections.abc import Sequence
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Literal
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
-
-if TYPE_CHECKING:
-    import io
-    from collections.abc import Sequence
-    from typing import Any
-
-    from PIL.ImageFile import ImageFile
+from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
+from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
 from .convert import _image_from_figure, _save_animation
 from .layout import _add_colourbars, _init_axes, _set_axes_limits
 from .plotting_core import (
-    DiffColourmapSpec,
-    PlotSpec,
     compute_difference,
     compute_display_ranges,
     compute_display_ranges_stream,
@@ -54,9 +47,6 @@ DEFAULT_SIC_SPEC = PlotSpec(
     colourbar_location="horizontal",
     colourbar_strategy="shared",
 )
-
-
-# ---- Main functions ----
 
 
 # --- Static Map Plot ---
@@ -273,8 +263,6 @@ def video_maps(
 
 
 # ---- Helper functions ----
-
-
 def _draw_frame(  # noqa: PLR0913
     axs: list,
     ground_truth: np.ndarray,

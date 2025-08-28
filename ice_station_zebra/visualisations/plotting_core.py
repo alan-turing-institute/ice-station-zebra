@@ -1,69 +1,8 @@
-from dataclasses import dataclass
-from typing import Literal, NamedTuple
-
 import numpy as np
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
-
-# Constants for array dimensions
-DIM_2D = 2
-DIM_3D = 3
-
-
-# -------- Concepts --------
-# DiffMode → what you compute
-# - "signed": target - prediction (can be ±, so symmetric colour scale around 0)
-# - "absolute": |target - prediction| (≥ 0, sequential scale)
-# - "smape": |pred - target| / ((|pred|+|target|)/2) (≥ 0, sequential scale)
-DiffMode = Literal["signed", "absolute", "smape"]
-
-# DiffStrategy → when you compute (for animations)
-# - "precompute": compute full diff stream once (fast playback, more RAM)
-# - "two-pass": scan once to figure the scale, compute per-frame (balanced)
-# - "per-frame": compute per-frame (low RAM, more CPU)
-DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
-
-
-class DiffColourmapSpec(NamedTuple):
-    """Colour scale specification for visualising a difference panel.
-
-    Attributes:
-        norm: Normalisation object for mapping data values to colours.
-              Typically TwoSlopeNorm for signed differences (centred at 0).
-              None for non-signed modes (absolute, smape).
-        vmin: Lower bound for colour scale (used if norm is None).
-        vmax: Upper bound for colour scale (used if norm is None).
-        cmap: Name of the matplotlib colourmap to use.
-
-    """
-
-    norm: Normalize | None
-    vmin: float | None
-    vmax: float | None
-    cmap: str
-
-
-# -- Constants --
-N_CONTOUR_LEVELS = 100
-
-
-@dataclass(frozen=True)
-class PlotSpec:
-    variable: str
-    title_groundtruth: str = "Ground Truth"
-    title_prediction: str = "Prediction"
-    title_difference: str = "Difference"
-    n_contour_levels: int = N_CONTOUR_LEVELS
-    colourmap: str = "viridis"
-    include_difference: bool = True
-    diff_mode: DiffMode = "signed"
-    diff_strategy: DiffStrategy = "precompute"
-    selected_timestep: int = 0
-    vmin: float | None = 0.0
-    vmax: float | None = 1.0
-    colourbar_location: Literal["vertical", "horizontal"] = "vertical"
-    colourbar_strategy: Literal["shared", "separate"] = "shared"
+from ice_station_zebra.types import DiffColourmapSpec, DiffMode, DiffStrategy, PlotSpec
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
@@ -78,12 +17,12 @@ def levels_from_spec(spec: PlotSpec) -> np.ndarray:
 
     Returns:
         NumPy array of contour levels spanning from vmin to vmax with
-        N_CONTOUR_LEVELS steps.
+        n_contour_levels steps.
 
     """
     vmin = 0.0 if spec.vmin is None else spec.vmin
     vmax = 1.0 if spec.vmax is None else spec.vmax
-    return np.linspace(vmin, vmax, N_CONTOUR_LEVELS)
+    return np.linspace(vmin, vmax, spec.n_contour_levels)
 
 
 def compute_difference(
@@ -271,7 +210,7 @@ def validate_2d_pair(
         InvalidArrayError: If the arrays are not 2D or have different shapes.
 
     """
-    if ground_truth.ndim != DIM_2D or prediction.ndim != DIM_2D:
+    if not (ground_truth.ndim == prediction.ndim == 2):  # noqa: PLR2004
         msg = f"Expected 2D [H,W]; got ground truth={ground_truth.shape}, prediction={prediction.shape}"
         raise InvalidArrayError(msg)
     if ground_truth.shape != prediction.shape:
@@ -297,7 +236,7 @@ def validate_3d_streams(
         InvalidArrayError: If the arrays are not 2D or have different shapes.
 
     """
-    if ground_truth_stream.ndim != DIM_3D or prediction_stream.ndim != DIM_3D:
+    if not (ground_truth_stream.ndim == prediction_stream.ndim == 3):  # noqa: PLR2004
         msg = f"Expected 3D [T,H,W]; got ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
         raise InvalidArrayError(msg)
     if ground_truth_stream.shape != prediction_stream.shape:

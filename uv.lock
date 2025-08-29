@@ -121,7 +121,7 @@ wheels = [
 
 [[package]]
 name = "anemoi-transform"
-version = "0.1.15"
+version = "0.1.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anemoi-utils" },
@@ -130,9 +130,9 @@ dependencies = [
     { name = "earthkit-meteo" },
     { name = "earthkit-regrid" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/d6/23e9739d98ecb2afd3c5b4d5b9de621acd4a75629f60d9869043729155ab/anemoi_transform-0.1.15.tar.gz", hash = "sha256:76df22766923da9ff7db85c6e23694da3a4f3b4b4026e77f3e8bafca0ff7c74b", size = 131167, upload-time = "2025-08-04T06:52:11.226Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/f0/544c4a0943d649ab089ac2bf6737ea7e5959b68fb6e6a7b6e3695757d9dc/anemoi_transform-0.1.16.tar.gz", hash = "sha256:771a4134bd35cf8ef713047e704558defdfab6a363ab4ea61356d4da26c6bee6", size = 132995, upload-time = "2025-08-08T07:49:42.267Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/d6/702b7c9981a0f55028e3c78a6df80d769d607bda0c1a0d304304802a8210/anemoi_transform-0.1.15-py3-none-any.whl", hash = "sha256:840e511b0cc563daa708864e8b3e84a0479a899b35df74947020486e6a93d0ec", size = 76752, upload-time = "2025-08-04T06:52:10.24Z" },
+    { url = "https://files.pythonhosted.org/packages/14/2d/c41440ff4924a4a8696efb8d795e710491882fc7ba76d1b0b479dd99ce83/anemoi_transform-0.1.16-py3-none-any.whl", hash = "sha256:2987a40467fb26d6a01b2b0a9a2be55e2a6bf8a8a4f0f3b28e61795da3bec2b4", size = 76819, upload-time = "2025-08-08T07:49:41.307Z" },
 ]
 
 [[package]]
@@ -1226,6 +1226,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "anemoi-datasets" },
+    { name = "anemoi-transform" },
     { name = "cachetools" },
     { name = "cdsapi" },
     { name = "hydra-core" },
@@ -1255,6 +1256,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anemoi-datasets", specifier = ">=0.5.25" },
+    { name = "anemoi-transform", specifier = ">=0.1.16" },
     { name = "cachetools", specifier = ">=6.1.0" },
     { name = "cdsapi", specifier = ">=0.7.6" },
     { name = "hydra-core", specifier = ">=1.3.2" },

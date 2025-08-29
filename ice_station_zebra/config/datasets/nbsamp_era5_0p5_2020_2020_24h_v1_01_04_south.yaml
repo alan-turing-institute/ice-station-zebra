@@ -13,12 +13,16 @@ nbsamp-era5-0p5-2020-2020-24h-v1-01-04-south:
 
   input:
     anemoi-dataset:
-      join:
-      - dataset: ../zebra_anemoi/data/anemoi/samp-era5-0p5-2020-2020-24h-v1-01-04-south.zarr
-        select: [ 2t, 10u, 10v, z_250, z_500 ]
-      - forcings:
-        template: \${datasets.nbsamp-era5-0p5-2020-2020-24h-v1-01-04-south.input.anemoi-dataset.join.0.dataset}
-        param:
-        - cos_julian_day
-        - sin_julian_day
-        
+      pipe:
+        - join:
+          - dataset: ../zebra_anemoi/data/anemoi/samp2-era5-0p5-2020-2020-24h-v1-01-04-south.zarr
+            select: [ temp_2m, z_250, z_500 , cos_julian_day, sin_julian_day ]
+        - rename:
+          param:
+            temp_2m: 2t
+      
+  # input:
+  # anemoi-dataset:
+  #   join:
+  #   - dataset: ../zebra_anemoi/data/anemoi/samp2-era5-0p5-2020-2020-24h-v1-01-04-south.zarr
+  #     select: [ 2t, 10u, 10v, z_250, z_500 , cos_julian_day, sin_julian_day ]

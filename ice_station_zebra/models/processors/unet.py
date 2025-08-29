@@ -75,7 +75,21 @@ class UNetProcessor(BaseProcessor):
             channels[0], self.n_latent_channels, kernel_size=1, padding="same"
         )
 
-    def forward_nchw(self, x: TensorNCHW) -> TensorNCHW:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: process in latent space.
+
+        Uses the default timestep-by-timestep rollout to iterate over NCHW input.
+
+        Args:
+            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
+
+        Returns:
+            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
+
+        """
+        return self.rollout(x)
+
+    def rollout_step(self, x: TensorNCHW) -> TensorNCHW:
         """Apply UNet model to NCHW tensor.
 
         Args:
@@ -111,17 +125,3 @@ class UNetProcessor(BaseProcessor):
 
         # Apply final layer and return
         return self.final_layer(up9)
-
-    def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward step: process in latent space.
-
-        Uses the default timestep-by-timestep implementation to iterate over NCHW input.
-
-        Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
-
-        Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
-
-        """
-        return self.forward_ntchw(x)

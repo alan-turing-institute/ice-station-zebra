@@ -22,13 +22,10 @@ class NullProcessor(BaseProcessor):
         super().__init__(**kwargs)
         self.model = nn.Identity()
 
-    def forward_nchw(self, x: TensorNCHW) -> TensorNCHW:
-        return self.model(x)
-
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: process in latent space.
 
-        Uses the default timestep-by-timestep implementation to iterate over NCHW input.
+        Uses the default timestep-by-timestep rollout to iterate over NCHW input.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -37,4 +34,7 @@ class NullProcessor(BaseProcessor):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
-        return self.forward_ntchw(x)
+        return self.rollout(x)
+
+    def rollout_step(self, x: TensorNCHW) -> TensorNCHW:
+        return self.model(x)

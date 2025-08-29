@@ -24,8 +24,12 @@ class BaseProcessor(nn.Module, ABC):
         self.n_history_steps = n_history_steps
         self.n_latent_channels = n_latent_channels
 
-    def forward_nchw(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward step: process in NCHW latent space.
+    @abstractmethod
+    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
+        """Forward step: process in latent space.
+
+        To use the default timestep-by-timestep rollout, you must implement
+        rollout_step and then simply call `self.rollout(x)` in this method.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -34,15 +38,11 @@ class BaseProcessor(nn.Module, ABC):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
-        msg = "If you are using the default forward_ntchw, you must implement forward_nchw."
-        raise NotImplementedError(msg)
 
-    def forward_ntchw(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: process in NTCHW latent space.
+    def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
+        """Perform rollout over each time slice of a NTCHW tensor.
 
-        This is a default implementation of the forward step that assumes the child
-        class has implemented forward_nchw. It can be overridden by children that want
-        to implement a time-aware forward step.
+        The child class must implement rollout_step.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -59,18 +59,14 @@ class BaseProcessor(nn.Module, ABC):
         # predict when n_forecast_steps > n_history_steps.
         outputs: list[TensorNCHW] = []
         for _ in range(self.n_forecast_steps):
-            outputs.append(self.forward_nchw(nchw_slices.pop(0)))
+            outputs.append(self.rollout_step(nchw_slices.pop(0)))
             nchw_slices.append(outputs[-1])
 
         # Stack the outputs up as a new time dimension
         return stack(outputs, dim=1)
 
-    @abstractmethod
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: process in latent space.
-
-        To use the default timestep-by-timestep implementation, you must implement
-        forward_nchw and then simply call `self.forward_ntchw(x)` in this method.
+    def rollout_step(self, x: TensorNCHW) -> TensorNCHW:
+        """Single rollout step: process in NCHW latent space.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -79,3 +75,5 @@ class BaseProcessor(nn.Module, ABC):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
+        msg = "If you are using rollout, you must implement rollout_step."
+        raise NotImplementedError(msg)

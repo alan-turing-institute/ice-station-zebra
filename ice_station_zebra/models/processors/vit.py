@@ -33,14 +33,14 @@ class VitProcessor(nn.Module):
         
         self.img_size = img_size
         self.patch_size = patch_size
-        self.patches_per_side = img_size // patch_size
+        self.patches_per_side = self.img_size // patch_size
         self.out_channels = start_out_channels
         self.emb_dim = emb_dim
 
     
         
-        self.patch_embed = PatchEmbedding(n_latent_channels, patch_size, emb_dim, img_size)
-        num_patches = (img_size // patch_size) ** 2
+        self.patch_embed = PatchEmbedding(n_latent_channels, patch_size, emb_dim, self.img_size)
+        num_patches = (self.img_size // patch_size) ** 2
         
         self.pos_embed = nn.Parameter(torch.randn(1, num_patches, emb_dim))
         self.dropout = nn.Dropout(dropout)

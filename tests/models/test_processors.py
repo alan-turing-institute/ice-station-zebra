@@ -1,8 +1,44 @@
 import pytest
 import torch
 
-from ice_station_zebra.models.processors import NullProcessor, UNetProcessor
+from ice_station_zebra.models.processors import (
+    BaseProcessor,
+    NullProcessor,
+    UNetProcessor,
+)
 from ice_station_zebra.types import DataSpace
+
+
+@pytest.mark.parametrize("test_batch_size", [1, 2, 5])
+@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
+@pytest.mark.parametrize("test_n_forecast_steps", [1, 2])
+@pytest.mark.parametrize("test_n_history_steps", [1, 2])
+class TestBaseProcessor:
+    def test_rollout(
+        self,
+        test_batch_size: int,
+        test_latent_shape: tuple[int, int, int],
+        test_n_forecast_steps: int,
+        test_n_history_steps: int,
+    ) -> None:
+        processor = BaseProcessor(
+            n_forecast_steps=test_n_forecast_steps,
+            n_history_steps=test_n_history_steps,
+            n_latent_channels=test_latent_shape[2],
+        )
+        with pytest.raises(
+            NotImplementedError,
+            match="If you are using the default forward method, you must implement rollout.",
+        ):
+            processor(
+                torch.randn(
+                    test_batch_size,
+                    test_n_history_steps,
+                    test_latent_shape[2],
+                    test_latent_shape[0],
+                    test_latent_shape[1],
+                )
+            )
 
 
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])

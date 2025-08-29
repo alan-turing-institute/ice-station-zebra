@@ -63,5 +63,5 @@ class BaseProcessor(nn.Module):
             TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
 
         """
-        msg = "If you are using rollout, you must implement rollout_step."
+        msg = "If you are using the default forward method, you must implement rollout."
         raise NotImplementedError(msg)

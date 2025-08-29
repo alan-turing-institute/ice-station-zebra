@@ -29,7 +29,14 @@ class UNetProcessor(BaseProcessor):
         start_out_channels: int,
         **kwargs: Any,
     ) -> None:
-        """Initialise a UNetProcessor."""
+        """Initialise a UNetProcessor.
+
+        Args:
+            filter_size: Size of the convolutional filters.
+            start_out_channels: Number of output channels in the first layer.
+            kwargs: Arguments to BaseProcessor.
+
+        """
         super().__init__(**kwargs)
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]

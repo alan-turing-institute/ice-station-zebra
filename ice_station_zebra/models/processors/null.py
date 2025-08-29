@@ -18,7 +18,12 @@ class NullProcessor(BaseProcessor):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialise a NullProcessor."""
+        """Initialise a NullProcessor.
+
+        Args:
+            kwargs: Arguments to BaseProcessor.
+
+        """
         super().__init__(**kwargs)
         self.model = nn.Identity()
 

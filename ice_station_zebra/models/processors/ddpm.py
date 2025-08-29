@@ -1,3 +1,5 @@
+from typing import Any
+
 import torch
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 
@@ -14,16 +16,16 @@ class DDPMProcessor(BaseProcessor):
         TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(self, n_latent_channels: int, timesteps: int = 1000) -> None:
+    def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
         """Initialize the DDPM processor.
 
         Args:
-            n_latent_channels: Num latent channels used in UNetDiffusion.
             timesteps: Num diffusion timesteps (default=1000).
+            kwargs: Arguments to BaseProcessor.
 
         """
-        super().__init__()
-        self.model = UNetDiffusion(n_latent_channels, timesteps)
+        super().__init__(**kwargs)
+        self.model = UNetDiffusion(self.n_latent_channels, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)

@@ -1,12 +1,66 @@
 import io
+import tempfile
+from pathlib import Path
+from typing import Literal
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import animation
 from matplotlib.figure import Figure
-from PIL import Image, ImageFile
+from PIL import Image
+from PIL.ImageFile import ImageFile
+
+from ice_station_zebra.exceptions import VideoRenderError
+
+DEFAULT_DPI = 200
 
 
-def image_from_figure(figure: Figure) -> ImageFile.ImageFile:
-    """Convert a matplotlib Figure to a PIL Image."""
-    img_buf = io.BytesIO()
-    figure.savefig(img_buf, format="png")
-    img_buf.seek(0)
-    return Image.open(img_buf)
+def _image_from_figure(fig: Figure) -> ImageFile:
+    """Convert a matplotlib figure to a PIL image file."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png")
+    buf.seek(0)
+    return Image.open(buf)
+
+
+def _image_from_array(a: np.ndarray) -> ImageFile:
+    """Convert a numpy array to a PIL image file."""
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(a)
+    ax.axis("off")
+    try:
+        return _image_from_figure(fig)
+    finally:
+        plt.close(fig)
+
+
+def _save_animation(
+    anim: animation.FuncAnimation,
+    *,
+    fps: int,
+    video_format: Literal["mp4", "gif"] = "gif",
+) -> io.BytesIO:
+    """Save an animation to a temporary file and return BytesIO (with cleanup)."""
+    suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
+        try:
+            # Save video to tempfile
+            writer: animation.AbstractMovieWriter = (
+                animation.PillowWriter(fps=fps)
+                if suffix == ".gif"
+                else animation.FFMpegWriter(
+                    fps=fps,
+                    codec="libx264",
+                    bitrate=1800,
+                    extra_args=["-pix_fmt", "yuv420p"],
+                )
+            )
+            anim.save(tmp.name, writer=writer, dpi=DEFAULT_DPI)
+            # Load tempfile into a BytesIO buffer
+            with Path(tmp.name).open("rb") as fh:
+                buffer = io.BytesIO(fh.read())
+        except (OSError, MemoryError) as err:
+            msg = f"Video encoding failed: {err!s}"
+            raise VideoRenderError(msg) from err
+    buffer.seek(0)
+    return buffer

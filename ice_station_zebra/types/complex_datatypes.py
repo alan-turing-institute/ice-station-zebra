@@ -1,47 +1,16 @@
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Self, TypedDict
+from typing import Any, Self
 
-from jaxtyping import Float
-from numpy import float32
-from numpy.typing import NDArray
 from omegaconf import DictConfig
 from torch import Tensor
 
-ArrayCHW = Float[NDArray[float32], "channels height width"]
-ArrayTCHW = Float[NDArray[float32], "time channels height width"]
-TensorNCHW = Float[Tensor, "batch channels height width"]
-TensorNTCHW = Float[Tensor, "batch time channels height width"]
-
-
-@dataclass
-class AnemoiCreateArgs:
-    config: DictConfig
-    path: str
-    command: str = "unused"
-    overwrite: bool = False
-    processes: int = 0
-    threads: int = 0
-
-
-@dataclass
-class AnemoiInspectArgs:
-    detailed: bool
-    path: str
-    progress: bool
-    size: bool
-    statistics: bool
-
-
-class DataloaderArgs(TypedDict):
-    batch_size: int
-    sampler: None
-    batch_sampler: None
-    drop_last: bool
-    worker_init_fn: None
+from .typedefs import TensorNTCHW
 
 
 class DataSpace:
+    """Description of a CHW data space."""
+
     channels: int
     name: str
     shape: tuple[int, int]

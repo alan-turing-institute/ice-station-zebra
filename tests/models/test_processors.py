@@ -28,12 +28,14 @@ class TestNullProcessor:
         result: torch.Tensor = processor(
             torch.randn(
                 test_batch_size,
+                test_n_history_steps,
                 latent_space.channels,
                 *latent_space.shape,
             )
         )
         assert result.shape == (
             test_batch_size,
+            test_n_forecast_steps,
             latent_space.channels,
             *latent_space.shape,
         )
@@ -94,8 +96,13 @@ class TestUNetProcessor:
         )
 
         # Create a tensor with the expected shape
-        x = torch.randn(test_batch_size, latent_space.channels, *latent_space.shape)
-        _, _, height, width = x.shape
+        x = torch.randn(
+            test_batch_size,
+            test_n_history_steps,
+            latent_space.channels,
+            *latent_space.shape,
+        )
+        _, _, _, height, width = x.shape
 
         # We will either catch an error or see a successful run
         if height % 16 or width % 16:
@@ -106,6 +113,7 @@ class TestUNetProcessor:
             result: torch.Tensor = processor(x)
             assert result.shape == (
                 test_batch_size,
+                test_n_forecast_steps,
                 latent_space.channels,
                 *latent_space.shape,
             )

@@ -31,6 +31,7 @@ class TestNaiveLatentSpaceDecoder:
         result = decoder(
             torch.randn(
                 test_batch_size,
+                test_n_forecast_steps,
                 latent_space.channels,
                 *latent_space.shape,
             )

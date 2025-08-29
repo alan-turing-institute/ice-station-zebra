@@ -1,9 +1,9 @@
 import math
 from typing import Any
 
-from torch import nn
+from torch import nn, stack
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNTCHW
 
 from .base_decoder import BaseDecoder
 
@@ -12,7 +12,7 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
     """Naive, linear decoder that takes data in a latent space and translates it to a larger output space.
 
     Latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, latent_channels, latent_height, latent_width)
 
     Output space:
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
@@ -44,24 +44,25 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         layers.append(nn.Upsample(output_space.shape))
 
         # Convolve to the desired number of output channels
-        layers.append(
-            nn.Conv2d(n_channels, output_space.channels * self.n_forecast_steps, 1)
-        )
-
-        # Unflatten the time and channels
-        layers.append(nn.Unflatten(1, [self.n_forecast_steps, output_space.channels]))
+        layers.append(nn.Conv2d(n_channels, output_space.channels, 1))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNCHW) -> TensorNTCHW:
+    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: decode latent space into output space.
 
         Args:
-            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNTCHW with (batch_size, n_forecast_steps, latent_channels, latent_height, latent_width)
 
         Returns:
             TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
 
         """
-        return self.model(x)
+        return stack(
+            [
+                self.model(x[:, idx_t, :, :, :])  # cut the NTCHW input into NCHW slices
+                for idx_t in range(self.n_forecast_steps)
+            ],
+            dim=1,
+        )

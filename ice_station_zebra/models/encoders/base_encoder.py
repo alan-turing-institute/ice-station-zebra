@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from torch import nn
 
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import TensorNTCHW
 
 
 class BaseEncoder(nn.Module, ABC):
@@ -12,7 +12,7 @@ class BaseEncoder(nn.Module, ABC):
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
     Latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
     def __init__(self, *, name: str, n_history_steps: int) -> None:
@@ -22,13 +22,13 @@ class BaseEncoder(nn.Module, ABC):
         self.n_history_steps = n_history_steps
 
     @abstractmethod
-    def forward(self, x: TensorNTCHW) -> TensorNCHW:
+    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: encode input space into latent space.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
         Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
 
         """

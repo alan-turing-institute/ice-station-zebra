@@ -1,11 +1,9 @@
-from abc import ABC, abstractmethod
-
 from torch import nn, stack
 
 from ice_station_zebra.types import TensorNCHW, TensorNTCHW
 
 
-class BaseProcessor(nn.Module, ABC):
+class BaseProcessor(nn.Module):
     """Processor that converts latent input into latent output.
 
     Input space:
@@ -24,25 +22,15 @@ class BaseProcessor(nn.Module, ABC):
         self.n_history_steps = n_history_steps
         self.n_latent_channels = n_latent_channels
 
-    @abstractmethod
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: process in latent space.
 
-        To use the default timestep-by-timestep rollout, you must implement
-        rollout_step and then simply call `self.rollout(x)` in this method.
+        The default implementation simply calls `self.rollout` on each time slice until
+        a sufficient number of forecast steps have been produced. These are then stacked
+        together to produce the final output.
 
-        Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
-
-        Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
-
-        """
-
-    def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Perform rollout over each time slice of a NTCHW tensor.
-
-        The child class must implement rollout_step.
+        If you want to handle the NTCHW tensors directly, simply override this method in
+        your child class.
 
         Args:
             x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
@@ -59,13 +47,13 @@ class BaseProcessor(nn.Module, ABC):
         # predict when n_forecast_steps > n_history_steps.
         outputs: list[TensorNCHW] = []
         for _ in range(self.n_forecast_steps):
-            outputs.append(self.rollout_step(nchw_slices.pop(0)))
+            outputs.append(self.rollout(nchw_slices.pop(0)))
             nchw_slices.append(outputs[-1])
 
         # Stack the outputs up as a new time dimension
         return stack(outputs, dim=1)
 
-    def rollout_step(self, x: TensorNCHW) -> TensorNCHW:
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Single rollout step: process in NCHW latent space.
 
         Args:

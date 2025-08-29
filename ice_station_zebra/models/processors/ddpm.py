@@ -4,7 +4,7 @@ import torch
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import TensorNCHW
 
 from .base_processor import BaseProcessor
 
@@ -30,21 +30,7 @@ class DDPMProcessor(BaseProcessor):
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: process in latent space.
-
-        Uses the default timestep-by-timestep rollout to iterate over NCHW input.
-
-        Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
-
-        Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
-
-        """
-        return self.rollout(x)
-
-    def rollout_step(self, x: TensorNCHW) -> TensorNCHW:
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Generate a single NCHW output with diffusion.
 
         Args:

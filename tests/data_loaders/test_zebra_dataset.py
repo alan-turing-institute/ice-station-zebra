@@ -9,7 +9,7 @@ from ice_station_zebra.types import DataSpace
 
 class TestZebraDataset:
     dates_str = ("2020-01-01", "2020-01-02", "2020-01-03")
-    dates_np = tuple(map(np.datetime64, dates_str))
+    dates_np = tuple(np.datetime64(s) for s in dates_str)
 
     def test_dataset_name(self) -> None:
         dataset = ZebraDataset(

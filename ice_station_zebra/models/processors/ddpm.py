@@ -37,12 +37,10 @@ class DDPMProcessor(nn.Module):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
-        x_bhwc = x.movedim(1, -1)
-        sample_weight = torch.ones_like(x_bhwc[..., :1])
+        sample_weight = torch.ones_like(x[..., :1])
 
-        y_bhwc = self.sample(x_bhwc, sample_weight)
+        y_bchw = self.sample(x, sample_weight)
 
-        y_bchw = y_bhwc.movedim(-1, 1)
         return (y_bchw + 1.0) / 2.0
 
     def sample(

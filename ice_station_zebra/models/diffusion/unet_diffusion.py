@@ -128,11 +128,8 @@ class UNetDiffusion(nn.Module):
         t = self.time_embed(t)
 
         # Concatenate with conditional input
-        noise = torch.cat([noise, conditioning], dim=-1)  # [b,h,w,(d*c)+input_channels]
-
-        # Convert to channel-first format
-        noise = torch.movedim(noise, -1, 1)  # [b,channels,h,w]
-
+        noise = torch.cat([noise, conditioning], dim=1)  # [b,(d*c)+input_channels,h,w]
+        
         # Encoder pathway
         bn1 = self.conv1(noise)
         conv1 = self.maxpool1(bn1)
@@ -167,10 +164,7 @@ class UNetDiffusion(nn.Module):
         up9 = self._add_time_embedding(up9, t)
         up9 = self.up9b(up9)
 
-        # Final output
-        output = self.final_layer(up9)  # [b, c_out, h, w]
-
-        return torch.movedim(output, 1, -1)  # [b, h, w, c_out]
+        return self.final_layer(up9)  # [b, c_out, h, w]
 
     def _timestep_embedding(
         self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000

@@ -129,7 +129,7 @@ class UNetDiffusion(nn.Module):
 
         # Concatenate with conditional input
         noise = torch.cat([noise, conditioning], dim=1)  # [b,(d*c)+input_channels,h,w]
-        
+
         # Encoder pathway
         bn1 = self.conv1(noise)
         conv1 = self.maxpool1(bn1)

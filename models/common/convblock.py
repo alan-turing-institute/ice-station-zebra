@@ -1,7 +1,7 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
+from typing import Optional
 
-from .activations import get_activation
+from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvBlock(nn.Module):
@@ -9,44 +9,79 @@ class ConvBlock(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        *,
         filter_size: int,
-        final: bool = False,
         activation: str = "ReLU",
+        normalization: Optional[str] = "batch",  # None, "batch", or "group"
+        num_groups: Optional[int] = None,  # Required for GroupNorm
+        activation_after_norm: bool = False, 
+        final: bool = False,
     ) -> None:
+        """
+        Initialise a flexible ConvBlock.
+        
+        Args:
+            in_channels: Input channel size
+            out_channels: Output channel size
+            filter_size: Kernel size for convolutions
+            final: Whether to add an extra conv layer at the end
+            activation: Activation function name
+            normalization: Type of normalization (None, "batch", or "group")
+            num_groups: Number of groups for GroupNorm (required if normalization="group")
+            activation_after_norm: If True, apply activation after normalization 
+        """
         super().__init__()
-
-        def act():
-            return get_activation(activation)
-
-        layers = [
-            nn.Conv2d(
-                in_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            act(),
-            nn.Conv2d(
-                out_channels, out_channels, kernel_size=filter_size, padding="same"
-            ),
-            act(),
-        ]
-        if final:
-            layers += [
-                nn.Conv2d(
-                    out_channels,
-                    out_channels,
-                    kernel_size=filter_size,
-                    padding="same",
-                ),
-                act(),
-            ]
-
+        
+        if normalization == "group" and num_groups is None:
+            raise ValueError("num_groups must be specified when using GroupNorm")
+        
+        activation_layer = ACTIVATION_FROM_NAME[activation]
+        layers = []
+        
+        if activation_after_norm:
+            # First conv block
+            layers.extend([
+                nn.Conv2d(in_channels, out_channels, kernel_size=filter_size, padding="same"),
+                nn.GroupNorm(num_groups, out_channels) if normalization == "group" else nn.BatchNorm2d(out_channels),
+                activation_layer(inplace=True),
+            ])
+            
+            # Second conv block
+            layers.extend([
+                nn.Conv2d(out_channels, out_channels, kernel_size=filter_size, padding="same"),
+                nn.GroupNorm(num_groups, out_channels) if normalization == "group" else nn.BatchNorm2d(out_channels),
+                activation_layer(inplace=True),
+            ])
+            
+            # Final conv block if requested
+            if final:
+                layers.extend([
+                    nn.Conv2d(out_channels, out_channels, kernel_size=filter_size, padding="same"),
+                    nn.GroupNorm(num_groups, out_channels) if normalization == "group" else nn.BatchNorm2d(out_channels),
+                    activation_layer(inplace=True),
+                ])
         else:
-            layers.append(
-                nn.BatchNorm2d(num_features=out_channels),
-            )
-
+            # conv → activation, then norm only at the end if not final
+            layers.extend([
+                nn.Conv2d(in_channels, out_channels, kernel_size=filter_size, padding="same"),
+                activation_layer(inplace=True),
+                nn.Conv2d(out_channels, out_channels, kernel_size=filter_size, padding="same"),
+                activation_layer(inplace=True),
+            ])
+            
+            if final:
+                # Final block: add extra conv → activation (no norm)
+                layers.extend([
+                    nn.Conv2d(out_channels, out_channels, kernel_size=filter_size, padding="same"),
+                    activation_layer(inplace=True),
+                ])
+            else:
+                # Non-final: add normalization at the end
+                if normalization == "batch":
+                    layers.append(nn.BatchNorm2d(num_features=out_channels))
+                elif normalization == "group":
+                    layers.append(nn.GroupNorm(num_groups, out_channels))
+        
         self.model = nn.Sequential(*layers)
-
+    
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
-

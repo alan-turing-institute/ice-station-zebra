@@ -33,7 +33,8 @@ class BottleneckBlock(nn.Module):
         super().__init__()
 
         if normalization == "group" and num_groups is None:
-            raise ValueError("num_groups must be specified when using GroupNorm")
+            msg = "num_groups must be specified when using GroupNorm"
+            raise ValueError(msg)
 
         activation_layer = ACTIVATION_FROM_NAME[activation]
 

@@ -23,6 +23,7 @@ dependencies = [
     "netcdf4>=1.7.0",
     "pillow>=11.3.0",
     "pydantic>=2.11.7",
+    "torch-ema>=0.3",
     "typer>=0.16.0",
     "types-cachetools>=6.1.0",
     "wandb>=0.21.0",
@@ -94,6 +95,7 @@ allow-star-arg-any = true
     "DTZ001", # allow unlocalised datetimes in tests
     "S101", # allow asserts in tests
     "INP001", # allow implicit namespace in tests
+    "PLR0913", # allow unlimited arguments in tests
     "PLR2004", # allow magic-number comparison in tests
 ]
 

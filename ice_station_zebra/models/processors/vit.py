@@ -12,8 +12,7 @@ Description:
 import torch
 import torch.nn as nn
 import numpy as np
-from ice_station_zebra.models.common.patchembed import PatchEmbedding
-from ice_station_zebra.models.common.transformerblock import TransformerEncoderBlock
+from ice_station_zebra.models.common import PatchEmbedding, TransformerEncoderBlock
 
 class VitProcessor(nn.Module):
     def __init__(

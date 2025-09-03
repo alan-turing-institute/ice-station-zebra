@@ -55,8 +55,8 @@ samp-era5-0p5-2020-2020-24h-v1-01-04-south:
         wind_direction: wdir
     - test_filter:
         input_field: msl  # Example of custom filter
-# 
-        
+#
+
 # samp-era5-0p5-2020-2020-24h-v1-01-04-south:
 #   name: samp-era5-0p5-2020-2020-24h-v1-01-04-south
 #   #group_as: era5-south
@@ -107,4 +107,3 @@ samp-era5-0p5-2020-2020-24h-v1-01-04-south:
 #     #     - cos_julian_day
 #     #     - sin_julian_day
 #     #     template: ${datasets.samp-era5-0p5-2020-2020-24h-v1-01-04-south.input.join.0.mars.use_cdsapi_dataset}
-        

@@ -4,14 +4,13 @@ from pathlib import Path
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.inspect import InspectZarr
-# from anemoi.transform.filters import rename, uv_to_ddff
+from anemoi.transform.filters import filter_registry
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
-from .filters.test_filter import testFilter
-from anemoi.transform.filters import filter_registry
 
 from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
 
+from .filters.test_filter import testFilter
 from .preprocessors import IPreprocessor
 
 logger = logging.getLogger(__name__)

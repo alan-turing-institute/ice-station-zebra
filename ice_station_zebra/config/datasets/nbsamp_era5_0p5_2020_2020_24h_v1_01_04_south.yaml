@@ -20,7 +20,7 @@ nbsamp-era5-0p5-2020-2020-24h-v1-01-04-south:
         - rename:
           param:
             temp_2m: 2t
-      
+
   # input:
   # anemoi-dataset:
   #   join:

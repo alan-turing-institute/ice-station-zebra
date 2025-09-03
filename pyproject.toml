@@ -56,6 +56,7 @@ omit= [
 [[tool.mypy.overrides]]
 module = [
     "anemoi.datasets.*",
+    "anemoi.transform.*",
     "icenet.data.sic.*",
     "zarr.*",
 ]

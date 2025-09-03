@@ -1,5 +1,5 @@
-from .test_filter import TestFilter
+from .example_filter import ExampleFilter
 
 __all__ = [
-    "TestFilter",
+    "ExampleFilter",
 ]

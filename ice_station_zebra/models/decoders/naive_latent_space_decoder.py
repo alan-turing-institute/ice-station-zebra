@@ -1,9 +1,9 @@
 import math
 from typing import Any
 
-from torch import nn, stack
+from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_decoder import BaseDecoder
 
@@ -49,20 +49,14 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: decode latent space into output space.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_forecast_steps, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+            TensorNCHW with (batch_size, output_channels, output_height, output_width)
 
         """
-        return stack(
-            [
-                self.model(x[:, idx_t, :, :, :])  # cut the NTCHW input into NCHW slices
-                for idx_t in range(self.n_forecast_steps)
-            ],
-            dim=1,
-        )
+        return self.model(x)

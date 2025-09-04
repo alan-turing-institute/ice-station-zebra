@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import TensorNTCHW
+from ice_station_zebra.types import TensorNCHW
 
 from .base_processor import BaseProcessor
 

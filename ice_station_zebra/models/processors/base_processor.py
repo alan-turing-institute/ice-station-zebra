@@ -61,10 +61,10 @@ class BaseProcessor(nn.Module):
         """Single rollout step: process in NCHW latent space.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
         msg = "If you are using the default forward method, you must implement rollout."

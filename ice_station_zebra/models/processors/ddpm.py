@@ -37,10 +37,10 @@ class DDPMProcessor(BaseProcessor):
         """Generate a single NCHW output with diffusion.
 
         Args:
-            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
         x_bhwc = x.movedim(1, -1)

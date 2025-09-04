@@ -24,7 +24,7 @@ class TestBaseProcessor:
         processor = BaseProcessor(
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
-            n_latent_channels=test_latent_shape[2],
+            n_latent_channels_total=test_latent_shape[2],
         )
         with pytest.raises(
             NotImplementedError,
@@ -59,7 +59,7 @@ class TestNullProcessor:
         processor = NullProcessor(
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
-            n_latent_channels=latent_space.channels,
+            n_latent_channels_total=latent_space.channels,
         )
         result: torch.Tensor = processor(
             torch.randn(
@@ -104,7 +104,7 @@ class TestUNetProcessor:
                     filter_size=test_filter_size,
                     n_forecast_steps=test_n_forecast_steps,
                     n_history_steps=test_n_history_steps,
-                    n_latent_channels=test_latent_shape[2],
+                    n_latent_channels_total=test_latent_shape[2],
                     start_out_channels=test_start_out_channels,
                 )
             return
@@ -118,7 +118,7 @@ class TestUNetProcessor:
                     filter_size=test_filter_size,
                     n_forecast_steps=test_n_forecast_steps,
                     n_history_steps=test_n_history_steps,
-                    n_latent_channels=test_latent_shape[2],
+                    n_latent_channels_total=test_latent_shape[2],
                     start_out_channels=test_start_out_channels,
                 )
             return
@@ -127,7 +127,7 @@ class TestUNetProcessor:
             filter_size=test_filter_size,
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
-            n_latent_channels=test_latent_shape[2],
+            n_latent_channels_total=test_latent_shape[2],
             start_out_channels=test_start_out_channels,
         )
 

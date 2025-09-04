@@ -26,6 +26,7 @@ class TestNaiveLatentSpaceDecoder:
         decoder = NaiveLatentSpaceDecoder(
             latent_space=latent_space,
             n_forecast_steps=test_n_forecast_steps,
+            n_latent_channels_total=latent_space.channels,
             output_space=output_space,
         )
         result = decoder(

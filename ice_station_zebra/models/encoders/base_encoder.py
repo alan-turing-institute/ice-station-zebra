@@ -34,9 +34,8 @@ class BaseEncoder(nn.Module):
         """
         return stack(
             [
-                self.rollout(
-                    x[:, idx_t, :, :, :]
-                )  # cut the NTCHW input into NCHW slices
+                # Apply rollout to each NCHW slice in the NTCHW input
+                self.rollout(x[:, idx_t, :, :, :])
                 for idx_t in range(self.n_history_steps)
             ],
             dim=1,

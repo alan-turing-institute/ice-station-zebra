@@ -1,4 +1,5 @@
-import math
+from collections.abc import Sequence
+from math import ceil
 
 from torch import nn
 
@@ -12,9 +13,7 @@ class ResizingAveragePool2d(nn.Module):
     The input and output sizes must be specified at initialisation time.
     """
 
-    def __init__(
-        self, input_size: tuple[int, int], output_size: tuple[int, int]
-    ) -> None:
+    def __init__(self, input_size: Sequence[int], output_size: Sequence[int]) -> None:
         """Initialize the ResizingAveragePool2d module.
 
         Args:
@@ -25,25 +24,24 @@ class ResizingAveragePool2d(nn.Module):
         super().__init__()
 
         # Calculate an upsampling factor that will leave the input larger than the output
-        upsample_scale = math.ceil(
-            max(
-                [
-                    size_out / size_in
-                    for size_in, size_out in zip(input_size, output_size, strict=True)
-                ]
-                + [1]
-            )
+        upsample_scale = max(
+            [
+                ceil(size_out / size_in)
+                for size_in, size_out in zip(input_size, output_size, strict=True)
+            ]
+            + [1]
         )
 
         # We may have different stride/kernel sizes in the H and W dimensions
         # These values will ensure that the output is the correct size
-        strides = [
-            input_size[idx] * upsample_scale // output_size[idx] for idx in range(2)
-        ]
-        kernel_sizes = [
-            input_size[idx] * upsample_scale - (output_size[idx] - 1) * strides[idx]
-            for idx in range(2)
-        ]
+        strides = (
+            input_size[0] * upsample_scale // output_size[0],
+            input_size[1] * upsample_scale // output_size[1],
+        )
+        kernel_sizes = (
+            input_size[0] * upsample_scale - (output_size[0] - 1) * strides[0],
+            input_size[1] * upsample_scale - (output_size[1] - 1) * strides[1],
+        )
 
         # We upsample and then pool down to the desired output size
         self.model = nn.Sequential(

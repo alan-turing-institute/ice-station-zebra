@@ -7,20 +7,24 @@ class BaseProcessor(nn.Module):
     """Processor that converts latent input into latent output.
 
     Input space:
-        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
 
     Output space:
-        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
     def __init__(
-        self, *, n_forecast_steps: int, n_history_steps: int, n_latent_channels: int
+        self,
+        *,
+        n_forecast_steps: int,
+        n_history_steps: int,
+        n_latent_channels_total: int,
     ) -> None:
         """Initialise a NullProcessor."""
         super().__init__()
         self.n_forecast_steps = n_forecast_steps
         self.n_history_steps = n_history_steps
-        self.n_latent_channels = n_latent_channels
+        self.n_latent_channels_total = n_latent_channels_total
 
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: process in latent space.
@@ -33,10 +37,10 @@ class BaseProcessor(nn.Module):
         your child class.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
+            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
+            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
 
         """
         # Cut the NTCHW input into NCHW slices
@@ -57,10 +61,10 @@ class BaseProcessor(nn.Module):
         """Single rollout step: process in NCHW latent space.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
+            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
+            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
 
         """
         msg = "If you are using the default forward method, you must implement rollout."

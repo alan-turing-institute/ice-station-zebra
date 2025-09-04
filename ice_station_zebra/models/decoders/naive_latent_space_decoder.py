@@ -31,7 +31,7 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         n_conv_layers = math.floor(
             math.log2(min(*output_space.shape) / max(*latent_space.shape))
         )
-        n_channels = latent_space.channels
+        n_channels = self.n_latent_channels_total
         for _ in range(n_conv_layers):
             layers.append(
                 nn.ConvTranspose2d(

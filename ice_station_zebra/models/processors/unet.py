@@ -16,10 +16,10 @@ class UNetProcessor(BaseProcessor):
     https://doi.org/10.1038/s41467-021-25257-4
 
     Input space:
-        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
 
     Output space:
-        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
     def __init__(
@@ -51,7 +51,7 @@ class UNetProcessor(BaseProcessor):
 
         # Encoder
         self.conv1 = ConvBlock(
-            self.n_latent_channels, channels[0], filter_size=filter_size
+            self.n_latent_channels_total, channels[0], filter_size=filter_size
         )
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
@@ -79,17 +79,17 @@ class UNetProcessor(BaseProcessor):
 
         # Final layer
         self.final_layer = nn.Conv2d(
-            channels[0], self.n_latent_channels, kernel_size=1, padding="same"
+            channels[0], self.n_latent_channels_total, kernel_size=1, padding="same"
         )
 
     def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Apply UNet model to NCHW tensor.
 
         Args:
-            x: TensorNCHW with (batch_size, n_latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNCHW with (batch_size, n_latent_channels, latent_height, latent_width)
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
         _, _, h, w = x.shape

@@ -12,8 +12,11 @@ from .base_processor import BaseProcessor
 class DDPMProcessor(BaseProcessor):
     """Denoising Diffusion Probabilistic Model (DDPM).
 
-    Operations all occur in latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+    Input space:
+        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+
+    Output space:
+        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
     def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
@@ -25,7 +28,7 @@ class DDPMProcessor(BaseProcessor):
 
         """
         super().__init__(**kwargs)
-        self.model = UNetDiffusion(self.n_latent_channels, timesteps)
+        self.model = UNetDiffusion(self.n_latent_channels_total, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)

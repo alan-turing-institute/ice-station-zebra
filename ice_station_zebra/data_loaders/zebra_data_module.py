@@ -77,7 +77,6 @@ class ZebraDataModule(LightningDataModule):
         return [
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
-            if name != self.predict_target
         ]
 
     @cached_property

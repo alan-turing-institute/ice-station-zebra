@@ -1,9 +1,9 @@
 import math
 from typing import Any
 
-from torch import nn, stack
+from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_encoder import BaseEncoder
 
@@ -51,22 +51,14 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: encode input space into latent space.
-
-        As the model works in NCHW space, we apply it independently to each time step.
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
+        """Apply NaiveLatentSpaceEncoder to NCHW tensor.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
+            x: TensorNCHW with (batch_size, input_channels, input_height, input_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
+            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
-        return stack(
-            [
-                self.model(x[:, idx_t, :, :, :])  # cut the NTCHW input into NCHW slices
-                for idx_t in range(self.n_history_steps)
-            ],
-            dim=1,
-        )
+        return self.model(x)

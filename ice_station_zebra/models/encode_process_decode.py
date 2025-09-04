@@ -84,7 +84,7 @@ class EncodeProcessDecode(ZebraModel):
         ]
 
         # Combine in the variable dimension: tensor with (batch_size, n_history_steps, all_variables, latent_height, latent_width)
-        latent_input_combined: TensorNTCHW = torch.cat(latent_inputs, dim=1)
+        latent_input_combined: TensorNTCHW = torch.cat(latent_inputs, dim=2)
 
         # Process in latent space: tensor with (batch_size, n_forecast_steps, all_variables, latent_height, latent_width)
         latent_output: TensorNTCHW = self.processor(latent_input_combined)

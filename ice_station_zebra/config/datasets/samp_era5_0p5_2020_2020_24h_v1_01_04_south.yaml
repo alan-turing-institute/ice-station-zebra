@@ -53,9 +53,9 @@ samp-era5-0p5-2020-2020-24h-v1-01-04-south:
         v_component: v # Name of v wind component (input) variable
         wind_speed: ws # Name of wind speed (output) variable
         wind_direction: wdir
-    - test_filter:
-        input_field: msl  # Example of custom filter
-#
+#     - example_filter:
+#         input_field: msl  # Example of custom filter
+# #
 
 # samp-era5-0p5-2020-2020-24h-v1-01-04-south:
 #   name: samp-era5-0p5-2020-2020-24h-v1-01-04-south

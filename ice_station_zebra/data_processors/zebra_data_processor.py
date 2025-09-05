@@ -48,7 +48,7 @@ class ZebraDataProcessor:
 
     def download(self) -> None:
         """Download a single Anemoi dataset."""
-        filter_registry.register("test_filter", ExampleFilter)
+        filter_registry.register("example_filter", ExampleFilter)
         self.preprocessor.download(self.path_preprocessor)
         logger.info("Creating dataset %s at %s.", self.name, self.path_dataset)
         Create().run(

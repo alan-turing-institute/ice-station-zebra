@@ -4,7 +4,7 @@ import earthkit.data as ekd  # type: ignore[import-untyped]
 from anemoi.transform.filters.matching import MatchingFieldsFilter, matching
 
 
-# @filter_registry.register("test_filter")
+# @filter_registry.register("example_filter")
 class ExampleFilter(MatchingFieldsFilter):
     @matching(
         select="param",

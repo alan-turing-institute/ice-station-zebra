@@ -17,7 +17,7 @@
 | ice\_station\_zebra/config/\_\_init\_\_.py                              |        0 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/\_\_init\_\_.py                       |        3 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       44 |       27 |     39% |27-45, 66, 78, 89-90, 94, 101, 108-112, 117-121 |
-| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       50 |       30 |     40% |25-66, 77, 86, 96-116, 122-142, 148-168 |
+| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       50 |       30 |     40% |25-66, 77, 85, 95-115, 121-141, 147-167 |
 | ice\_station\_zebra/data\_loaders/zebra\_dataset.py                     |       45 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/\_\_init\_\_.py                    |        2 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/cli.py                             |       23 |        9 |     61% |20-23, 30-33, 37 |
@@ -38,20 +38,21 @@
 | ice\_station\_zebra/models/common/timeembed.py                          |        9 |        4 |     56% | 26-30, 37 |
 | ice\_station\_zebra/models/common/upconvblock.py                        |        9 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        3 |        0 |    100% |           |
-| ice\_station\_zebra/models/decoders/base\_decoder.py                    |        9 |        0 |    100% |           |
-| ice\_station\_zebra/models/decoders/naive\_latent\_space\_decoder.py    |       20 |        0 |    100% |           |
+| ice\_station\_zebra/models/decoders/base\_decoder.py                    |       12 |        2 |     83% |     54-55 |
+| ice\_station\_zebra/models/decoders/naive\_latent\_space\_decoder.py    |       19 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/\_\_init\_\_.py                    |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/gaussian\_diffusion.py             |       46 |       36 |     22% |41-74, 93-98, 117-137, 153-156, 177-182 |
 | ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       67 |     15% |49-102, 123-167, 183-198, 211-214 |
-| ice\_station\_zebra/models/encode\_process\_decode.py                   |       22 |        0 |    100% |           |
+| ice\_station\_zebra/models/encode\_process\_decode.py                   |       23 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                     |        3 |        0 |    100% |           |
-| ice\_station\_zebra/models/encoders/base\_encoder.py                    |       10 |        0 |    100% |           |
-| ice\_station\_zebra/models/encoders/naive\_latent\_space\_encoder.py    |       20 |        0 |    100% |           |
+| ice\_station\_zebra/models/encoders/base\_encoder.py                    |       12 |        2 |     83% |     54-55 |
+| ice\_station\_zebra/models/encoders/naive\_latent\_space\_encoder.py    |       19 |        0 |    100% |           |
 | ice\_station\_zebra/models/persistence.py                               |       16 |        0 |    100% |           |
-| ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        4 |        0 |    100% |           |
-| ice\_station\_zebra/models/processors/ddpm.py                           |       26 |       17 |     35% |24-28, 40-44, 62-78 |
-| ice\_station\_zebra/models/processors/null.py                           |        9 |        0 |    100% |           |
-| ice\_station\_zebra/models/processors/unet.py                           |       51 |        0 |    100% |           |
+| ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        5 |        0 |    100% |           |
+| ice\_station\_zebra/models/processors/base\_processor.py                |       18 |        0 |    100% |           |
+| ice\_station\_zebra/models/processors/ddpm.py                           |       27 |       17 |     37% |30-34, 46-50, 68-84 |
+| ice\_station\_zebra/models/processors/null.py                           |       10 |        0 |    100% |           |
+| ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/zebra\_model.py                              |       45 |        0 |    100% |           |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
@@ -67,7 +68,7 @@
 | ice\_station\_zebra/visualisations/layout.py                            |      158 |      132 |     16% |115-318, 338-347, 363-365, 379-381, 430-503, 536-553, 571-575, 610-626 |
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      102 |       90 |     12% |23-25, 45-53, 79-115, 152-190, 213-219, 239-245, 252-272, 279-289 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |       88 |       69 |     22% |82-121, 169-262, 307-409, 430, 446-447 |
-|                                                               **TOTAL** | **1578** |  **779** | **51%** |           |
+|                                                               **TOTAL** | **1605** |  **783** | **51%** |           |
 
 
 ## Setup coverage badge

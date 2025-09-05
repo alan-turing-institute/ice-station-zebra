@@ -9,17 +9,47 @@ class UpconvBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         activation: str = "ReLU",
+        normalization: str | None = "batch",  # None, "batch", or "group"
+        num_groups: int | None = None,  # Required for GroupNorm
     ) -> None:
-        """Initialise an UpconvBlock."""
+        """Initialise a flexible UpconvBlock.
+
+        Args:
+            in_channels: Input channel size
+            out_channels: Output channel size
+            activation: Activation function name
+            normalization: Type of normalization (None, "batch", or "group")
+            num_groups: Number of groups for GroupNorm (required if normalization="group")
+
+        """
         super().__init__()
+
+        if normalization == "group" and num_groups is None:
+            msg = "num_groups must be specified when using GroupNorm"
+            raise ValueError(msg)
 
         activation_layer = ACTIVATION_FROM_NAME[activation]
 
-        self.model = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode="nearest"),
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
-            activation_layer(inplace=True),
+        layers = []
+
+        # Upsampling layer
+        layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
+
+        # Convolution
+        layers.append(
+            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same")
         )
+
+        # Optional normalization
+        if normalization == "batch":
+            layers.append(nn.BatchNorm2d(num_features=out_channels))
+        elif normalization == "group":
+            layers.append(nn.GroupNorm(num_groups, out_channels))
+
+        # Activation
+        layers.append(activation_layer(inplace=True))
+
+        self.model = nn.Sequential(*layers)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)

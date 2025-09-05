@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_b7bfa2af456e0641_unet_diffusion_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.5">coverage.py v7.10.5</a>,
-            created at 2025-08-28 21:28 +0000
+            created at 2025-09-05 10:02 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -188,12 +188,12 @@
     <p class="pln"><span class="n"><a id="t106" href="#t106">106</a></span><span class="t"><span class="str">        where the model predicts velocity v_t instead of noise epsilon.</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t107" href="#t107">107</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t108" href="#t108">108</a></span><span class="t"><span class="str">        Args:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t109" href="#t109">109</a></span><span class="t"><span class="str">            x (torch.Tensor): Current noisy sample x_t at timestep t (shape: [B,H,W,n_classes*n_forecast_days]).</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t109" href="#t109">109</a></span><span class="t"><span class="str">            x (torch.Tensor): Current noisy sample x_t at timestep t (shape: [B,n_classes*n_forecast_days,H,W]).</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t110" href="#t110">110</a></span><span class="t"><span class="str">            t (torch.Tensor): Timesteps for each sample in the batch (shape: [B]).</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t111" href="#t111">111</a></span><span class="t"><span class="str">            pred_v (torch.Tensor): Model's predicted velocity (v_theta) at timestep t (shape: [B,H,W,n_classes*n_forecast_days]).</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t111" href="#t111">111</a></span><span class="t"><span class="str">            pred_v (torch.Tensor): Model's predicted velocity (v_theta) at timestep t (shape: [B,n_classes*n_forecast_days,H,W]).</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t112" href="#t112">112</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t113" href="#t113">113</a></span><span class="t"><span class="str">        Returns:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t114" href="#t114">114</a></span><span class="t"><span class="str">            torch.Tensor: Sample from the previous timestep x_{t-1} (shape: [B,H,W,n_classes*n_forecast_days]).</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t114" href="#t114">114</a></span><span class="t"><span class="str">            torch.Tensor: Sample from the previous timestep x_{t-1} (shape: [B,n_classes*n_forecast_days,H,W]).</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t115" href="#t115">115</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t116" href="#t116">116</a></span><span class="t"><span class="str">        """</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t117" href="#t117">117</a></span><span class="t">        <span class="nam">sqrt_alpha_t</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_extract</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">sqrt_alphas_cumprod</span><span class="op">,</span> <span class="nam">t</span><span class="op">,</span> <span class="nam">x</span><span class="op">.</span><span class="nam">shape</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -271,7 +271,7 @@
             <a class="nav" href="z_b7bfa2af456e0641_unet_diffusion_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.5">coverage.py v7.10.5</a>,
-            created at 2025-08-28 21:28 +0000
+            created at 2025-09-05 10:02 +0000
         </p>
     </div>
 </footer>

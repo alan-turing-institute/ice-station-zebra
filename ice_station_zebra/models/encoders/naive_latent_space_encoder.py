@@ -3,7 +3,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_encoder import BaseEncoder
 
@@ -15,7 +15,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
     Latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
     def __init__(
@@ -27,14 +27,13 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Start by flattening the time and channels
-        layers.append(nn.Flatten(1, 2))
-        n_channels = input_space.channels * self.n_history_steps
-
-        # Add size-reducing convolutional layers while we are larger than the latent shape
+        # Calculate how many size-reducing convolutional layers are needed
         n_conv_layers = math.floor(
             math.log2(min(*input_space.shape) / max(*latent_space.shape))
         )
+
+        # Add size-reducing convolutional layers
+        n_channels = input_space.channels
         for _ in range(n_conv_layers):
             layers.append(
                 nn.Conv2d(
@@ -52,11 +51,11 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNTCHW) -> TensorNCHW:
-        """Forward step: encode input space into latent space.
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
+        """Apply NaiveLatentSpaceEncoder to NCHW tensor.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
+            x: TensorNCHW with (batch_size, input_channels, input_height, input_width)
 
         Returns:
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)

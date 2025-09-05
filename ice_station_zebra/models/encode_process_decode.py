@@ -4,12 +4,14 @@ import hydra
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNTCHW
 
 from .zebra_model import ZebraModel
 
 if TYPE_CHECKING:
+    from ice_station_zebra.models.decoders import BaseDecoder
     from ice_station_zebra.models.encoders import BaseEncoder
+    from ice_station_zebra.models.processors import BaseProcessor
 
 
 class EncodeProcessDecode(ZebraModel):
@@ -28,6 +30,7 @@ class EncodeProcessDecode(ZebraModel):
         # Construct the latent space
         latent_space["name"] = "latent_space"
         latent_space_ = DataSpace.from_dict(latent_space)
+        n_latent_channels_total = latent_space_.channels * len(self.input_spaces)
 
         # Add one encoder per dataset
         # We store this as a list to ensure consistent ordering
@@ -48,17 +51,22 @@ class EncodeProcessDecode(ZebraModel):
             self.add_module(f"encoder_{idx}", module)
 
         # Add a processor
-        self.processor = hydra.utils.instantiate(
+        self.processor: BaseProcessor = hydra.utils.instantiate(
             dict(**processor)
-            | {"n_latent_channels": latent_space_.channels * len(self.encoders)}
+            | {
+                "n_forecast_steps": self.n_forecast_steps,
+                "n_history_steps": self.n_history_steps,
+                "n_latent_channels_total": n_latent_channels_total,
+            }
         )
 
         # Add a decoder
-        self.decoder = hydra.utils.instantiate(
+        self.decoder: BaseDecoder = hydra.utils.instantiate(
             dict(**decoder)
             | {
                 "latent_space": latent_space_,
                 "n_forecast_steps": self.n_forecast_steps,
+                "n_latent_channels_total": n_latent_channels_total,
                 "output_space": self.output_space,
             }
         )
@@ -66,24 +74,24 @@ class EncodeProcessDecode(ZebraModel):
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Forward step of the model.
 
-        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
-        - encode inputs to [NCHW] latent space [batch, C_input_kprime, H_latent, W_latent]
-        - concatenate inputs in [NCHW] latent space [batch, C_total, H_latent, W_latent]
-        - process in latent space [NCHW] [batch, C_total, H_latent, W_latent]
-        - decode back to [NTCHW] output space [batch, n_forecast_steps, C_output, H_output, W_output]
+        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, n_input_channels_k, H_input_k, W_input_k]
+        - encode inputs to [NTCHW] latent space [batch, n_history_steps, n_latent_channels, H_latent, W_latent]
+        - concatenate inputs in [NTCHW] latent space [batch, n_history_steps, n_latent_channels_total, H_latent, W_latent]
+        - process in latent space [NTCHW] [batch, n_forecast_steps, n_latent_channels_total, H_latent, W_latent]
+        - decode back to [NTCHW] output space [batch, n_forecast_steps, n_output_channels, H_output, W_output]
         """
-        # Encode inputs into latent space: list of tensors with (batch_size, variables, latent_height, latent_width)
-        latent_inputs: list[TensorNCHW] = [
+        # Encode inputs into latent space: list of tensors with (batch_size, n_history_steps, variables, latent_height, latent_width)
+        latent_inputs: list[TensorNTCHW] = [
             encoder(inputs[encoder.name]) for encoder in self.encoders
         ]
 
-        # Combine in the variable dimension: tensor with (batch_size, all_variables, latent_height, latent_width)
-        latent_input_combined: TensorNCHW = torch.cat(latent_inputs, dim=1)
+        # Combine in the variable dimension: tensor with (batch_size, n_history_steps, all_variables, latent_height, latent_width)
+        latent_input_combined: TensorNTCHW = torch.cat(latent_inputs, dim=2)
 
-        # Process in latent space: tensor with (batch_size, all_variables, latent_height, latent_width)
-        latent_output: TensorNCHW = self.processor(latent_input_combined)
+        # Process in latent space: tensor with (batch_size, n_forecast_steps, all_variables, latent_height, latent_width)
+        latent_output: TensorNTCHW = self.processor(latent_input_combined)
 
-        # Decode to output space: tensor with (batch_size, output_variables, output_height, output_width)
+        # Decode to output space: tensor with (batch_size, n_forecast_steps, output_variables, output_height, output_width)
         output: TensorNTCHW = self.decoder(latent_output)
 
         # Return

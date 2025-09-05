@@ -208,8 +208,8 @@ block_dropout = CommonConvBlock(
     final=False
 )
 
-# GroupNorm with both final layer and dropout
-block_final_dropout = CommonConvBlock(
+# GroupNorm with both final layer and dropout (Bottleneck-style)
+block_bottleneck = CommonConvBlock(
     in_channels=64,
     out_channels=128,
     norm_type="groupnorm",

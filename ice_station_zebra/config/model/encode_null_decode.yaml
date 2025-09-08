@@ -14,4 +14,4 @@ processor:
   _target_: ice_station_zebra.models.processors.NullProcessor
 
 decoder:
-  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder
+  _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

@@ -1,55 +1,47 @@
-from torch import Tensor, nn
+from torch import nn, Tensor
+from .convnormact import ConvNormAct, get_num_groups
 
-from .activations import ACTIVATION_FROM_NAME
 
+class UpConvBlock(nn.Module):
+    """Upsampling block: upsample → ConvNormAct."""
 
-class UpconvBlock(nn.Module):
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        activation: str = "ReLU",
-        normalization: str | None = "batch",  # None, "batch", or "group"
-        num_groups: int | None = None,  # Required for GroupNorm
+        kernel_size: int = 2,
+        norm_type: str = "groupnorm",
+        activation: str = "SiLU",
+        dropout_rate: float = 0.0,
     ) -> None:
-        """Initialise a flexible UpconvBlock.
+        """
+        Upsampling block with upsample and convolution.
 
         Args:
-            in_channels: Input channel size
-            out_channels: Output channel size
-            activation: Activation function name
-            normalization: Type of normalization (None, "batch", or "group")
-            num_groups: Number of groups for GroupNorm (required if normalization="group")
-
+            in_channels (int): Input channel size.
+            out_channels (int): Output channel size.
+            kernel_size (int): Kernel size for the convolution after upsampling.
+            norm_type (str): Type of normalization ("groupnorm", "batchnorm", or "none").
+            activation (str): Name of activation function.
+            dropout_rate (float): Dropout probability for ConvNormAct.
         """
         super().__init__()
 
-        if normalization == "group" and num_groups is None:
-            msg = "num_groups must be specified when using GroupNorm"
-            raise ValueError(msg)
+        # Determine num_groups only if using GroupNorm
+        num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
 
-        activation_layer = ACTIVATION_FROM_NAME[activation]
-
-        layers = []
-
-        # Upsampling layer
-        layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
-
-        # Convolution
-        layers.append(
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same")
+        self.block = nn.Sequential(
+            nn.Upsample(scale_factor=2, mode="nearest"),
+            ConvNormAct(
+                in_channels,
+                out_channels,
+                kernel_size,
+                norm_type,
+                num_groups,
+                activation,
+                dropout_rate,
+            ),
         )
 
-        # Optional normalization
-        if normalization == "batch":
-            layers.append(nn.BatchNorm2d(num_features=out_channels))
-        elif normalization == "group":
-            layers.append(nn.GroupNorm(num_groups, out_channels))
-
-        # Activation
-        layers.append(activation_layer(inplace=True))
-
-        self.model = nn.Sequential(*layers)
-
     def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)
+        return self.block(x)

@@ -1,6 +1,5 @@
 from torch import Tensor, nn
 
-from .activations import ACTIVATION_FROM_NAME
 from .convnormact import ConvNormAct, get_num_groups
 
 
@@ -40,10 +39,7 @@ class CommonConvBlock(nn.Module):
         norm_type = norm_type.lower()
 
         # Determine num_groups only if using GroupNorm
-        num_groups = (
-            num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
-
-        )
+        num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
 
         # Create stacked ConvNormAct blocks
         self.block1 = ConvNormAct(

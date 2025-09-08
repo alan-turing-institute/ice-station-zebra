@@ -20,6 +20,7 @@ def get_num_groups(channels: int) -> int:
         num_groups -= 1
     return 1  # Fallback to GroupNorm(1,...), equivalent to LayerNorm
 
+
 class ConvNormAct(nn.Module):
     """Mini block: Conv2d → Normalization → Activation, optional Dropout.
 

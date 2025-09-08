@@ -1,4 +1,5 @@
-from torch import nn, Tensor
+from torch import Tensor, nn
+
 from .convnormact import ConvNormAct, get_num_groups
 
 
@@ -14,8 +15,7 @@ class UpConvBlock(nn.Module):
         activation: str = "SiLU",
         dropout_rate: float = 0.0,
     ) -> None:
-        """
-        Upsampling block with upsample and convolution.
+        """Upsampling block with upsample and convolution.
 
         Args:
             in_channels (int): Input channel size.
@@ -24,6 +24,7 @@ class UpConvBlock(nn.Module):
             norm_type (str): Type of normalization ("groupnorm", "batchnorm", or "none").
             activation (str): Name of activation function.
             dropout_rate (float): Dropout probability for ConvNormAct.
+
         """
         super().__init__()
 

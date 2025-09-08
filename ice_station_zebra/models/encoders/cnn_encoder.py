@@ -50,7 +50,7 @@ class CNNEncoder(BaseEncoder):
         self.model = nn.Sequential(*layers)
 
     def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Apply CNNEncoder to NCHW tensor.
+        """Single rollout step: encode NCHW input into NCHW latent space.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

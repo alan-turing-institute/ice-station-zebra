@@ -17,7 +17,7 @@ import torch.nn.functional as F
 import math
 from typing import Tuple
 
-from .common import BottleneckBlock, ConvBlock, TimeEmbed, UpconvBlock
+from .common import CommonConvBlock, TimeEmbed, UpConvBlock
 
         
 class UNetDiffusion(nn.Module):
@@ -36,6 +36,7 @@ class UNetDiffusion(nn.Module):
                  timesteps=1000,
                  start_out_channels=32,
                  activation: str = "SiLU",
+                 normalization: str = "groupnorm",
                  **kwargs):
         """
         Initialize the U-Net diffusion model.
@@ -58,6 +59,7 @@ class UNetDiffusion(nn.Module):
         self.n_output_classes = n_output_classes
         self.timesteps = timesteps
         self.activation = activation
+        self.normalization = normalization
         
         # Time embedding
         self.time_embed_dim = 256
@@ -68,37 +70,102 @@ class UNetDiffusion(nn.Module):
         self.initial_conv_channels = (n_output_classes * n_forecast_days) + input_channels
         
         # Encoder
-        self.conv1 = ConvBlock(self.initial_conv_channels, channels[0], filter_size=filter_size, activation=self.activation)
+        self.conv1 = CommonConvBlock(
+            in_channels=self.initial_conv_channels,
+            out_channels=channels[0],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
         self.maxpool1 = nn.MaxPool2d(2)
-        self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size, activation=self.activation)
+        self.conv2 = CommonConvBlock(
+            in_channels=channels[0],
+            out_channels=channels[1],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
         self.maxpool2 = nn.MaxPool2d(2)
-        self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size, activation=self.activation)
+        self.conv3 = CommonConvBlock(
+            in_channels=channels[1],
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
         self.maxpool3 = nn.MaxPool2d(2)
-        self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size, activation=self.activation)
+        self.conv4 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
         self.maxpool4 = nn.MaxPool2d(2)
+        
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size, activation=self.activation)
+        self.conv5 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[3],
+            kernel_size=self.filter_size,  # You'll need to pass this from self.filter_size
+            norm_type=self.normalization,
+            activation=self.activation,
+            dropout_rate=0.1,
+        )
 
         # Decoder
-        self.up6 = UpconvBlock(channels[3], channels[2], activation=self.activation)
-        self.up7 = UpconvBlock(channels[2], channels[2], activation=self.activation)
-        self.up8 = UpconvBlock(channels[2], channels[1], activation=self.activation)
-        self.up9 = UpconvBlock(channels[1], channels[0], activation=self.activation)
+        self.up6 = UpConvBlock(
+            in_channels=channels[3],
+            out_channels=channels[2],
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
+        self.up7 = UpConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
+        self.up8 = UpConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[1],
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
+        self.up9 = UpConvBlock(
+            in_channels=channels[1],
+            out_channels=channels[0],
+            norm_type=self.normalization,
+            activation=self.activation,
+        )
 
-        self.up6b = ConvBlock(
-            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size, activation=self.activation
+        self.up6b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
         )
-        self.up7b = ConvBlock(
-            channels[3] + self.time_embed_dim, channels[2], filter_size=filter_size, activation=self.activation
+        self.up7b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
         )
-        self.up8b = ConvBlock(
-            channels[2] + self.time_embed_dim, channels[1], filter_size=filter_size, activation=self.activation
+        self.up8b = CommonConvBlock(
+            in_channels=channels[2] + self.time_embed_dim,
+            out_channels=channels[1],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
+            activation=self.activation,
         )
-        self.up9b = ConvBlock(
-            channels[1] + self.time_embed_dim,
-            channels[0],
-            filter_size=filter_size,
+        self.up9b = CommonConvBlock(
+            in_channels=channels[1] + self.time_embed_dim,
+            out_channels=channels[0],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
             final=True,
         )
@@ -214,4 +281,19 @@ class UNetDiffusion(nn.Module):
         t = t.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, h, w)
         return torch.cat([x, t], dim=1)
     
-  
+    def _get_num_groups(self, channels):
+        """
+        Determines the maximum number of groups that divide `channels` for GroupNorm.
+
+        Args:
+            channels (int): Number of feature channels.
+
+        Returns:
+            int: Optimal number of groups.
+        """
+        num_groups = 8  # Start with preferred group count
+        while num_groups > 1:
+            if channels % num_groups == 0:
+                return num_groups
+            num_groups -= 1
+        return 1  # Fallback to GroupNorm(1,...) which is equivalent to LayerNorm

@@ -25,7 +25,7 @@ class CNNEncoder(BaseEncoder):
         *,
         input_space: DataSpace,
         latent_space: DataSpace,
-        n_layers: int = 4,
+        n_layers: int = 2,
         activation: str = "ReLU",
         **kwargs: Any,
     ) -> None:

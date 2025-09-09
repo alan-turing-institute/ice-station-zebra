@@ -11,6 +11,8 @@ from .base_decoder import BaseDecoder
 class CNNDecoder(BaseDecoder):
     """Decoder that uses a convolutional neural net (CNN) to translate latent space back to data space.
 
+    The layers are the reverse of those in the CNNEncoder.
+
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
@@ -33,8 +35,11 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
+        # Convolve to the necessary number of channels that will reduce down to the output channels
+        n_channels = output_space.channels * (2**n_layers)
+        layers.append(nn.Conv2d(self.n_latent_channels_total, n_channels, 1))
+
         # Add n_layers size-increasing convolutional blocks
-        n_channels = self.n_latent_channels_total
         for _ in range(n_layers):
             layers.append(ConvBlockUpsample(n_channels, activation=activation))
             n_channels //= 2
@@ -42,9 +47,6 @@ class CNNDecoder(BaseDecoder):
         # Add an adaptive pooling layer that sets the final spatial dimensions
         final_conv_shape = [size * (2**n_layers) for size in latent_space.shape]
         layers.append(ResizingAveragePool2d(final_conv_shape, output_space.shape))
-
-        # Convolve to the desired number of latent channels
-        layers.append(nn.Conv2d(n_channels, output_space.channels, 1))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

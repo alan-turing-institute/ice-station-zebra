@@ -11,6 +11,8 @@ from .base_encoder import BaseEncoder
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
+    The layers are the reverse of those in the CNNDecoder.
+
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 

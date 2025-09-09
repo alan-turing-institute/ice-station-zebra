@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ice_station_zebra.models.decoders import NaiveLatentSpaceDecoder
+from ice_station_zebra.models.decoders import NaiveLinearDecoder
 from ice_station_zebra.types import DataSpace
 
 
@@ -9,7 +9,7 @@ from ice_station_zebra.types import DataSpace
 @pytest.mark.parametrize("test_output_shape", [(512, 512, 4), (1000, 200, 1)])
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
 @pytest.mark.parametrize("test_n_forecast_steps", [1, 3, 5])
-class TestNaiveLatentSpaceDecoder:
+class TestNaiveLinearDecoder:
     def test_forward_shape(
         self,
         test_batch_size: int,
@@ -23,7 +23,7 @@ class TestNaiveLatentSpaceDecoder:
         output_space = DataSpace(
             name="output", shape=test_output_shape[0:2], channels=test_output_shape[2]
         )
-        decoder = NaiveLatentSpaceDecoder(
+        decoder = NaiveLinearDecoder(
             latent_space=latent_space,
             n_forecast_steps=test_n_forecast_steps,
             n_latent_channels_total=latent_space.channels,

@@ -1,28 +1,48 @@
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
-from .activations import get_activation
+from .convnormact import ConvNormAct, get_num_groups
 
 
-class UpconvBlock(nn.Module):
+class UpConvBlock(nn.Module):
+    """Upsampling block: upsample → ConvNormAct."""
+
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        activation: str = "ReLU",
+        kernel_size: int = 2,
+        norm_type: str = "groupnorm",
+        activation: str = "SiLU",
+        dropout_rate: float = 0.0,
     ) -> None:
+        """Upsampling block with upsample and convolution.
+
+        Args:
+            in_channels (int): Input channel size.
+            out_channels (int): Output channel size.
+            kernel_size (int): Kernel size for the convolution after upsampling.
+            norm_type (str): Type of normalization ("groupnorm", "batchnorm", or "none").
+            activation (str): Name of activation function.
+            dropout_rate (float): Dropout probability for ConvNormAct.
+
+        """
         super().__init__()
 
-        def act():
-            return get_activation(activation)
+        # Determine num_groups only if using GroupNorm
+        num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
 
-        self.model = nn.Sequential(
+        self.block = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
-            nn.GroupNorm(num_groups, out_channels),
-            act(),
+            ConvNormAct(
+                in_channels,
+                out_channels,
+                kernel_size,
+                norm_type,
+                num_groups,
+                activation,
+                dropout_rate,
+            ),
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.model(x)
-
+        return self.block(x)

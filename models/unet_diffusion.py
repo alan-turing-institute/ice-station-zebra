@@ -37,6 +37,7 @@ class UNetDiffusion(nn.Module):
                  start_out_channels=32,
                  activation: str = "SiLU",
                  normalization: str = "groupnorm",
+                 dropout_rate: float = 0.1,
                  **kwargs):
         """
         Initialize the U-Net diffusion model.
@@ -48,6 +49,10 @@ class UNetDiffusion(nn.Module):
             n_forecast_days (int): Number of days to forecast.
             n_output_classes (int): Number of output regression targets per forecast day.
             timesteps (int): Number of diffusion timesteps.
+            start_out_channels (int): Number of output channels in the first convolution block. Defaults to 32.
+            activation (str): Activation function to use (e.g., SiLU, ReLU, LeakyReLU).
+            normalization (str): Normalization strategy (e.g., groupnorm, batchnorm).
+            dropout_rate (float): Dropout probability applied in convolutional blocks.
             **kwargs: Additional arguments (ignored).
         """
         super(UNetDiffusion, self).__init__()
@@ -60,6 +65,7 @@ class UNetDiffusion(nn.Module):
         self.timesteps = timesteps
         self.activation = activation
         self.normalization = normalization
+        self.dropout_rate = dropout_rate
         
         # Time embedding
         self.time_embed_dim = 256
@@ -111,7 +117,7 @@ class UNetDiffusion(nn.Module):
             kernel_size=self.filter_size,  # You'll need to pass this from self.filter_size
             norm_type=self.normalization,
             activation=self.activation,
-            dropout_rate=0.1,
+            dropout_rate=self.dropout_rate,
         )
 
         # Decoder

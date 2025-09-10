@@ -15,9 +15,6 @@ import math
 import torch
 from torch import nn
 
-# from ice_station_zebra.models.common.convblock import CommonConvBlock
-# from ice_station_zebra.models.common.timeembed import TimeEmbed
-# from ice_station_zebra.models.common.UpConvBlock import UpConvBlock
 from .common import CommonConvBlock, TimeEmbed, UpConvBlock
 
 
@@ -28,7 +25,7 @@ class UNetDiffusion(nn.Module):
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_channels: int,
         timesteps: int = 1000,
@@ -37,6 +34,7 @@ class UNetDiffusion(nn.Module):
         time_embed_dim: int = 256,
         normalization: str = "groupnorm",
         activation: str = "SiLU",
+        dropout_rate: float = 0.1,
     ) -> None:
         """Initialize the U-Net diffusion model.
 
@@ -53,6 +51,9 @@ class UNetDiffusion(nn.Module):
         self.filter_size = filter_size
         self.start_out_channels = start_out_channels
         self.timesteps = timesteps
+        self.normalization = normalization
+        self.activation = activation
+        self.dropout_rate = dropout_rate
 
         # Time embedding
         self.time_embed = TimeEmbed(time_embed_dim)
@@ -104,7 +105,7 @@ class UNetDiffusion(nn.Module):
             kernel_size=self.filter_size,  # You'll need to pass this from self.filter_size
             norm_type=self.normalization,
             activation=self.activation,
-            dropout_rate=0.1,
+            dropout_rate=self.dropout_rate,
         )
 
         # Decoder

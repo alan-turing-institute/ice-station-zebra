@@ -44,6 +44,9 @@ class UNetDiffusion(nn.Module):
             filter_size (int): Convolution kernel size for all conv layers.
             start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
             time_embed_dim (int): Size of time embedding dimension.
+            normalization (str): Normalization strategy (e.g., groupnorm, batchnorm, layernorm).
+            activation (str): Activation function to use (e.g., SiLU, ReLU, LeakyReLU).
+            dropout_rate (float): Dropout probability applied in convolutional blocks.
 
         """
         super().__init__()

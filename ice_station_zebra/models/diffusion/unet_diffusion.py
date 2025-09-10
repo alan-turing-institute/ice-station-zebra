@@ -15,7 +15,7 @@ import math
 import torch
 from torch import nn
 
-from .ice_station_zebra.common import CommonConvBlock, TimeEmbed, UpConvBlock
+from ice_station_zebra.common import CommonConvBlock, TimeEmbed, UpConvBlock
 
 
 class UNetDiffusion(nn.Module):

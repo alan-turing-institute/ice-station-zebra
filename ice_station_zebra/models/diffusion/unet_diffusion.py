@@ -15,10 +15,10 @@ import math
 import torch
 from torch import nn
 
-from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
-from ice_station_zebra.models.common.convblock import ConvBlock
-from ice_station_zebra.models.common.timeembed import TimeEmbed
-from ice_station_zebra.models.common.upconvblock import UpconvBlock
+# from ice_station_zebra.models.common.convblock import CommonConvBlock
+# from ice_station_zebra.models.common.timeembed import TimeEmbed
+# from ice_station_zebra.models.common.UpConvBlock import UpConvBlock
+from .common import CommonConvBlock, TimeEmbed, UpConvBlock
 
 
 class UNetDiffusion(nn.Module):
@@ -35,6 +35,8 @@ class UNetDiffusion(nn.Module):
         filter_size: int = 3,
         start_out_channels: int = 64,
         time_embed_dim: int = 256,
+        normalization: str = "groupnorm",
+        activation: str = "SiLU",
     ) -> None:
         """Initialize the U-Net diffusion model.
 
@@ -62,124 +64,102 @@ class UNetDiffusion(nn.Module):
         self.initial_conv_channels = input_channels + output_channels
 
         # Encoder
-        self.conv1 = ConvBlock(
-            self.initial_conv_channels,
-            channels[0],
-            filter_size=self.filter_size,
+        self.conv1 = CommonConvBlock(
+            in_channels=self.initial_conv_channels,
+            out_channels=channels[0],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[0]),
-            activation_after_norm=True,
         )
         self.maxpool1 = nn.MaxPool2d(2)
-        self.conv2 = ConvBlock(
-            channels[0],
-            channels[1],
-            filter_size=self.filter_size,
+        self.conv2 = CommonConvBlock(
+            in_channels=channels[0],
+            out_channels=channels[1],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[1]),
-            activation_after_norm=True,
         )
         self.maxpool2 = nn.MaxPool2d(2)
-        self.conv3 = ConvBlock(
-            channels[1],
-            channels[2],
-            filter_size=self.filter_size,
+        self.conv3 = CommonConvBlock(
+            in_channels=channels[1],
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
-            activation_after_norm=True,
         )
         self.maxpool3 = nn.MaxPool2d(2)
-        self.conv4 = ConvBlock(
-            channels[2],
-            channels[2],
-            filter_size=self.filter_size,
+        self.conv4 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
-            activation_after_norm=True,
         )
         self.maxpool4 = nn.MaxPool2d(2)
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(
-            channels[2],
-            channels[3],
-            filter_size=self.filter_size,  # You'll need to pass this from self.filter_size
+        self.conv5 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[3],
+            kernel_size=self.filter_size,  # You'll need to pass this from self.filter_size
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[3]),
             dropout_rate=0.1,
-            activation_after_norm=True,
         )
 
         # Decoder
-        self.up6 = UpconvBlock(
-            channels[3],
-            channels[2],
+        self.up6 = UpConvBlock(
+            in_channels=channels[3],
+            out_channels=channels[2],
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
         )
-        self.up7 = UpconvBlock(
-            channels[2],
-            channels[2],
+        self.up7 = UpConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
         )
-        self.up8 = UpconvBlock(
-            channels[2],
-            channels[1],
+        self.up8 = UpConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[1],
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[1]),
         )
-        self.up9 = UpconvBlock(
-            channels[1],
-            channels[0],
+        self.up9 = UpConvBlock(
+            in_channels=channels[1],
+            out_channels=channels[0],
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[0]),
         )
 
-        self.up6b = ConvBlock(
-            channels[3] + self.time_embed_dim,
-            channels[2],
-            filter_size=self.filter_size,
+        self.up6b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
-            activation_after_norm=True,
         )
-        self.up7b = ConvBlock(
-            channels[3] + self.time_embed_dim,
-            channels[2],
-            filter_size=self.filter_size,
+        self.up7b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[2]),
-            activation_after_norm=True,
         )
-        self.up8b = ConvBlock(
-            channels[2] + self.time_embed_dim,
-            channels[1],
-            filter_size=self.filter_size,
+        self.up8b = CommonConvBlock(
+            in_channels=channels[2] + self.time_embed_dim,
+            out_channels=channels[1],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[1]),
-            activation_after_norm=True,
         )
-        self.up9b = ConvBlock(
-            channels[1] + self.time_embed_dim,
-            channels[0],
-            filter_size=self.filter_size,
+        self.up9b = CommonConvBlock(
+            in_channels=channels[1] + self.time_embed_dim,
+            out_channels=channels[0],
+            kernel_size=self.filter_size,
+            norm_type=self.normalization,
             activation=self.activation,
-            normalization=self.normalization,
-            num_groups=self._get_num_groups(channels[0]),
-            activation_after_norm=True,
             final=True,
         )
 

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
+from ice_station_zebra.models.common import BottleneckBlock, CommonConvBlock, UpconvBlock
 from ice_station_zebra.types import TensorNCHW
 
 
@@ -32,17 +32,17 @@ class UNetProcessor(nn.Module):
             raise ValueError(msg)
 
         # Encoder
-        self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
+        self.conv1 = CommonConvBlock(n_latent_channels, channels[0], kernel_size=filter_size)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
+        self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=filter_size)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size)
+        self.conv3 = CommonConvBlock(channels[1], channels[2], kernel_size=filter_size)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size)
+        self.conv4 = CommonConvBlock(channels[2], channels[2], kernel_size=filter_size)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size)
+        self.conv5 = CommonConvBlock(channels[2], channels[3], kernel_size=filter_size)
 
         # Decoder
         self.up6 = UpconvBlock(channels[3], channels[2])
@@ -50,11 +50,11 @@ class UNetProcessor(nn.Module):
         self.up8 = UpconvBlock(channels[2], channels[1])
         self.up9 = UpconvBlock(channels[1], channels[0])
 
-        self.up6b = ConvBlock(channels[3], channels[2], filter_size=filter_size)
-        self.up7b = ConvBlock(channels[3], channels[2], filter_size=filter_size)
-        self.up8b = ConvBlock(channels[2], channels[1], filter_size=filter_size)
-        self.up9b = ConvBlock(
-            channels[1], channels[0], filter_size=filter_size, final=True
+        self.up6b = CommonConvBlock(channels[3], channels[2], kernel_size=filter_size)
+        self.up7b = CommonConvBlock(channels[3], channels[2], kernel_size=filter_size)
+        self.up8b = CommonConvBlock(channels[2], channels[1], kernel_size=filter_size)
+        self.up9b = CommonConvBlock(
+            channels[1], channels[0], kernel_size=filter_size, final=True
         )
 
         # Final layer

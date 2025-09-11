@@ -3,7 +3,7 @@ from typing import Any
 import torch
 from torch import nn
 
-from ice_station_zebra.models.common import CommonConvBlock, UpconvBlock
+from ice_station_zebra.models.common import CommonConvBlock, UpConvBlock
 from ice_station_zebra.types import TensorNCHW
 
 from .base_processor import BaseProcessor

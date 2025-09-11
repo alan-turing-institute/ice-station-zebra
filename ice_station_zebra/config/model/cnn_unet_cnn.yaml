@@ -5,7 +5,7 @@ name: cnn-unet-cnn
 # Each dataset will be encoded into a latent space with these properties
 latent_space:
   channels: 20
-  shape: [128, 128]
+  shape: [64, 64]
 
 encoder:
   _target_: ice_station_zebra.models.encoders.CNNEncoder

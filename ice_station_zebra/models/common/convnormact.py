@@ -48,6 +48,7 @@ class ConvNormAct(nn.Module):
         """Initialise a ConvNormAct block."""
         super().__init__()
         norm_type = norm_type.lower()
+        norm_layer: nn.Module
         if norm_type == "groupnorm":
             if num_groups is None:
                 msg = "num_groups must be specified for GroupNorm"

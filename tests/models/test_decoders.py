@@ -30,10 +30,10 @@ class TestDecoders:
             name="output", shape=test_output_shape[0:2], channels=test_output_shape[2]
         )
         decoder: BaseDecoder = test_decoder_cls(
-            latent_space=latent_space,
+            latent_space=latent_space,  # type: ignore[call-arg]
             n_forecast_steps=test_n_forecast_steps,
             n_latent_channels_total=latent_space.channels,
-            output_space=output_space,
+            output_space=output_space,  # type: ignore[call-arg]
         )
         result: torch.Tensor = decoder(
             torch.randn(

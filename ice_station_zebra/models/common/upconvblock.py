@@ -11,8 +11,8 @@ class UpConvBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int = 2,
-        norm_type: str = "groupnorm",
-        activation: str = "SiLU",
+        norm_type: str = "batchnorm",
+        activation: str = "ReLU",
         dropout_rate: float = 0.0,
     ) -> None:
         """Upsampling block with upsample and convolution.

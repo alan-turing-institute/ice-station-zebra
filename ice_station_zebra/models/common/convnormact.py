@@ -40,7 +40,7 @@ class ConvNormAct(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int,
-        norm_type: str = "groupnorm",
+        norm_type: str = "batchnorm",
         num_groups: int | None = None,
         activation: str = "ReLU",
         dropout_rate: float = 0.0,

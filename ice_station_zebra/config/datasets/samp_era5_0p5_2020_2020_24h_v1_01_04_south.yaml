@@ -6,7 +6,7 @@ samp-era5-0p5-2020-2020-24h-v1-01-04-south:
 
   dates:
     start: '2020-01-01T00:00:00'
-    end: '2020-01-05T23:00:00'
+    end: '2020-04-30T23:00:00'
     frequency: 24h
 
   input:

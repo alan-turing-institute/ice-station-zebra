@@ -47,4 +47,3 @@ samp-era5-0p5-2020-2020-24h-v1-01-04-south:
         - cos_julian_day
         - sin_julian_day
         template: \${input.join.0.mars}
-    

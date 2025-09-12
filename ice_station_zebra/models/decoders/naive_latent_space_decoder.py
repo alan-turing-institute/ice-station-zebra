@@ -3,7 +3,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_decoder import BaseDecoder
 
@@ -12,7 +12,7 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
     """Naive, linear decoder that takes data in a latent space and translates it to a larger output space.
 
     Latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+        TensorNTCHW with (batch_size, n_forecast_steps, latent_channels, latent_height, latent_width)
 
     Output space:
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
@@ -31,7 +31,7 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         n_conv_layers = math.floor(
             math.log2(min(*output_space.shape) / max(*latent_space.shape))
         )
-        n_channels = latent_space.channels
+        n_channels = self.n_latent_channels_total
         for _ in range(n_conv_layers):
             layers.append(
                 nn.ConvTranspose2d(
@@ -44,24 +44,19 @@ class NaiveLatentSpaceDecoder(BaseDecoder):
         layers.append(nn.Upsample(output_space.shape))
 
         # Convolve to the desired number of output channels
-        layers.append(
-            nn.Conv2d(n_channels, output_space.channels * self.n_forecast_steps, 1)
-        )
-
-        # Unflatten the time and channels
-        layers.append(nn.Unflatten(1, [self.n_forecast_steps, output_space.channels]))
+        layers.append(nn.Conv2d(n_channels, output_space.channels, 1))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: TensorNCHW) -> TensorNTCHW:
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: decode latent space into output space.
 
         Args:
-            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
+            TensorNCHW with (batch_size, output_channels, output_height, output_width)
 
         """
         return self.model(x)

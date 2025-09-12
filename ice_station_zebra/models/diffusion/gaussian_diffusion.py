@@ -106,12 +106,12 @@ class GaussianDiffusion:
         where the model predicts velocity v_t instead of noise epsilon.
 
         Args:
-            x (torch.Tensor): Current noisy sample x_t at timestep t (shape: [B,H,W,n_classes*n_forecast_days]).
+            x (torch.Tensor): Current noisy sample x_t at timestep t (shape: [B,n_classes*n_forecast_days,H,W]).
             t (torch.Tensor): Timesteps for each sample in the batch (shape: [B]).
-            pred_v (torch.Tensor): Model's predicted velocity (v_theta) at timestep t (shape: [B,H,W,n_classes*n_forecast_days]).
+            pred_v (torch.Tensor): Model's predicted velocity (v_theta) at timestep t (shape: [B,n_classes*n_forecast_days,H,W]).
 
         Returns:
-            torch.Tensor: Sample from the previous timestep x_{t-1} (shape: [B,H,W,n_classes*n_forecast_days]).
+            torch.Tensor: Sample from the previous timestep x_{t-1} (shape: [B,n_classes*n_forecast_days,H,W]).
 
         """
         sqrt_alpha_t = self._extract(self.sqrt_alphas_cumprod, t, x.shape)

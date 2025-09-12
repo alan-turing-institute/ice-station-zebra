@@ -38,6 +38,7 @@ class TestNaiveLatentSpaceEncoder:
         )
         assert result.shape == (
             test_batch_size,
+            test_n_history_steps,
             latent_space.channels,
             *latent_space.shape,
         )

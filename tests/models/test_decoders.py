@@ -11,14 +11,14 @@ from ice_station_zebra.types import DataSpace
 
 class TestDecoders:
     @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
-    @pytest.mark.parametrize("test_decoder_cls", [CNNDecoder, NaiveLinearDecoder])
+    @pytest.mark.parametrize("test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder"])
     @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
     @pytest.mark.parametrize("test_n_forecast_steps", [1, 3, 5])
     @pytest.mark.parametrize("test_output_shape", [(512, 512, 4), (1000, 200, 1)])
     def test_forward_shape(
         self,
         test_batch_size: int,
-        test_decoder_cls: type[BaseDecoder],
+        test_decoder_cls: str,
         test_latent_shape: tuple[int, int, int],
         test_output_shape: tuple[int, int, int],
         test_n_forecast_steps: int,
@@ -29,12 +29,21 @@ class TestDecoders:
         output_space = DataSpace(
             name="output", shape=test_output_shape[0:2], channels=test_output_shape[2]
         )
-        decoder: BaseDecoder = test_decoder_cls(
-            latent_space=latent_space,  # type: ignore[call-arg]
-            n_forecast_steps=test_n_forecast_steps,
-            n_latent_channels_total=latent_space.channels,
-            output_space=output_space,  # type: ignore[call-arg]
-        )
+        decoder: BaseDecoder = {
+            "CNNDecoder": CNNDecoder(
+                latent_space=latent_space,
+                n_forecast_steps=test_n_forecast_steps,
+                n_latent_channels_total=latent_space.channels,
+                n_layers=1,
+                output_space=output_space,
+            ),
+            "NaiveLinearDecoder": NaiveLinearDecoder(
+                latent_space=latent_space,
+                n_forecast_steps=test_n_forecast_steps,
+                n_latent_channels_total=latent_space.channels,
+                output_space=output_space,
+            ),
+        }[test_decoder_cls]
         result: torch.Tensor = decoder(
             torch.randn(
                 test_batch_size,

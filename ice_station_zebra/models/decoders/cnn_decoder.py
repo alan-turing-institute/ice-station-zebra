@@ -25,8 +25,9 @@ class CNNDecoder(BaseDecoder):
         *,
         latent_space: DataSpace,
         output_space: DataSpace,
-        n_layers: int = 2,
         activation: str = "ReLU",
+        kernel_size: int = 3,
+        n_layers: int = 2,
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNDecoder."""
@@ -41,7 +42,11 @@ class CNNDecoder(BaseDecoder):
 
         # Add n_layers size-increasing convolutional blocks
         for _ in range(n_layers):
-            layers.append(ConvBlockUpsample(n_channels, activation=activation))
+            layers.append(
+                ConvBlockUpsample(
+                    n_channels, activation=activation, kernel_size=kernel_size
+                )
+            )
             n_channels //= 2
 
         # Add an adaptive pooling layer that sets the final spatial dimensions

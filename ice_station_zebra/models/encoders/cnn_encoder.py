@@ -25,8 +25,9 @@ class CNNEncoder(BaseEncoder):
         *,
         input_space: DataSpace,
         latent_space: DataSpace,
-        n_layers: int = 2,
         activation: str = "ReLU",
+        kernel_size: int = 3,
+        n_layers: int = 2,
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNEncoder."""
@@ -42,7 +43,11 @@ class CNNEncoder(BaseEncoder):
         # Add n_layers size-reducing convolutional blocks
         n_channels = input_space.channels
         for _ in range(n_layers):
-            layers.append(ConvBlockDownsample(n_channels, activation=activation))
+            layers.append(
+                ConvBlockDownsample(
+                    n_channels, activation=activation, kernel_size=kernel_size
+                )
+            )
             n_channels *= 2
 
         # Convolve to the desired number of latent channels

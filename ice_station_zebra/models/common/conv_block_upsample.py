@@ -18,7 +18,7 @@ class ConvBlockUpsample(nn.Module):
 
         Args:
             activation: the activation function to use.
-            kernel_size: the size of the convolutional kernel.
+            kernel_size: the size of the convolutional kernel (odd numbers are preferable!).
             n_input_channels: the number of input channels.
 
         """
@@ -31,6 +31,7 @@ class ConvBlockUpsample(nn.Module):
         output_padding = kernel_size % 2
 
         self.model = nn.Sequential(
+            # Size reducing convolution/normalisation/activation
             nn.ConvTranspose2d(
                 n_input_channels,
                 n_output_channels,
@@ -38,6 +39,18 @@ class ConvBlockUpsample(nn.Module):
                 output_padding=output_padding,
                 padding=padding,
                 stride=2,
+            ),
+            nn.BatchNorm2d(n_output_channels),
+            activation_layer(inplace=True),
+            # Size preserving convolution/normalisation/activation
+            # Since ConvTranspose2d does not yet support `padding=same`, even-sized
+            # kernels cannot preserve size. We therefore adjust the kernel size and
+            # padding accordingly.
+            nn.ConvTranspose2d(
+                n_output_channels,
+                n_output_channels,
+                kernel_size=kernel_size + 1 - output_padding,
+                padding=padding + 1 - output_padding,
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),

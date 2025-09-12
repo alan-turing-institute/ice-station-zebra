@@ -9,6 +9,8 @@ latent_space:
 
 encoder:
   _target_: ice_station_zebra.models.encoders.CNNEncoder
+  kernel_size: 3
+  n_layers: 3
 
 processor:
   _target_: ice_station_zebra.models.processors.UNetProcessor
@@ -17,3 +19,5 @@ processor:
 
 decoder:
   _target_: ice_station_zebra.models.decoders.CNNDecoder
+  kernel_size: 3
+  n_layers: 3

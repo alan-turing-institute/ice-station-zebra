@@ -30,12 +30,22 @@ class ConvBlockDownsample(nn.Module):
         padding = (kernel_size - 1) // 2
 
         self.model = nn.Sequential(
+            # Size reducing convolution/normalisation/activation
             nn.Conv2d(
                 n_input_channels,
                 n_output_channels,
                 kernel_size=kernel_size,
                 padding=padding,
                 stride=2,
+            ),
+            nn.BatchNorm2d(n_output_channels),
+            activation_layer(inplace=True),
+            # Size preserving convolution/normalisation/activation
+            nn.Conv2d(
+                n_output_channels,
+                n_output_channels,
+                kernel_size=kernel_size,
+                padding="same",
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),

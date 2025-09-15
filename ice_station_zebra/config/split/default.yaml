@@ -12,5 +12,5 @@ validate:
 
 # This dataset is a holdout set used to compare fully-trained models (e.g. on a project leaderboard)
 test:
-  start: 2020-04-01
-  end: 2020-04-02
+  start: 2020-04-24
+  end: 2020-04-30

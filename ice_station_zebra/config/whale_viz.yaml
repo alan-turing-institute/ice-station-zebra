@@ -1,5 +1,5 @@
 defaults:
-  - _self_
+  - base
   - datasets:
     - osisaf-sic-north-2003-08-24h-v1
     - osisaf-sic-north-2010-08-24h-v1
@@ -7,5 +7,4 @@ defaults:
   - whale_telemetry
   - visualization
   - evaluate: default
- 
-base_path: /Users/sarana/Documents/e&s/SeaIce/ice-station-zebra/mydata
+base_path: /your/path/to/data

@@ -36,12 +36,15 @@ class CNNEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Start with an adaptive pooling layer that sets the initial spatial dimensions
+        # Start by normalising the input across height and width separately for each channel
+        n_channels = input_space.channels
+        layers.append(nn.BatchNorm2d(n_channels))
+
+        # Add an adaptive pooling layer that sets the initial spatial dimensions
         initial_conv_shape = [size * (2**n_layers) for size in latent_space.shape]
         layers.append(ResizingAveragePool2d(input_space.shape, initial_conv_shape))
 
         # Add n_layers size-reducing convolutional blocks
-        n_channels = input_space.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockDownsample(

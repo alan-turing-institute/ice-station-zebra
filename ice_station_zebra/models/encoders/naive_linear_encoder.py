@@ -26,6 +26,9 @@ class NaiveLinearEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
+        # Start by normalising the input across height and width separately for each channel
+        layers.append(nn.BatchNorm2d(input_space.channels))
+
         # Resample to the desired latent shape
         layers.append(nn.Upsample(latent_space.shape))
 

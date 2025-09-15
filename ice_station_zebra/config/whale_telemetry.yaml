@@ -8,7 +8,7 @@ whale_telemetry:
   # Data source
   input:
     csv:
-      path: supplementary_data/whale_telemetry_dataset/Locations_3species_West-East_Greenland.csv
+      path: ../supplementary_data/whale_telemetry_dataset/Locations_3species_West-East_Greenland.csv
       separator: ";"
   
   # Column mapping
@@ -35,4 +35,4 @@ whale_telemetry:
   date_filter:
     start_month: 7  # July
     end_month: 9    # September
-    target_years: [2003] ##, 2010, 2018] 
+    target_years: [2003, 2010, 2018] 

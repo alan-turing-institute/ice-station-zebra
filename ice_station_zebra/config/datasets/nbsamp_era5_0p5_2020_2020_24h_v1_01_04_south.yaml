@@ -1,5 +1,6 @@
 nbsamp-era5-0p5-2020-2020-24h-v1-01-04-south:
   name: nbsamp-era5-0p5-2020-2020-24h-v1-01-04-south
+  group_as: era5
   description: Small ERA5 dataset for testing (0.5 deg, south)
   attribution: ECMWF/C3S
   licence: CC-BY-4.0

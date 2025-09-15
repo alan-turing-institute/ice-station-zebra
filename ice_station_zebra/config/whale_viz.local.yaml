@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - datasets:
-    - osisaf-sic-north-2000-07-24h-v1
+    - osisaf-sic-north-2003-08-24h-v1
   - whale_telemetry
   - visualization
   - evaluate: default

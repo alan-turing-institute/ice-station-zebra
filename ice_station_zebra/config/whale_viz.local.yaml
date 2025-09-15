@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+  - datasets:
+    - osisaf-sic-north-2000-07-24h-v1
+  - whale_telemetry
+  - visualization
+  - evaluate: default
+ 
+base_path: /Users/sarana/Documents/e&s/SeaIce/ice-station-zebra/mydata

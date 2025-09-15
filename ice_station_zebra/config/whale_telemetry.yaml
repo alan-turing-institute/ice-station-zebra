@@ -1,0 +1,38 @@
+whale_telemetry:
+  name: whale_telemetry
+  group_as: whale_data
+  description: Whale telemetry data for West Greenland/Canadian Arctic region
+  attribution: Philippine Chambault et al. (2022, Science Advances)
+  licence: CC-BY-4.0
+
+  # Data source
+  input:
+    csv:
+      path: supplementary_data/whale_telemetry_dataset/Locations_3species_West-East_Greenland.csv
+      separator: ";"
+  
+  # Column mapping
+  columns:
+    id: id
+    timestamp: dateTime
+    longitude: lon
+    latitude: lat
+    month: month
+    year: year
+    species: species
+    side: side
+  
+  # Filtering criteria
+  filters:
+    side: West
+    species: Bw
+  
+  # Coordinate system
+  input_crs: EPSG:4326  # WGS84
+  target_crs: AEQD      # Azimuthal Equidistant
+  
+  # Date filtering (applied after loading all data)
+  date_filter:
+    start_month: 7  # July
+    end_month: 9    # September
+    target_years: [1994, 2000, 2007, 2010, 2012, 2018] 

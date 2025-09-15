@@ -1,6 +1,6 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
 
-name: encode-unet-decode
+name: naive-ddpm-naive
 
 # Each dataset will be encoded into a latent space with these properties
 latent_space:
@@ -11,9 +11,8 @@ encoder:
   _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
 
 processor:
-  _target_: ice_station_zebra.models.processors.UNetProcessor
-  filter_size: 3 # Size of the kernel for convolutional layers
-  start_out_channels: 64 # Initial number of channels for the first convolutional layer
+  _target_: ice_station_zebra.models.processors.DDPMProcessor
+  timesteps: 1000 # DDPM timesteps
 
 decoder:
   _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

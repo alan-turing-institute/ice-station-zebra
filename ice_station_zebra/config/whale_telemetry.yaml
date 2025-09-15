@@ -35,4 +35,5 @@ whale_telemetry:
   date_filter:
     start_month: 7  # July
     end_month: 9    # September
-    target_years: [2003, 2010, 2018] 
+    target_years: [2003, 2010, 2018]
+    

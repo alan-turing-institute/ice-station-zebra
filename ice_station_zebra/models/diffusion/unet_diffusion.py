@@ -166,7 +166,7 @@ class UNetDiffusion(nn.Module):
             kernel_size=self.filter_size,
             norm_type=self.normalization,
             activation=self.activation,
-            final=True,
+            n_subblocks=3,
         )
 
         # Final layer

@@ -65,14 +65,16 @@ class ConvNormAct(nn.Module):
             )
             raise ValueError(msg)
 
-        layers = [
+        activation_layer = ACTIVATION_FROM_NAME[activation](inplace=True)
+        dropout_layer = (
+            nn.Dropout2d(dropout_rate) if dropout_rate > 0 else nn.Identity()
+        )
+        self.block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding="same"),
             norm_layer,
-            ACTIVATION_FROM_NAME[activation](inplace=True),
-        ]
-        if dropout_rate > 0.0:
-            layers.append(nn.Dropout2d(dropout_rate))
-        self.block = nn.Sequential(*layers)
+            activation_layer,
+            dropout_layer,
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         """Apply ConvNormAct block to input tensor."""

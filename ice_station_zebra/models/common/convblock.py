@@ -42,26 +42,16 @@ class CommonConvBlock(nn.Module):
         num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
 
         # Create stacked ConvNormAct blocks
-        self.block1 = ConvNormAct(
-            in_channels,
-            out_channels,
-            kernel_size,
-            norm_type,
-            num_groups,
-            activation,
-            dropout_rate,
-        )
-        self.block2 = ConvNormAct(
-            out_channels,
-            out_channels,
-            kernel_size,
-            norm_type,
-            num_groups,
-            activation,
-            dropout_rate,
-        )
-
-        self.final_layer = (
+        layers = [
+            ConvNormAct(
+                in_channels,
+                out_channels,
+                kernel_size,
+                norm_type,
+                num_groups,
+                activation,
+                dropout_rate,
+            ),
             ConvNormAct(
                 out_channels,
                 out_channels,
@@ -70,18 +60,28 @@ class CommonConvBlock(nn.Module):
                 num_groups,
                 activation,
                 dropout_rate,
+            ),
+        ]
+
+        if final:
+            layers.append(
+                ConvNormAct(
+                    out_channels,
+                    out_channels,
+                    kernel_size,
+                    norm_type,
+                    num_groups,
+                    activation,
+                    dropout_rate,
+                )
             )
-            if final
-            else None
-        )
+
+        # Combine into Sequential
+        self.layers = nn.Sequential(*layers)
 
     def forward(self, x: Tensor) -> Tensor:
         """Apply stacked ConvNormAct layers to input tensor."""
-        x = self.block1(x)
-        x = self.block2(x)
-        if self.final_layer is not None:
-            x = self.final_layer(x)
-        return x
+        return self.layers(x)
 
 
 """

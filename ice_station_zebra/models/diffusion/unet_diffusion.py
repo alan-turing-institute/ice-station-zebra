@@ -31,7 +31,7 @@ class UNetDiffusion(nn.Module):
         self,
         input_channels: int,
         timesteps: int = 1000,
-        filter_size: int = 3,
+        kernel_size: int = 3,
         start_out_channels: int = 64,
         time_embed_dim: int = 256,
         normalization: str = "groupnorm",
@@ -43,7 +43,7 @@ class UNetDiffusion(nn.Module):
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
             timesteps (int): Number of diffusion timesteps.
-            filter_size (int): Convolution kernel size for all conv layers.
+            kernel_size (int): Convolution kernel size for all conv layers.
             start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
             time_embed_dim (int): Size of time embedding dimension.
             normalization (str): Normalization strategy (e.g., groupnorm, batchnorm, layernorm).
@@ -53,7 +53,7 @@ class UNetDiffusion(nn.Module):
         """
         super().__init__()
 
-        self.filter_size = filter_size
+        self.kernel_size = kernel_size
         self.start_out_channels = start_out_channels
         self.timesteps = timesteps
         self.normalization = normalization
@@ -73,7 +73,7 @@ class UNetDiffusion(nn.Module):
         self.conv1 = CommonConvBlock(
             in_channels=self.initial_conv_channels,
             out_channels=channels[0],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
@@ -81,7 +81,7 @@ class UNetDiffusion(nn.Module):
         self.conv2 = CommonConvBlock(
             in_channels=channels[0],
             out_channels=channels[1],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
@@ -89,7 +89,7 @@ class UNetDiffusion(nn.Module):
         self.conv3 = CommonConvBlock(
             in_channels=channels[1],
             out_channels=channels[2],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
@@ -97,7 +97,7 @@ class UNetDiffusion(nn.Module):
         self.conv4 = CommonConvBlock(
             in_channels=channels[2],
             out_channels=channels[2],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
@@ -107,7 +107,7 @@ class UNetDiffusion(nn.Module):
         self.conv5 = CommonConvBlock(
             in_channels=channels[2],
             out_channels=channels[3],
-            kernel_size=self.filter_size,  # You'll need to pass this from self.filter_size
+            kernel_size=self.kernel_size,  # You'll need to pass this from self.kernel_size
             norm_type=self.normalization,
             activation=self.activation,
             dropout_rate=self.dropout_rate,
@@ -142,28 +142,28 @@ class UNetDiffusion(nn.Module):
         self.up6b = CommonConvBlock(
             in_channels=channels[3] + self.time_embed_dim,
             out_channels=channels[2],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
         self.up7b = CommonConvBlock(
             in_channels=channels[3] + self.time_embed_dim,
             out_channels=channels[2],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
         self.up8b = CommonConvBlock(
             in_channels=channels[2] + self.time_embed_dim,
             out_channels=channels[1],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
         )
         self.up9b = CommonConvBlock(
             in_channels=channels[1] + self.time_embed_dim,
             out_channels=channels[0],
-            kernel_size=self.filter_size,
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
             n_subblocks=3,

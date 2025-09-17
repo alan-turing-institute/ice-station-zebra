@@ -75,7 +75,7 @@ class UNetProcessor(BaseProcessor):
         self.up7b = CommonConvBlock(channels[3], channels[2], kernel_size=filter_size)
         self.up8b = CommonConvBlock(channels[2], channels[1], kernel_size=filter_size)
         self.up9b = CommonConvBlock(
-            channels[1], channels[0], kernel_size=filter_size, final=True
+            channels[1], channels[0], kernel_size=filter_size, n_subblocks=3
         )
 
         # Final layer

@@ -25,14 +25,14 @@ class UNetProcessor(BaseProcessor):
     def __init__(
         self,
         *,
-        filter_size: int,
+        kernel_size: int,
         start_out_channels: int,
         **kwargs: Any,
     ) -> None:
         """Initialise a UNetProcessor.
 
         Args:
-            filter_size: Size of the convolutional filters.
+            kernel_size: Size of the convolutional filters.
             start_out_channels: Number of output channels in the first layer.
             kwargs: Arguments to BaseProcessor.
 
@@ -41,7 +41,7 @@ class UNetProcessor(BaseProcessor):
 
         channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
-        if filter_size <= 0:
+        if kernel_size <= 0:
             msg = "Filter size must be greater than 0."
             raise ValueError(msg)
 
@@ -51,19 +51,19 @@ class UNetProcessor(BaseProcessor):
 
         # Encoder
         self.conv1 = CommonConvBlock(
-            self.n_latent_channels_total, channels[0], kernel_size=filter_size
+            self.n_latent_channels_total, channels[0], kernel_size=kernel_size
         )
 
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=filter_size)
+        self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=kernel_size)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.conv3 = CommonConvBlock(channels[1], channels[2], kernel_size=filter_size)
+        self.conv3 = CommonConvBlock(channels[1], channels[2], kernel_size=kernel_size)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        self.conv4 = CommonConvBlock(channels[2], channels[2], kernel_size=filter_size)
+        self.conv4 = CommonConvBlock(channels[2], channels[2], kernel_size=kernel_size)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
 
         # Bottleneck
-        self.conv5 = CommonConvBlock(channels[2], channels[3], kernel_size=filter_size)
+        self.conv5 = CommonConvBlock(channels[2], channels[3], kernel_size=kernel_size)
 
         # Decoder
         self.up6 = UpConvBlock(channels[3], channels[2])
@@ -71,11 +71,11 @@ class UNetProcessor(BaseProcessor):
         self.up8 = UpConvBlock(channels[2], channels[1])
         self.up9 = UpConvBlock(channels[1], channels[0])
 
-        self.up6b = CommonConvBlock(channels[3], channels[2], kernel_size=filter_size)
-        self.up7b = CommonConvBlock(channels[3], channels[2], kernel_size=filter_size)
-        self.up8b = CommonConvBlock(channels[2], channels[1], kernel_size=filter_size)
+        self.up6b = CommonConvBlock(channels[3], channels[2], kernel_size=kernel_size)
+        self.up7b = CommonConvBlock(channels[3], channels[2], kernel_size=kernel_size)
+        self.up8b = CommonConvBlock(channels[2], channels[1], kernel_size=kernel_size)
         self.up9b = CommonConvBlock(
-            channels[1], channels[0], kernel_size=filter_size, n_subblocks=3
+            channels[1], channels[0], kernel_size=kernel_size, n_subblocks=3
         )
 
         # Final layer

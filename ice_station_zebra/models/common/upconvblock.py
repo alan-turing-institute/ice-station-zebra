@@ -1,6 +1,6 @@
 from torch import Tensor, nn
 
-from .convnormact import ConvNormAct, get_num_groups
+from .convnormact import ConvNormAct
 
 
 class UpConvBlock(nn.Module):
@@ -28,9 +28,6 @@ class UpConvBlock(nn.Module):
         """
         super().__init__()
 
-        # Determine num_groups only if using GroupNorm
-        num_groups = get_num_groups(out_channels) if norm_type == "groupnorm" else None
-
         self.block = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="nearest"),
             ConvNormAct(
@@ -38,7 +35,6 @@ class UpConvBlock(nn.Module):
                 out_channels,
                 kernel_size,
                 norm_type,
-                num_groups,
                 activation,
                 dropout_rate,
             ),

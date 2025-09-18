@@ -30,7 +30,7 @@ class IceNetSICPreprocessor(IPreprocessor):
     def download(self, preprocessor_path: Path) -> None:
         """Download data to the specified preprocessor path."""
         # Change to the output directory before downloading
-        icenet_path = preprocessor_path / self.name
+        icenet_path = preprocessor_path / self.dataset_name / self.cls_name
         icenet_path.mkdir(parents=True, exist_ok=True)
         current_directory = Path.cwd()
         os.chdir(icenet_path)
@@ -41,7 +41,7 @@ class IceNetSICPreprocessor(IPreprocessor):
         logger.info("Generating polar masks for %s.", mask_year)
         masks.generate(year=mask_year)
 
-        logger.info("Downloading sea ice concentration data.")
+        logger.info("Downloading sea ice concentration data to %s.", icenet_path)
         sic = SICDownloader(
             dates=[
                 pd.to_datetime(date).date() for date in self.date_range

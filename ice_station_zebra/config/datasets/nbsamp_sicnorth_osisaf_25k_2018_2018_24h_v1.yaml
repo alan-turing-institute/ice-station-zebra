@@ -16,4 +16,4 @@ nbsamp-sicnorth-osisaf-25k-2018-2018-24h-v1:
 
   input:
     netcdf:
-      path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2018.nc
+      path: ${base_path}/data/preprocessing/${...name}/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2018.nc

@@ -1,6 +1,6 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
 
-name: encode-ddpm-decode
+name: cnn-ddpm-cnn
 
 # Each dataset will be encoded into a latent space with these properties
 latent_space:

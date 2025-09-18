@@ -5,7 +5,7 @@ defaults:
   - evaluate: default
   - loggers:
     - wandb
-  - model: encode_null_decode
+  - model: cnn_unet_cnn
   - predict: osisaf-south
   - split: default
   - train: default

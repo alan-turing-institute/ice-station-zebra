@@ -32,7 +32,7 @@ def hydra_adaptor(function: Callable) -> Callable[Param, RetType]:
         config_name: Annotated[
             str | None,
             Option(help="Specify the name of a file to load from the config directory"),
-        ] = "zebra",
+        ] = "base",
         *args: Param.args,
         **kwargs: Param.kwargs,
     ) -> RetType:

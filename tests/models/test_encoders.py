@@ -1,18 +1,24 @@
 import pytest
 import torch
 
-from ice_station_zebra.models.encoders import NaiveLatentSpaceEncoder
+from ice_station_zebra.models.encoders import (
+    BaseEncoder,
+    CNNEncoder,
+    NaiveLinearEncoder,
+)
 from ice_station_zebra.types import DataSpace
 
 
-@pytest.mark.parametrize("test_input_shape", [(512, 512, 4), (100, 20, 1)])
-@pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
-@pytest.mark.parametrize("test_batch_size", [1, 2, 5])
-@pytest.mark.parametrize("test_n_history_steps", [1, 3, 5])
-class TestNaiveLatentSpaceEncoder:
+class TestEncoders:
+    @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
+    @pytest.mark.parametrize("test_encoder_cls", ["CNNEncoder", "NaiveLinearEncoder"])
+    @pytest.mark.parametrize("test_input_shape", [(512, 512, 4), (20, 200, 1)])
+    @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (40, 73, 3)])
+    @pytest.mark.parametrize("test_n_history_steps", [1, 3, 5])
     def test_forward_shape(
         self,
         test_batch_size: int,
+        test_encoder_cls: str,
         test_input_shape: tuple[int, int, int],
         test_latent_shape: tuple[int, int, int],
         test_n_history_steps: int,
@@ -23,12 +29,19 @@ class TestNaiveLatentSpaceEncoder:
         latent_space = DataSpace(
             name="latent", shape=test_latent_shape[0:2], channels=test_latent_shape[2]
         )
-        encoder = NaiveLatentSpaceEncoder(
-            input_space=input_space,
-            latent_space=latent_space,
-            n_history_steps=test_n_history_steps,
-        )
-        result = encoder(
+        encoder: BaseEncoder = {
+            "CNNEncoder": CNNEncoder(
+                input_space=input_space,
+                latent_space=latent_space,
+                n_history_steps=test_n_history_steps,
+            ),
+            "NaiveLinearEncoder": NaiveLinearEncoder(
+                input_space=input_space,
+                latent_space=latent_space,
+                n_history_steps=test_n_history_steps,
+            ),
+        }[test_encoder_cls]
+        result: torch.Tensor = encoder(
             torch.randn(
                 test_batch_size,
                 test_n_history_steps,

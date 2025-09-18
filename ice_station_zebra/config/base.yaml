@@ -1,7 +1,7 @@
 defaults:
   - datasets:
-    - samp_era5_0p5_2020_2020_24h_v1_01_04_south
-    - samp_osisaf_2020_2020_24h_v1_01_04_sic_south
+    - samp_sicsouth_osisaf_25k_2020_2020_24h_v1
+    - samp_weathersouth_era5_0p5_2020_2020_24h_v1
   - evaluate: default
   - loggers:
     - wandb

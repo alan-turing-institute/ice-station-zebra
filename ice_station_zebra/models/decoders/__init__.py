@@ -1,7 +1,9 @@
 from .base_decoder import BaseDecoder
-from .naive_latent_space_decoder import NaiveLatentSpaceDecoder
+from .cnn_decoder import CNNDecoder
+from .naive_linear_decoder import NaiveLinearDecoder
 
 __all__ = [
     "BaseDecoder",
-    "NaiveLatentSpaceDecoder",
+    "CNNDecoder",
+    "NaiveLinearDecoder",
 ]

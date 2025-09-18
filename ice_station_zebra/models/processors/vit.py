@@ -33,16 +33,16 @@ class VitProcessor(nn.Module):
         
         self.img_size = img_size
         self.patch_size = patch_size
-        self.patches_per_side = self.img_size // patch_size
-        self.out_channels = start_out_channels
         self.emb_dim = emb_dim
+        self.out_channels = start_out_channels
 
     
         
         self.patch_embed = PatchEmbedding(n_latent_channels, patch_size, emb_dim, self.img_size)
-        num_patches = (self.img_size // patch_size) ** 2
+        # num_patches = (self.img_size // patch_size) ** 2
         
-        self.pos_embed = nn.Parameter(torch.randn(1, num_patches, emb_dim))
+        # self.pos_embed = nn.Parameter(torch.randn(1, num_patches, emb_dim))
+        self.pos_embed = None
         self.dropout = nn.Dropout(dropout)
 
         self.transformer = nn.Sequential(
@@ -67,7 +67,15 @@ class VitProcessor(nn.Module):
             torch.Tensor: Output tensor of shape [B, C, H, W]
         """
         B, C, H, W = x.shape
+        H_patches = H // self.patch_size
+        W_patches = W // self.patch_size
+
+        num_patches = H_patches * W_patches
         
+        if self.pos_embed is None or self.pos_embed.shape[1] != num_patches:
+            self.pos_embed = nn.Parameter(
+                torch.randn(1, num_patches, self.emb_dim, device=x.device, dtype=x.dtype)
+            )
         
         x = self.patch_embed(x)  # (B, N, D)
         x = x + self.pos_embed
@@ -78,7 +86,7 @@ class VitProcessor(nn.Module):
 
         x = self.decoder(x)  # (B, N, out_channels**patch_size*patch_size)
         
-        H_patches = W_patches = int(np.sqrt(x.shape[1]))
+        # H_patches = W_patches = int(np.sqrt(x.shape[1]))
         
         x = x.reshape(B, H_patches, W_patches, self.out_channels, self.patch_size, self.patch_size)
         x = x.permute(0, 3, 1, 4, 2, 5)  # (B, out_channels, H_patches, patch_size, W_patches, patch_size)

@@ -10,6 +10,70 @@ from omegaconf import DictConfig
 from ice_station_zebra.types import AnemoiCreateArgs
 
 
+@pytest.fixture
+def cfg_decoder() -> DictConfig:
+    """Test configuration for a decoder."""
+    return DictConfig(
+        {"_target_": "ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder"}
+    )
+
+
+@pytest.fixture
+def cfg_encoder() -> DictConfig:
+    """Test configuration for an encoder."""
+    return DictConfig(
+        {"_target_": "ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder"}
+    )
+
+
+@pytest.fixture
+def cfg_input_space() -> DictConfig:
+    """Test configuration for an input space."""
+    return DictConfig(
+        {
+            "channels": 4,
+            "name": "test-input",
+            "shape": (512, 512),
+        }
+    )
+
+
+@pytest.fixture
+def cfg_latent_space() -> DictConfig:
+    """Test configuration for a latent space."""
+    return DictConfig(
+        {
+            "channels": 50,
+            "name": "latent",
+            "shape": (64, 64),
+        }
+    )
+
+
+@pytest.fixture
+def cfg_optimizer() -> DictConfig:
+    """Test configuration for an optimizer."""
+    return DictConfig({"_target_": "torch.optim.AdamW", "lr": 5e-4})
+
+
+@pytest.fixture
+def cfg_output_space() -> DictConfig:
+    """Test configuration for an output space."""
+    return DictConfig(
+        {
+            "channels": 1,
+            "name": "target",
+            "shape": (432, 432),
+        }
+    )
+
+
+@pytest.fixture
+def cfg_processor() -> DictConfig:
+    """Test configuration for a processor."""
+    return DictConfig({"_target_": "ice_station_zebra.models.processors.NullProcessor"})
+
+
 @pytest.fixture(scope="session")
 def mock_data() -> dict[str, dict[str, Any]]:
     """Fixture to create a mock dataset for testing."""

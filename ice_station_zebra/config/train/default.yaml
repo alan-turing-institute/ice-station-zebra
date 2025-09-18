@@ -1,7 +1,7 @@
 defaults:
   - callbacks:
     - device_stats
-    - unconditional_checkpoint
+    - ema_weight_averaging
   - optimizer: default
   - trainer: default
   - _self_

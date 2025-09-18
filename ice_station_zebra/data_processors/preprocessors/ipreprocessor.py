@@ -1,4 +1,4 @@
-from collections.abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 from omegaconf import DictConfig
@@ -13,7 +13,3 @@ class IPreprocessor(ABC):
     @abstractmethod
     def download(self, preprocessor_path: Path) -> None:
         """Download data to the specified preprocessor path."""
-
-
-class NullPreprocessor(IPreprocessor):
-    pass

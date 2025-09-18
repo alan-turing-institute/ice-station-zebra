@@ -7,7 +7,7 @@ from icenet.data.sic.mask import Masks
 from icenet.data.sic.osisaf import SICDownloader
 from omegaconf import DictConfig
 
-from .base import IPreprocessor
+from .ipreprocessor import IPreprocessor
 
 logger = logging.getLogger(__name__)
 

@@ -16,4 +16,4 @@ osisaf-sic-north-2010-08-24h-v1:
 
   input:
     netcdf:
-      path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2010.nc 
+      path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2010.nc

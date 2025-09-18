@@ -24,5 +24,5 @@ class ZebraDataProcessorFactory:
                 .get("type", "None")
             ]
             self.datasets.append(
-                ZebraDataProcessor(dataset_name, config, cls_preprocessor)
+                ZebraDataProcessor(dataset_name, config, cls_preprocessor)  # type: ignore[type-abstract]
             )

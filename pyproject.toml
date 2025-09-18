@@ -62,6 +62,7 @@ omit= [
 module = [
     "anemoi.datasets.*",
     "anemoi.transform.*",
+    "earthkit.*",
     "icenet.data.sic.*",
     "zarr.*",
 ]

@@ -14,7 +14,7 @@ from ice_station_zebra.types import AnemoiCreateArgs
 def cfg_decoder() -> DictConfig:
     """Test configuration for a decoder."""
     return DictConfig(
-        {"_target_": "ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder"}
+        {"_target_": "ice_station_zebra.models.decoders.NaiveLinearDecoder"}
     )
 
 
@@ -22,7 +22,7 @@ def cfg_decoder() -> DictConfig:
 def cfg_encoder() -> DictConfig:
     """Test configuration for an encoder."""
     return DictConfig(
-        {"_target_": "ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder"}
+        {"_target_": "ice_station_zebra.models.encoders.NaiveLinearEncoder"}
     )
 
 

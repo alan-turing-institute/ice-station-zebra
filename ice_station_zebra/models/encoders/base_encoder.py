@@ -42,7 +42,7 @@ class BaseEncoder(nn.Module):
         )
 
     def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: process in NCHW latent space.
+        """Single rollout step: encode NCHW input into NCHW latent space.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

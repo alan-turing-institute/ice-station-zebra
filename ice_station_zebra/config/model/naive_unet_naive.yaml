@@ -1,6 +1,6 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
 
-name: encode-unet-decode
+name: naive-unet-naive
 
 # Each dataset will be encoded into a latent space with these properties
 latent_space:
@@ -8,7 +8,7 @@ latent_space:
   shape: [128, 128]
 
 encoder:
-  _target_: ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder
+  _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
 
 processor:
   _target_: ice_station_zebra.models.processors.UNetProcessor
@@ -16,4 +16,4 @@ processor:
   start_out_channels: 64 # Initial number of channels for the first convolutional layer
 
 decoder:
-  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder
+  _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

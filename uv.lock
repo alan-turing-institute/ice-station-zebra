@@ -1522,7 +1522,6 @@ dependencies = [
     { name = "anemoi-datasets" },
     { name = "cachetools" },
     { name = "cdsapi" },
-    { name = "cmocean" },
     { name = "hydra-core" },
     { name = "icenet" },
     { name = "jaxtyping" },
@@ -1548,6 +1547,7 @@ dev = [
     { name = "pytest-cov" },
 ]
 notebooks = [
+    { name = "cmocean" },
     { name = "download-toolbox" },
     { name = "jupyter" },
 ]
@@ -1557,7 +1557,6 @@ requires-dist = [
     { name = "anemoi-datasets", specifier = ">=0.5.25" },
     { name = "cachetools", specifier = ">=6.1.0" },
     { name = "cdsapi", specifier = ">=0.7.6" },
-    { name = "cmocean", specifier = ">=4.0.3" },
     { name = "hydra-core", specifier = ">=1.3.2" },
     { name = "icenet", specifier = "==0.2.7" },
     { name = "jaxtyping", specifier = ">=0.3.2" },
@@ -1583,6 +1582,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.2.1" },
 ]
 notebooks = [
+    { name = "cmocean", specifier = ">=4.0.3" },
     { name = "download-toolbox", specifier = ">=0.0.6" },
     { name = "jupyter", specifier = ">=1.1.1" },
 ]

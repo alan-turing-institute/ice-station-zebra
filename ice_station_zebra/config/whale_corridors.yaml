@@ -4,7 +4,7 @@ defaults:
     - osisaf-sic-north-2003-08-24h-v1
     - osisaf-sic-north-2010-08-24h-v1
     - osisaf-sic-north-2018-08-24h-v1
-  - whale_telemetry
-  - visualization
-  - evaluate: default
-base_path: /your/path/to/data
+  - notebooks:
+    - whale_telemetry_csv
+    - whale_visualisation
+  - _self_

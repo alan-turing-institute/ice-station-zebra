@@ -8,9 +8,9 @@ whale_telemetry:
   # Data source
   input:
     csv:
-      path: ../supplementary_data/whale_telemetry_dataset/Locations_3species_West-East_Greenland.csv
+      path: ${base_path}/data/notebooks/whale_corridors/Locations_3species_West-East_Greenland.csv
       separator: ";"
-  
+
   # Column mapping
   columns:
     id: id
@@ -21,19 +21,18 @@ whale_telemetry:
     year: year
     species: species
     side: side
-  
+
   # Filtering criteria
   filters:
     side: West
     species: Bw
-  
+
   # Coordinate system
   input_crs: EPSG:4326  # WGS84
   target_crs: AEQD      # Azimuthal Equidistant
-  
+
   # Date filtering (applied after loading all data)
   date_filter:
     start_month: 7  # July
     end_month: 9    # September
     target_years: [2003, 2010, 2018]
-    

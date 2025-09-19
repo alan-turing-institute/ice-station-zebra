@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import numpy as np
 import pytest
@@ -64,3 +64,48 @@ def sic_pair_2d() -> tuple[np.ndarray, np.ndarray, date]:
 
     current_date = date(2020, 1, 16)
     return ground_truth.astype(np.float32), prediction.astype(np.float32), current_date
+
+
+@pytest.fixture
+def sic_pair_3d_stream() -> tuple[np.ndarray, np.ndarray, list[date]]:
+    """Short 3D streams (time, height, width) and dates for animations.
+
+    Shape (4, 48, 48), values in [0, 1]. Frames drift slightly over time
+    with a bit of noise to mimic day-to-day change.
+    """
+    rng = np.random.default_rng(54321)
+    timesteps, height, width = 4, 48, 48
+
+    groundtruth_frames = []
+    prediction_frames = []
+    cy, cx = (height - 1) / 2.0, (width - 1) / 2.0
+    yy, xx = np.meshgrid(np.arange(height), np.arange(width), indexing="ij")
+    dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+
+    base_radius = min(height, width) * 0.25
+    for t in range(timesteps):
+        # Ground truth: small daily wiggle of the coastline
+        radius_t = base_radius + 0.5 * np.sin(0.7 * t)
+        d_outside_t = np.maximum(0.0, dist - radius_t)
+        groundtruth_t = np.exp(-(d_outside_t / 6.0)) + rng.normal(
+            0.0, 0.03, size=(height, width)
+        )
+        groundtruth_t = np.clip(groundtruth_t, 0.0, 1.0)
+        # Note: When land masking is implemented, uncomment the line below and remove the 0.0 line
+        # Sould be:groundtruth_t[dist < radius_t] = np.nan
+        groundtruth_t[dist < radius_t] = (
+            0.0  # Temporary: set land to 0 SIC to match current code behavior
+        )
+
+        # Prediction: same circle shape as ground truth, but different ice distribution noise
+        prediction_t = _make_circular_arctic(
+            height, width, rng=rng, noise=0.08
+        )  # Different noise level
+
+        groundtruth_frames.append(groundtruth_t.astype(np.float32))
+        prediction_frames.append(prediction_t.astype(np.float32))
+
+    ground_truth_stream = np.stack(groundtruth_frames, axis=0)
+    prediction_stream = np.stack(prediction_frames, axis=0)
+    dates = [date(2020, 1, 15) + timedelta(days=int(d)) for d in range(timesteps)]
+    return ground_truth_stream, prediction_stream, dates

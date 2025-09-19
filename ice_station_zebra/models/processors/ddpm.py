@@ -121,3 +121,31 @@ class DDPMProcessor(BaseProcessor):
         
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return {"loss": loss}
+
+    def validation_step(self, batch):
+        """
+        One validation step using the specified loss function defined in the criterion.
+
+        Args:
+            batch (tuple): (x, y, sample_weight)
+
+        Returns:
+            dict: {"val_loss": loss}
+        """
+        x, y, sample_weight = batch
+        y = y.squeeze(-1)  # Removes the last dimension (size 1)
+        
+        # Generate samples (returns [-1, 1] range)
+        outputs = self.sample(x, sample_weight)
+        
+        # Convert to [0, 1] for metrics and loss
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+        
+        # Calculate loss in [0, 1] space
+        loss = self.criterion(y_hat, y, sample_weight)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
+        
+        # Update metrics in [0, 1] space
+        self.metrics.update(y_hat, y, sample_weight)
+        return {"val_loss": loss}

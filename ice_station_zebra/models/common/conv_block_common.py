@@ -79,34 +79,31 @@ class CommonConvBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int,
-        norm_type: str = "batchnorm",
-        activation: str = "ReLU",
         *,
-        n_subblocks: int = 2,
+        activation: str = "ReLU",
         dropout_rate: float = 0.0,
+        n_subblocks: int = 2,
+        norm_type: str = "batchnorm",
     ) -> None:
         """Initialise a CommonConvBlock."""
         super().__init__()
 
         # Create stacked ConvNormAct blocks
-        layers = []
-        for idx_subblock in range(n_subblocks):
-            # First block changes the number of channels, subsequent blocks keep it constant
-            in_channels_ = in_channels if idx_subblock == 0 else out_channels
-            layers.append(
+        # First block changes the number of channels, subsequent blocks keep it constant
+        self.block = nn.Sequential(
+            *(
                 ConvNormAct(
-                    in_channels_,
+                    in_channels if idx_subblock == 0 else out_channels,
                     out_channels,
                     kernel_size,
                     activation=activation,
                     dropout_rate=dropout_rate,
                     norm_type=norm_type,
                 )
+                for idx_subblock in range(n_subblocks)
             )
-
-        # Combine into Sequential
-        self.layers = nn.Sequential(*layers)
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         """Apply stacked ConvNormAct layers to input tensor."""
-        return self.layers(x)
+        return self.block(x)

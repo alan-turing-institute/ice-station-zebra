@@ -1,5 +1,5 @@
-full-osisaf-1979-2024-24h-v1-sic-south:
-  name: full-osisaf-1979-2024-24h-v1-sic-south
+full-sicsouth-osisaf-1979-2024-24h-v1:
+  name: full-sicsouth-osisaf-1979-2024-24h-v1
   group_as: osisaf
   description: OSISAF sea ice concentration for southern hemisphere
   attribution: EUMETSAT
@@ -16,4 +16,4 @@ full-osisaf-1979-2024-24h-v1-sic-south:
 
   input:
     netcdf:
-      path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/*.nc
+      path: ${base_path}/data/preprocessing/${...name}/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/*.nc

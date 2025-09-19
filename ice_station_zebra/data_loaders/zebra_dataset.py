@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from functools import cached_property
 from pathlib import Path
 
 import numpy as np
@@ -26,29 +27,36 @@ class ZebraDataset(Dataset):
         super().__init__()
         self._cache: LRUCache = LRUCache(maxsize=128)
         self._datasets: list[AnemoiDataset] = []
-        self._end = date_ranges[0]["end"]
+        self._date_ranges = sorted(
+            date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
+        )
         self._input_files = input_files
         self._name = name
-        self._start = date_ranges[0]["start"]
 
     @property
     def datasets(self) -> list[AnemoiDataset]:
-        """Load the underlying Anemoi datasets."""
+        """Load one or more underlying Anemoi datasets.
+
+        Each date range results in a separate dataset.
+        """
         if not self._datasets:
-            _dataset = open_dataset(self._input_files, start=self._start, end=self._end)
-            _dataset._name = self._name
-            self._datasets.append(_dataset)
+            for date_range in self._date_ranges:
+                _dataset = open_dataset(
+                    self._input_files, start=date_range["start"], end=date_range["end"]
+                )
+                _dataset._name = self._name
+                self._datasets.append(_dataset)
         return self._datasets
 
-    @property
+    @cached_property
     def dates(self) -> list[np.datetime64]:
         """Return all dates in the dataset."""
-        return list(self.datasets[0].dates)
+        return sorted({ds.dates for ds in self.datasets})
 
-    @property
+    @cached_property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""
-        return self.datasets[0].end_date
+        return self.dates[-1]
 
     @property
     def frequency(self) -> np.timedelta64:
@@ -72,7 +80,7 @@ class ZebraDataset(Dataset):
     @property
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
-        return self.datasets[0].start_date
+        return self.dates[0]
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""

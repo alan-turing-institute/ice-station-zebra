@@ -31,6 +31,7 @@ class ZebraDataset(Dataset):
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
         )
         self._input_files = input_files
+        self._len: int | None = None
         self._name = name
 
     @property
@@ -95,14 +96,16 @@ class ZebraDataset(Dataset):
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""
-        return sum(len(dataset) for dataset in self.datasets)
+        if self._len is None:
+            self._len = sum(dataset._len for dataset in self.datasets)
+        return self._len
 
     def __getitem__(self, idx: int) -> ArrayCHW:
         """Return the data for a single timestep in [C, H, W] format."""
         for dataset in self.datasets:
-            if idx < len(dataset):
+            if idx < dataset._len:
                 return dataset[idx].reshape(self.space.chw)
-            idx -= len(dataset)
+            idx -= dataset._len
         msg = f"Index {idx} out of range for dataset of length {len(self)}"
         raise IndexError(msg)
 
@@ -118,7 +121,7 @@ class ZebraDataset(Dataset):
         idx = 0
         for dataset in self.datasets:
             if date not in dataset.dates:
-                idx += len(dataset)
+                idx += dataset._len
             else:
                 ds_idx, _, _ = dataset.to_index(date, 0)
                 idx += ds_idx

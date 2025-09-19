@@ -35,11 +35,11 @@ class CombinedDataset(Dataset):
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
-        frequencies = sorted({ds.dataset.frequency for ds in datasets})
+        frequencies = sorted({ds.frequency for ds in datasets})
         if len(frequencies) != 1:
             msg = f"Cannot combine datasets with different frequencies: {frequencies}."
             raise ValueError(msg)
-        self.frequency = np.timedelta64(frequencies[0])
+        self.frequency = frequencies[0]
 
         # Get list of dates that are available in all datasets
         self.available_dates = [

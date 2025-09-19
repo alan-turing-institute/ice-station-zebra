@@ -47,6 +47,11 @@ class ZebraDataset(Dataset):
         return self.dataset.end_date
 
     @property
+    def frequency(self) -> np.timedelta64:
+        """Return the frequency of the dataset."""
+        return np.timedelta64(self.dataset.frequency)
+
+    @property
     def name(self) -> str:
         """Return the name of the dataset."""
         return self._name

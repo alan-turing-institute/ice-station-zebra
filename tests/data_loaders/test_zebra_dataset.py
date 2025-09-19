@@ -24,7 +24,7 @@ class TestZebraDataset:
             input_files=[mock_dataset],
         )
         # Test dates
-        assert all(date in dataset.dataset.dates for date in self.dates_np)
+        assert all(date in dataset.dates for date in self.dates_np)
 
     def test_dataset_end_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

@@ -137,3 +137,8 @@ Pros:
 Cons:
 - input variables have been transformed into latent space
 - time-step information has been compressed into the latent space
+
+## Jupyter notebooks
+
+There are various demonstrator Jupyter notebooks in the `notebooks` folder.
+You can run these with `uv run --group notebooks jupyter notebook`.

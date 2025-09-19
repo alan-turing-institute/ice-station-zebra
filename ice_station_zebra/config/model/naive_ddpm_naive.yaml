@@ -1,6 +1,6 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
 
-name: encode-ddpm-decode
+name: naive-ddpm-naive
 
 # Each dataset will be encoded into a latent space with these properties
 latent_space:
@@ -8,11 +8,11 @@ latent_space:
   shape: [128, 128]
 
 encoder:
-  _target_: ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder
+  _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
 
 processor:
   _target_: ice_station_zebra.models.processors.DDPMProcessor
   timesteps: 1000 # DDPM timesteps
 
 decoder:
-  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder
+  _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

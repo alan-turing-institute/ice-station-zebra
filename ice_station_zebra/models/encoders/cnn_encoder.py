@@ -1,15 +1,17 @@
-import math
 from typing import Any
 
 from torch import nn
 
+from ice_station_zebra.models.common import ConvBlockDownsample, ResizingAveragePool2d
 from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_encoder import BaseEncoder
 
 
-class NaiveLatentSpaceEncoder(BaseEncoder):
-    """Naive, linear encoder that takes data in an input space and translates it to a smaller latent space.
+class CNNEncoder(BaseEncoder):
+    """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
+
+    The layers are the reverse of those in the CNNDecoder.
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -19,31 +21,37 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
     """
 
     def __init__(
-        self, *, input_space: DataSpace, latent_space: DataSpace, **kwargs: Any
+        self,
+        *,
+        input_space: DataSpace,
+        latent_space: DataSpace,
+        activation: str = "ReLU",
+        kernel_size: int = 3,
+        n_layers: int = 2,
+        **kwargs: Any,
     ) -> None:
-        """Initialise a NaiveLatentSpaceEncoder."""
+        """Initialise a CNNEncoder."""
         super().__init__(name=input_space.name, **kwargs)
 
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Calculate how many size-reducing convolutional layers are needed
-        n_conv_layers = math.floor(
-            math.log2(min(*input_space.shape) / max(*latent_space.shape))
-        )
-
-        # Add size-reducing convolutional layers
+        # Start by normalising the input across height and width separately for each channel
         n_channels = input_space.channels
-        for _ in range(n_conv_layers):
+        layers.append(nn.BatchNorm2d(n_channels))
+
+        # Add an adaptive pooling layer that sets the initial spatial dimensions
+        initial_conv_shape = [size * (2**n_layers) for size in latent_space.shape]
+        layers.append(ResizingAveragePool2d(input_space.shape, initial_conv_shape))
+
+        # Add n_layers size-reducing convolutional blocks
+        for _ in range(n_layers):
             layers.append(
-                nn.Conv2d(
-                    n_channels, 2 * n_channels, kernel_size=4, stride=2, padding=1
+                ConvBlockDownsample(
+                    n_channels, activation=activation, kernel_size=kernel_size
                 )
             )
             n_channels *= 2
-
-        # Resample to the desired latent shape
-        layers.append(nn.Upsample(latent_space.shape))
 
         # Convolve to the desired number of latent channels
         layers.append(nn.Conv2d(n_channels, latent_space.channels, 1))
@@ -52,7 +60,7 @@ class NaiveLatentSpaceEncoder(BaseEncoder):
         self.model = nn.Sequential(*layers)
 
     def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Apply NaiveLatentSpaceEncoder to NCHW tensor.
+        """Single rollout step: encode NCHW input into NCHW latent space.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

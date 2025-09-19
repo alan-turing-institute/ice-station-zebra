@@ -1,11 +1,15 @@
-from .bottleneckblock import BottleneckBlock
-from .convblock import ConvBlock
-from .timeembed import TimeEmbed
-from .upconvblock import UpconvBlock
+from .conv_block_common import CommonConvBlock
+from .conv_block_downsample import ConvBlockDownsample
+from .conv_block_upsample import ConvBlockUpsample
+from .conv_block_upsample_naive import ConvBlockUpsampleNaive
+from .resizing_average_pool_2d import ResizingAveragePool2d
+from .time_embed import TimeEmbed
 
 __all__ = [
-    "BottleneckBlock",
-    "ConvBlock",
+    "CommonConvBlock",
+    "ConvBlockDownsample",
+    "ConvBlockUpsample",
+    "ConvBlockUpsampleNaive",
+    "ResizingAveragePool2d",
     "TimeEmbed",
-    "UpconvBlock",
 ]

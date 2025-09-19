@@ -175,3 +175,26 @@ class DDPMProcessor(BaseProcessor):
         self.test_metrics.update(y_hat, y, sample_weight)
         
         return loss
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        """
+        Perform prediction on a single batch.
+
+        Args:
+            batch (tuple): (x, y, sample_weight).
+            batch_idx (int): Batch index.
+            dataloader_idx (int): Index of the DataLoader (if using multiple).
+
+        Returns:
+            torch.Tensor: Prediction tensor [B, H, W, C_out].
+        """
+        x, y, sample_weight = batch
+        y = y.squeeze(-1)  # Removes the last dimension (size 1)
+        
+        outputs = self.sample(x, sample_weight)
+        
+        # Convert to [0, 1] for final predictions
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+        
+        return y_hat

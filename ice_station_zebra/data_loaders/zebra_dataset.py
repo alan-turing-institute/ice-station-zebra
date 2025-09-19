@@ -51,7 +51,7 @@ class ZebraDataset(Dataset):
     @cached_property
     def dates(self) -> list[np.datetime64]:
         """Return all dates in the dataset."""
-        return sorted({ds.dates for ds in self.datasets})
+        return sorted({date for ds in self.datasets for date in ds.dates})
 
     @cached_property
     def end_date(self) -> np.datetime64:
@@ -68,13 +68,24 @@ class ZebraDataset(Dataset):
         """Return the name of the dataset."""
         return self._name
 
-    @property
+    @cached_property
     def space(self) -> DataSpace:
         """Return the data space for this dataset."""
+        # Check all datasets have the same number of channels
+        per_ds_channels = sorted({ds.shape[1] for ds in self.datasets})
+        if len(per_ds_channels) != 1:
+            msg = f"All datasets must have the same number of channels, found {len(per_ds_channels)} different values"
+            raise ValueError(msg)
+        # Check all datasets have the same shape
+        per_ds_shape = sorted({ds.field_shape for ds in self.datasets})
+        if len(per_ds_shape) != 1:
+            msg = f"All datasets must have the same shape, found {len(per_ds_shape)} different values"
+            raise ValueError(msg)
+        # Return the data space
         return DataSpace(
-            channels=self.datasets[0].shape[1],
+            channels=per_ds_channels[0],
             name=self.name,
-            shape=self.datasets[0].field_shape,
+            shape=per_ds_shape[0],
         )
 
     @property

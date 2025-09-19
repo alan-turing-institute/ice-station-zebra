@@ -61,7 +61,7 @@ from .conv_norm_act import ConvNormAct
 
 
 class CommonConvBlock(nn.Module):
-    """Full convolutional block: two ConvNormAct stacked, with optional final layer.
+    """Full convolutional block consisting of multiple stacked ConvNormAct mini-blocks.
 
     Args:
         in_channels (int): Input channel size.

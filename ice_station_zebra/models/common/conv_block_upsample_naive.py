@@ -3,8 +3,14 @@ from torch import Tensor, nn
 from .conv_norm_act import ConvNormAct
 
 
-class UpConvBlock(nn.Module):
-    """Upsampling block: upsample → ConvNormAct."""
+class ConvBlockUpsampleNaive(nn.Module):
+    """Convolutional block that doubles the resolution.
+
+    Upsample → ConvNormAct
+
+    Note that using ConvTranspose2d as implemented in ConvBlockUpsample, is generally
+    preferred (see e.g. https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081)
+    """
 
     def __init__(
         self,

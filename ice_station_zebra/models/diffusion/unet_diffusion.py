@@ -15,9 +15,9 @@ import math
 import torch
 from torch import nn
 
+from ice_station_zebra.models.common import ConvBlockUpsampleNaive
 from ice_station_zebra.models.common.convblock import CommonConvBlock
 from ice_station_zebra.models.common.timeembed import TimeEmbed
-from ice_station_zebra.models.common.upconvblock import UpConvBlock
 
 
 class UNetDiffusion(nn.Module):
@@ -114,25 +114,25 @@ class UNetDiffusion(nn.Module):
         )
 
         # Decoder
-        self.up6 = UpConvBlock(
+        self.up6 = ConvBlockUpsampleNaive(
             in_channels=channels[3],
             out_channels=channels[2],
             norm_type=self.normalization,
             activation=self.activation,
         )
-        self.up7 = UpConvBlock(
+        self.up7 = ConvBlockUpsampleNaive(
             in_channels=channels[2],
             out_channels=channels[2],
             norm_type=self.normalization,
             activation=self.activation,
         )
-        self.up8 = UpConvBlock(
+        self.up8 = ConvBlockUpsampleNaive(
             in_channels=channels[2],
             out_channels=channels[1],
             norm_type=self.normalization,
             activation=self.activation,
         )
-        self.up9 = UpConvBlock(
+        self.up9 = ConvBlockUpsampleNaive(
             in_channels=channels[1],
             out_channels=channels[0],
             norm_type=self.normalization,

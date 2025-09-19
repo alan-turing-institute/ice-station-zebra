@@ -47,23 +47,15 @@ def _make_circular_arctic(
 
 
 @pytest.fixture
-def sic_pair_2d() -> tuple[np.ndarray, np.ndarray, date]:
-    """Small 2D ground-truth/prediction arrays and a date for static plots.
+def sic_pair_2d(
+    sic_pair_3d_stream: tuple[np.ndarray, np.ndarray, list[date]],
+) -> tuple[np.ndarray, np.ndarray, date]:
+    """Extract a single frame from the 3D stream for static plots.
 
-    Shape (48, 48), values in [0, 1]. Prediction is ground truth with a
-    different ice distribution noise but same circle shape.
+    Returns the first timestep from the stream as 2D arrays.
     """
-    rng = np.random.default_rng(123)
-    height, width = 48, 48
-    ground_truth = _make_circular_arctic(height, width, rng=rng)
-
-    # Prediction: same circle shape as ground truth, but different ice distribution noise
-    prediction = _make_circular_arctic(
-        height, width, rng=rng, noise=0.08
-    )  # Different noise level
-
-    current_date = date(2020, 1, 16)
-    return ground_truth.astype(np.float32), prediction.astype(np.float32), current_date
+    ground_truth_stream, prediction_stream, dates = sic_pair_3d_stream
+    return ground_truth_stream[0], prediction_stream[0], dates[0]
 
 
 @pytest.fixture

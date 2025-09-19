@@ -2,6 +2,7 @@ from typing import Any
 
 import torch
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
+import torch.nn.functional as F
 
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 from ice_station_zebra.types import TensorNCHW
@@ -82,3 +83,41 @@ class DDPMProcessor(BaseProcessor):
                 y = self.diffusion.p_sample(y, t_batch, pred_v)
 
         return y
+
+    def training_step(self, batch):
+        """
+        One training step using DDPM loss (predicted noise vs. true noise).
+
+        Args:
+            batch (tuple): (x, y, sample_weight).
+
+        Returns:
+            dict: {"loss": loss}
+        """
+        x, y, sample_weight = batch
+        y = y.squeeze(-1)
+        
+        # Scale target to [-1, 1] 
+        y_scaled = 2.0 * y - 1.0
+        
+        # Sample random timesteps
+        t = torch.randint(0, self.timesteps, (x.shape[0],), device=x.device).long()
+        
+        # Create noisy version using scaled target
+        noise = torch.randn_like(y_scaled)
+        noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
+        
+        # Predict v
+        pred_v = self.model(noisy_y, t, x, sample_weight)
+        pred_v = pred_v.squeeze()
+        
+        # Compute target v using scaled data
+        target_v = self.diffusion.calculate_v(y_scaled, noise, t)
+        
+        loss = F.mse_loss(pred_v, target_v)
+        
+        if self.global_step % 100 == 0:
+            print(f"Step {self.global_step}: Loss {loss.item():.4f}")
+        
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        return {"loss": loss}

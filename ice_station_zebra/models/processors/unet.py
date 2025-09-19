@@ -39,8 +39,6 @@ class UNetProcessor(BaseProcessor):
         """
         super().__init__(**kwargs)
 
-        channels = [start_out_channels * 2**exponent for exponent in range(4)]
-
         if kernel_size <= 0:
             msg = "Kernel size must be greater than 0."
             raise ValueError(msg)
@@ -49,11 +47,12 @@ class UNetProcessor(BaseProcessor):
             msg = "Start out channels must be greater than 0."
             raise ValueError(msg)
 
+        channels = [start_out_channels * 2**exponent for exponent in range(4)]
+
         # Encoder
         self.conv1 = CommonConvBlock(
             self.n_latent_channels_total, channels[0], kernel_size=kernel_size
         )
-
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=kernel_size)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)

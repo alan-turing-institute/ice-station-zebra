@@ -97,9 +97,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[
-                        (self.train_period["start"], self.train_period["end"])
-                    ],
+                    date_ranges=[self.train_period],
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -124,7 +122,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[(self.val_period["start"], self.val_period["end"])],
+                    date_ranges=[self.val_period],
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -149,7 +147,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[(self.test_period["start"], self.test_period["end"])],
+                    date_ranges=[self.test_period],
                 )
                 for name, paths in self.dataset_groups.items()
             ],

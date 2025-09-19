@@ -1,9 +1,9 @@
 defaults:
   - base
   - datasets:
-    - osisaf-sic-north-2003-08-24h-v1
-    - osisaf-sic-north-2010-08-24h-v1
-    - osisaf-sic-north-2018-08-24h-v1
+    - nbsamp_sicnorth_osisaf_25k_2003_2003_24h_v1
+    - nbsamp_sicnorth_osisaf_25k_2010_2010_24h_v1
+    - nbsamp_sicnorth_osisaf_25k_2018_2018_24h_v1
   - notebooks:
     - whale_telemetry_csv
     - whale_visualisation

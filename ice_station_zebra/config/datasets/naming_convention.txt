@@ -1,0 +1,26 @@
+We use the Anemoi naming convention from https://anemoi.readthedocs.io/projects/registry/en/stable/naming-conventions.html.
+
+purpose-content-source-resolution-start-year-end-year-frequency-version
+
+purpose:
+  - nbsamp: Test datasets for use in notebooks
+  - samp: Test datasets for use on the command line
+content:
+  - sicnorth: sea ice concentration (northern hemisphere)
+  - sicsouth: sea ice concentration (southern hemisphere)
+  - weathernorth: weather data (northern hemisphere)
+  - weathersouth: weather data (southern hemisphere)
+source:
+  - era5: ERA5 weather data
+  - osisaf: OSISAF sea ice data
+resolution:
+  - 0p5: 0.5 degree
+  - 25k: 25km grid
+- start-year:
+  - YYYY: year code
+- end-year:
+  - YYYY: year code
+- frequency:
+  - 24h: every 24 hours
+- version:
+  - vX: where X increments each time changes are made

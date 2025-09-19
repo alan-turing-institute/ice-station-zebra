@@ -1,5 +1,5 @@
-osisaf-sic-south-2020-01-24h-v1:
-  name: osisaf-sic-south-2020-01-24h-v1
+samp-sicsouth-osisaf-25k-2020-2020-24h-v1:
+  name: samp-sicsouth-osisaf-25k-2020-2020-24h-v1
   group_as: osisaf-south
   description: OSISAF sea ice concentration for southern hemisphere
   attribution: EUMETSAT
@@ -7,7 +7,7 @@ osisaf-sic-south-2020-01-24h-v1:
 
   dates:
     start: '2020-01-01T00:00:00'
-    end: '2020-01-31T23:00:00'
+    end: '2020-04-30T23:00:00'
     frequency: 24h
 
   preprocessor:
@@ -16,4 +16,4 @@ osisaf-sic-south-2020-01-24h-v1:
 
   input:
     netcdf:
-      path: ${base_path}/data/preprocessing/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2020.nc
+      path: ${base_path}/data/preprocessing/${...name}/${...preprocessor.type}/data/osisaf/${...preprocessor.hemisphere}/siconca/2020.nc

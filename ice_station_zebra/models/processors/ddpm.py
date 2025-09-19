@@ -198,3 +198,52 @@ class DDPMProcessor(BaseProcessor):
         y_hat = torch.clamp(y_hat, 0, 1)
         
         return y_hat
+
+    def configure_optimizers(self):
+        """
+        Set up the optimizer.
+
+        Returns:
+            torch.optim.Optimizer: Adam optimizer.
+        """
+        # Add weight decay to discourage large weights (helps generalization)
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.learning_rate,
+            weight_decay=1e-4,  
+            betas=(0.9, 0.95),  
+            eps=1e-8
+        )
+        
+        scheduler = {
+            'scheduler': torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer,
+                T_max=100,
+                eta_min=self.learning_rate * 0.01
+            ),
+            'interval': 'epoch',
+            'frequency': 1,
+            'name': 'lr'
+        }
+        return {'optimizer': optimizer, 'lr_scheduler': scheduler}
+
+    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure, **kwargs):
+        """
+        Custom optimizer step used in PyTorch Lightning.
+    
+        This method performs a single optimization step using the provided closure,
+        and updates the Exponential Moving Average (EMA) of the model weights.
+    
+        Args:
+            epoch (int): Current epoch number.
+            batch_idx (int): Index of the current batch.
+            optimizer (Optimizer): The optimizer instance (e.g., Adam).
+            optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
+            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
+    
+        Notes:
+            - This method is automatically called by PyTorch Lightning during training.
+            - `self.ema.update()` updates the EMA shadow weights after the optimizer step.
+        """
+        optimizer.step(closure=optimizer_closure)
+        self.ema.update()

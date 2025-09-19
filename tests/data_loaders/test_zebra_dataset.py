@@ -30,7 +30,7 @@ class TestZebraDataset:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            end=self.dates_str[1],
+            date_ranges=[(None, self.dates_str[1])],
         )
         assert dataset.start_date == self.dates_np[0]
         assert dataset.end_date == self.dates_np[1]
@@ -98,7 +98,7 @@ class TestZebraDataset:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            start=self.dates_str[1],
+            date_ranges=[(self.dates_str[1], None)],
         )
         assert dataset.start_date == self.dates_np[1]
         assert dataset.end_date == self.dates_np[-1]

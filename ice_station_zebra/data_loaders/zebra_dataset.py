@@ -16,8 +16,7 @@ class ZebraDataset(Dataset):
         name: str,
         input_files: list[Path],
         *,
-        start: str | None = None,
-        end: str | None = None,
+        date_ranges: Sequence[tuple[str | None, str | None]] = [(None, None)],
     ) -> None:
         """A dataset for use by Zebra.
 
@@ -27,10 +26,10 @@ class ZebraDataset(Dataset):
         super().__init__()
         self._cache: LRUCache = LRUCache(maxsize=128)
         self._dataset: AnemoiDataset | None = None
-        self._end = end
+        self._end = date_ranges[0][1]
         self._input_files = input_files
         self._name = name
-        self._start = start
+        self._start = date_ranges[0][0]
 
     @property
     def dataset(self) -> AnemoiDataset:

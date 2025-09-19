@@ -57,7 +57,7 @@ block_bottleneck = CommonConvBlock(
 
 from torch import Tensor, nn
 
-from .convnormact import ConvNormAct
+from .conv_norm_act import ConvNormAct
 
 
 class CommonConvBlock(nn.Module):
@@ -98,9 +98,9 @@ class CommonConvBlock(nn.Module):
                     in_channels_,
                     out_channels,
                     kernel_size,
-                    norm_type,
-                    activation,
-                    dropout_rate,
+                    activation=activation,
+                    dropout_rate=dropout_rate,
+                    norm_type=norm_type,
                 )
             )
 

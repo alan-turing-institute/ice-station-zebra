@@ -4,7 +4,7 @@ from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvNormAct(nn.Module):
-    """Mini block: Conv2d → Normalization → Activation, optional Dropout.
+    """Mini block: Conv2d → Normalization → Activation → optional Dropout.
 
     Args:
         in_channels: Input channel size.
@@ -16,41 +16,43 @@ class ConvNormAct(nn.Module):
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         in_channels: int,
         out_channels: int,
         kernel_size: int,
-        norm_type: str = "batchnorm",
+        *,
         activation: str = "ReLU",
         dropout_rate: float = 0.0,
+        norm_type: str = "batchnorm",
+        padding: int | str = "same",
+        stride: int = 1,
     ) -> None:
-        """Initialise a ConvNormAct block."""
+        """Initialise a ConvNormAct mini-block."""
         super().__init__()
-        norm_type = norm_type.lower()
-        norm_layer: nn.Module
-        if norm_type == "groupnorm":
-            norm_layer = nn.GroupNorm(self._get_num_groups(out_channels), out_channels)
-        elif norm_type == "batchnorm":
-            norm_layer = nn.BatchNorm2d(out_channels)
-        elif norm_type == "none":
-            norm_layer = nn.Identity()
-        else:
+        try:
+            norm_layer: nn.Module = {
+                "batchnorm": nn.BatchNorm2d(out_channels),
+                "groupnorm": nn.GroupNorm(
+                    self._get_num_groups(out_channels), out_channels
+                ),
+                "none": nn.Identity(),
+            }[norm_type.lower()]
+        except KeyError as exc:
             msg = (
                 f"Unknown norm_type: {norm_type}. "
                 "Choose 'groupnorm', 'batchnorm', or 'none'"
             )
-            raise ValueError(msg)
+            raise ValueError(msg) from exc
 
-        activation_layer = ACTIVATION_FROM_NAME[activation](inplace=True)
-        dropout_layer = (
-            nn.Dropout2d(dropout_rate) if dropout_rate > 0 else nn.Identity()
-        )
+        # Assemble the mini-block
         self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size, padding="same"),
+            nn.Conv2d(
+                in_channels, out_channels, kernel_size, padding=padding, stride=stride
+            ),
             norm_layer,
-            activation_layer,
-            dropout_layer,
+            ACTIVATION_FROM_NAME[activation](inplace=True),
+            nn.Dropout2d(dropout_rate) if dropout_rate > 0 else nn.Identity(),
         )
 
     def _get_num_groups(self, channels: int) -> int:

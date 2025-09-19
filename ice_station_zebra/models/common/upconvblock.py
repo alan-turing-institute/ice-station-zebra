@@ -1,6 +1,6 @@
 from torch import Tensor, nn
 
-from .convnormact import ConvNormAct
+from .conv_norm_act import ConvNormAct
 
 
 class UpConvBlock(nn.Module):
@@ -34,9 +34,9 @@ class UpConvBlock(nn.Module):
                 in_channels,
                 out_channels,
                 kernel_size,
-                norm_type,
-                activation,
-                dropout_rate,
+                activation=activation,
+                dropout_rate=dropout_rate,
+                norm_type=norm_type,
             ),
         )
 

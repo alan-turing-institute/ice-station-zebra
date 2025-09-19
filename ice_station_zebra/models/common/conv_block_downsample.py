@@ -2,7 +2,7 @@ from torch import nn
 
 from ice_station_zebra.types import TensorNCHW
 
-from .activations import ACTIVATION_FROM_NAME
+from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockDownsample(nn.Module):
@@ -23,7 +23,6 @@ class ConvBlockDownsample(nn.Module):
 
         """
         super().__init__()
-        activation_layer = ACTIVATION_FROM_NAME[activation]
 
         # Calculate convolutional parameters
         n_output_channels = n_input_channels * 2
@@ -31,24 +30,23 @@ class ConvBlockDownsample(nn.Module):
 
         self.model = nn.Sequential(
             # Size reducing convolution/normalisation/activation
-            nn.Conv2d(
+            ConvNormAct(
                 n_input_channels,
                 n_output_channels,
                 kernel_size=kernel_size,
+                activation=activation,
+                norm_type="batchnorm",
                 padding=padding,
                 stride=2,
             ),
-            nn.BatchNorm2d(n_output_channels),
-            activation_layer(inplace=True),
             # Size preserving convolution/normalisation/activation
-            nn.Conv2d(
+            ConvNormAct(
                 n_output_channels,
                 n_output_channels,
                 kernel_size=kernel_size,
-                padding="same",
+                activation=activation,
+                norm_type="batchnorm",
             ),
-            nn.BatchNorm2d(n_output_channels),
-            activation_layer(inplace=True),
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:

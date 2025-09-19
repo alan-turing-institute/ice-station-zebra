@@ -47,7 +47,7 @@ class TestZebraDataset:
         # Check exception for out of range
         with pytest.raises(IndexError) as excinfo:
             dataset[5]
-        assert "list index out of range" in str(excinfo.value)
+        assert "Index 5 out of range for dataset of length 3" in str(excinfo.value)
 
     def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -60,7 +60,7 @@ class TestZebraDataset:
         assert data_array.shape == (3, 1, 2, 2)
         # Check exception for out of range
         with pytest.raises(
-            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+            ValueError, match="Date 1970-01-01 not found in the dataset"
         ):
             dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
 
@@ -73,7 +73,7 @@ class TestZebraDataset:
         assert dataset.index_from_date(self.dates_np[0]) == 0
         # Check exception for out of range
         with pytest.raises(
-            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+            ValueError, match="Date 1970-01-01 not found in the dataset"
         ):
             dataset.index_from_date(np.datetime64("1970-01-01"))
 

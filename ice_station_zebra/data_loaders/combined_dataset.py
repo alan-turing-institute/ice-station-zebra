@@ -35,7 +35,7 @@ class CombinedDataset(Dataset):
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
-        frequencies = sorted({ds.frequency for ds in datasets})
+        frequencies = sorted({ds.frequency for ds in datasets})  # type: ignore[type-var]
         if len(frequencies) != 1:
             msg = f"Cannot combine datasets with different frequencies: {frequencies}."
             raise ValueError(msg)
@@ -45,7 +45,7 @@ class CombinedDataset(Dataset):
         self.available_dates = [
             available_date
             # Iterate over all dates in any dataset
-            for available_date in sorted({date for ds in datasets for date in ds.dates})
+            for available_date in sorted({date for ds in datasets for date in ds.dates})  # type: ignore[type-var]
             # Check that all inputs have n_history_steps starting on start_date
             if all(
                 date in ds.dates

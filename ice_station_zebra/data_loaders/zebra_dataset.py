@@ -102,11 +102,12 @@ class ZebraDataset(Dataset):
 
     def __getitem__(self, idx: int) -> ArrayCHW:
         """Return the data for a single timestep in [C, H, W] format."""
+        ds_idx = idx
         for dataset in self.datasets:
-            if idx < dataset._len:
-                return dataset[idx].reshape(self.space.chw)
-            idx -= dataset._len
-        msg = f"Index {idx} out of range for dataset of length {len(self)}"
+            if ds_idx < dataset._len:
+                return dataset[ds_idx].reshape(self.space.chw)
+            ds_idx -= dataset._len
+        msg = f"Index {idx} out of range for dataset of length {len(self)}."
         raise IndexError(msg)
 
     def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
@@ -120,10 +121,12 @@ class ZebraDataset(Dataset):
         """Return the index of a given date in the dataset."""
         idx = 0
         for dataset in self.datasets:
-            if date not in dataset.dates:
-                idx += dataset._len
-            else:
+            try:
                 ds_idx, _, _ = dataset.to_index(date, 0)
                 idx += ds_idx
-                break
-        return idx
+            except ValueError:
+                idx += dataset._len
+            else:
+                return idx
+        msg = f"Date {date} not found in the dataset {self.dates[0]} to {self.dates[-1]} by {self.frequency}"
+        raise ValueError(msg)

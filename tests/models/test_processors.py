@@ -99,7 +99,7 @@ class TestUNetProcessor:
 
         # Catch invalid filter size
         if test_kernel_size <= 0:
-            with pytest.raises(ValueError, match="Filter size must be greater than 0."):
+            with pytest.raises(ValueError, match="Kernel size must be greater than 0."):
                 UNetProcessor(
                     kernel_size=test_kernel_size,
                     n_forecast_steps=test_n_forecast_steps,

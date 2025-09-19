@@ -42,7 +42,7 @@ class UNetProcessor(BaseProcessor):
         channels = [start_out_channels * 2**exponent for exponent in range(4)]
 
         if kernel_size <= 0:
-            msg = "Filter size must be greater than 0."
+            msg = "Kernel size must be greater than 0."
             raise ValueError(msg)
 
         if start_out_channels <= 0:

@@ -109,7 +109,7 @@ class UNetDiffusion(nn.Module):
         self.conv5 = CommonConvBlock(
             in_channels=channels[2],
             out_channels=channels[3],
-            kernel_size=self.kernel_size,  # You'll need to pass this from self.kernel_size
+            kernel_size=self.kernel_size,
             norm_type=self.normalization,
             activation=self.activation,
             dropout_rate=self.dropout_rate,

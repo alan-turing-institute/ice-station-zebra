@@ -1,6 +1,6 @@
-"""Full convolutional block consisting of multiple stacked ConvNormAct.
+"""Full convolutional block consisting of multiple stacked ConvNormAct mini-blocks.
 
-The first block changes the number of channels, subsequent blocks keep it constant.
+The first mini-block changes the number of channels, subsequent blocks keep it constant.
 
 Example usage:
 

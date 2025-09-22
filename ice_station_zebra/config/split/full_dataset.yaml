@@ -1,5 +1,17 @@
 batch_size: 2
 
+# This data is a holdout set not to be used until we are ready to produce final outputs (e.g. a paper)
+predict:
+  - start: 2013-01-01
+    end: 2013-12-31
+  - start: 2023-01-01
+    end: 2023-12-31
+
+# This data is a test set used to compare fully-trained models (e.g. on the project leaderboard)
+test:
+  - start: 2019-01-01
+    end: 2019-12-31
+
 # This data is used for training the model
 train:
   - start: null
@@ -13,8 +25,3 @@ train:
 validate:
   - start: 2020-01-01
     end: 2022-12-31
-
-# This data is a test set used to compare fully-trained models (e.g. on the project leaderboard)
-test:
-  - start: 2019-01-01
-    end: 2019-12-31

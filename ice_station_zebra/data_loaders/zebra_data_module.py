@@ -47,6 +47,14 @@ class ZebraDataModule(LightningDataModule):
 
         # Set periods for train, validation, and test
         self.batch_size = int(config["split"]["batch_size"])
+        self.predict_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["predict"]
+        ]
+        self.test_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["test"]
+        ]
         self.train_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
             for period in config["split"]["train"]
@@ -54,10 +62,6 @@ class ZebraDataModule(LightningDataModule):
         self.val_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
             for period in config["split"]["validate"]
-        ]
-        self.test_periods = [
-            {k: None if v == "None" else v for k, v in period.items()}
-            for period in config["split"]["test"]
         ]
 
         # Set history and forecast steps
@@ -89,6 +93,56 @@ class ZebraDataModule(LightningDataModule):
             for name, paths in self.dataset_groups.items()
             if name == self.predict_target
         )
+
+    def predict_dataloader(
+        self,
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
+        """Construct predict dataloader."""
+        dataset = CombinedDataset(
+            [
+                ZebraDataset(
+                    name,
+                    paths,
+                    date_ranges=self.predict_periods,
+                )
+                for name, paths in self.dataset_groups.items()
+            ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
+            target=self.predict_target,
+        )
+        logger.info(
+            "Loaded predict dataset with %d samples between %s and %s.",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
+        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
+
+    def test_dataloader(
+        self,
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
+        """Construct test dataloader."""
+        dataset = CombinedDataset(
+            [
+                ZebraDataset(
+                    name,
+                    paths,
+                    date_ranges=self.test_periods,
+                )
+                for name, paths in self.dataset_groups.items()
+            ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
+            target=self.predict_target,
+        )
+        logger.info(
+            "Loaded test dataset with %d samples between %s and %s.",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
+        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 
     def train_dataloader(
         self,
@@ -134,31 +188,6 @@ class ZebraDataModule(LightningDataModule):
         )
         logger.info(
             "Loaded validation dataset with %d samples between %s and %s.",
-            len(dataset),
-            dataset.start_date,
-            dataset.end_date,
-        )
-        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
-
-    def test_dataloader(
-        self,
-    ) -> DataLoader[dict[str, ArrayTCHW]]:
-        """Construct test dataloader."""
-        dataset = CombinedDataset(
-            [
-                ZebraDataset(
-                    name,
-                    paths,
-                    date_ranges=self.test_periods,
-                )
-                for name, paths in self.dataset_groups.items()
-            ],
-            n_forecast_steps=self.n_forecast_steps,
-            n_history_steps=self.n_history_steps,
-            target=self.predict_target,
-        )
-        logger.info(
-            "Loaded test dataset with %d samples between %s and %s.",
             len(dataset),
             dataset.start_date,
             dataset.end_date,

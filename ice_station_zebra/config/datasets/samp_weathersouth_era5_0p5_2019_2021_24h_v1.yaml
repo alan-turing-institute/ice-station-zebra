@@ -1,13 +1,13 @@
-samp-weathersouth-era5-0p5-2020-2020-24h-v1:
-  name: samp-weathersouth-era5-0p5-2020-2020-24h-v1
+samp-weathersouth-era5-0p5-2019-2021-24h-v1:
+  name: samp-weathersouth-era5-0p5-2019-2021-24h-v1
   group_as: era5
   description: Small ERA5 dataset for testing (0.5 deg, south)
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 
   dates:
-    start: '2020-01-01T00:00:00'
-    end: '2020-04-30T23:00:00'
+    start: '2019-12-01T00:00:00'
+    end: '2021-01-31T23:00:00'
     frequency: 24h
 
   input:

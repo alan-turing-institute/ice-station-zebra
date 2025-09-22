@@ -47,16 +47,18 @@ class ZebraDataModule(LightningDataModule):
 
         # Set periods for train, validation, and test
         self.batch_size = int(config["split"]["batch_size"])
-        self.train_period = {
-            k: None if v == "None" else v for k, v in config["split"]["train"].items()
-        }
-        self.val_period = {
-            k: None if v == "None" else v
-            for k, v in config["split"]["validate"].items()
-        }
-        self.test_period = {
-            k: None if v == "None" else v for k, v in config["split"]["test"].items()
-        }
+        self.train_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["train"]
+        ]
+        self.val_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["validate"]
+        ]
+        self.test_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["test"]
+        ]
 
         # Set history and forecast steps
         self.n_forecast_steps = int(config["predict"].get("n_forecast_steps", 1))
@@ -97,7 +99,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[self.train_period],
+                    date_ranges=self.train_periods,
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -122,7 +124,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[self.val_period],
+                    date_ranges=self.val_periods,
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -147,7 +149,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[self.test_period],
+                    date_ranges=self.test_periods,
                 )
                 for name, paths in self.dataset_groups.items()
             ],

@@ -7,6 +7,13 @@ from ice_station_zebra.data_loaders.zebra_dataset import ZebraDataset
 from ice_station_zebra.types import DataSpace
 
 
+class MockAnemoiDataset:
+    def __init__(self, channels: int, height: int, width: int) -> None:
+        """A mock Anemoi dataset for testing purposes."""
+        self.shape = (0, channels, height * width)
+        self.field_shape = (height, width)
+
+
 class TestZebraDataset:
     dates_str = ("2020-01-01", "2020-01-02", "2020-01-03")
     dates_np = tuple(np.datetime64(s) for s in dates_str)
@@ -93,6 +100,35 @@ class TestZebraDataset:
         assert isinstance(dataset.space, DataSpace)
         assert dataset.space.channels == 1
         assert dataset.space.shape == (2, 2)
+
+    def test_dataset_space_error_shape(self) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[],
+        )
+        dataset._datasets = [MockAnemoiDataset(1, 32, 32), MockAnemoiDataset(1, 32, 64)]
+        # Test data space shapes
+        with pytest.raises(
+            ValueError,
+            match="All datasets must have the same shape, found 2 different values",
+        ):
+            _ = dataset.space
+
+    def test_dataset_space_error_channels(self) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[],
+        )
+        dataset._datasets = [
+            MockAnemoiDataset(10, 32, 32),
+            MockAnemoiDataset(11, 32, 32),
+        ]
+        # Test data space channels
+        with pytest.raises(
+            ValueError,
+            match="All datasets must have the same number of channels, found 2 different values",
+        ):
+            _ = dataset.space
 
     def test_dataset_start_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

@@ -15,7 +15,7 @@ class MockAnemoiDataset:
 
 
 class TestZebraDataset:
-    dates_str = ("2020-01-01", "2020-01-02", "2020-01-03")
+    dates_str = ("2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05")
     dates_np = tuple(np.datetime64(s) for s in dates_str)
 
     def test_dataset_name(self) -> None:
@@ -32,6 +32,19 @@ class TestZebraDataset:
         )
         # Test dates
         assert all(date in dataset.dates for date in self.dates_np)
+
+    def test_dataset_date_ranges(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            date_ranges=[
+                {"start": self.dates_str[0], "end": self.dates_str[1]},
+                {"start": self.dates_str[-2], "end": self.dates_str[-1]},
+            ],
+        )
+        assert self.dates_np[2] not in dataset.dates
+        assert len(dataset.datasets) == 2
+        assert len(dataset) == 4
 
     def test_dataset_end_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -53,8 +66,8 @@ class TestZebraDataset:
         assert data_array.shape == (1, 2, 2)
         # Check exception for out of range
         with pytest.raises(IndexError) as excinfo:
-            dataset[5]
-        assert "Index 5 out of range for dataset of length 3" in str(excinfo.value)
+            dataset[10]
+        assert "Index 10 out of range for dataset of length 5" in str(excinfo.value)
 
     def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -64,7 +77,7 @@ class TestZebraDataset:
         # Check return type and shape
         data_array = dataset.get_tchw(self.dates_np)
         assert isinstance(data_array, np.ndarray)
-        assert data_array.shape == (3, 1, 2, 2)
+        assert data_array.shape == (5, 1, 2, 2)
         # Check exception for out of range
         with pytest.raises(
             ValueError, match="Date 1970-01-01 not found in the dataset"
@@ -89,7 +102,7 @@ class TestZebraDataset:
             name="mock_dataset",
             input_files=[mock_dataset],
         )
-        assert len(dataset) == 3
+        assert len(dataset) == 5
 
     def test_dataset_space(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

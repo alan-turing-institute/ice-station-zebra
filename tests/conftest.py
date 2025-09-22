@@ -96,11 +96,13 @@ def mock_data() -> dict[str, dict[str, Any]]:
                     datetime.datetime(2020, 1, 1, 0, 0, 0),
                     datetime.datetime(2020, 1, 2, 0, 0, 0),
                     datetime.datetime(2020, 1, 3, 0, 0, 0),
+                    datetime.datetime(2020, 1, 4, 0, 0, 0),
+                    datetime.datetime(2020, 1, 5, 0, 0, 0),
                 ],
             },
         },
         "attrs": {},
-        "dims": {"lat": 2, "lon": 2, "time": 3},
+        "dims": {"lat": 2, "lon": 2, "time": 5},
         "data_vars": {
             "ice_conc": {
                 "dims": ("time", "lat", "lon"),
@@ -109,6 +111,8 @@ def mock_data() -> dict[str, dict[str, Any]]:
                     [[0.5, 1.0], [0.4, 0.0]],
                     [[0.4, 0.9], [0.3, 0.1]],
                     [[0.3, 0.8], [0.2, 0.2]],
+                    [[0.2, 0.7], [0.1, 0.3]],
+                    [[0.1, 0.6], [0.0, 0.4]],
                 ],
             }
         },
@@ -127,7 +131,7 @@ def mock_dataset(
         {
             "dates": {
                 "start": "2020-01-01T00:00:00",
-                "end": "2020-01-03T23:00:00",
+                "end": "2020-01-05T23:00:00",
                 "frequency": "24h",
             },
             "input": {

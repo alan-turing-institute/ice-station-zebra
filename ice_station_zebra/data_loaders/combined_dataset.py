@@ -35,29 +35,27 @@ class CombinedDataset(Dataset):
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
-        frequencies = sorted({ds.dataset.frequency for ds in datasets})
+        frequencies = sorted({ds.frequency for ds in datasets})  # type: ignore[type-var]
         if len(frequencies) != 1:
             msg = f"Cannot combine datasets with different frequencies: {frequencies}."
             raise ValueError(msg)
-        self.frequency = np.timedelta64(frequencies[0])
+        self.frequency = frequencies[0]
 
         # Get list of dates that are available in all datasets
         self.available_dates = [
-            start_date
+            available_date
             # Iterate over all dates in any dataset
-            for start_date in sorted(
-                {date for ds in datasets for date in ds.dataset.dates}
-            )
+            for available_date in sorted({date for ds in datasets for date in ds.dates})  # type: ignore[type-var]
             # Check that all inputs have n_history_steps starting on start_date
             if all(
-                date in ds.dataset.dates
-                for date in self.get_history_steps(start_date)
+                date in ds.dates
+                for date in self.get_history_steps(available_date)
                 for ds in self.inputs
             )
             # Check that the target has n_forecast_steps starting after the history dates
             and all(
-                date in self.target.dataset.dates
-                for date in self.get_forecast_steps(start_date)
+                date in self.target.dates
+                for date in self.get_forecast_steps(available_date)
             )
         ]
 

@@ -12,9 +12,9 @@ from ice_station_zebra.types import DataSpace
 class TestDecoders:
     @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
     @pytest.mark.parametrize("test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder"])
-    @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (100, 200, 3)])
+    @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (200, 100, 3)])
     @pytest.mark.parametrize("test_n_forecast_steps", [1, 3, 5])
-    @pytest.mark.parametrize("test_output_shape", [(512, 512, 4), (1000, 200, 1)])
+    @pytest.mark.parametrize("test_output_shape", [(256, 256, 4), (100, 200, 1)])
     def test_forward_shape(
         self,
         test_batch_size: int,

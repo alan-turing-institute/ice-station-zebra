@@ -3,6 +3,7 @@ We use the Anemoi naming convention from https://anemoi.readthedocs.io/projects/
 purpose-content-source-resolution-start-year-end-year-frequency-version
 
 purpose:
+  - full: Full datasets for use on the command line
   - nbsamp: Test datasets for use in notebooks
   - samp: Test datasets for use on the command line
 content:

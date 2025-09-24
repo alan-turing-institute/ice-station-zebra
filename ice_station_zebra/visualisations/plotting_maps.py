@@ -377,17 +377,17 @@ def _draw_frame(  # noqa: PLR0913
             )
 
         if diff_colour_scale.norm is not None:
-            # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
-            diff_vmin = diff_colour_scale.norm.vmin or 0.0
-            diff_vmax = diff_colour_scale.norm.vmax or 1.0
+            # Signed differences with TwoSlopeNorm - use explicit levels and shared norm
+            norm = diff_colour_scale.norm
+            diff_vmin = norm.vmin or 0.0
+            diff_vmax = norm.vmax or 1.0
             diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
 
             image_difference = axs[2].contourf(
                 difference,
                 levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
-                vmin=diff_vmin,
-                vmax=diff_vmax,
+                norm=norm,
             )
         else:
             # Non-negative differences with vmin/vmax

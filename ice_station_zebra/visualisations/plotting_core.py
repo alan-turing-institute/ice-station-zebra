@@ -77,18 +77,19 @@ def make_diff_colourmap(
 
     """
     if mode == "signed":
-        # Use actual data range centred on zero
+        # Force symmetric limits around zero so 0 is the literal midpoint
         if isinstance(sample, (float, int)):
-            # For scalar input (two-pass strategy), make symmetric
             max_abs = max(1.0, float(abs(sample)))
             vmin, vmax = -max_abs, max_abs
         else:
-            # For array input (precompute strategy), use actual data range
-            vmin = float(np.nanmin(sample) or -1.0)
-            vmax = float(np.nanmax(sample) or 1.0)
-            # Ensure we span at least -1 to 1 for meaningful visualization
-            vmin = min(vmin, -1.0)
-            vmax = max(vmax, 1.0)
+            vmin_data = float(
+                np.nanmin(sample) if np.nanmin(sample) is not None else -1.0
+            )
+            vmax_data = float(
+                np.nanmax(sample) if np.nanmax(sample) is not None else 1.0
+            )
+            max_abs = max(1.0, abs(vmin_data), abs(vmax_data))
+            vmin, vmax = -max_abs, max_abs
 
         return DiffColourmapSpec(
             norm=TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax),

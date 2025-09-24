@@ -8,7 +8,7 @@ full-weathersouth-era5-0p5-1979-2024-24h-v1:
   dates:
     start: '1979-01-01T00:00:00'
     end: '2025-12-31T23:00:00'
-    frequency: 24h
+    frequency: 1d
 
   input:
     join:

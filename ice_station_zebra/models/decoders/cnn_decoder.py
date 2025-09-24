@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample, ResizingAveragePool2d
+from ice_station_zebra.models.common import ConvBlockUpsample
 from ice_station_zebra.types import DataSpace, TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -49,9 +49,8 @@ class CNNDecoder(BaseDecoder):
             )
             n_channels //= 2
 
-        # Add an adaptive pooling layer that sets the final spatial dimensions
-        final_conv_shape = [size * (2**n_layers) for size in latent_space.shape]
-        layers.append(ResizingAveragePool2d(final_conv_shape, output_space.shape))
+        # Set the final spatial dimensions (previously used adaptive pooling which is extremely slow)
+        layers.append(nn.Upsample(output_space.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

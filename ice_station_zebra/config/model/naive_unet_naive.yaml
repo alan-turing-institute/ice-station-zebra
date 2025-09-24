@@ -12,7 +12,7 @@ encoder:
 
 processor:
   _target_: ice_station_zebra.models.processors.UNetProcessor
-  filter_size: 3 # Size of the kernel for convolutional layers
+  kernel_size: 3 # Size of the kernel for convolutional layers
   start_out_channels: 64 # Initial number of channels for the first convolutional layer
 
 decoder:

@@ -47,16 +47,22 @@ class ZebraDataModule(LightningDataModule):
 
         # Set periods for train, validation, and test
         self.batch_size = int(config["split"]["batch_size"])
-        self.train_period = {
-            k: None if v == "None" else v for k, v in config["split"]["train"].items()
-        }
-        self.val_period = {
-            k: None if v == "None" else v
-            for k, v in config["split"]["validate"].items()
-        }
-        self.test_period = {
-            k: None if v == "None" else v for k, v in config["split"]["test"].items()
-        }
+        self.predict_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["predict"]
+        ]
+        self.test_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["test"]
+        ]
+        self.train_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["train"]
+        ]
+        self.val_periods = [
+            {k: None if v == "None" else v for k, v in period.items()}
+            for period in config["split"]["validate"]
+        ]
 
         # Set history and forecast steps
         self.n_forecast_steps = int(config["predict"].get("n_forecast_steps", 1))
@@ -88,6 +94,56 @@ class ZebraDataModule(LightningDataModule):
             if name == self.predict_target
         )
 
+    def predict_dataloader(
+        self,
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
+        """Construct predict dataloader."""
+        dataset = CombinedDataset(
+            [
+                ZebraDataset(
+                    name,
+                    paths,
+                    date_ranges=self.predict_periods,
+                )
+                for name, paths in self.dataset_groups.items()
+            ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
+            target=self.predict_target,
+        )
+        logger.info(
+            "Loaded predict dataset with %d samples between %s and %s.",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
+        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
+
+    def test_dataloader(
+        self,
+    ) -> DataLoader[dict[str, ArrayTCHW]]:
+        """Construct test dataloader."""
+        dataset = CombinedDataset(
+            [
+                ZebraDataset(
+                    name,
+                    paths,
+                    date_ranges=self.test_periods,
+                )
+                for name, paths in self.dataset_groups.items()
+            ],
+            n_forecast_steps=self.n_forecast_steps,
+            n_history_steps=self.n_history_steps,
+            target=self.predict_target,
+        )
+        logger.info(
+            "Loaded test dataset with %d samples between %s and %s.",
+            len(dataset),
+            dataset.start_date,
+            dataset.end_date,
+        )
+        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
+
     def train_dataloader(
         self,
     ) -> DataLoader[dict[str, ArrayTCHW]]:
@@ -97,7 +153,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[self.train_period],
+                    date_ranges=self.train_periods,
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -122,7 +178,7 @@ class ZebraDataModule(LightningDataModule):
                 ZebraDataset(
                     name,
                     paths,
-                    date_ranges=[self.val_period],
+                    date_ranges=self.val_periods,
                 )
                 for name, paths in self.dataset_groups.items()
             ],
@@ -132,31 +188,6 @@ class ZebraDataModule(LightningDataModule):
         )
         logger.info(
             "Loaded validation dataset with %d samples between %s and %s.",
-            len(dataset),
-            dataset.start_date,
-            dataset.end_date,
-        )
-        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
-
-    def test_dataloader(
-        self,
-    ) -> DataLoader[dict[str, ArrayTCHW]]:
-        """Construct test dataloader."""
-        dataset = CombinedDataset(
-            [
-                ZebraDataset(
-                    name,
-                    paths,
-                    date_ranges=[self.test_period],
-                )
-                for name, paths in self.dataset_groups.items()
-            ],
-            n_forecast_steps=self.n_forecast_steps,
-            n_history_steps=self.n_history_steps,
-            target=self.predict_target,
-        )
-        logger.info(
-            "Loaded test dataset with %d samples between %s and %s.",
             len(dataset),
             dataset.start_date,
             dataset.end_date,

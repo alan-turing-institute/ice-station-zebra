@@ -15,7 +15,7 @@ test:
     end: 2019-12-31
 
 # This data is used for training the model
-# Data from 1979-1999, 2001-2012, 2014-2018, 2020 and 2024
+# Data from 1979-1999, 2001-2012, 2014-2018, 2020, 2022 and 2024
 train:
   - start: null
     end: 1999-12-31

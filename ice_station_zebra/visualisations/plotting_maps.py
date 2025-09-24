@@ -16,6 +16,7 @@ from typing import Any, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
+from matplotlib.axes import Axes
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
@@ -405,6 +406,31 @@ def _draw_frame(  # noqa: PLR0913
                 vmin=vmin,
                 vmax=vmax,
             )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays
+
+    def _overlay_nans(ax: Axes, arr: np.ndarray) -> None:
+        """Overlay NaNs as semi-transparent grey overlays.
+
+        Not used currently, add the following before the return statement to enable:
+        >>> _overlay_nans(axs[0], ground_truth)
+        >>> _overlay_nans(axs[1], prediction)
+        >>> if plot_spec.include_difference:
+        >>>     _overlay_nans(axs[2], difference)
+        Mask should then be visible in the plot.
+
+        """
+        if np.isnan(arr).any():
+            ax.imshow(
+                np.isnan(arr),
+                cmap="black",
+                vmin=0,
+                vmax=1,
+                alpha=0.35,
+                interpolation="nearest",
+            )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays here
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 

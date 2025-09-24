@@ -11,7 +11,7 @@
 import io
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -460,7 +460,7 @@ def _format_date_to_string(date: date | datetime) -> str:
     )
 
 
-def _clear_contours(ax: Any) -> None:  # noqa: ANN401
+def _clear_contours(ax: Axes) -> None:
     """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
 
     Prevents overlapping plots in an animation loop.

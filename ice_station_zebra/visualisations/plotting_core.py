@@ -248,7 +248,20 @@ def validate_3d_streams(
 def compute_display_ranges(
     ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Compute vmin/vmax for ground truth and prediction based on strategy."""
+    """Compute vmin/vmax for ground truth and prediction based on strategy.
+
+    Args:
+        ground_truth: The ground truth array. [H,W]
+        prediction: The prediction array. [H,W]
+        plot_spec: The plotting specification.
+
+    Returns:
+        The display ranges. (vmin, vmax)
+
+    Raises:
+        InvalidArrayError: If the arrays are not 2D or have different shapes.
+
+    """
     if plot_spec.colourbar_strategy == "shared":
         # Both panels use spec vmin/vmax (current behavior)
         vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
@@ -275,7 +288,20 @@ def compute_display_ranges(
 def compute_display_ranges_stream(
     ground_truth_stream: np.ndarray, prediction_stream: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Compute stable vmin/vmax for GT and Prediction over the entire video."""
+    """Compute stable vmin/vmax for Ground Truth and Prediction over the entire video.
+
+    Args:
+        ground_truth_stream: The ground truth array. [T,H,W]
+        prediction_stream: The prediction array. [T,H,W]
+        plot_spec: The plotting specification.
+
+    Returns:
+        The display ranges. (vmin, vmax)
+
+    Raises:
+        InvalidArrayError: If the arrays are not 3D or have different shapes.
+
+    """
     if plot_spec.colourbar_strategy == "shared":
         vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
         vmax = plot_spec.vmax if plot_spec.vmax is not None else 1.0

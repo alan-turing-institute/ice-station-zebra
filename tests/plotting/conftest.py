@@ -1,7 +1,19 @@
 from datetime import date, timedelta
+from pathlib import Path
 
+import hydra
+import matplotlib as mpl
 import numpy as np
 import pytest
+import torch
+from omegaconf import OmegaConf
+from omegaconf import errors as oc_errors
+
+from ice_station_zebra.data_loaders import ZebraDataModule
+
+mpl.use("Agg")
+
+TEST_DATE = date(2020, 1, 15)
 
 
 def _make_circular_arctic(
@@ -65,7 +77,7 @@ def sic_pair_3d_stream() -> tuple[np.ndarray, np.ndarray, list[date]]:
     Shape (4, 48, 48), values in [0, 1]. Frames drift slightly over time
     with a bit of noise to mimic day-to-day change.
     """
-    rng = np.random.default_rng(54321)
+    rng = np.random.default_rng(100)
     timesteps, height, width = 4, 48, 48
 
     groundtruth_frames = []
@@ -99,5 +111,139 @@ def sic_pair_3d_stream() -> tuple[np.ndarray, np.ndarray, list[date]]:
 
     ground_truth_stream = np.stack(groundtruth_frames, axis=0)
     prediction_stream = np.stack(prediction_frames, axis=0)
-    dates = [date(2020, 1, 15) + timedelta(days=int(d)) for d in range(timesteps)]
+    dates = [TEST_DATE + timedelta(days=int(d)) for d in range(timesteps)]
     return ground_truth_stream, prediction_stream, dates
+
+
+@pytest.fixture
+def checkpoint_data(
+    *, use_checkpoint: bool, example_checkpoint_path: Path | None
+) -> tuple[np.ndarray, np.ndarray, date] | None:
+    """Load data from a checkpoint for plotting tests.
+
+    Returns (ground_truth, prediction, date) if checkpoint is available, else None.
+    """
+    if not use_checkpoint or example_checkpoint_path is None:
+        return None
+
+    try:
+        # Load config (try checkpoint dir first, fallback to default)
+        config_path = example_checkpoint_path.parent.parent / "model_config.yaml"
+        if config_path.exists():
+            config = OmegaConf.load(config_path)
+        else:
+            # Fallback to default config
+            # Look for a file ending with local.yaml
+            file_path = Path("ice_station_zebra/config/")
+            file_path = file_path.glob("*.local.yaml")
+            file_path = next(file_path)
+            config = OmegaConf.load(file_path)
+
+        # Load model from checkpoint
+        model_cls = hydra.utils.get_class(config["model"]["_target_"])
+        model = model_cls.load_from_checkpoint(checkpoint_path=example_checkpoint_path)
+        model.eval()
+
+        # Load data module
+        data_module = ZebraDataModule(config)
+        data_module.setup("test")
+        test_dataloader = data_module.test_dataloader()
+
+        # Get a single batch
+        batch = next(iter(test_dataloader))
+
+        # Run model inference
+        with torch.no_grad():
+            target = batch.pop("target")
+            prediction = model(batch)
+
+        # Extract first sample, first timestep, first channel -> [H, W]
+        ground_truth = target[0, 0, 0].detach().cpu().numpy()
+        prediction_array = prediction[0, 0, 0].detach().cpu().numpy()
+
+        # Get date
+        current_date = TEST_DATE
+
+    except (
+        FileNotFoundError,
+        KeyError,
+        AttributeError,
+        RuntimeError,
+        ValueError,
+        StopIteration,
+        ImportError,
+        OSError,
+        oc_errors.OmegaConfBaseException,
+    ) as e:
+        pytest.skip(f"Could not load checkpoint data: {e}")
+    else:
+        return ground_truth, prediction_array, current_date
+
+
+@pytest.fixture
+def plotting_data(
+    checkpoint_data: tuple[np.ndarray, np.ndarray, date] | None,
+    sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
+) -> tuple[np.ndarray, np.ndarray, date]:
+    """Choose between checkpoint data or dummy data for plotting tests.
+
+    Returns checkpoint data if available and --use-checkpoint is set, otherwise dummy data.
+    """
+    if checkpoint_data is not None:
+        return checkpoint_data
+    return sic_pair_2d
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add command-line options for plotting tests.
+
+    --use-checkpoint: prefer loading a model checkpoint instead of dummy data
+    --checkpoint-path: explicit path to a checkpoint (.ckpt)
+    """
+    parser.addoption(
+        "--use-checkpoint",
+        action="store_true",
+        default=False,
+        help="Use a model checkpoint instead of dummy SIC arrays.",
+    )
+    parser.addoption(
+        "--checkpoint-path",
+        action="store",
+        default="",
+        help="Path to a .ckpt file to use in plotting tests.",
+    )
+
+
+@pytest.fixture
+def use_checkpoint(pytestconfig: pytest.Config) -> bool:
+    """Whether tests should use a checkpoint instead of dummy data."""
+    return bool(pytestconfig.getoption("--use-checkpoint"))
+
+
+@pytest.fixture
+def example_checkpoint_path(pytestconfig: pytest.Config) -> Path | None:
+    """Return a checkpoint path if available, else None.
+
+    Resolution order:
+    1) --checkpoint-path if provided and exists
+    2) tests/plotting/checkpoints/example.ckpt if present in repo
+    3) data/training/wandb/.../checkpoints/*.ckpt (first found) [optional scan]
+    """
+    # 1) explicit
+    arg_path = str(pytestconfig.getoption("--checkpoint-path") or "").strip()
+    if arg_path:
+        p = Path(arg_path).expanduser().resolve()
+        return p if p.exists() else None
+
+    # 2) bundled example (recommended to add to repo if you want deterministic tests)
+    bundled = Path(__file__).parent / "checkpoints" / "example.ckpt"
+    if bundled.exists():
+        return bundled.resolve()
+
+    # 3) optional: try a typical wandb path if present locally
+    default_wandb = Path(__file__).resolve().parents[2] / "data" / "training" / "wandb"
+    if default_wandb.exists():
+        for ckpt in default_wandb.rglob("*.ckpt"):
+            return ckpt.resolve()
+
+    return None

@@ -21,13 +21,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
 from matplotlib.gridspec import GridSpec
-from matplotlib.ticker import FuncFormatter, MaxNLocator
+from matplotlib.ticker import FuncFormatter
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
     from matplotlib.axes import Axes
+    from matplotlib.colorbar import Colorbar
     from matplotlib.figure import Figure
 
     from .plotting_core import DiffColourmapSpec, PlotSpec
@@ -48,12 +49,24 @@ MIN_TICKS_FOR_MIDDLE_ZERO = 3
 # Spacing and margin constants (as fractions of figure dimensions)
 DEFAULT_OUTER_MARGIN = 0.05  # Outer margin around entire figure (prevents clipping)
 DEFAULT_GUTTER = 0.05  # Horizontal gap between panels (fraction of panel width)
+DEFAULT_GUTTER_HORIZONTAL = 0.03  # Smaller gaps when colourbar is below
+DEFAULT_GUTTER_VERTICAL = 0.03  # Default for side-by-side with vertical bars
 DEFAULT_CBAR_WIDTH = (
     0.06  # Width allocated for colourbar slots (fraction of panel width)
 )
 DEFAULT_TITLE_SPACE = (
     0.08  # Vertical space reserved for figure title (prevents overlap)
 )
+
+# Horizontal colourbar sizing (fractions of figure height)
+DEFAULT_CBAR_HEIGHT = (
+    0.07  # Thickness of horizontal colourbar row (relative to plot height)
+)
+DEFAULT_CBAR_PAD = 0.03  # Vertical gap between plots and the colourbar row
+
+# Horizontal colourbar width within its slot (inset fraction within parent slot)
+HCBAR_WIDTH_FRAC = 0.75  # centred 75% width
+HCBAR_LEFT_FRAC = (1.0 - HCBAR_WIDTH_FRAC) / 2.0
 
 # Default figure sizes for different panel configurations
 DEFAULT_FIGSIZE_TWO_PANELS = (12, 6)  # Ground truth + Prediction
@@ -69,9 +82,11 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
     height: int | None = None,
     width: int | None = None,
     outer_margin: float = DEFAULT_OUTER_MARGIN,
-    gutter: float = DEFAULT_GUTTER,
+    gutter: float | None = None,
     cbar_width: float = DEFAULT_CBAR_WIDTH,
     title_space: float = DEFAULT_TITLE_SPACE,
+    cbar_height: float = DEFAULT_CBAR_HEIGHT,
+    cbar_pad: float = DEFAULT_CBAR_PAD,
 ) -> tuple[Figure, list[Axes], dict[str, Axes | None]]:
     """Create a GridSpec layout for multi-panel plots.
 
@@ -99,6 +114,10 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
         cbar_width: Fraction of panel width allocated for each colourbar slot.
         title_space: Fraction of figure height reserved at the top for figure title
                     (prevents title from overlapping with plot content).
+        cbar_height: Height fraction for the horizontal colourbar row (row 2 when
+            orientation is 'horizontal'). Controls the bar thickness.
+        cbar_pad: Vertical gap fraction between the plot row and the colourbar row in
+            horizontal layouts. Set to 0.0 for flush rows.
 
     Returns:
         tuple containing:
@@ -115,14 +134,26 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
     n_panels = 3 if plot_spec.include_difference else 2
     orientation = plot_spec.colourbar_location
 
+    # Choose gutter default per orientation if not provided
+    if gutter is None:
+        gutter = (
+            DEFAULT_GUTTER_HORIZONTAL
+            if orientation == "horizontal"
+            else DEFAULT_GUTTER_VERTICAL
+        )
+
+    # Calculate top boundary: ensure title space doesn't consume too much of figure
+    # Minimum 60% of figure height must remain for plots
+    top_val = max(0.6, 1.0 - (outer_margin + title_space))
+
     # Calculate figure size based on data aspect ratio or use defaults
     if height and width and height > 0:
         # Calculate panel width maintaining data aspect ratio
         base_h = 6.0  # Standard height in inches
         aspect = width / height
-        panel_w = base_h * aspect
 
         if orientation == "vertical":
+            panel_w = base_h * aspect
             # Account for colourbars: panels + gutters + colourbar slots
             fig_w = (
                 n_panels * panel_w  # Main panels
@@ -130,7 +161,17 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
                 + (n_panels - 1) * cbar_width * panel_w  # Colourbar slots
             )
         else:
-            # Horizontal colourbars don't affect width calculation
+            # --- Horizontal colourbars ---
+            # Fraction of usable (top..bottom) height that belongs to the plot row
+            usable_h_frac = top_val - outer_margin
+            plot_row_frac = 1.0 / (1.0 + cbar_pad + cbar_height)
+
+            # True height of the plot row in inches
+            effective_plot_h = base_h * usable_h_frac * plot_row_frac
+
+            # Make each panel width match the square content in that row
+            panel_w = effective_plot_h * aspect
+
             fig_w = n_panels * panel_w + (n_panels - 1) * gutter * panel_w
         fig_size = (fig_w, base_h)
     else:
@@ -140,10 +181,6 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
             if plot_spec.include_difference
             else DEFAULT_FIGSIZE_TWO_PANELS
         )
-
-    # Calculate top boundary: ensure title space doesn't consume too much of figure
-    # Minimum 60% of figure height must remain for plots
-    top_val = max(0.6, 1.0 - (outer_margin + title_space))
 
     fig = plt.figure(figsize=fig_size, constrained_layout=False)
 
@@ -243,24 +280,24 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
 
     else:
         # HORIZONTAL COLOURBAR LAYOUT
-        # Grid structure: 2 rows (plots on top, colourbars on bottom)
-        # Column pattern: [panel][panel][gutter][panel]
+        # Grid structure: 3 rows ([plots][pad][colourbars])
+        # Column pattern: [panel][gutter][panel][gutter][panel]
 
         width_ratios = [1.0, gutter] * n_panels  # Alternate panels and gutters
         width_ratios = width_ratios[:-1]  # Remove trailing gutter
 
         gs = GridSpec(
-            nrows=2,  # Top row: plots, Bottom row: colourbars
+            nrows=3,  # 0: plots, 1: pad, 2: colourbars
             ncols=len(width_ratios),
             figure=fig,
             width_ratios=width_ratios,
-            height_ratios=[1.0, cbar_width],  # Plot area vs colourbar height
+            height_ratios=[1.0, cbar_pad, cbar_height],
             left=outer_margin,
             right=1 - outer_margin,
             top=top_val,
             bottom=outer_margin,
             wspace=0.0,  # Width spacing handled by explicit gutter columns
-            hspace=0.0,  # Height spacing handled by explicit height ratios
+            hspace=0.0,  # Rows are explicitly allocated via height ratios
         )
 
         # Create main plot axes in top row
@@ -276,34 +313,62 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
             panel_col = 2 * i  # Skip gutter columns: 0, 2, 4, ...
             axs.append(fig.add_subplot(gs[0, panel_col]))
 
-        # Create colourbar axes in bottom row at specific column positions
+        # Anchor plots to the bottom of their GridSpec cells to remove intra-cell vertical whitespace
+        for ax in axs:
+            ax.set_anchor("S")
+
+        # Create colourbar axes in bottom row (row index 2)
         if separate_colourbars:
-            # Each panel gets its own colourbar
-            caxes["groundtruth"] = (
-                fig.add_subplot(gs[1, 0]) if n_panels >= 1 else None
-            )  # Under ground truth
-            caxes["prediction"] = (
-                fig.add_subplot(gs[1, 2])
-                if n_panels >= MIN_PANEL_COUNT_FOR_PREDICTION
-                else None
-            )  # Under prediction
-            caxes["difference"] = (
-                fig.add_subplot(gs[1, 4])
-                if n_panels >= MIN_PANEL_COUNT_FOR_DIFFERENCE
-                else None
-            )  # Under difference
+            # Each panel gets its own colourbar directly beneath it (75% width, centred)
+            if n_panels >= 1:
+                _p_gt = fig.add_subplot(gs[2, 0])
+                _p_gt.set_axis_off()
+                caxes["groundtruth"] = _p_gt.inset_axes(
+                    [HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0]
+                )
+            else:
+                caxes["groundtruth"] = None
+
+            if n_panels >= MIN_PANEL_COUNT_FOR_PREDICTION:
+                _p_pr = fig.add_subplot(gs[2, 2])
+                _p_pr.set_axis_off()
+                caxes["prediction"] = _p_pr.inset_axes(
+                    [HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0]
+                )
+            else:
+                caxes["prediction"] = None
+
+            if n_panels >= MIN_PANEL_COUNT_FOR_DIFFERENCE:
+                _p_df = fig.add_subplot(gs[2, 4])
+                _p_df.set_axis_off()
+                caxes["difference"] = _p_df.inset_axes(
+                    [HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0]
+                )
+            else:
+                caxes["difference"] = None
         else:
-            # Original shared colourbar logic
-            caxes["prediction"] = (
-                fig.add_subplot(gs[1, 2])
-                if n_panels >= MIN_PANEL_COUNT_FOR_PREDICTION
-                else None
-            )  # Under prediction
-            caxes["difference"] = (
-                fig.add_subplot(gs[1, 4])
-                if n_panels >= MIN_PANEL_COUNT_FOR_DIFFERENCE
-                else None
-            )  # Under difference
+            # Shared colourbar logic
+            # Under GT+gutter+Pred span columns 0..3 when two panels present
+            if n_panels >= MIN_PANEL_COUNT_FOR_PREDICTION:
+                # Create a full-width parent and then a centered inset at configured width
+                _parent_cbar_ax = fig.add_subplot(gs[2, 0:3])
+                _parent_cbar_ax.set_axis_off()
+                inset_cbar_ax = _parent_cbar_ax.inset_axes(
+                    [HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0]
+                )
+                caxes["prediction"] = inset_cbar_ax
+            else:
+                # Fallback: only GT present; use full column
+                caxes["prediction"] = fig.add_subplot(gs[2, 0:1])
+
+            if n_panels >= MIN_PANEL_COUNT_FOR_DIFFERENCE:
+                _parent_diff_ax = fig.add_subplot(gs[2, 4])
+                _parent_diff_ax.set_axis_off()
+                caxes["difference"] = _parent_diff_ax.inset_axes(
+                    [HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0]
+                )
+            else:
+                caxes["difference"] = None
 
     _set_titles(axs, plot_spec)
     _style_axes(axs)
@@ -314,6 +379,8 @@ def _init_axes(  # noqa: PLR0913, C901, PLR0912, PLR0915
         "gutter": gutter,
         "cbar_width": cbar_width,
         "title_space": title_space,
+        "cbar_height": cbar_height,
+        "cbar_pad": cbar_pad,
     }
     return fig, axs, caxes
 
@@ -382,6 +449,18 @@ def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
 
 
 # --- Colourbar Functions ---
+def _get_cbar_limits_from_mappable(cbar: Colorbar) -> tuple[float, float]:
+    """Return (vmin, vmax) for a colourbar's mappable with robust fallbacks."""
+    vmin = vmax = None
+    try:  # Works for many matplotlib mappables
+        vmin, vmax = cbar.mappable.get_clim()  # type: ignore[attr-defined]
+    except AttributeError:
+        norm = getattr(cbar.mappable, "norm", None)
+        vmin = getattr(norm, "vmin", None)
+        vmax = getattr(norm, "vmax", None)
+    if vmin is None or vmax is None:
+        vmin, vmax = 0.0, 1.0
+    return float(vmin), float(vmax)
 
 
 def _add_colourbars(  # noqa: PLR0913
@@ -514,43 +593,23 @@ def _format_truth_prediction_ticks(
     *,
     is_vertical: bool,
 ) -> None:
-    """Tick formatting for ground truth and prediction colourbar.
+    """Tick formatting for ground truth and prediction colourbar: always 5 ticks.
 
-    This function provides context-aware formatting optimized for scientific data display:
-
-    Formatting Rules:
-        - [0,1] ranges (common for probabilities/concentrations): 6 evenly spaced ticks (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
-        - Other ranges: 5 automatically positioned ticks using MaxNLocator
-        - All values: 1 decimal place precision for readability
-
-    The formatting adapts to colourbar orientation, applying tick formatting to the
-    appropriate axis (y-axis for vertical, x-axis for horizontal colourbars).
-
-    Args:
-        colourbar: matplotlib colourbar object
-        plot_spec: PlotSpec containing vmin/vmax for range detection and formatting context
-        is_vertical: Whether the colourbar is oriented vertically (affects which axis to format)
-
+    Prefers explicit vmin/vmax from the spec; falls back to the mappable limits.
     """
-    # Check if data is in the standard [0,1] range (e.g. for concentrations/probabilities)
-    is_unit_range = (
-        plot_spec.vmin is not None
-        and plot_spec.vmax is not None
-        and 0.0 <= plot_spec.vmin <= 1.0
-        and 0.0 <= plot_spec.vmax <= 1.0
-    )
+    axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
 
-    # Get appropriate axis based on colourbar orientation
-    target_axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-
-    if is_unit_range:
-        # For [0,1] data: use 6 evenly spaced ticks for clear percentage-like values
-        colourbar.set_ticks(np.linspace(0.0, 1.0, 6))
-        target_axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.1f}"))
+    if plot_spec.vmin is not None and plot_spec.vmax is not None:
+        vmin, vmax = float(plot_spec.vmin), float(plot_spec.vmax)
     else:
-        # For arbitrary ranges: let matplotlib choose ~5 good tick positions
-        target_axis.set_major_locator(MaxNLocator(5))
-        target_axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.1f}"))
+        vmin, vmax = _get_cbar_limits_from_mappable(colourbar)
+
+    ticks = np.linspace(vmin, vmax, 5)
+    colourbar.set_ticks(ticks)
+    axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.1f}"))
+
+    if not is_vertical:
+        colourbar.ax.xaxis.set_tick_params(pad=1)
 
 
 def _format_prediction_ticks(
@@ -558,21 +617,14 @@ def _format_prediction_ticks(
     *,
     is_vertical: bool,
 ) -> None:
-    """Tick formatting for prediction colourbar when using separate strategy.
-
-    Uses automatic tick placement for data-driven ranges rather than
-    the spec vmin/vmax range.
-
-    Args:
-        colourbar: matplotlib colourbar object
-        is_vertical: Whether the colourbar is oriented vertically
-
-    """
-    target_axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-
-    # Use automatic tick placement for data-driven ranges
-    target_axis.set_major_locator(MaxNLocator(5))
-    target_axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.1f}"))
+    """Tick formatting for prediction colourbar when using separate strategy: 5 ticks."""
+    axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
+    vmin, vmax = _get_cbar_limits_from_mappable(colourbar)
+    ticks = np.linspace(vmin, vmax, 5)
+    colourbar.set_ticks(ticks)
+    axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.1f}"))
+    if not is_vertical:
+        colourbar.ax.xaxis.set_tick_params(pad=1)
 
 
 def _format_difference_ticks(
@@ -581,46 +633,26 @@ def _format_difference_ticks(
     *,
     is_vertical: bool,
 ) -> None:
-    """Tick formatting for difference/comparison colourbars.
+    """Tick formatting for difference/comparison colourbars: always 5 ticks.
 
-    Difference colourbars often use symmetric colour scales (e.g., blue-white-red) to
-    highlight positive and negative deviations from zero. This function ensures that
-    zero is prominently displayed and that tick values provide meaningful context
-    for the magnitude of differences.
-
-    Formatting Features:
-        - TwoSlopeNorm detection: Ensures zero is always included in tick marks
-        - Symmetric tick placement: 5 evenly spaced ticks from vmin to vmax
-        - Higher precision: 2 decimal places for difference values (more precise than raw data)
-        - Zero-centered: Middle tick is always exactly 0.0 for symmetric scales
-
-    Args:
-        colourbar: matplotlib colourbar object
-        image_difference: ContourSet or QuadMesh containing the normalization object
-                         used for the difference plot (checked for TwoSlopeNorm)
-        is_vertical: Whether the colourbar is oriented vertically (affects axis selection)
-
-    Example:
-        For a difference range [-0.15, +0.15]:
-        - Ticks at: -0.15, -0.08, 0.00, +0.08, +0.15,
-        - Zero forced in the middle position
-
+    Signed differences use TwoSlopeNorm; force the middle tick to 0.0 and place
+    midpoints halfway to each end. Absolute modes use 5 evenly spaced ticks.
     """
-    # Handle symmetric normalisation (common for difference plots)
+    axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
+
     if isinstance(image_difference.norm, TwoSlopeNorm):
-        # Extract actual data range from the normalization
-        vmin_actual = float(image_difference.norm.vmin or 0.0)
-        vmax_actual = float(image_difference.norm.vmax or 1.0)
-
-        # Create 5 evenly spaced ticks across the range
-        ticks = np.linspace(vmin_actual, vmax_actual, 5)
-
-        # Force the middle tick to be exactly zero for symmetric display
-        if ticks.size >= MIN_TICKS_FOR_MIDDLE_ZERO:
-            ticks[ticks.size // 2] = 0.0
-
+        vmin = float(image_difference.norm.vmin or -1.0)
+        vmax = float(image_difference.norm.vmax or 1.0)
+        ticks = np.array(
+            [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax], dtype=float
+        )
         colourbar.set_ticks(ticks)
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.2f}"))
+    else:
+        vmin, vmax = _get_cbar_limits_from_mappable(colourbar)
+        ticks = np.linspace(vmin, vmax, 5)
+        colourbar.set_ticks(ticks)
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.2f}"))
 
-    # 2 decimal places for difference values
-    target_axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-    target_axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.2f}"))
+    if not is_vertical:
+        colourbar.ax.xaxis.set_tick_params(pad=1)

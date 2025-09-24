@@ -11,11 +11,12 @@
 import io
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
+from matplotlib.axes import Axes
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
@@ -376,17 +377,17 @@ def _draw_frame(  # noqa: PLR0913
             )
 
         if diff_colour_scale.norm is not None:
-            # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
-            diff_vmin = diff_colour_scale.norm.vmin or 0.0
-            diff_vmax = diff_colour_scale.norm.vmax or 1.0
+            # Signed differences with TwoSlopeNorm - use explicit levels and shared norm
+            norm = diff_colour_scale.norm
+            diff_vmin = norm.vmin or 0.0
+            diff_vmax = norm.vmax or 1.0
             diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
 
             image_difference = axs[2].contourf(
                 difference,
                 levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
-                vmin=diff_vmin,
-                vmax=diff_vmax,
+                norm=norm,
             )
         else:
             # Non-negative differences with vmin/vmax
@@ -405,6 +406,31 @@ def _draw_frame(  # noqa: PLR0913
                 vmin=vmin,
                 vmax=vmax,
             )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays
+
+    def _overlay_nans(ax: Axes, arr: np.ndarray) -> None:
+        """Overlay NaNs as semi-transparent grey overlays.
+
+        Not used currently, add the following before the return statement to enable:
+        >>> _overlay_nans(axs[0], ground_truth)
+        >>> _overlay_nans(axs[1], prediction)
+        >>> if plot_spec.include_difference:
+        >>>     _overlay_nans(axs[2], difference)
+        Mask should then be visible in the plot.
+
+        """
+        if np.isnan(arr).any():
+            ax.imshow(
+                np.isnan(arr),
+                cmap="black",
+                vmin=0,
+                vmax=1,
+                alpha=0.35,
+                interpolation="nearest",
+            )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays here
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 
@@ -434,7 +460,7 @@ def _format_date_to_string(date: date | datetime) -> str:
     )
 
 
-def _clear_contours(ax: Any) -> None:  # noqa: ANN401
+def _clear_contours(ax: Axes) -> None:
     """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
 
     Prevents overlapping plots in an animation loop.

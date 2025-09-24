@@ -24,7 +24,7 @@ repos:
       # Run the linter
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
-        pass_filenames: false
+        # pass_filenames: false
       # Run the formatter
       - id: ruff-format
-        pass_filenames: false
+        # pass_filenames: false

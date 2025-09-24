@@ -70,10 +70,12 @@ class ZebraDataModule(LightningDataModule):
 
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(
-            batch_size=self.batch_size,
-            sampler=None,
             batch_sampler=None,
+            batch_size=self.batch_size,
             drop_last=False,
+            num_workers=0,
+            persistent_workers=False,
+            sampler=None,
             worker_init_fn=None,
         )
 
@@ -93,6 +95,12 @@ class ZebraDataModule(LightningDataModule):
             for name, paths in self.dataset_groups.items()
             if name == self.predict_target
         )
+
+    def assign_workers(self, n_workers: int) -> None:
+        """Assign number of workers for data loading."""
+        logger.info("Assigning %d workers for data loading.", n_workers)
+        self._common_dataloader_kwargs["num_workers"] = n_workers
+        self._common_dataloader_kwargs["persistent_workers"] = n_workers > 0
 
     def predict_dataloader(
         self,

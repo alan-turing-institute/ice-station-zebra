@@ -23,7 +23,6 @@ class CNNDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        latent_space: DataSpace,
         output_space: DataSpace,
         activation: str = "ReLU",
         kernel_size: int = 3,

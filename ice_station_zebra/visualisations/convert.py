@@ -52,7 +52,14 @@ def _save_animation(
                     fps=fps,
                     codec="libx264",
                     bitrate=1800,
-                    extra_args=["-pix_fmt", "yuv420p"],
+                    # Ensure dimensions are compatible with yuv420p (even width/height)
+                    # by applying a scale filter that truncates to the nearest even integers.
+                    extra_args=[
+                        "-pix_fmt",
+                        "yuv420p",
+                        "-vf",
+                        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                    ],
                 )
             )
             anim.save(tmp.name, writer=writer, dpi=DEFAULT_DPI)

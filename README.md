@@ -17,7 +17,7 @@
 | ice\_station\_zebra/config/\_\_init\_\_.py                              |        0 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/\_\_init\_\_.py                       |        3 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       44 |       27 |     39% |27-45, 64, 76, 87-88, 92, 99, 106-110, 115-119 |
-| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       50 |       30 |     40% |25-66, 77, 85, 95-114, 120-139, 145-164 |
+| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       55 |       34 |     38% |25-72, 83, 91, 101-120, 126-145, 151-170, 176-195 |
 | ice\_station\_zebra/data\_loaders/zebra\_dataset.py                     |       78 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/\_\_init\_\_.py                    |        2 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/cli.py                             |       25 |       10 |     60% |21-25, 32-35, 39 |
@@ -76,7 +76,7 @@
 | ice\_station\_zebra/visualisations/layout.py                            |      158 |      132 |     16% |115-318, 338-347, 363-365, 379-381, 430-503, 536-553, 571-575, 610-626 |
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      102 |       90 |     12% |23-25, 45-53, 79-115, 152-190, 213-219, 239-245, 252-272, 279-289 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |       88 |       69 |     22% |82-121, 169-262, 307-409, 430, 446-447 |
-|                                                               **TOTAL** | **1737** |  **798** | **54%** |           |
+|                                                               **TOTAL** | **1742** |  **802** | **54%** |           |
 
 
 ## Setup coverage badge

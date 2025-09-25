@@ -1,15 +1,15 @@
 from .bottleneckblock import BottleneckBlock
 from .convblock import ConvBlock
-from .timeembed import TimeEmbed
-from .upconvblock import UpconvBlock
 from .patchembed import PatchEmbedding
+from .timeembed import TimeEmbed
 from .transformerblock import TransformerEncoderBlock
+from .upconvblock import UpconvBlock
 
 __all__ = [
     "BottleneckBlock",
     "ConvBlock",
-    "TimeEmbed",
-    "UpconvBlock",
     "PatchEmbedding",
+    "TimeEmbed",
     "TransformerEncoderBlock",
+    "UpconvBlock",
 ]

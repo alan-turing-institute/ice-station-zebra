@@ -66,13 +66,12 @@ class EncodeProcessDecode(ZebraModel):
         )
 
         # Add a decoder
-        n_latent_channels_total = combined_latent_space.channels
         self.decoder: BaseDecoder = hydra.utils.instantiate(
             dict(**decoder)
             | {
+                "data_space_in": combined_latent_space,
+                "data_space_out": self.output_space,
                 "n_forecast_steps": self.n_forecast_steps,
-                "n_latent_channels_total": n_latent_channels_total,
-                "output_space": self.output_space,
             }
         )
 

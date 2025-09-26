@@ -1,6 +1,6 @@
 from torch import nn, stack
 
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 
 class BaseDecoder(nn.Module):
@@ -13,11 +13,18 @@ class BaseDecoder(nn.Module):
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
-    def __init__(self, *, n_forecast_steps: int, n_latent_channels_total: int) -> None:
+    def __init__(
+        self,
+        *,
+        data_space_in: DataSpace,
+        data_space_out: DataSpace,
+        n_forecast_steps: int,
+    ) -> None:
         """Initialise a BaseDecoder."""
         super().__init__()
+        self.data_space_in = data_space_in
+        self.data_space_out = data_space_out
         self.n_forecast_steps = n_forecast_steps
-        self.n_latent_channels_total = n_latent_channels_total
 
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: decode latent space into output space.

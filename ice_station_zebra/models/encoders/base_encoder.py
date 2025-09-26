@@ -26,6 +26,15 @@ class BaseEncoder(nn.Module):
         self.data_space_out = data_space_out
         self.name = data_space_in.name
         self.n_history_steps = n_history_steps
+        self.n_output_channels_: int | None = None
+
+    @property
+    def n_output_channels(self) -> int:
+        """The number of output channels produced by this encoder."""
+        if self.n_output_channels_ is None:
+            msg = "The number of output channels has not been set."
+            raise ValueError(msg)
+        return self.n_output_channels_
 
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: encode input space into latent space.

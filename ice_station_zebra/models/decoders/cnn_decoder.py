@@ -32,11 +32,19 @@ class CNNDecoder(BaseDecoder):
         """Initialise a CNNDecoder."""
         super().__init__(**kwargs)
 
+        # Ensure number of channels is divisible by the power of two implied by n_layers
+        n_channels = self.data_space_in.channels
+        if n_channels % (2**n_layers):
+            msg = (
+                f"The number of input channels {n_channels} must be divisible by {2**n_layers}. "
+                f"Without this, it is not possible to apply {n_layers} convolutions."
+            )
+            raise ValueError(msg)
+
         # Construct list of layers
         layers: list[nn.Module] = []
 
         # Add n_layers size-increasing convolutional blocks
-        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(

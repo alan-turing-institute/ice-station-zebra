@@ -54,8 +54,8 @@ class CNNEncoder(BaseEncoder):
             )
             n_channels *= 2
 
-        # Convolve to the desired number of latent channels
-        layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
+        # Set the number of output channels
+        self.n_output_channels_ = n_channels
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

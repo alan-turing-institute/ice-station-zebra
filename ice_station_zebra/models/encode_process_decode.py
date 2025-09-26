@@ -21,15 +21,10 @@ class EncodeProcessDecode(ZebraModel):
         encoder: DictConfig,
         processor: DictConfig,
         decoder: DictConfig,
-        latent_space: DictConfig,
         **kwargs: Any,
     ) -> None:
         """Initialise an EncodeProcessDecode model."""
         super().__init__(**kwargs)
-
-        # Construct the latent space
-        latent_space["name"] = "single_latent_space"
-        single_latent_space = DataSpace.from_dict(latent_space)
 
         # Add one encoder per dataset
         # We store this as a list to ensure consistent ordering
@@ -38,7 +33,6 @@ class EncodeProcessDecode(ZebraModel):
                 dict(**encoder)
                 | {
                     "data_space_in": input_space,
-                    "data_space_out": single_latent_space,
                     "n_history_steps": self.n_history_steps,
                 }
             )
@@ -54,7 +48,7 @@ class EncodeProcessDecode(ZebraModel):
         combined_latent_space = DataSpace(
             name="combined_latent_space",
             channels=sum(encoder.n_output_channels for encoder in self.encoders),
-            shape=single_latent_space.shape,
+            shape=self.encoders[0].data_space_out.shape,
         )
         self.processor: BaseProcessor = hydra.utils.instantiate(
             dict(**processor)

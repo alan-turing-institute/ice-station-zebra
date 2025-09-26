@@ -17,13 +17,15 @@ class BaseEncoder(nn.Module):
         self,
         *,
         data_space_in: DataSpace,
-        data_space_out: DataSpace,
+        latent_space: tuple[int, int],
         n_history_steps: int,
     ) -> None:
         """Initialise a BaseEncoder."""
         super().__init__()
         self.data_space_in = data_space_in
-        self.data_space_out = data_space_out
+        self.data_space_out = DataSpace(
+            name=f"latent_space_{data_space_in.name}", channels=0, shape=latent_space
+        )
         self.name = data_space_in.name
         self.n_history_steps = n_history_steps
         self.n_output_channels_: int | None = None

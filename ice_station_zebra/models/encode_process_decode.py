@@ -84,18 +84,18 @@ class EncodeProcessDecode(ZebraModel):
         - process in latent space [NTCHW] [batch, n_forecast_steps, n_latent_channels_total, H_latent, W_latent]
         - decode back to [NTCHW] output space [batch, n_forecast_steps, n_output_channels, H_output, W_output]
         """
-        # Encode inputs into latent space: list of tensors with (batch_size, n_history_steps, variables, latent_height, latent_width)
+        # Encode inputs into latent space: list of tensors with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)
         latent_inputs: list[TensorNTCHW] = [
             encoder(inputs[encoder.name]) for encoder in self.encoders
         ]
 
-        # Combine in the variable dimension: tensor with (batch_size, n_history_steps, all_variables, latent_height, latent_width)
+        # Combine in the variable dimension: tensor with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
         latent_input_combined: TensorNTCHW = torch.cat(latent_inputs, dim=2)
 
-        # Process in latent space: tensor with (batch_size, n_forecast_steps, all_variables, latent_height, latent_width)
+        # Process in latent space: tensor with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
         latent_output: TensorNTCHW = self.processor(latent_input_combined)
 
-        # Decode to output space: tensor with (batch_size, n_forecast_steps, output_variables, output_height, output_width)
+        # Decode to output space: tensor with (batch_size, n_forecast_steps, n_output_channels, output_height, output_width)
         output: TensorNTCHW = self.decoder(latent_output)
 
         # Return

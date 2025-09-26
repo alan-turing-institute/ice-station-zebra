@@ -1,6 +1,6 @@
 from torch import nn, stack
 
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 
 class BaseEncoder(nn.Module):
@@ -13,10 +13,18 @@ class BaseEncoder(nn.Module):
         TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(self, *, name: str, n_history_steps: int) -> None:
+    def __init__(
+        self,
+        *,
+        data_space_in: DataSpace,
+        data_space_out: DataSpace,
+        n_history_steps: int,
+    ) -> None:
         """Initialise a BaseEncoder."""
         super().__init__()
-        self.name = name
+        self.data_space_in = data_space_in
+        self.data_space_out = data_space_out
+        self.name = data_space_in.name
         self.n_history_steps = n_history_steps
 
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:

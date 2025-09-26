@@ -3,7 +3,7 @@ from typing import Any
 from torch import nn
 
 from ice_station_zebra.models.common import ConvBlockDownsample
-from ice_station_zebra.types import DataSpace, TensorNCHW
+from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
 
@@ -23,27 +23,25 @@ class CNNEncoder(BaseEncoder):
     def __init__(
         self,
         *,
-        input_space: DataSpace,
-        latent_space: DataSpace,
         activation: str = "ReLU",
         kernel_size: int = 3,
         n_layers: int = 2,
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNEncoder."""
-        super().__init__(name=input_space.name, **kwargs)
+        super().__init__(**kwargs)
 
         # Construct list of layers
         layers: list[nn.Module] = []
 
         # Start by normalising the input across height and width separately for each channel
-        n_channels = input_space.channels
+        n_channels = self.data_space_in.channels
         layers.append(nn.BatchNorm2d(n_channels))
 
-        # Set the initial spatial dimensions (previously used adaptive pooling which is extremely slow)
+        # Set the spatial dimensions as required by the number of convolutional layers
         initial_conv_shape = (
-            latent_space.shape[0] * (2**n_layers),
-            latent_space.shape[1] * (2**n_layers),
+            self.data_space_out.shape[0] * (2**n_layers),
+            self.data_space_out.shape[1] * (2**n_layers),
         )
         layers.append(nn.Upsample(initial_conv_shape))
 
@@ -57,7 +55,7 @@ class CNNEncoder(BaseEncoder):
             n_channels *= 2
 
         # Convolve to the desired number of latent channels
-        layers.append(nn.Conv2d(n_channels, latent_space.channels, 1))
+        layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

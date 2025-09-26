@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNCHW
+from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
 
@@ -17,23 +17,23 @@ class NaiveLinearEncoder(BaseEncoder):
         TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(
-        self, *, input_space: DataSpace, latent_space: DataSpace, **kwargs: Any
-    ) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         """Initialise a NaiveLinearEncoder."""
-        super().__init__(name=input_space.name, **kwargs)
+        super().__init__(**kwargs)
 
         # Construct list of layers
         layers: list[nn.Module] = []
 
         # Start by normalising the input across height and width separately for each channel
-        layers.append(nn.BatchNorm2d(input_space.channels))
+        layers.append(nn.BatchNorm2d(self.data_space_in.channels))
 
         # Resample to the desired latent shape
-        layers.append(nn.Upsample(latent_space.shape))
+        layers.append(nn.Upsample(self.data_space_out.shape))
 
         # Convolve to the desired number of latent channels
-        layers.append(nn.Conv2d(input_space.channels, latent_space.channels, 1))
+        layers.append(
+            nn.Conv2d(self.data_space_in.channels, self.data_space_out.channels, 1)
+        )
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

@@ -38,13 +38,14 @@ class EncodeProcessDecode(ZebraModel):
             hydra.utils.instantiate(
                 dict(**encoder)
                 | {
-                    "input_space": input_space,
-                    "latent_space": latent_space_,
+                    "data_space_in": input_space,
+                    "data_space_out": latent_space_,
                     "n_history_steps": self.n_history_steps,
                 }
             )
             for input_space in self.input_spaces
         ]
+
         # We have to explicitly register each encoder as list[Module] will not be
         # automatically picked up by PyTorch
         for idx, module in enumerate(self.encoders):

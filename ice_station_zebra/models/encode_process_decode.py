@@ -28,9 +28,8 @@ class EncodeProcessDecode(ZebraModel):
         super().__init__(**kwargs)
 
         # Construct the latent space
-        latent_space["name"] = "latent_space"
-        latent_space_ = DataSpace.from_dict(latent_space)
-        n_latent_channels_total = latent_space_.channels * len(self.input_spaces)
+        latent_space["name"] = "single_latent_space"
+        single_latent_space = DataSpace.from_dict(latent_space)
 
         # Add one encoder per dataset
         # We store this as a list to ensure consistent ordering
@@ -39,7 +38,7 @@ class EncodeProcessDecode(ZebraModel):
                 dict(**encoder)
                 | {
                     "data_space_in": input_space,
-                    "data_space_out": latent_space_,
+                    "data_space_out": single_latent_space,
                     "n_history_steps": self.n_history_steps,
                 }
             )
@@ -52,16 +51,22 @@ class EncodeProcessDecode(ZebraModel):
             self.add_module(f"encoder_{idx}", module)
 
         # Add a processor
+        combined_latent_space = DataSpace(
+            name="combined_latent_space",
+            channels=single_latent_space.channels * len(self.input_spaces),
+            shape=single_latent_space.shape,
+        )
         self.processor: BaseProcessor = hydra.utils.instantiate(
             dict(**processor)
             | {
+                "data_space": combined_latent_space,
                 "n_forecast_steps": self.n_forecast_steps,
                 "n_history_steps": self.n_history_steps,
-                "n_latent_channels_total": n_latent_channels_total,
             }
         )
 
         # Add a decoder
+        n_latent_channels_total = combined_latent_space.channels
         self.decoder: BaseDecoder = hydra.utils.instantiate(
             dict(**decoder)
             | {

@@ -51,7 +51,7 @@ class UNetProcessor(BaseProcessor):
 
         # Encoder
         self.conv1 = CommonConvBlock(
-            self.n_latent_channels_total, channels[0], kernel_size=kernel_size
+            self.data_space.channels, channels[0], kernel_size=kernel_size
         )
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=kernel_size)
@@ -79,7 +79,7 @@ class UNetProcessor(BaseProcessor):
 
         # Final layer
         self.final_layer = nn.Conv2d(
-            channels[0], self.n_latent_channels_total, kernel_size=1, padding="same"
+            channels[0], self.data_space.channels, kernel_size=1, padding="same"
         )
 
     def rollout(self, x: TensorNCHW) -> TensorNCHW:

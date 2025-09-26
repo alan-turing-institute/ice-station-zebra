@@ -20,8 +20,8 @@ class TestDecoders:
         test_batch_size: int,
         test_decoder_cls: str,
         test_latent_chw: tuple[int, int, int],
-        test_output_chw: tuple[int, int, int],
         test_n_forecast_steps: int,
+        test_output_chw: tuple[int, int, int],
     ) -> None:
         latent_space = DataSpace(
             name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:3]

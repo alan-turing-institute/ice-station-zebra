@@ -49,6 +49,6 @@ class TestEncoders:
         assert result.shape == (
             test_batch_size,
             test_n_history_steps,
-            encoder.n_output_channels,
+            encoder.data_space_out.channels,
             *test_latent_hw,
         )

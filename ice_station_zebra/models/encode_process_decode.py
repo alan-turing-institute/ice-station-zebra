@@ -47,7 +47,7 @@ class EncodeProcessDecode(ZebraModel):
         # Add a processor
         combined_latent_space = DataSpace(
             name="combined_latent_space",
-            channels=sum(encoder.n_output_channels for encoder in self.encoders),
+            channels=sum(encoder.data_space_out.channels for encoder in self.encoders),
             shape=self.encoders[0].data_space_out.shape,
         )
         self.processor: BaseProcessor = hydra.utils.instantiate(

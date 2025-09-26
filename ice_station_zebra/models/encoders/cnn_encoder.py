@@ -54,8 +54,8 @@ class CNNEncoder(BaseEncoder):
             )
             n_channels *= 2
 
-        # Set the number of output channels
-        self.n_output_channels_ = n_channels
+        # Override the default number of output channels
+        self.data_space_out.channels = n_channels
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

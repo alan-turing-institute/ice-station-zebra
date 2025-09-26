@@ -30,9 +30,6 @@ class NaiveLinearEncoder(BaseEncoder):
         # Resample to the desired latent shape
         layers.append(nn.Upsample(self.data_space_out.shape))
 
-        # Set the number of output channels
-        self.n_output_channels_ = self.data_space_in.channels
-
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import hydra
+from lightning.fabric.utilities import suggested_max_num_workers
 from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
 
@@ -91,10 +92,16 @@ class ZebraTrainer:
             if isinstance(callback, (ModelCheckpoint, UnconditionalCheckpoint)):
                 callback.dirpath = run_directory / "checkpoints"
 
+        # Assign workers for data loading
+        self.data_module.assign_workers(
+            suggested_max_num_workers(self.trainer.num_devices)
+        )
+
         # Save config to the output directory
         OmegaConf.save(config, run_directory / "model_config.yaml")
 
     def train(self) -> None:
+        logger.info("Starting training for %d epochs.", self.trainer.max_epochs)
         self.trainer.fit(
             model=self.model,
             datamodule=self.data_module,

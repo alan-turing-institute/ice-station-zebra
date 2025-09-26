@@ -64,7 +64,6 @@ class EncodeProcessDecode(ZebraModel):
         self.decoder: BaseDecoder = hydra.utils.instantiate(
             dict(**decoder)
             | {
-                "latent_space": latent_space_,
                 "n_forecast_steps": self.n_forecast_steps,
                 "n_latent_channels_total": n_latent_channels_total,
                 "output_space": self.output_space,

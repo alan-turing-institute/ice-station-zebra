@@ -31,14 +31,12 @@ class TestDecoders:
         )
         decoder: BaseDecoder = {
             "CNNDecoder": CNNDecoder(
-                latent_space=latent_space,
                 n_forecast_steps=test_n_forecast_steps,
                 n_latent_channels_total=latent_space.channels,
                 n_layers=1,
                 output_space=output_space,
             ),
             "NaiveLinearDecoder": NaiveLinearDecoder(
-                latent_space=latent_space,
                 n_forecast_steps=test_n_forecast_steps,
                 n_latent_channels_total=latent_space.channels,
                 output_space=output_space,

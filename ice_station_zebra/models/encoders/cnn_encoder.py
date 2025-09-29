@@ -11,7 +11,9 @@ from .base_encoder import BaseEncoder
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
-    The layers are the reverse of those in the CNNDecoder.
+    - Resize (if needed)
+    - Batch normalisation
+    - n_layers of size-reducing convolutional blocks
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -34,16 +36,16 @@ class CNNEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Start by normalising the input across height and width separately for each channel
-        n_channels = self.data_space_in.channels
-        layers.append(nn.BatchNorm2d(n_channels))
-
         # Set the spatial dimensions as required by the number of convolutional layers
         initial_required_shape = (
             self.data_space_out.shape[0] * (2**n_layers),
             self.data_space_out.shape[1] * (2**n_layers),
         )
         layers.append(ResizingInterpolation(initial_required_shape))
+
+        # Normalise the input across height and width separately for each channel
+        n_channels = self.data_space_in.channels
+        layers.append(nn.BatchNorm2d(n_channels))
 
         # Add n_layers size-reducing convolutional blocks
         for _ in range(n_layers):

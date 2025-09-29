@@ -14,6 +14,12 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
+    - Resize (if needed)
+    - Batch normalisation
+    - n_layers of size-increasing convolutional blocks
+    - Convolve to required number of channels
+    - Resize to output size (if needed)
+
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
 
@@ -47,6 +53,25 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
+        # Ensure that the spatial dimensions are large enough that the size after
+        # convolution will be at least as large as the desired output size.
+        # N.B. Dividing by negative layer factor allows us to round up.
+        minimal_initial_shape = (
+            int(-(self.data_space_out.shape[0] // -layer_factor)),
+            int(-(self.data_space_out.shape[1] // -layer_factor)),
+        )
+        if any(
+            self.data_space_in.shape[idx] < minimal_initial_shape[idx]
+            for idx in range(2)
+        ):
+            layers.append(ResizingInterpolation(minimal_initial_shape))
+            conv_input_shape = minimal_initial_shape
+        else:
+            conv_input_shape = self.data_space_in.shape
+
+        # Normalise the input across height and width separately for each channel
+        layers.append(nn.BatchNorm2d(n_channels))
+
         # Add n_layers size-increasing convolutional blocks
         for _ in range(n_layers):
             layers.append(
@@ -56,11 +81,10 @@ class CNNDecoder(BaseDecoder):
             )
             n_channels //= 2
 
-        # Set the final spatial dimensions (previously used adaptive pooling which is extremely slow)
-        layers.append(ResizingInterpolation(self.data_space_out.shape))
-
-        # Convolve to the required number of output channels
-        layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
+        # If necessary, apply a final size-reducing layer to get the exact output shape
+        conv_output_shape = tuple(dim * layer_factor for dim in conv_input_shape)
+        if conv_output_shape != self.data_space_out.shape:
+            layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

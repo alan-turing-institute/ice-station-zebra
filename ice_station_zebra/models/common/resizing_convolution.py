@@ -19,6 +19,7 @@ class ResizingConvolution(nn.Module):
         input_shape: Sequence[int],
         output_channels: int,
         output_shape: Sequence[int],
+        max_kernel_size: int = 20,
     ) -> None:
         """Initialize the ResizingConvolution module.
 
@@ -27,6 +28,7 @@ class ResizingConvolution(nn.Module):
             input_shape: the input shape in H x W format.
             output_channels: the number of output channels
             output_shape: the output shape in H x W format.
+            max_kernel_size: the maximum kernel size to use. Larger kernels will give a more accurate resize but are slower.
 
         """
         super().__init__()
@@ -38,17 +40,17 @@ class ResizingConvolution(nn.Module):
             max(input_shape[0] // output_shape[0], 1),
             max(input_shape[1] // output_shape[1], 1),
         )
-        scales_ = (
+        out_to_in_scale = (
             input_shape[0] - (output_shape[0] - 1) * strides[0],
             input_shape[1] - (output_shape[1] - 1) * strides[1],
         )
         kernel_sizes = (
-            max(scales_[0], 1),
-            max(scales_[1], 1),
+            min(max(out_to_in_scale[0], 1), max_kernel_size),
+            min(max(out_to_in_scale[1], 1), max_kernel_size),
         )
         padding = (
-            max((kernel_sizes[0] - scales_[0]) // 2, 0),
-            max((kernel_sizes[1] - scales_[1]) // 2, 0),
+            max((kernel_sizes[0] - out_to_in_scale[0]) // 2, 0),
+            max((kernel_sizes[1] - out_to_in_scale[1]) // 2, 0),
         )
 
         # Create the convolution layer
@@ -62,7 +64,7 @@ class ResizingConvolution(nn.Module):
             )
         )
 
-        # Check whether an additional resizing step is needed
+        # If necessary, apply an additional resizing step
         conv_output_shape = (
             int(((input_shape[0] + 2 * padding[0] - kernel_sizes[0]) / strides[0]) + 1),
             int(((input_shape[1] + 2 * padding[1] - kernel_sizes[1]) / strides[1]) + 1),

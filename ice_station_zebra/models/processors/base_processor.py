@@ -39,21 +39,23 @@ class BaseProcessor(nn.Module):
         msg = "If you are using the default forward method, you must implement rollout."
         raise NotImplementedError(msg)
 
-    def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
+    def rollout(self, x: TensorNTCHW, y: TensorNTCHW | None = None) -> TensorNTCHW:  # noqa: ARG002
         """Rollout multiple forward steps: process in latent space.
 
         The default implementation simply calls `self.forward` on each time slice until
         a sufficient number of forecast steps have been produced. These are then stacked
         together to produce the final output.
 
-        If you want to handle the NTCHW tensors directly, simply override this method in
-        your child class.
+        If you want to handle the NTCHW tensors directly, or to use the target tensor for
+        model training simply override this method in your child class.
 
         Args:
-            x: TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+            x: Input TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+            y: during training: Target TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
+               otherwise:       None
 
         Returns:
-            TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
+            Predicted TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
 
         """
         # Cut the NTCHW input into NCHW slices

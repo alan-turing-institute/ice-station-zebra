@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockDownsample, ResizingInterpolation
+from ice_station_zebra.models.common import ConvBlockDownsample, ResizingConvolution
 from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
@@ -11,7 +11,7 @@ from .base_encoder import BaseEncoder
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
-    - Resize (if needed)
+    - Resize with convolution (if needed)
     - Batch normalisation
     - n_layers of size-reducing convolutional blocks
 
@@ -36,12 +36,21 @@ class CNNEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Set the spatial dimensions as required by the number of convolutional layers
+        # If necessary, apply a convolutional resizing to get the correct input dimensions
+        n_channels = self.data_space_in.channels
         initial_required_shape = (
             self.data_space_out.shape[0] * (2**n_layers),
             self.data_space_out.shape[1] * (2**n_layers),
         )
-        layers.append(ResizingInterpolation(initial_required_shape))
+        if self.data_space_in.shape != initial_required_shape:
+            layers.append(
+                ResizingConvolution(
+                    n_channels,
+                    self.data_space_in.shape,
+                    n_channels,
+                    initial_required_shape,
+                )
+            )
 
         # Normalise the input across height and width separately for each channel
         n_channels = self.data_space_in.channels
@@ -56,7 +65,7 @@ class CNNEncoder(BaseEncoder):
             )
             n_channels *= 2
 
-        # Override the default number of output channels
+        # Set the number of output channels correctly
         self.data_space_out.channels = n_channels
 
         # Combine the layers sequentially

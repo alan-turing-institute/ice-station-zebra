@@ -1,11 +1,14 @@
+import logging
 from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
+from ice_station_zebra.models.common import ConvBlockUpsample, ResizingConvolution
 from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
+
+logger = logging.getLogger(__name__)
 
 
 class CNNDecoder(BaseDecoder):
@@ -14,11 +17,10 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
-    - Resize (if needed)
+    - Resize with convolution (if needed)
     - Batch normalisation
     - n_layers of size-increasing convolutional blocks
-    - Convolve to required number of channels
-    - Resize to output size (if needed)
+    - Resize with convolution (if needed)
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -64,7 +66,14 @@ class CNNDecoder(BaseDecoder):
             self.data_space_in.shape[idx] < minimal_initial_shape[idx]
             for idx in range(2)
         ):
-            layers.append(ResizingInterpolation(minimal_initial_shape))
+            layers.append(
+                ResizingConvolution(
+                    n_channels,
+                    self.data_space_in.shape,
+                    n_channels,
+                    minimal_initial_shape,
+                )
+            )
             conv_input_shape = minimal_initial_shape
         else:
             conv_input_shape = self.data_space_in.shape
@@ -81,10 +90,19 @@ class CNNDecoder(BaseDecoder):
             )
             n_channels //= 2
 
-        # If necessary, apply a final size-reducing layer to get the exact output shape
+        # If necessary, apply a convolutional resizing to get the correct output dimensions
         conv_output_shape = tuple(dim * layer_factor for dim in conv_input_shape)
-        if conv_output_shape != self.data_space_out.shape:
-            layers.append(ResizingInterpolation(self.data_space_out.shape))
+        if (conv_output_shape != self.data_space_out.shape) or (
+            n_channels != self.data_space_out.channels
+        ):
+            layers.append(
+                ResizingConvolution(
+                    n_channels,
+                    conv_output_shape,
+                    self.data_space_out.channels,
+                    self.data_space_out.shape,
+                )
+            )
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

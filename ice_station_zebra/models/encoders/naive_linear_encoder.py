@@ -2,6 +2,7 @@ from typing import Any
 
 from torch import nn
 
+from ice_station_zebra.models.common import ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
@@ -27,8 +28,8 @@ class NaiveLinearEncoder(BaseEncoder):
         # Start by normalising the input across height and width separately for each channel
         layers.append(nn.BatchNorm2d(self.data_space_in.channels))
 
-        # Resample to the desired latent shape
-        layers.append(nn.Upsample(self.data_space_out.shape))
+        # Resize to the desired latent shape
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

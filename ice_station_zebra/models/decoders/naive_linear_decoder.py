@@ -2,6 +2,7 @@ from typing import Any
 
 from torch import nn
 
+from ice_station_zebra.models.common import ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -29,8 +30,8 @@ class NaiveLinearDecoder(BaseDecoder):
             nn.Conv2d(self.data_space_in.channels, self.data_space_out.channels, 1)
         )
 
-        # Resample to the desired output shape
-        layers.append(nn.Upsample(self.data_space_out.shape))
+        # Resize to the desired output shape
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

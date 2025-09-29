@@ -36,8 +36,8 @@ class NaiveLinearDecoder(BaseDecoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: decode NCHW latent data into NCHW output.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward process. Decode latent space into output space for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

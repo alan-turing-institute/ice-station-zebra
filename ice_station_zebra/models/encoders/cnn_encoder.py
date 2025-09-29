@@ -60,8 +60,8 @@ class CNNEncoder(BaseEncoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: encode NCHW input into NCHW latent space.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward process. Encode input space into latent space for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

@@ -31,6 +31,9 @@ class ResizingConvolution(nn.Module):
         """
         super().__init__()
 
+        # Construct list of layers
+        layers: list[nn.Module] = []
+
         strides = (
             max(input_shape[0] // output_shape[0], 1),
             max(input_shape[1] // output_shape[1], 1),
@@ -48,9 +51,8 @@ class ResizingConvolution(nn.Module):
             max((kernel_sizes[1] - scales_[1]) // 2, 0),
         )
 
-
         # Create the convolution layer
-        layers = [
+        layers.append(
             nn.Conv2d(
                 in_channels=input_channels,
                 out_channels=output_channels,
@@ -58,7 +60,7 @@ class ResizingConvolution(nn.Module):
                 stride=strides,
                 padding=padding,
             )
-        ]
+        )
 
         # Check whether an additional resizing step is needed
         conv_output_shape = (

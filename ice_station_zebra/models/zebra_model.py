@@ -113,7 +113,7 @@ class ZebraModel(LightningModule, ABC):
         """Run the training step.
 
         - Separate the batch into inputs and target
-        - Run inputs through the model
+        - Run inputs and target through the model
         - Calculate the loss wrt. the target
 
         Args:
@@ -125,7 +125,7 @@ class ZebraModel(LightningModule, ABC):
             A Tensor containing the loss for the batch.
 
         """
-        target = batch.pop("target")
+        target = batch["target"].clone().detach()
         prediction = self(batch)
         return self.loss(prediction, target)
 

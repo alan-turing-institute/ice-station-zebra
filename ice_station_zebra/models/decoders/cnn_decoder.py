@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample
+from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -32,11 +32,14 @@ class CNNDecoder(BaseDecoder):
         """Initialise a CNNDecoder."""
         super().__init__(**kwargs)
 
+        # Calculate the factor by which the scale changes after n_layers
+        layer_factor = 2**n_layers
+
         # Ensure number of channels is divisible by the power of two implied by n_layers
         n_channels = self.data_space_in.channels
-        if n_channels % (2**n_layers):
+        if n_channels % layer_factor:
             msg = (
-                f"The number of input channels {n_channels} must be divisible by {2**n_layers}. "
+                f"The number of input channels {n_channels} must be divisible by {layer_factor}. "
                 f"Without this, it is not possible to apply {n_layers} convolutions."
             )
             raise ValueError(msg)
@@ -54,7 +57,7 @@ class CNNDecoder(BaseDecoder):
             n_channels //= 2
 
         # Set the final spatial dimensions (previously used adaptive pooling which is extremely slow)
-        layers.append(nn.Upsample(self.data_space_out.shape))
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Convolve to the required number of output channels
         layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))

@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockDownsample
+from ice_station_zebra.models.common import ConvBlockDownsample, ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
@@ -39,11 +39,11 @@ class CNNEncoder(BaseEncoder):
         layers.append(nn.BatchNorm2d(n_channels))
 
         # Set the spatial dimensions as required by the number of convolutional layers
-        initial_conv_shape = (
+        initial_required_shape = (
             self.data_space_out.shape[0] * (2**n_layers),
             self.data_space_out.shape[1] * (2**n_layers),
         )
-        layers.append(nn.Upsample(initial_conv_shape))
+        layers.append(ResizingInterpolation(initial_required_shape))
 
         # Add n_layers size-reducing convolutional blocks
         for _ in range(n_layers):

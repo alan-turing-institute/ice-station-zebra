@@ -1,14 +1,14 @@
-samp-weathersouth-era5-0p5-2020-2020-24h-v1:
-  name: samp-weathersouth-era5-0p5-2020-2020-24h-v1
+full-weathernorth-era5-0p5-1979-2024-24h-v1:
+  name: full-weathernorth-era5-0p5-1979-2024-24h-v1
   group_as: era5
-  description: Small ERA5 dataset for testing (0.5 deg, south)
+  description: Full ERA5 dataset (0.5 deg)
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 
   dates:
-    start: '2020-01-01T00:00:00'
-    end: '2020-04-30T23:00:00'
-    frequency: 24h
+    start: '1979-01-01T00:00:00'
+    end: '2024-12-31T23:00:00'
+    frequency: 1d
 
   input:
     join:
@@ -17,7 +17,7 @@ samp-weathersouth-era5-0p5-2020-2020-24h-v1:
         class: ea
         expver: "0001"
         grid: "0.5 / 0.5"
-        area: "0/-180/-90/180"  # southern hemisphere
+        area: "90/-180/0/180"  # northern hemisphere
         levtype: sfc
         param:
         - 2t
@@ -30,7 +30,7 @@ samp-weathersouth-era5-0p5-2020-2020-24h-v1:
         class: ea
         expver: "0001"
         grid: "0.5 / 0.5"
-        area: "0/-180/-90/180"  # southern hemisphere
+        area: "90/-180/0/180"  # northern hemisphere
         level:
         - 10
         - 250

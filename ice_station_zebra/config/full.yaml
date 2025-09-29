@@ -1,7 +1,9 @@
 defaults:
   - datasets:
-    - samp_sicsouth_osisaf_25k_2019_2021_24h_v1
-    - samp_weathersouth_era5_0p5_2019_2021_24h_v1
+    - full_sicnorth_osisaf_1979_2024_24h_v1
+    - full_sicsouth_osisaf_1979_2024_24h_v1
+    - full_weathernorth_era5_0p5_1979_2024_24h_v1
+    - full_weathersouth_era5_0p5_1979_2024_24h_v1
   - evaluate: default
   - loggers:
     - wandb

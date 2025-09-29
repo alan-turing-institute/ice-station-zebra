@@ -20,7 +20,6 @@ class NaiveLinearDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        latent_space: DataSpace,  # noqa: ARG002
         output_space: DataSpace,
         **kwargs: Any,
     ) -> None:

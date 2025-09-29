@@ -72,8 +72,15 @@ class ZebraModel(LightningModule, ABC):
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Forward step of the model.
 
-        - start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
-        - return a single [NTCHW] output [batch, n_forecast_steps, C_output, H_output, W_output]
+        - start with multiple [NTCHW] inputs, one for each input dataset
+        - return a single [NTCHW] output representing the predicted output
+
+        Args:
+            inputs: Dictionary of dataset name to TensorNTCHW with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]
+
+        Returns:
+            Predicted TensorNTCHW with shape [batch, n_forecast_steps, C_output, H_output, W_output]
+
         """
 
     def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:

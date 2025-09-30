@@ -21,9 +21,9 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
-    - Resize using interpolation (if needed)
-    - n_layers of size-increasing convolutional blocks
     - Resize with convolution (if needed)
+    - n_layers of size-increasing convolutional blocks
+    - Resize with interpolation (if needed)
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -47,10 +47,9 @@ class CNNDecoder(BaseDecoder):
         layer_factor = 2**n_layers
 
         # Ensure number of channels is divisible by the power of two implied by n_layers
-        n_channels = self.data_space_in.channels
-        if n_channels % layer_factor:
+        if self.data_space_in.channels % layer_factor:
             msg = (
-                f"The number of input channels {n_channels} must be divisible by {layer_factor}. "
+                f"The number of input channels {self.data_space_in.channels} must be divisible by {layer_factor}. "
                 f"Without this, it is not possible to apply {n_layers} convolutions."
             )
             raise ValueError(msg)
@@ -58,24 +57,28 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # If necessary, scale the input dimensions until the size after convolution will
-        # be at least as large as the desired output size.
+        # If necessary, upscale the input until the post-convolution size is larger than
+        # or equal to the desired output size.
+        # N.B. dividing by a negative integer performs a ceiling division
         upscaled_shape = (
-            self.data_space_in.shape[0]
-            * -(
-                self.data_space_out.shape[0]
-                // -(self.data_space_in.shape[0] * layer_factor)
-            ),
-            self.data_space_in.shape[1]
-            * -(
-                self.data_space_out.shape[1]
-                // -(self.data_space_in.shape[1] * layer_factor)
-            ),
+            -(self.data_space_out.shape[0] // -layer_factor),
+            -(self.data_space_out.shape[1] // -layer_factor),
         )
-        if upscaled_shape != self.data_space_in.shape:
-            layers.append(ResizingInterpolation(upscaled_shape))
+        upscaled_channels = self.data_space_out.channels * layer_factor
+        if (upscaled_shape != self.data_space_in.shape) or (
+            upscaled_channels != self.data_space_in.channels
+        ):
+            layers.append(
+                ResizingConvolution(
+                    self.data_space_in.channels,
+                    self.data_space_in.shape,
+                    upscaled_channels,
+                    upscaled_shape,
+                )
+            )
 
         # Add n_layers size-increasing convolutional blocks
+        n_channels = upscaled_channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(
@@ -84,19 +87,10 @@ class CNNDecoder(BaseDecoder):
             )
             n_channels //= 2
 
-        # If necessary, apply a convolutional resizing to get the correct output dimensions
+        # If necessary, apply an interpolating resizing to get the correct output shape
         conv_output_shape = tuple(dim * layer_factor for dim in upscaled_shape)
-        if (conv_output_shape != self.data_space_out.shape) or (
-            n_channels != self.data_space_out.channels
-        ):
-            layers.append(
-                ResizingConvolution(
-                    n_channels,
-                    conv_output_shape,
-                    self.data_space_out.channels,
-                    self.data_space_out.shape,
-                )
-            )
+        if conv_output_shape != self.data_space_out.shape:
+            layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

@@ -27,7 +27,7 @@ class BaseDecoder(nn.Module):
         self.n_forecast_steps = n_forecast_steps
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward process. Decode latent space into output space for a single timestep.
+        """Forward step: decode latent space into output space for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
@@ -40,7 +40,7 @@ class BaseDecoder(nn.Module):
         raise NotImplementedError(msg)
 
     def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Rollout multiple forward steps: decoding latent space into output space.
+        """Decode latent space into output space across multiple timesteps.
 
         The default implementation simply calls `self.forward` independently on each
         time slice. These are then stacked together to produce the final output.

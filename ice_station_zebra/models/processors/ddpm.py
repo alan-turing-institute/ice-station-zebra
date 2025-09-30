@@ -34,7 +34,7 @@ class DDPMProcessor(BaseProcessor):
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Generate NCHW output with diffusion for a single timestep.
+        """Forward step: generate NCHW output with diffusion for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

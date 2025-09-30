@@ -83,7 +83,7 @@ class UNetProcessor(BaseProcessor):
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Apply UNet model to NCHW tensor for a single timestep.
+        """Forward step: apply UNet model to NCHW tensor for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

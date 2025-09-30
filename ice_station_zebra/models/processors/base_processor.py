@@ -27,7 +27,7 @@ class BaseProcessor(nn.Module):
         self.n_history_steps = n_history_steps
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward process in NCHW latent space for a single timestep.
+        """Forward step: process in NCHW latent space for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
@@ -40,7 +40,7 @@ class BaseProcessor(nn.Module):
         raise NotImplementedError(msg)
 
     def rollout(self, x: TensorNTCHW, y: TensorNTCHW | None = None) -> TensorNTCHW:  # noqa: ARG002
-        """Rollout multiple forward steps: process in latent space.
+        """Process in latent space across multiple timesteps.
 
         The default implementation simply calls `self.forward` on each time slice until
         a sufficient number of forecast steps have been produced. These are then stacked

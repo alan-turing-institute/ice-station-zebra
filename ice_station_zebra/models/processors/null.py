@@ -28,7 +28,7 @@ class NullProcessor(BaseProcessor):
         self.model = nn.Identity()
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Apply identity to NCHW tensor.
+        """Forward step: apply identity to NCHW tensor.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

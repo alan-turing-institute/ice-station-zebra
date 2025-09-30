@@ -66,7 +66,7 @@ class CNNDecoder(BaseDecoder):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward process. Decode latent space into output space for a single timestep.
+        """Forward step: decode latent space into output space with a CNN.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

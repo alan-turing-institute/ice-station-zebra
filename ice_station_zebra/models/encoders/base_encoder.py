@@ -32,7 +32,7 @@ class BaseEncoder(nn.Module):
         self.n_history_steps = n_history_steps
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward process. Encode input space into latent space for a single timestep.
+        """Forward step: encode input space into latent space for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)
@@ -45,7 +45,7 @@ class BaseEncoder(nn.Module):
         raise NotImplementedError(msg)
 
     def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Rollout multiple forward steps: encoding input space into latent space.
+        """Encode input space into latent space across multiple timesteps.
 
         The default implementation simply calls `self.forward` independently on each
         time slice. These are then stacked together to produce the final output.

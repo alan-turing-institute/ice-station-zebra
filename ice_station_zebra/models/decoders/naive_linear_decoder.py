@@ -37,7 +37,7 @@ class NaiveLinearDecoder(BaseDecoder):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward process. Decode latent space into output space for a single timestep.
+        """Forward step: decode latent space into output space with a linear transform.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

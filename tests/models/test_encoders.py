@@ -38,7 +38,7 @@ class TestEncoders:
                 n_history_steps=test_n_history_steps,
             ),
         }[test_encoder_cls]
-        result: torch.Tensor = encoder(
+        result: torch.Tensor = encoder.rollout(
             torch.randn(
                 test_batch_size,
                 test_n_history_steps,

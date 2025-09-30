@@ -3,7 +3,11 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample, ResizingConvolution
+from ice_station_zebra.models.common import (
+    ConvBlockUpsample,
+    ResizingConvolution,
+    ResizingInterpolation,
+)
 from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -17,8 +21,7 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
-    - Resize with convolution (if needed)
-    - Batch normalisation
+    - Resize using interpolation (if needed)
     - n_layers of size-increasing convolutional blocks
     - Resize with convolution (if needed)
 
@@ -55,31 +58,22 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Ensure that the spatial dimensions are large enough that the size after
-        # convolution will be at least as large as the desired output size.
-        # N.B. Dividing by negative layer factor allows us to round up.
-        minimal_initial_shape = (
-            int(-(self.data_space_out.shape[0] // -layer_factor)),
-            int(-(self.data_space_out.shape[1] // -layer_factor)),
+        # If necessary, scale the input dimensions until the size after convolution will
+        # be at least as large as the desired output size.
+        upscaled_shape = (
+            self.data_space_in.shape[0]
+            * -(
+                self.data_space_out.shape[0]
+                // -(self.data_space_in.shape[0] * layer_factor)
+            ),
+            self.data_space_in.shape[1]
+            * -(
+                self.data_space_out.shape[1]
+                // -(self.data_space_in.shape[1] * layer_factor)
+            ),
         )
-        if any(
-            self.data_space_in.shape[idx] < minimal_initial_shape[idx]
-            for idx in range(2)
-        ):
-            layers.append(
-                ResizingConvolution(
-                    n_channels,
-                    self.data_space_in.shape,
-                    n_channels,
-                    minimal_initial_shape,
-                )
-            )
-            conv_input_shape = minimal_initial_shape
-        else:
-            conv_input_shape = self.data_space_in.shape
-
-        # Normalise the input across height and width separately for each channel
-        layers.append(nn.BatchNorm2d(n_channels))
+        if upscaled_shape != self.data_space_in.shape:
+            layers.append(ResizingInterpolation(upscaled_shape))
 
         # Add n_layers size-increasing convolutional blocks
         for _ in range(n_layers):
@@ -91,7 +85,7 @@ class CNNDecoder(BaseDecoder):
             n_channels //= 2
 
         # If necessary, apply a convolutional resizing to get the correct output dimensions
-        conv_output_shape = tuple(dim * layer_factor for dim in conv_input_shape)
+        conv_output_shape = tuple(dim * layer_factor for dim in upscaled_shape)
         if (conv_output_shape != self.data_space_out.shape) or (
             n_channels != self.data_space_out.channels
         ):

@@ -2,8 +2,8 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample
-from ice_station_zebra.types import DataSpace, TensorNCHW
+from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
+from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
 
@@ -24,7 +24,6 @@ class CNNDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        output_space: DataSpace,
         activation: str = "ReLU",
         kernel_size: int = 3,
         n_layers: int = 2,
@@ -33,11 +32,22 @@ class CNNDecoder(BaseDecoder):
         """Initialise a CNNDecoder."""
         super().__init__(**kwargs)
 
+        # Calculate the factor by which the scale changes after n_layers
+        layer_factor = 2**n_layers
+
+        # Ensure number of channels is divisible by the power of two implied by n_layers
+        n_channels = self.data_space_in.channels
+        if n_channels % layer_factor:
+            msg = (
+                f"The number of input channels {n_channels} must be divisible by {layer_factor}. "
+                f"Without this, it is not possible to apply {n_layers} convolutions."
+            )
+            raise ValueError(msg)
+
         # Construct list of layers
         layers: list[nn.Module] = []
 
         # Add n_layers size-increasing convolutional blocks
-        n_channels = self.n_latent_channels_total
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(
@@ -47,10 +57,10 @@ class CNNDecoder(BaseDecoder):
             n_channels //= 2
 
         # Set the final spatial dimensions (previously used adaptive pooling which is extremely slow)
-        layers.append(nn.Upsample(output_space.shape))
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Convolve to the required number of output channels
-        layers.append(nn.Conv2d(n_channels, output_space.channels, 1))
+        layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

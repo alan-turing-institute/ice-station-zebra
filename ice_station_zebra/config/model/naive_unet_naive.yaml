@@ -2,13 +2,9 @@ _target_: ice_station_zebra.models.EncodeProcessDecode
 
 name: naive-unet-naive
 
-# Each dataset will be encoded into a latent space with these properties
-latent_space:
-  channels: 20
-  shape: [128, 128]
-
 encoder:
   _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
+  latent_space: [128, 128] # Shape of the latent space
 
 processor:
   _target_: ice_station_zebra.models.processors.UNetProcessor

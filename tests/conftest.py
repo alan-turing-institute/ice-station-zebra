@@ -22,7 +22,10 @@ def cfg_decoder() -> DictConfig:
 def cfg_encoder() -> DictConfig:
     """Test configuration for an encoder."""
     return DictConfig(
-        {"_target_": "ice_station_zebra.models.encoders.NaiveLinearEncoder"}
+        {
+            "_target_": "ice_station_zebra.models.encoders.NaiveLinearEncoder",
+            "latent_space": (64, 64),
+        }
     )
 
 
@@ -34,18 +37,6 @@ def cfg_input_space() -> DictConfig:
             "channels": 4,
             "name": "test-input",
             "shape": (512, 512),
-        }
-    )
-
-
-@pytest.fixture
-def cfg_latent_space() -> DictConfig:
-    """Test configuration for a latent space."""
-    return DictConfig(
-        {
-            "channels": 50,
-            "name": "latent",
-            "shape": (64, 64),
         }
     )
 

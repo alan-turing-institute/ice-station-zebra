@@ -28,7 +28,7 @@ class DDPMProcessor(BaseProcessor):
 
         """
         super().__init__(**kwargs)
-        self.model = UNetDiffusion(self.n_latent_channels_total, timesteps)
+        self.model = UNetDiffusion(self.data_space.channels, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)

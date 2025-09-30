@@ -1,6 +1,6 @@
 from torch import nn, stack
 
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 
 class BaseProcessor(nn.Module):
@@ -16,15 +16,16 @@ class BaseProcessor(nn.Module):
     def __init__(
         self,
         *,
+        data_space: DataSpace,
         n_forecast_steps: int,
         n_history_steps: int,
-        n_latent_channels_total: int,
+        # n_latent_channels_total: int,
     ) -> None:
         """Initialise a NullProcessor."""
         super().__init__()
+        self.data_space = data_space
         self.n_forecast_steps = n_forecast_steps
         self.n_history_steps = n_history_steps
-        self.n_latent_channels_total = n_latent_channels_total
 
     def forward(self, x: TensorNTCHW) -> TensorNTCHW:
         """Forward step: process in latent space.

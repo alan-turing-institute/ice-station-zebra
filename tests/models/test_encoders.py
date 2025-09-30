@@ -24,7 +24,7 @@ class TestEncoders:
         test_n_history_steps: int,
     ) -> None:
         input_space = DataSpace(
-            name="input", channels=test_input_chw[0], shape=test_input_chw[1:3]
+            name="input", channels=test_input_chw[0], shape=test_input_chw[1:]
         )
         encoder: BaseEncoder = {
             "CNNEncoder": CNNEncoder(

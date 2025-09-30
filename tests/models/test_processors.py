@@ -22,7 +22,7 @@ class TestBaseProcessor:
         test_n_history_steps: int,
     ) -> None:
         latent_space = DataSpace(
-            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:3]
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
         )
         processor = BaseProcessor(
             data_space=latent_space,
@@ -55,7 +55,7 @@ class TestNullProcessor:
         test_n_history_steps: int,
     ) -> None:
         latent_space = DataSpace(
-            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:3]
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
         )
         processor = NullProcessor(
             data_space=latent_space,
@@ -95,7 +95,7 @@ class TestUNetProcessor:
         test_start_out_channels: int,
     ) -> None:
         latent_space = DataSpace(
-            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:3]
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
         )
 
         # Catch invalid filter size

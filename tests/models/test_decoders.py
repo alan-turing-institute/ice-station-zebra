@@ -24,10 +24,10 @@ class TestDecoders:
         test_output_chw: tuple[int, int, int],
     ) -> None:
         latent_space = DataSpace(
-            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:3]
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
         )
         output_space = DataSpace(
-            name="output", channels=test_output_chw[0], shape=test_output_chw[1:3]
+            name="output", channels=test_output_chw[0], shape=test_output_chw[1:]
         )
         decoder: BaseDecoder = {
             "CNNDecoder": CNNDecoder(

@@ -5,7 +5,6 @@ from torch import nn
 
 from ice_station_zebra.models.common import (
     ConvBlockUpsample,
-    ResizingConvolution,
     ResizingInterpolation,
 )
 from ice_station_zebra.types import TensorNCHW
@@ -21,7 +20,7 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
-    - Resize with convolution (if needed)
+    - Resize with interpolation (if needed)
     - n_layers of size-increasing convolutional blocks
     - Resize with interpolation (if needed)
 
@@ -64,21 +63,11 @@ class CNNDecoder(BaseDecoder):
             -(self.data_space_out.shape[0] // -layer_factor),
             -(self.data_space_out.shape[1] // -layer_factor),
         )
-        upscaled_channels = self.data_space_out.channels * layer_factor
-        if (upscaled_shape != self.data_space_in.shape) or (
-            upscaled_channels != self.data_space_in.channels
-        ):
-            layers.append(
-                ResizingConvolution(
-                    self.data_space_in.channels,
-                    self.data_space_in.shape,
-                    upscaled_channels,
-                    upscaled_shape,
-                )
-            )
+        if upscaled_shape != self.data_space_in.shape:
+            layers.append(ResizingInterpolation(upscaled_shape))
 
         # Add n_layers size-increasing convolutional blocks
-        n_channels = upscaled_channels
+        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(
@@ -86,6 +75,10 @@ class CNNDecoder(BaseDecoder):
                 )
             )
             n_channels //= 2
+
+        # If necessary, convolve to the required number of output channels
+        if n_channels != self.data_space_out.channels:
+            layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
 
         # If necessary, apply an interpolating resizing to get the correct output shape
         conv_output_shape = tuple(dim * layer_factor for dim in upscaled_shape)

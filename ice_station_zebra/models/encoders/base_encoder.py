@@ -60,7 +60,7 @@ class BaseEncoder(nn.Module):
         return stack(
             [
                 # Rollout the model over the input slices, producing an output for each one.
-                self.forward(x[:, idx_t, :, :, :])
+                self(x[:, idx_t, :, :, :])
                 for idx_t in range(self.n_history_steps)
             ],
             dim=1,

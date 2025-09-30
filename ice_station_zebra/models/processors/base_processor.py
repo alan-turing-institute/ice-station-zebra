@@ -66,7 +66,7 @@ class BaseProcessor(nn.Module):
         # predict when n_forecast_steps > n_history_steps.
         outputs: list[TensorNCHW] = []
         for _ in range(self.n_forecast_steps):
-            outputs.append(self.forward(nchw_slices.pop(0)))
+            outputs.append(self(nchw_slices.pop(0)))
             nchw_slices.append(outputs[-1])
 
         # Stack the outputs up as a new time dimension

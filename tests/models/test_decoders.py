@@ -59,17 +59,23 @@ class TestDecoders:
 
 
 class TestCNNDecoder:
-    def test_latent_shape_errors(self) -> None:
+    @pytest.mark.parametrize("test_latent_chw", [(3, 32, 32), (5, 200, 100)])
+    @pytest.mark.parametrize("test_n_layers", [1, 2, 5])
+    def test_latent_shape_errors(
+        self, test_latent_chw: tuple[int, int, int], test_n_layers: int
+    ) -> None:
         test_n_forecast_steps = 1
-        latent_space = DataSpace(name="latent", shape=(32, 32), channels=3)
+        latent_space = DataSpace(
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
+        )
         output_space = DataSpace(name="output", shape=(256, 256), channels=4)
         with pytest.raises(
             ValueError,
-            match="The number of input channels 3 must be divisible by 2. Without this, it is not possible to apply 1 convolutions.",
+            match=f"The number of input channels {test_latent_chw[0]} must be divisible by {2**test_n_layers}. Without this, it is not possible to apply {test_n_layers} convolutions.",
         ):
             CNNDecoder(
                 data_space_in=latent_space,
                 data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,
-                n_layers=1,
+                n_layers=test_n_layers,
             )

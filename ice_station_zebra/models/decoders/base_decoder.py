@@ -36,7 +36,7 @@ class BaseDecoder(nn.Module):
             TensorNCHW with (batch_size, output_channels, output_height, output_width)
 
         """
-        msg = "If you are using the default forward method, you must implement rollout."
+        msg = "If you are using the default rollout method, you must implement forward."
         raise NotImplementedError(msg)
 
     def rollout(self, x: TensorNTCHW) -> TensorNTCHW:

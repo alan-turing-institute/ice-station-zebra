@@ -33,6 +33,7 @@ from .plotting_core import (
     prepare_difference_stream,
     validate_2d_pair,
     validate_3d_streams,
+    compute_sanity_report,
 )
 
 #: Default plotting specification for sea ice concentration visualisation
@@ -115,6 +116,31 @@ def plot_maps(
 
     _set_axes_limits(axs, width=width, height=height)
     fig.suptitle(_format_date_to_string(date))
+
+    # Include sanity report
+    (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = compute_display_ranges(
+        ground_truth, prediction, plot_spec
+    )
+    sanity_report = compute_sanity_report(
+        ground_truth,
+        prediction,
+        vmin=groundtruth_min,
+        vmax=groundtruth_max,
+        outside_warn=plot_spec.outside_warn,
+        severe_outside=plot_spec.severe_outside,
+        include_shared_range_mismatch_check=plot_spec.include_shared_range_mismatch_check,
+    )
+    badge = ("" if not sanity_report.warnings else "Warnings: " + ", ".join(sanity_report.warnings))
+    if badge:
+        # Place the warning just below the title
+        title_artist = getattr(fig, "_suptitle", None)
+        if title_artist is not None:
+            _, title_y = title_artist.get_position()
+            warning_y = max(title_y - 0.03, 0.0)
+        else:
+            warning_y = 0.93
+        fig.text(0.5, warning_y, badge, fontsize=9, color="firebrick", ha="center", va="top")
+        
 
     try:
         return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
@@ -377,17 +403,17 @@ def _draw_frame(  # noqa: PLR0913
             )
 
         if diff_colour_scale.norm is not None:
-            # Signed differences with TwoSlopeNorm - use explicit levels and shared norm
-            norm = diff_colour_scale.norm
-            diff_vmin = norm.vmin or 0.0
-            diff_vmax = norm.vmax or 1.0
+            # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
+            diff_vmin = diff_colour_scale.norm.vmin or 0.0
+            diff_vmax = diff_colour_scale.norm.vmax or 1.0
             diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
 
             image_difference = axs[2].contourf(
                 difference,
                 levels=diff_levels,
                 cmap=diff_colour_scale.cmap,
-                norm=norm,
+                vmin=diff_vmin,
+                vmax=diff_vmax,
             )
         else:
             # Non-negative differences with vmin/vmax

@@ -8,5 +8,5 @@ __all__ = [
     "DDPMProcessor",
     "NullProcessor",
     "UNetProcessor",
-    "VitProcessor"
+    "VitProcessor",
 ]

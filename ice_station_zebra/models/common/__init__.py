@@ -13,9 +13,9 @@ __all__ = [
     "ConvBlockDownsample",
     "ConvBlockUpsample",
     "ConvBlockUpsampleNaive",
+    "PatchEmbedding",
     "ResizingAveragePool2d",
     "ResizingInterpolation",
     "TimeEmbed",
     "TransformerEncoderBlock",
-    "PatchEmbedding"
 ]

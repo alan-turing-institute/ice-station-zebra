@@ -77,3 +77,6 @@ class PlotSpec:
     vmax: float | None = 1.0
     colourbar_location: Literal["vertical", "horizontal"] = "vertical"
     colourbar_strategy: Literal["shared", "separate"] = "shared"
+    outside_warn: float = 0.05
+    severe_outside: float = 0.20
+    include_shared_range_mismatch_check: bool = True

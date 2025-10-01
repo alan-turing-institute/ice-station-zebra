@@ -510,7 +510,7 @@ def _get_cbar_limits_from_mappable(cbar: Colorbar) -> tuple[float, float]:
     return float(vmin), float(vmax)
 
 
-def _add_colourbars(  # noqa: PLR0913
+def _add_colourbars(  # noqa: PLR0913, PLR0912
     axs: list[Axes],
     *,
     image_groundtruth: QuadContourSet,
@@ -635,10 +635,19 @@ def _add_colourbars(  # noqa: PLR0913
                 orientation=orientation,
             )
 
-        # Tick formatting, ensures zero tick is always present and often symmetric
-        _format_difference_ticks(
-            colourbar_diff, image_difference, is_vertical=is_vertical
-        )
+        # Tick formatting: symmetric for TwoSlopeNorm, otherwise linear
+        if isinstance(image_difference.norm, TwoSlopeNorm):
+            vmin = float(image_difference.norm.vmin or -1.0)
+            vmax = float(image_difference.norm.vmax or 1.0)
+            _format_symmetric_ticks(
+                colourbar_diff,
+                vmin=vmin,
+                vmax=vmax,
+                decimals=2,
+                is_vertical=is_vertical,
+            )
+        else:
+            _format_linear_ticks(colourbar_diff, decimals=2, is_vertical=is_vertical)
 
 
 # --- Tick Formatting Functions ---
@@ -670,32 +679,23 @@ def _format_linear_ticks(
         colourbar.ax.xaxis.set_tick_params(pad=1)
 
 
-def _format_difference_ticks(
+def _format_symmetric_ticks(
     colourbar: Colorbar,
-    image_difference: QuadContourSet,
     *,
+    vmin: float,
+    vmax: float,
+    decimals: int = 2,
     is_vertical: bool,
 ) -> None:
-    """Tick formatting for difference/comparison colourbars: always 5 ticks.
+    """Format symmetric diverging ticks with a 0-centered midpoint.
 
-    Signed differences use TwoSlopeNorm; force the middle tick to 0.0 and place
-    midpoints halfway to each end. Absolute modes use 5 evenly spaced ticks.
+    Places five ticks: [vmin, midpoint to 0, 0, 0 to midpoint, vmax].
     """
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-
-    if isinstance(image_difference.norm, TwoSlopeNorm):
-        vmin = float(image_difference.norm.vmin or -1.0)
-        vmax = float(image_difference.norm.vmax or 1.0)
-        ticks = np.array(
-            [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax], dtype=float
-        )
-        colourbar.set_ticks(ticks)
-        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.2f}"))
-    else:
-        vmin, vmax = _get_cbar_limits_from_mappable(colourbar)
-        ticks = np.linspace(vmin, vmax, 5)
-        colourbar.set_ticks(ticks)
-        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.2f}"))
-
+    ticks = np.array(
+        [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax], dtype=float
+    )
+    colourbar.set_ticks(ticks)
+    axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)

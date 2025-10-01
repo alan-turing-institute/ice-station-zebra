@@ -1,7 +1,9 @@
 from .base_encoder import BaseEncoder
-from .naive_latent_space_encoder import NaiveLatentSpaceEncoder
+from .cnn_encoder import CNNEncoder
+from .naive_linear_encoder import NaiveLinearEncoder
 
 __all__ = [
     "BaseEncoder",
-    "NaiveLatentSpaceEncoder",
+    "CNNEncoder",
+    "NaiveLinearEncoder",
 ]

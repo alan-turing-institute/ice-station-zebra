@@ -1,75 +1,95 @@
+from typing import Any
+
 import torch
 from torch import nn
 
-from ice_station_zebra.models.common import BottleneckBlock, ConvBlock, UpconvBlock
+from ice_station_zebra.models.common import CommonConvBlock, ConvBlockUpsampleNaive
 from ice_station_zebra.types import TensorNCHW
 
+from .base_processor import BaseProcessor
 
-class UNetProcessor(nn.Module):
+
+class UNetProcessor(BaseProcessor):
     """UNet model that processes input through a UNet architecture.
 
     Structure based on Andersson et al. (2021) Nature Communications
     https://doi.org/10.1038/s41467-021-25257-4
+
+    Input space:
+        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+
+    Output space:
+        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
     def __init__(
         self,
-        n_latent_channels: int,
-        filter_size: int,
+        *,
+        kernel_size: int,
         start_out_channels: int,
+        **kwargs: Any,
     ) -> None:
-        """Initialise a UNetProcessor."""
-        super().__init__()
+        """Initialise a UNetProcessor.
 
-        channels = [start_out_channels * 2**exponent for exponent in range(4)]
+        Args:
+            kernel_size: Size of the convolutional filters.
+            start_out_channels: Number of output channels in the first layer.
+            kwargs: Arguments to BaseProcessor.
 
-        if filter_size <= 0:
-            msg = "Filter size must be greater than 0."
+        """
+        super().__init__(**kwargs)
+
+        if kernel_size <= 0:
+            msg = "Kernel size must be greater than 0."
             raise ValueError(msg)
 
         if start_out_channels <= 0:
             msg = "Start out channels must be greater than 0."
             raise ValueError(msg)
 
+        channels = [start_out_channels * 2**exponent for exponent in range(4)]
+
         # Encoder
-        self.conv1 = ConvBlock(n_latent_channels, channels[0], filter_size=filter_size)
+        self.conv1 = CommonConvBlock(
+            self.data_space.channels, channels[0], kernel_size=kernel_size
+        )
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
+        self.conv2 = CommonConvBlock(channels[0], channels[1], kernel_size=kernel_size)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size)
+        self.conv3 = CommonConvBlock(channels[1], channels[2], kernel_size=kernel_size)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size)
+        self.conv4 = CommonConvBlock(channels[2], channels[2], kernel_size=kernel_size)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size)
+        self.conv5 = CommonConvBlock(channels[2], channels[3], kernel_size=kernel_size)
 
         # Decoder
-        self.up6 = UpconvBlock(channels[3], channels[2])
-        self.up7 = UpconvBlock(channels[2], channels[2])
-        self.up8 = UpconvBlock(channels[2], channels[1])
-        self.up9 = UpconvBlock(channels[1], channels[0])
+        self.up6 = ConvBlockUpsampleNaive(channels[3], channels[2])
+        self.up7 = ConvBlockUpsampleNaive(channels[2], channels[2])
+        self.up8 = ConvBlockUpsampleNaive(channels[2], channels[1])
+        self.up9 = ConvBlockUpsampleNaive(channels[1], channels[0])
 
-        self.up6b = ConvBlock(channels[3], channels[2], filter_size=filter_size)
-        self.up7b = ConvBlock(channels[3], channels[2], filter_size=filter_size)
-        self.up8b = ConvBlock(channels[2], channels[1], filter_size=filter_size)
-        self.up9b = ConvBlock(
-            channels[1], channels[0], filter_size=filter_size, final=True
+        self.up6b = CommonConvBlock(channels[3], channels[2], kernel_size=kernel_size)
+        self.up7b = CommonConvBlock(channels[3], channels[2], kernel_size=kernel_size)
+        self.up8b = CommonConvBlock(channels[2], channels[1], kernel_size=kernel_size)
+        self.up9b = CommonConvBlock(
+            channels[1], channels[0], kernel_size=kernel_size, n_subblocks=3
         )
 
         # Final layer
         self.final_layer = nn.Conv2d(
-            channels[0], n_latent_channels, kernel_size=1, padding="same"
+            channels[0], self.data_space.channels, kernel_size=1, padding="same"
         )
 
-    def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward step: process in latent space.
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
+        """Apply UNet model to NCHW tensor.
 
         Args:
-            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
         _, _, h, w = x.shape

@@ -1,15 +1,21 @@
-from .bottleneckblock import BottleneckBlock
-from .convblock import ConvBlock
+from .conv_block_common import CommonConvBlock
+from .conv_block_downsample import ConvBlockDownsample
+from .conv_block_upsample import ConvBlockUpsample
+from .conv_block_upsample_naive import ConvBlockUpsampleNaive
+from .resizing_average_pool_2d import ResizingAveragePool2d
+from .resizing_interpolation import ResizingInterpolation
+from .time_embed import TimeEmbed
 from .patchembed import PatchEmbedding
-from .timeembed import TimeEmbed
 from .transformerblock import TransformerEncoderBlock
-from .upconvblock import UpconvBlock
 
 __all__ = [
-    "BottleneckBlock",
-    "ConvBlock",
-    "PatchEmbedding",
+    "CommonConvBlock",
+    "ConvBlockDownsample",
+    "ConvBlockUpsample",
+    "ConvBlockUpsampleNaive",
+    "ResizingAveragePool2d",
+    "ResizingInterpolation",
     "TimeEmbed",
     "TransformerEncoderBlock",
-    "UpconvBlock",
+    "PatchEmbedding"
 ]

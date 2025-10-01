@@ -1,4 +1,4 @@
-from .plotting_core import PlotSpec
+from .plotting_core import PlotSpec, compute_sanity_report
 from .plotting_maps import (
     DEFAULT_SIC_SPEC,
     plot_maps,
@@ -8,6 +8,7 @@ from .plotting_maps import (
 __all__ = [
     "DEFAULT_SIC_SPEC",
     "PlotSpec",
+    "compute_sanity_report",
     "plot_maps",
     "video_maps",
 ]

@@ -11,7 +11,7 @@ from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
 
-from ._dummy_arctic import make_circular_arctic
+from .test_dummy_arctic import make_circular_arctic
 
 mpl.use("Agg")
 
@@ -28,6 +28,24 @@ def sic_pair_2d(
     """
     ground_truth_stream, prediction_stream, dates = sic_pair_3d_stream
     return ground_truth_stream[0], prediction_stream[0], dates[0]
+
+
+@pytest.fixture
+def sic_pair_warning_2d() -> tuple[np.ndarray, np.ndarray, date]:
+    """Construct arrays that should trigger sanity-report warnings.
+
+    Ground truth stays in [0,1]. Prediction has a stripe with values > 1.5 to
+    ensure >5% of values are outside the display range when using shared 0..1.
+    """
+    height, width = 64, 64
+    gt = np.clip(np.random.default_rng(42).random((height, width)), 0.0, 1.0).astype(
+        np.float32
+    )
+    pred = gt.copy()
+    # Make a vertical stripe out-of-range ~25% of pixels
+    stripe_cols = slice(width // 4, width // 2)
+    pred[:, stripe_cols] = 1.6
+    return gt, pred, TEST_DATE
 
 
 @pytest.fixture

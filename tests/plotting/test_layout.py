@@ -10,10 +10,10 @@ import pytest
 
 mpl.use("Agg")
 
-from ice_station_zebra.visualisations.layout import _init_axes
+from ice_station_zebra.visualisations.layout import _build_layout
 from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 
-from ._plot_layout import axis_rectangle, rectangles_overlap
+from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
 
 if TYPE_CHECKING:
     # Imports used only for type annotations
@@ -48,7 +48,7 @@ def test_no_axes_overlap(
         colourbar_strategy=colourbar_strategy,
     )
 
-    _, axes, colourbar_axes = _init_axes(
+    _, axes, colourbar_axes = _build_layout(
         plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
     )
 
@@ -85,7 +85,7 @@ def test_axes_have_reasonable_gaps(
         colourbar_strategy=colourbar_strategy,
     )
 
-    _, axes, colourbar_axes = _init_axes(
+    _, axes, colourbar_axes = _build_layout(
         plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
     )
 

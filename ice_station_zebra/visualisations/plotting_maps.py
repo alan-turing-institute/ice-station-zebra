@@ -23,17 +23,17 @@ from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
 from .convert import _image_from_figure, _save_animation
-from .layout import _add_colourbars, _init_axes, _set_axes_limits
+from .layout import _add_colourbars, _build_layout, _set_axes_limits
 from .plotting_core import (
     compute_difference,
     compute_display_ranges,
     compute_display_ranges_stream,
+    compute_sanity_report,
     levels_from_spec,
     make_diff_colourmap,
     prepare_difference_stream,
     validate_2d_pair,
     validate_3d_streams,
-    compute_sanity_report,
 )
 
 #: Default plotting specification for sea ice concentration visualisation
@@ -48,6 +48,9 @@ DEFAULT_SIC_SPEC = PlotSpec(
     vmax=1.0,
     colourbar_location="horizontal",
     colourbar_strategy="shared",
+    outside_warn=0.05,
+    severe_outside=0.20,
+    include_shared_range_mismatch_check=True,
 )
 
 
@@ -84,7 +87,7 @@ def plot_maps(
     height, width = validate_2d_pair(ground_truth, prediction)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -118,19 +121,25 @@ def plot_maps(
     fig.suptitle(_format_date_to_string(date))
 
     # Include sanity report
-    (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = compute_display_ranges(
-        ground_truth, prediction, plot_spec
+    (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
+        compute_display_ranges(ground_truth, prediction, plot_spec)
     )
     sanity_report = compute_sanity_report(
         ground_truth,
         prediction,
         vmin=groundtruth_min,
         vmax=groundtruth_max,
-        outside_warn=plot_spec.outside_warn,
-        severe_outside=plot_spec.severe_outside,
-        include_shared_range_mismatch_check=plot_spec.include_shared_range_mismatch_check,
+        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
+        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
+        include_shared_range_mismatch_check=getattr(
+            plot_spec, "include_shared_range_mismatch_check", True
+        ),
     )
-    badge = ("" if not sanity_report.warnings else "Warnings: " + ", ".join(sanity_report.warnings))
+    badge = (
+        ""
+        if not sanity_report.warnings
+        else "Warnings: " + ", ".join(sanity_report.warnings)
+    )
     if badge:
         # Place the warning just below the title
         title_artist = getattr(fig, "_suptitle", None)
@@ -139,8 +148,9 @@ def plot_maps(
             warning_y = max(title_y - 0.03, 0.0)
         else:
             warning_y = 0.93
-        fig.text(0.5, warning_y, badge, fontsize=9, color="firebrick", ha="center", va="top")
-        
+        fig.text(
+            0.5, warning_y, badge, fontsize=9, color="firebrick", ha="center", va="top"
+        )
 
     try:
         return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
@@ -202,7 +212,7 @@ def video_maps(
         raise InvalidArrayError(error_msg)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation

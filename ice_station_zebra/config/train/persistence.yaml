@@ -4,3 +4,6 @@ defaults:
     - device_stats
     - unconditional_checkpoint
   - _self_
+
+trainer:
+  max_epochs: 1

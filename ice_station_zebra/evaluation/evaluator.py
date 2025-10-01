@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import hydra
+from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data_loaders import ZebraDataModule
@@ -74,6 +75,11 @@ class ZebraEvaluator:
                 },
                 **config["train"]["trainer"],
             )
+        )
+
+        # Assign workers for data loading
+        self.data_module.assign_workers(
+            suggested_max_num_workers(self.trainer.num_devices)
         )
 
     def evaluate(self) -> None:

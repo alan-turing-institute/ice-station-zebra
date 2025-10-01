@@ -1,15 +1,13 @@
 defaults:
   - datasets:
-    - era5-0d5-south-2019-12-24h-v1
-    - era5-0d5-south-2020-01-24h-v1
-    - osisaf-sic-south-2019-12-24h-v1
-    - osisaf-sic-south-2020-01-24h-v1
+    - samp_sicsouth_osisaf_25k_2019_2021_24h_v1
+    - samp_weathersouth_era5_0p5_2019_2021_24h_v1
   - evaluate: default
   - loggers:
     - wandb
-  - model: encode_null_decode
+  - model: naive_unet_naive
   - predict: osisaf-south
-  - split: default
+  - split: sample_dataset
   - train: default
   - _self_
 

@@ -1,48 +1,52 @@
+from typing import Any
+
 import torch
-from torch import nn
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 from ice_station_zebra.types import TensorNCHW
 
+from .base_processor import BaseProcessor
 
-class DDPMProcessor(nn.Module):
+
+class DDPMProcessor(BaseProcessor):
     """Denoising Diffusion Probabilistic Model (DDPM).
 
-    Operations all occur in latent space:
-        TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+    Input space:
+        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+
+    Output space:
+        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
-    def __init__(self, n_latent_channels: int, timesteps: int = 1000) -> None:
+    def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
         """Initialize the DDPM processor.
 
         Args:
-            n_latent_channels: Num latent channels used in UNetDiffusion.
             timesteps: Num diffusion timesteps (default=1000).
+            kwargs: Arguments to BaseProcessor.
 
         """
-        super().__init__()
-        self.model = UNetDiffusion(n_latent_channels, timesteps)
+        super().__init__(**kwargs)
+        self.model = UNetDiffusion(self.data_space.channels, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
-    def forward(self, x: TensorNCHW) -> TensorNCHW:
-        """Transformation summary.
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
+        """Generate a single NCHW output with diffusion.
 
         Args:
-            x: TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
-        x_bhwc = x.movedim(1, -1)
-        sample_weight = torch.ones_like(x_bhwc[..., :1])
+        sample_weight = torch.ones_like(x[..., :1])
 
-        y_bhwc = self.sample(x_bhwc, sample_weight)
+        y_bchw = self.sample(x, sample_weight)
 
-        y_bchw = y_bhwc.movedim(-1, 1)
         return (y_bchw + 1.0) / 2.0
 
     def sample(

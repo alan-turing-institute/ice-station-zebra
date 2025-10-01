@@ -4,8 +4,10 @@ __pycache__
 .ipynb_checkpoints/
 .python-version
 .venv
+.vscode
 *local.yaml
 dist
 outputs
 wandb
-zebra-env/
+notebooks/data
+notebooks/*.nc

@@ -15,10 +15,11 @@ import math
 import torch
 from torch import nn
 
-from ice_station_zebra.models.common.bottleneckblock import BottleneckBlock
-from ice_station_zebra.models.common.convblock import ConvBlock
-from ice_station_zebra.models.common.timeembed import TimeEmbed
-from ice_station_zebra.models.common.upconvblock import UpconvBlock
+from ice_station_zebra.models.common import (
+    CommonConvBlock,
+    ConvBlockUpsampleNaive,
+    TimeEmbed,
+)
 
 
 class UNetDiffusion(nn.Module):
@@ -28,74 +29,147 @@ class UNetDiffusion(nn.Module):
     Supports configurable depth, filter size, and number of forecast days/classes.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_channels: int,
         timesteps: int = 1000,
-        filter_size: int = 3,
+        kernel_size: int = 3,
         start_out_channels: int = 64,
         time_embed_dim: int = 256,
+        normalization: str = "groupnorm",
+        activation: str = "SiLU",
+        dropout_rate: float = 0.1,
     ) -> None:
         """Initialize the U-Net diffusion model.
 
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
             timesteps (int): Number of diffusion timesteps.
-            filter_size (int): Convolution kernel size for all conv layers.
+            kernel_size (int): Convolution kernel size for all conv layers.
             start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
             time_embed_dim (int): Size of time embedding dimension.
+            normalization (str): Normalization strategy (e.g., groupnorm, batchnorm, layernorm).
+            activation (str): Activation function to use (e.g., SiLU, ReLU, LeakyReLU).
+            dropout_rate (float): Dropout probability applied in convolutional blocks.
 
         """
         super().__init__()
 
-        self.filter_size = filter_size
-        self.start_out_channels = start_out_channels
         self.timesteps = timesteps
+
+        if kernel_size <= 0:
+            msg = "Kernel size must be greater than 0."
+            raise ValueError(msg)
+
+        if start_out_channels <= 0:
+            msg = "Start out channels must be greater than 0."
+            raise ValueError(msg)
 
         # Time embedding
         self.time_embed = TimeEmbed(time_embed_dim)
 
         # Channel calculations
         channels = [start_out_channels * 2**i for i in range(4)]
-
         output_channels = input_channels
-        self.initial_conv_channels = input_channels + output_channels
 
         # Encoder
-        self.conv1 = ConvBlock(
-            self.initial_conv_channels, channels[0], filter_size=filter_size
+        self.conv1 = CommonConvBlock(
+            in_channels=input_channels + output_channels,
+            out_channels=channels[0],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
         )
-        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = ConvBlock(channels[0], channels[1], filter_size=filter_size)
-        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.conv3 = ConvBlock(channels[1], channels[2], filter_size=filter_size)
-        self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        self.conv4 = ConvBlock(channels[2], channels[2], filter_size=filter_size)
-        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+        self.maxpool1 = nn.MaxPool2d(2)
+        self.conv2 = CommonConvBlock(
+            in_channels=channels[0],
+            out_channels=channels[1],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.maxpool2 = nn.MaxPool2d(2)
+        self.conv3 = CommonConvBlock(
+            in_channels=channels[1],
+            out_channels=channels[2],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.maxpool3 = nn.MaxPool2d(2)
+        self.conv4 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.maxpool4 = nn.MaxPool2d(2)
 
         # Bottleneck
-        self.conv5 = BottleneckBlock(channels[2], channels[3], filter_size=filter_size)
+        self.conv5 = CommonConvBlock(
+            in_channels=channels[2],
+            out_channels=channels[3],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
+            dropout_rate=dropout_rate,
+        )
 
         # Decoder
-        self.up6 = UpconvBlock(channels[3], channels[2])
-        self.up7 = UpconvBlock(channels[2], channels[2])
-        self.up8 = UpconvBlock(channels[2], channels[1])
-        self.up9 = UpconvBlock(channels[1], channels[0])
+        self.up6 = ConvBlockUpsampleNaive(
+            in_channels=channels[3],
+            out_channels=channels[2],
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.up7 = ConvBlockUpsampleNaive(
+            in_channels=channels[2],
+            out_channels=channels[2],
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.up8 = ConvBlockUpsampleNaive(
+            in_channels=channels[2],
+            out_channels=channels[1],
+            norm_type=normalization,
+            activation=activation,
+        )
+        self.up9 = ConvBlockUpsampleNaive(
+            in_channels=channels[1],
+            out_channels=channels[0],
+            norm_type=normalization,
+            activation=activation,
+        )
 
-        self.up6b = ConvBlock(
-            channels[3] + time_embed_dim, channels[2], filter_size=filter_size
+        self.up6b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
         )
-        self.up7b = ConvBlock(
-            channels[3] + time_embed_dim, channels[2], filter_size=filter_size
+        self.up7b = CommonConvBlock(
+            in_channels=channels[3] + self.time_embed_dim,
+            out_channels=channels[2],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
         )
-        self.up8b = ConvBlock(
-            channels[2] + time_embed_dim, channels[1], filter_size=filter_size
+        self.up8b = CommonConvBlock(
+            in_channels=channels[2] + self.time_embed_dim,
+            out_channels=channels[1],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
         )
-        self.up9b = ConvBlock(
-            channels[1] + time_embed_dim,
-            channels[0],
-            filter_size=filter_size,
-            final=True,
+        self.up9b = CommonConvBlock(
+            in_channels=channels[1] + self.time_embed_dim,
+            out_channels=channels[0],
+            kernel_size=kernel_size,
+            norm_type=normalization,
+            activation=activation,
+            n_subblocks=3,
         )
 
         # Final layer
@@ -128,10 +202,7 @@ class UNetDiffusion(nn.Module):
         t = self.time_embed(t)
 
         # Concatenate with conditional input
-        noise = torch.cat([noise, conditioning], dim=-1)  # [b,h,w,(d*c)+input_channels]
-
-        # Convert to channel-first format
-        noise = torch.movedim(noise, -1, 1)  # [b,channels,h,w]
+        noise = torch.cat([noise, conditioning], dim=1)  # [b,(d*c)+input_channels,h,w]
 
         # Encoder pathway
         bn1 = self.conv1(noise)
@@ -167,10 +238,7 @@ class UNetDiffusion(nn.Module):
         up9 = self._add_time_embedding(up9, t)
         up9 = self.up9b(up9)
 
-        # Final output
-        output = self.final_layer(up9)  # [b, c_out, h, w]
-
-        return torch.movedim(output, 1, -1)  # [b, h, w, c_out]
+        return self.final_layer(up9)  # [b, c_out, h, w]
 
     def _timestep_embedding(
         self, timesteps: torch.Tensor, dim: int = 256, max_period: int = 10000

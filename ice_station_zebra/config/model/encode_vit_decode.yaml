@@ -20,6 +20,7 @@ processor:
   mlp_dim: 256
   dropout: 0.3
   start_out_channels: 20 # Initial number of channels
+  
 
 decoder:
   _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder

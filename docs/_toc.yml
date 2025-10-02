@@ -9,6 +9,11 @@ chapters:
   sections:
   - file: api/data_loaders
   - file: api/models
+  - file: api/models-common
+  - file: api/models-encoders
+  - file: api/models-decoders
+  - file: api/models-processors
+  - file: api/models-diffusion
   - file: api/training
   - file: api/evaluation
   - file: api/types

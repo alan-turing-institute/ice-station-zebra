@@ -393,7 +393,7 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
     def _inset_cbar(parent_ax: Axes) -> Axes:
         """Create a centred inset colourbar axis within parent, using configured fractions."""
         parent_ax.set_axis_off()
-        return parent_ax.inset_axes([HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0])
+        return parent_ax.inset_axes((HCBAR_LEFT_FRAC, 0.0, HCBAR_WIDTH_FRAC, 1.0))
 
     if separate_colourbars:
         # ---- Separate colourbar logic ----
@@ -673,7 +673,7 @@ def _format_linear_ticks(
         vmax = mvmax if vmax is None else vmax
 
     ticks = np.linspace(float(vmin), float(vmax), 5)
-    colourbar.set_ticks(ticks)
+    colourbar.set_ticks([float(t) for t in ticks])
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
@@ -692,10 +692,8 @@ def _format_symmetric_ticks(
     Places five ticks: [vmin, midpoint to 0, 0, 0 to midpoint, vmax].
     """
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-    ticks = np.array(
-        [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax], dtype=float
-    )
-    colourbar.set_ticks(ticks)
+    ticks = [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax]
+    colourbar.set_ticks([float(t) for t in ticks])
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)

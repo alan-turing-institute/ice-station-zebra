@@ -7,8 +7,15 @@ from ice_station_zebra.data_loaders.zebra_dataset import ZebraDataset
 from ice_station_zebra.types import DataSpace
 
 
+class MockAnemoiDataset:
+    def __init__(self, channels: int, height: int, width: int) -> None:
+        """A mock Anemoi dataset for testing purposes."""
+        self.shape = (0, channels, height * width)
+        self.field_shape = (height, width)
+
+
 class TestZebraDataset:
-    dates_str = ("2020-01-01", "2020-01-02", "2020-01-03")
+    dates_str = ("2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05")
     dates_np = tuple(np.datetime64(s) for s in dates_str)
 
     def test_dataset_name(self) -> None:
@@ -24,13 +31,26 @@ class TestZebraDataset:
             input_files=[mock_dataset],
         )
         # Test dates
-        assert all(date in dataset.dataset.dates for date in self.dates_np)
+        assert all(date in dataset.dates for date in self.dates_np)
+
+    def test_dataset_date_ranges(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            date_ranges=[
+                {"start": self.dates_str[0], "end": self.dates_str[1]},
+                {"start": self.dates_str[-2], "end": self.dates_str[-1]},
+            ],
+        )
+        assert self.dates_np[2] not in dataset.dates
+        assert len(dataset.datasets) == 2
+        assert len(dataset) == 4
 
     def test_dataset_end_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            end=self.dates_str[1],
+            date_ranges=[{"start": None, "end": self.dates_str[1]}],
         )
         assert dataset.start_date == self.dates_np[0]
         assert dataset.end_date == self.dates_np[1]
@@ -46,8 +66,8 @@ class TestZebraDataset:
         assert data_array.shape == (1, 2, 2)
         # Check exception for out of range
         with pytest.raises(IndexError) as excinfo:
-            dataset[5]
-        assert "list index out of range" in str(excinfo.value)
+            dataset[10]
+        assert "Index 10 out of range for dataset of length 5" in str(excinfo.value)
 
     def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -57,10 +77,10 @@ class TestZebraDataset:
         # Check return type and shape
         data_array = dataset.get_tchw(self.dates_np)
         assert isinstance(data_array, np.ndarray)
-        assert data_array.shape == (3, 1, 2, 2)
+        assert data_array.shape == (5, 1, 2, 2)
         # Check exception for out of range
         with pytest.raises(
-            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+            ValueError, match="Date 1970-01-01 not found in the dataset"
         ):
             dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
 
@@ -73,7 +93,7 @@ class TestZebraDataset:
         assert dataset.index_from_date(self.dates_np[0]) == 0
         # Check exception for out of range
         with pytest.raises(
-            ValueError, match="Date 1970-01-01T00:00:00 not found in the dataset"
+            ValueError, match="Date 1970-01-01 not found in the dataset"
         ):
             dataset.index_from_date(np.datetime64("1970-01-01"))
 
@@ -82,7 +102,7 @@ class TestZebraDataset:
             name="mock_dataset",
             input_files=[mock_dataset],
         )
-        assert len(dataset) == 3
+        assert len(dataset) == 5
 
     def test_dataset_space(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -94,11 +114,40 @@ class TestZebraDataset:
         assert dataset.space.channels == 1
         assert dataset.space.shape == (2, 2)
 
+    def test_dataset_space_error_shape(self) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[],
+        )
+        dataset._datasets = [MockAnemoiDataset(1, 32, 32), MockAnemoiDataset(1, 32, 64)]
+        # Test data space shapes
+        with pytest.raises(
+            ValueError,
+            match="All datasets must have the same shape, found 2 different values",
+        ):
+            _ = dataset.space
+
+    def test_dataset_space_error_channels(self) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[],
+        )
+        dataset._datasets = [
+            MockAnemoiDataset(10, 32, 32),
+            MockAnemoiDataset(11, 32, 32),
+        ]
+        # Test data space channels
+        with pytest.raises(
+            ValueError,
+            match="All datasets must have the same number of channels, found 2 different values",
+        ):
+            _ = dataset.space
+
     def test_dataset_start_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            start=self.dates_str[1],
+            date_ranges=[{"start": self.dates_str[1], "end": None}],
         )
         assert dataset.start_date == self.dates_np[1]
         assert dataset.end_date == self.dates_np[-1]

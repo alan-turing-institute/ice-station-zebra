@@ -5,6 +5,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 
+from .filters import register_filters
 from .zebra_data_processor_factory import ZebraDataProcessorFactory
 
 # Create the typer app
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @hydra_adaptor
 def create(config: DictConfig) -> None:
     """Create all datasets."""
+    register_filters()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)

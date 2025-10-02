@@ -1,0 +1,13 @@
+_target_: ice_station_zebra.models.EncodeProcessDecode
+
+name: naive-null-naive
+
+encoder:
+  _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
+  latent_space: [128, 128] # Shape of the latent space
+
+processor:
+  _target_: ice_station_zebra.models.processors.NullProcessor
+
+decoder:
+  _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

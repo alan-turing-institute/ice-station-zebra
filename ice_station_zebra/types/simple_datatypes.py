@@ -33,10 +33,12 @@ class AnemoiInspectArgs:
 class DataloaderArgs(TypedDict):
     """Arguments for the data loader."""
 
-    batch_size: int
-    sampler: None
     batch_sampler: None
+    batch_size: int
     drop_last: bool
+    num_workers: int
+    persistent_workers: bool
+    sampler: None
     worker_init_fn: None
 
 

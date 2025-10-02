@@ -1,0 +1,50 @@
+visualization:
+  # Spatial extent for West Greenland/Canadian Arctic (configurable bbox)
+  spatial_extent:
+    north: 85.0  # Northern boundary
+    south: 60.0  # Southern boundary
+    east: -30.0  # Eastern boundary (Greenland)
+    west: -120.0 # Western boundary (Canadian Arctic)
+
+  # Sea ice visualization settings
+  sea_ice:
+    # Ice edge threshold
+    ice_edge_threshold: 0.15  # 15% concentration
+
+    # Colormap
+    colormap: "Blues_r"  # Blue to white
+
+    # Missing data color
+    missing_color: "orange"
+
+  # Whale track visualization
+  whale_tracks:
+    # Line thickness
+    line_width: 2.0
+
+    # Color scheme
+    color_scheme: "tab10"  # Distinct colors per whale
+
+    # Track smoothing
+    smooth_tracks: true
+
+    # Date stamp format
+    date_format: "%Y-%m-%d"
+
+  # Animation settings
+  animation:
+    frame_rate: 24  # FPS
+    duration: 10    # seconds
+    resolution: [1920, 1080]
+
+    # Frame generation
+    weekly_frames: true
+    frame_interval: "7D"  # Weekly intervals
+
+  # Output settings
+  output:
+    directory: plots/
+    save_intermediate: true
+    format: "png"  # For static plots
+    video_format: "mp4"
+    video_codec: "H.264"

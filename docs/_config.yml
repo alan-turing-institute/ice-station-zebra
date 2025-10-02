@@ -1,0 +1,25 @@
+# Book settings
+title: "Ice Station Zebra API Documentation"
+author: The Alan Turing Institute
+
+sphinx:
+  extra_extensions:
+    - sphinx.ext.autodoc
+    - sphinx.ext.autosummary
+  config:
+    autosummary_generate: true
+    autodoc_typehints: "description"   # optional
+    autodoc_member_order: "bysource"   # optional
+    autoclass_content: "init"          # pull class doc from __init__ docstring
+
+# Table of contents
+toc:
+  - file: intro
+  - file: cli
+  - file: api/index
+  - file: api/data_loaders
+  - file: api/models
+  - file: api/training
+  - file: api/evaluation
+  - file: api/types
+  - file: api/visualisations

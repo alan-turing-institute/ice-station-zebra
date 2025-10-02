@@ -22,7 +22,7 @@ from PIL.ImageFile import ImageFile
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
-from .convert import _image_from_figure, _save_animation
+from . import convert
 from .layout import _add_colourbars, _build_layout, _set_axes_limits
 from .plotting_core import (
     compute_difference,
@@ -153,7 +153,7 @@ def plot_maps(
         )
 
     try:
-        return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
+        return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
     finally:
         plt.close(fig)
 
@@ -297,7 +297,7 @@ def video_maps(
 
     # Save -> BytesIO and clean up temp file
     try:
-        video_buffer = _save_animation(
+        video_buffer = convert._save_animation(
             animation_object, fps=fps, video_format=video_format
         )
         return {"sea-ice_concentration-video-maps": video_buffer}

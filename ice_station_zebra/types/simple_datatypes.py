@@ -41,17 +41,7 @@ class DataloaderArgs(TypedDict):
 
 
 class DiffColourmapSpec(NamedTuple):
-    """Colour scale specification for visualising a difference panel.
-
-    Attributes:
-        norm: Normalisation object for mapping data values to colours.
-              Typically TwoSlopeNorm for signed differences (centred at 0).
-              None for non-signed modes (absolute, smape).
-        vmin: Lower bound for colour scale (used if norm is None).
-        vmax: Upper bound for colour scale (used if norm is None).
-        cmap: Name of the matplotlib colourmap to use.
-
-    """
+    """Colour scale specification for visualising a difference panel."""
 
     norm: Normalize | None
     vmin: float | None
@@ -61,22 +51,33 @@ class DiffColourmapSpec(NamedTuple):
 
 @dataclass(frozen=True)
 class PlotSpec:
-    """Specification for a plotting strategy."""
+    """Specification for a plotting strategy used by visualisations."""
 
+    # What and how
     variable: str
     title_groundtruth: str = "Ground Truth"
     title_prediction: str = "Prediction"
     title_difference: str = "Difference"
-    n_contour_levels: int = 100
+
+    # Rendering
+    n_contour_levels: int = 51
     colourmap: str = "viridis"
+
+    # Difference pane
     include_difference: bool = True
     diff_mode: DiffMode = "signed"
     diff_strategy: DiffStrategy = "precompute"
     selected_timestep: int = 0
+
+    # Ranges: Optional to allow inference upstream; defaults pin to [0,1]
     vmin: float | None = 0.0
     vmax: float | None = 1.0
-    colourbar_location: Literal["vertical", "horizontal"] = "vertical"
+
+    # Colourbar layout
+    colourbar_location: Literal["vertical", "horizontal"] = "horizontal"
     colourbar_strategy: Literal["shared", "separate"] = "shared"
+
+    # Sanity/warnings in badge
     outside_warn: float = 0.05
     severe_outside: float = 0.20
     include_shared_range_mismatch_check: bool = True

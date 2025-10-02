@@ -28,13 +28,13 @@ from .plotting_core import (
     compute_difference,
     compute_display_ranges,
     compute_display_ranges_stream,
-    compute_sanity_report,
     levels_from_spec,
     make_diff_colourmap,
     prepare_difference_stream,
     validate_2d_pair,
     validate_3d_streams,
 )
+from .sanity import compute_sanity_report
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -220,7 +220,7 @@ def video_maps(
         ground_truth_stream, prediction_stream, plot_spec
     )
 
-    # Prepare the difference array according to the strategy
+    # Prepare the difference array according to the strategy; also ensure a colour scale exists
     difference_stream, diff_colour_scale = prepare_difference_stream(
         include_difference=plot_spec.include_difference,
         diff_mode=plot_spec.diff_mode,
@@ -228,6 +228,12 @@ def video_maps(
         ground_truth_stream=ground_truth_stream,
         prediction_stream=prediction_stream,
     )
+    if plot_spec.include_difference and diff_colour_scale is None:
+        # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
+        first_diff = compute_difference(
+            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
+        )
+        diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
     precomputed_diff_0 = (
         difference_stream[0]
         if (plot_spec.include_difference and difference_stream is not None)
@@ -405,12 +411,10 @@ def _draw_frame(  # noqa: PLR0913
             else compute_difference(ground_truth, prediction, plot_spec.diff_mode)
         )
 
-        # DiffRender system tells us how to colour the difference panel
+        # Expect colour scale to be provided by caller; no fallback here
         if diff_colour_scale is None:
-            # Fallback: compute render params on-demand (per-frame strategy)
-            diff_colour_scale = make_diff_colourmap(
-                difference, mode=plot_spec.diff_mode
-            )
+            error_msg = "diff_colour_scale must be provided when including difference"
+            raise InvalidArrayError(error_msg)
 
         if diff_colour_scale.norm is not None:
             # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency

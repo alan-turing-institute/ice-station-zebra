@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Literal
 import pytest
 
 from ice_station_zebra.visualisations import convert
-from ice_station_zebra.visualisations.plotting_core import compute_sanity_report
 from ice_station_zebra.visualisations.plotting_maps import (
     DEFAULT_SIC_SPEC,
     plot_maps,
     video_maps,
 )
+from ice_station_zebra.visualisations.sanity import compute_sanity_report
 
 if TYPE_CHECKING:
     # Imports used only for type annotations

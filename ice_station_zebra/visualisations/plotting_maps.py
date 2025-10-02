@@ -298,7 +298,7 @@ def video_maps(
     # Save -> BytesIO and clean up temp file
     try:
         video_buffer = convert._save_animation(
-            animation_object, fps=fps, video_format=video_format
+            animation_object, _fps=fps, _video_format=video_format
         )
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:

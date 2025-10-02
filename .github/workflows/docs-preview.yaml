@@ -6,7 +6,7 @@ on:
     branches: [ main ]   # runs for ANY PR targeting main (e.g., your 20-create-docs → main)
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
   pull-requests: write

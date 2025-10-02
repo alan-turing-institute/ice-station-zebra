@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; Ice Station Zebra API Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Ice Station Zebra API Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="intro.html">
+                    Weclome to Ice Station Zebra!
+                </a>
+            </li>
+        </ul>
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-new-models.html">Adding new models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI Commands</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/data_loaders.html">Data Loaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/training.html">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/evaluation.html">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualisations.html">Visualisations</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#Z"><strong>Z</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.assign_workers">assign_workers() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset">CombinedDataset (class in ice_station_zebra.data_loaders.combined_dataset)</a>
+</li>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.compute_difference">compute_difference() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.compute_display_ranges">compute_display_ranges() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.compute_display_ranges_stream">compute_display_ranges_stream() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.configure_optimizers">configure_optimizers() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets">datasets (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index">date_from_index() (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset method)</a>
+</li>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates">dates (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.end_date">end_date (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset property)</a>
+
+      <ul>
+        <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.end_date">(ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.forward">forward() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.frequency">frequency (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps">get_forecast_steps() (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_history_steps">get_history_steps() (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset method)</a>
+</li>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.get_tchw">get_tchw() (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    ice_station_zebra.types.typedefs
+
+      <ul>
+        <li><a href="api/types.html#module-ice_station_zebra.types.typedefs">module</a>
+</li>
+      </ul></li>
+      <li>
+    ice_station_zebra.visualisations.plotting_core
+
+      <ul>
+        <li><a href="api/visualisations.html#module-ice_station_zebra.visualisations.plotting_core">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.index_from_date">index_from_date() (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset method)</a>
+</li>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.input_spaces">input_spaces (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.levels_from_spec">levels_from_spec() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.loss">loss() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.make_diff_colourmap">make_diff_colourmap() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api/types.html#module-ice_station_zebra.types.typedefs">ice_station_zebra.types.typedefs</a>
+</li>
+        <li><a href="api/visualisations.html#module-ice_station_zebra.visualisations.plotting_core">ice_station_zebra.visualisations.plotting_core</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name">name (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.output_space">output_space (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader">predict_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.prepare_difference_stream">prepare_difference_stream() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space">space (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.start_date">start_date (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset property)</a>
+
+      <ul>
+        <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.start_date">(ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.test_dataloader">test_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
+</li>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.test_step">test_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader">train_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
+</li>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.training_step">training_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.val_dataloader">val_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
+</li>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.validate_2d_pair">validate_2d_pair() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.validate_3d_streams">validate_3d_streams() (in module ice_station_zebra.visualisations.plotting_core)</a>
+</li>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.validation_step">validation_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Z">Z</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule">ZebraDataModule (class in ice_station_zebra.data_loaders.zebra_data_module)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset">ZebraDataset (class in ice_station_zebra.data_loaders.zebra_dataset)</a>
+</li>
+      <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel">ZebraModel (class in ice_station_zebra.models.zebra_model)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Alan Turing Institute
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

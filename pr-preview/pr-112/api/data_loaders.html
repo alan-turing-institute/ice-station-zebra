@@ -1,0 +1,879 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Loaders &#8212; Ice Station Zebra API Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/data_loaders';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="API Reference" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Ice Station Zebra API Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../intro.html">
+                    Weclome to Ice Station Zebra!
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../adding-new-models.html">Adding new models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI Commands</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Data Loaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training.html">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualisations.html">Visualisations</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/data_loaders.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Data Loaders</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combineddataset">CombinedDataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset"><code class="docutils literal notranslate"><span class="pre">CombinedDataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.date_from_index()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.get_forecast_steps()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_history_steps"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.get_history_steps()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.end_date"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.end_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.start_date"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.start_date</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebradatamodule">ZebraDataModule</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.input_spaces"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.input_spaces</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.output_space"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.output_space</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.assign_workers"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.assign_workers()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.predict_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.test_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.test_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.train_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.val_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.val_dataloader()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebradataset">ZebraDataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset"><code class="docutils literal notranslate"><span class="pre">ZebraDataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.datasets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.dates</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.end_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.end_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.frequency"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.frequency</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.name</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.space</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.start_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.start_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.get_tchw"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.get_tchw()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.index_from_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.index_from_date()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-examples">Usage Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-a-dataset">Loading a Dataset</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-multiple-datasets">Combining Multiple Datasets</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-zebradatamodule">Using ZebraDataModule</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="data-loaders">
+<h1>Data Loaders<a class="headerlink" href="#data-loaders" title="Link to this heading">#</a></h1>
+<p>The data loaders module provides classes for loading and managing datasets in the Ice Station Zebra framework.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<section id="combineddataset">
+<h3>CombinedDataset<a class="headerlink" href="#combineddataset" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.data_loaders.combined_dataset.</span></span><span class="sig-name descname"><span class="pre">CombinedDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_forecast_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_history_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>Initialise a combined dataset from a sequence of ZebraDatasets.</p>
+<p>One of the datasets must be the target and all must have the same frequency. The
+number of forecast and history steps can be set, which will determine the shape
+of the NTCHW tensors returned by __getitem__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset" title="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset"><em>ZebraDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>target</strong> (<em>str</em>)</p></li>
+<li><p><strong>n_forecast_steps</strong> (<em>int</em>)</p></li>
+<li><p><strong>n_history_steps</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index">
+<span class="sig-name descname"><span class="pre">date_from_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index" title="Link to this definition">#</a></dt>
+<dd><p>Return the date of the timestep.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>idx</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>datetime</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps">
+<span class="sig-name descname"><span class="pre">get_forecast_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps" title="Link to this definition">#</a></dt>
+<dd><p>Return list of consecutive forecast dates for a given start date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>start_date</strong> (<em>datetime64</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<em>datetime64</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_history_steps">
+<span class="sig-name descname"><span class="pre">get_history_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_history_steps" title="Link to this definition">#</a></dt>
+<dd><p>Return list of consecutive history dates for a given start date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>start_date</strong> (<em>datetime64</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<em>datetime64</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.end_date">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end_date</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime64</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.end_date" title="Link to this definition">#</a></dt>
+<dd><p>Return the end date of the dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.start_date">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_date</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime64</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.start_date" title="Link to this definition">#</a></dt>
+<dd><p>Return the start date of the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="zebradatamodule">
+<h3>ZebraDataModule<a class="headerlink" href="#zebradatamodule" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.data_loaders.zebra_data_module.</span></span><span class="sig-name descname"><span class="pre">ZebraDataModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LightningDataModule</span></code></p>
+<p>Initialise a ZebraDataModule from a config.</p>
+<p>The config specifies all datasets used and how to group them. Data splits are
+also determined from the config, and the appropriate data loaders are created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>DictConfig</em>)</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.input_spaces">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_spaces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataSpace</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.input_spaces" title="Link to this definition">#</a></dt>
+<dd><p>Return the data space for each input.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.output_space">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_space</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataSpace</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.output_space" title="Link to this definition">#</a></dt>
+<dd><p>Return the data space of the desired output.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.assign_workers">
+<span class="sig-name descname"><span class="pre">assign_workers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_workers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.assign_workers" title="Link to this definition">#</a></dt>
+<dd><p>Assign number of workers for data loading.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_workers</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader">
+<span class="sig-name descname"><span class="pre">predict_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader" title="Link to this definition">#</a></dt>
+<dd><p>Construct predict dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DataLoader</em>[dict[str, <em>Float</em>[ndarray, ‘time channels height width’]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.test_dataloader">
+<span class="sig-name descname"><span class="pre">test_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.test_dataloader" title="Link to this definition">#</a></dt>
+<dd><p>Construct test dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DataLoader</em>[dict[str, <em>Float</em>[ndarray, ‘time channels height width’]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader">
+<span class="sig-name descname"><span class="pre">train_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader" title="Link to this definition">#</a></dt>
+<dd><p>Construct train dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DataLoader</em>[dict[str, <em>Float</em>[ndarray, ‘time channels height width’]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.val_dataloader">
+<span class="sig-name descname"><span class="pre">val_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.val_dataloader" title="Link to this definition">#</a></dt>
+<dd><p>Construct validation dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DataLoader</em>[dict[str, <em>Float</em>[ndarray, ‘time channels height width’]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="zebradataset">
+<h3>ZebraDataset<a class="headerlink" href="#zebradataset" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.data_loaders.zebra_dataset.</span></span><span class="sig-name descname"><span class="pre">ZebraDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_files</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_ranges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{'end':</span> <span class="pre">None,</span> <span class="pre">'start':</span> <span class="pre">None}]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>A dataset for use by Zebra.</p>
+<p>The underlying Anemoi dataset has shape [T; C; ensembles; position].
+We reshape this to CHW before returning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>input_files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>)</p></li>
+<li><p><strong>date_ranges</strong> (<em>Sequence</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>None</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">datasets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Dataset</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets" title="Link to this definition">#</a></dt>
+<dd><p>Load one or more underlying Anemoi datasets.</p>
+<p>Each date range results in a separate dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates" title="Link to this definition">#</a></dt>
+<dd><p>Return all dates in the dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.end_date">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end_date</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime64</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.end_date" title="Link to this definition">#</a></dt>
+<dd><p>Return the end date of the dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.frequency">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">frequency</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">timedelta64</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.frequency" title="Link to this definition">#</a></dt>
+<dd><p>Return the frequency of the dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name" title="Link to this definition">#</a></dt>
+<dd><p>Return the name of the dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">space</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataSpace</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space" title="Link to this definition">#</a></dt>
+<dd><p>Return the data space for this dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.start_date">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start_date</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime64</span></em><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.start_date" title="Link to this definition">#</a></dt>
+<dd><p>Return the start date of the dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.get_tchw">
+<span class="sig-name descname"><span class="pre">get_tchw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.get_tchw" title="Link to this definition">#</a></dt>
+<dd><p>Return the data for a series of timesteps in [T, C, H, W] format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dates</strong> (<em>Sequence</em><em>[</em><em>datetime64</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[ndarray, ‘time channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.index_from_date">
+<span class="sig-name descname"><span class="pre">index_from_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.index_from_date" title="Link to this definition">#</a></dt>
+<dd><p>Return the index of a given date in the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>date</strong> (<em>datetime64</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+</section>
+<section id="usage-examples">
+<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">#</a></h2>
+<section id="loading-a-dataset">
+<h3>Loading a Dataset<a class="headerlink" href="#loading-a-dataset" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ice_station_zebra.data_loaders.zebra_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZebraDataset</span>
+
+<span class="c1"># Load a dataset</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">ZebraDataset</span><span class="p">(</span><span class="s2">&quot;path/to/dataset.zarr&quot;</span><span class="p">)</span>
+
+<span class="c1"># Access data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Get first sample</span>
+</pre></div>
+</div>
+</section>
+<section id="combining-multiple-datasets">
+<h3>Combining Multiple Datasets<a class="headerlink" href="#combining-multiple-datasets" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ice_station_zebra.data_loaders.combined_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinedDataset</span>
+
+<span class="c1"># Create a combined dataset from multiple ZebraDatasets</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">CombinedDataset</span><span class="p">(</span>
+    <span class="n">datasets</span><span class="o">=</span><span class="p">[</span><span class="n">dataset1</span><span class="p">,</span> <span class="n">dataset2</span><span class="p">,</span> <span class="n">dataset3</span><span class="p">],</span>
+    <span class="n">target</span><span class="o">=</span><span class="s2">&quot;target_dataset_name&quot;</span><span class="p">,</span>
+    <span class="n">n_forecast_steps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">n_history_steps</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
+
+<span class="c1"># Access combined data</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">combined</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Returns dict with input and target data</span>
+</pre></div>
+</div>
+</section>
+<section id="using-zebradatamodule">
+<h3>Using ZebraDataModule<a class="headerlink" href="#using-zebradatamodule" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ice_station_zebra.data_loaders.zebra_data_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZebraDataModule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+
+<span class="c1"># Initialize with configuration</span>
+<span class="n">data_module</span> <span class="o">=</span> <span class="n">ZebraDataModule</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<span class="c1"># Get data loaders</span>
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">data_module</span><span class="o">.</span><span class="n">train_dataloader</span><span class="p">()</span>
+<span class="n">val_loader</span> <span class="o">=</span> <span class="n">data_module</span><span class="o">.</span><span class="n">val_dataloader</span><span class="p">()</span>
+<span class="n">test_loader</span> <span class="o">=</span> <span class="n">data_module</span><span class="o">.</span><span class="n">test_dataloader</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./api"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">API Reference</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="models.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Models</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combineddataset">CombinedDataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset"><code class="docutils literal notranslate"><span class="pre">CombinedDataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.date_from_index()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.get_forecast_steps()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_history_steps"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.get_history_steps()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.end_date"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.end_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.start_date"><code class="docutils literal notranslate"><span class="pre">CombinedDataset.start_date</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebradatamodule">ZebraDataModule</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.input_spaces"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.input_spaces</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.output_space"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.output_space</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.assign_workers"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.assign_workers()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.predict_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.test_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.test_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.train_dataloader()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.val_dataloader"><code class="docutils literal notranslate"><span class="pre">ZebraDataModule.val_dataloader()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebradataset">ZebraDataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset"><code class="docutils literal notranslate"><span class="pre">ZebraDataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.datasets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.dates</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.end_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.end_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.frequency"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.frequency</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.name</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.space</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.start_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.start_date</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.get_tchw"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.get_tchw()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.index_from_date"><code class="docutils literal notranslate"><span class="pre">ZebraDataset.index_from_date()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-examples">Usage Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-a-dataset">Loading a Dataset</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-multiple-datasets">Combining Multiple Datasets</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-zebradatamodule">Using ZebraDataModule</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Alan Turing Institute
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

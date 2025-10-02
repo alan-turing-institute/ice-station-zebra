@@ -80,9 +80,9 @@ def test_axes_have_reasonable_gaps(
 
     spec = replace(
         DEFAULT_SIC_SPEC,
-        colourbar_location=colourbar_location,
+        colourbar_location=colourbar_location,  # type: ignore[arg-type]
         include_difference=include_difference,
-        colourbar_strategy=colourbar_strategy,
+        colourbar_strategy=colourbar_strategy,  # type: ignore[arg-type]
     )
 
     _, axes, colourbar_axes = _build_layout(

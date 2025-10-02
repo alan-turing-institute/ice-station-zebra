@@ -1,12 +1,13 @@
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any, cast
 
 import hydra
 import matplotlib as mpl
 import numpy as np
 import pytest
 import torch
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
@@ -108,22 +109,28 @@ def checkpoint_data(
         # Load config (try checkpoint dir first, fallback to default)
         config_path = example_checkpoint_path.parent.parent / "model_config.yaml"
         if config_path.exists():
-            config = OmegaConf.load(config_path)
+            config = cast("DictConfig", OmegaConf.load(config_path))
         else:
             # Fallback to default config
             # Look for a file ending with local.yaml
-            file_path = Path("ice_station_zebra/config/")
-            file_path = file_path.glob("*.local.yaml")
-            file_path = next(file_path)
-            config = OmegaConf.load(file_path)
+            config_dir = Path("ice_station_zebra/config/")
+            yaml_iter = config_dir.glob("*.local.yaml")
+            local_yaml = next(yaml_iter)
+            config = cast("DictConfig", OmegaConf.load(local_yaml))
 
         # Load model from checkpoint
-        model_cls = hydra.utils.get_class(config["model"]["_target_"])
+        model_dict = cast(
+            "DictConfig", config["model"]
+        )  # ensure DictConfig for nested access
+        model_target = cast("str", model_dict["_target_"])
+        model_cls = cast("Any", hydra.utils.get_class(model_target))
         model = model_cls.load_from_checkpoint(checkpoint_path=example_checkpoint_path)
         model.eval()
 
         # Load data module
-        data_module = ZebraDataModule(config)
+        # Ensure DictConfig type for constructor
+        dm_config = cast("DictConfig", config)
+        data_module = ZebraDataModule(dm_config)
         data_module.setup("test")
         test_dataloader = data_module.test_dataloader()
 

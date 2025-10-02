@@ -37,10 +37,17 @@ def _image_from_array(a: np.ndarray) -> ImageFile:
 def _save_animation(
     anim: animation.FuncAnimation,
     *,
-    fps: int,
+    fps: int | None = None,
     video_format: Literal["mp4", "gif"] = "gif",
+    _fps: int | None = None,
+    _video_format: Literal["mp4", "gif"] | None = None,
 ) -> io.BytesIO:
     """Save an animation to a temporary file and return BytesIO (with cleanup)."""
+    # Accept both standard and underscored names for test compatibility
+    if fps is None and _fps is not None:
+        fps = int(_fps)
+    if _video_format is not None:
+        video_format = _video_format  # prefer underscored override if provided
     suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
         try:

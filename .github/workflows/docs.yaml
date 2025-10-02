@@ -1,0 +1,38 @@
+name: Docs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install uv (or use your preferred installer)
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # Create / use env and install your package + doc deps
+      - name: Install project (editable) and doc tooling
+        run: |
+          uv venv .venv
+          . .venv/bin/activate
+          uv pip install -e .
+          uv pip install jupyter-book "sphinx>=7" sphinx-autodoc-typehints
+
+      # Build the book with the SAME interpreter/env
+      - name: Build docs
+        run: |
+          . .venv/bin/activate
+          uv run jupyter-book build docs/
+
+      # (Optional) publish artifacts or deploy HTML to GitHub Pages
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html

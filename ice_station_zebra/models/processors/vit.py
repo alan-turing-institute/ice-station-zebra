@@ -8,6 +8,7 @@ Description:
     them to patch embeddings, processes through transformer encoder blocks, and outputs
     spatially-resolved predictions for specified forecast horizons.
 """
+
 from typing import Any
 
 import torch
@@ -15,9 +16,7 @@ from torch import nn
 
 from ice_station_zebra.models.common import PatchEmbedding, TransformerEncoderBlock
 from ice_station_zebra.types import TensorNCHW
-
 from .base_processor import BaseProcessor
-
 
 # class VitProcessor(nn.Module):
 class VitProcessor(BaseProcessor):

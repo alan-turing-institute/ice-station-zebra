@@ -71,7 +71,7 @@ def compute_sanity_report(  # noqa: PLR0913
     Uses a single display interval [vmin, vmax] to:
     - Report numeric minima and maxima for both arrays
     - Compute fractions of values falling outside the display interval
-    - Optionally add gentle nudges when magnitudes appear mismatched
+    - Optionally add low level warnings when magnitudes appear mismatched
 
     Args:
         groundtruth: Ground-truth data array.
@@ -139,7 +139,7 @@ def compute_sanity_report(  # noqa: PLR0913
             f"({outside_fraction_groundtruth:.0%} clipped; range {groundtruth_min:.2f}-{groundtruth_max:.2f})."
         )
 
-    # 2) Optional shared-range mismatch nudge
+    # 2) Optional shared-range mismatch low-level warning
     if include_shared_range_mismatch_check:
         span = vmax - vmin
         if span > 0 and np.isfinite(span):

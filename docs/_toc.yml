@@ -1,0 +1,15 @@
+# Table of contents
+format: jb-book
+root: intro
+chapters:
+- file: quickstart
+- file: adding-new-models
+- file: cli
+- file: api/index
+  sections:
+  - file: api/data_loaders
+  - file: api/models
+  - file: api/training
+  - file: api/evaluation
+  - file: api/types
+  - file: api/visualisations

@@ -82,12 +82,14 @@ def make_diff_colourmap(
             max_abs = max(1.0, float(abs(sample)))
             vmin, vmax = -max_abs, max_abs
         else:
+            # Find the min and max values of the sample array
             vmin_data = float(
                 np.nanmin(sample) if np.nanmin(sample) is not None else -1.0
             )
             vmax_data = float(
                 np.nanmax(sample) if np.nanmax(sample) is not None else 1.0
             )
+            # Find the maximum absolute value of the sample array
             max_abs = max(1.0, abs(vmin_data), abs(vmax_data))
             vmin, vmax = -max_abs, max_abs
 

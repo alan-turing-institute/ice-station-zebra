@@ -2,13 +2,14 @@ _target_: ice_station_zebra.models.EncodeProcessDecode
 
 name: encode-vit-decode
 
-# Each dataset will be encoded into a latent space with these properties
-latent_space:
-  channels: 20
-  shape: [192, 192]
+# # Each dataset will be encoded into a latent space with these properties
+# latent_space:
+#   channels: 20
+#   shape: [192, 192]
 
 encoder:
-  _target_: ice_station_zebra.models.encoders.NaiveLatentSpaceEncoder
+  _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
+  latent_space: [192, 192] # Shape of the latent space
 
 processor:
   _target_: ice_station_zebra.models.processors.VitProcessor
@@ -19,8 +20,8 @@ processor:
   heads: 4
   mlp_dim: 256
   dropout: 0.3
-  start_out_channels: 20 # Initial number of channels
+  start_out_channels: 28 # Initial number of channels
 
 
 decoder:
-  _target_: ice_station_zebra.models.decoders.NaiveLatentSpaceDecoder
+  _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder

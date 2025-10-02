@@ -2,6 +2,10 @@
 
 A pipeline for predicting sea ice.
 
+## Documentation
+
+📚 **[View the full documentation](https://alan-turing-institute.github.io/ice-station-zebra/pr-112/)** - Complete API reference, guides, and examples.
+
 ## Setting up your environment
 
 ### Tools

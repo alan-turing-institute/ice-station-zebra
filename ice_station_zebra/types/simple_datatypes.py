@@ -43,7 +43,15 @@ class DataloaderArgs(TypedDict):
 
 
 class DiffColourmapSpec(NamedTuple):
-    """Colour scale specification for visualising a difference panel."""
+    """Specify the colour scale used for a difference panel.
+
+    Attributes:
+        norm: Normalisation for mapping values to colours (e.g. TwoSlopeNorm for signed diffs).
+        vmin: Lower bound if no norm is provided.
+        vmax: Upper bound if no norm is provided.
+        cmap: Matplotlib colormap name.
+
+    """
 
     norm: Normalize | None
     vmin: float | None
@@ -53,15 +61,34 @@ class DiffColourmapSpec(NamedTuple):
 
 @dataclass(frozen=True)
 class PlotSpec:
-    """Specification for a plotting strategy used by visualisations."""
+    """Configure how sea-ice plots are rendered.
 
-    # What and how
+    Attributes:
+        variable: Variable name shown in plots / used for routing.
+        title_groundtruth: Title above the ground-truth panel.
+        title_prediction: Title above the prediction panel.
+        title_difference: Title above the difference panel.
+        n_contour_levels: Number of contour levels per panel.
+        colourmap: Colormap used for GT/prediction panels.
+        include_difference: Whether to draw a difference panel.
+        diff_mode: Difference definition (e.g. "signed", "absolute", "smape").
+        diff_strategy: Strategy for animations (precompute, two-pass, per-frame).
+        selected_timestep: Slice index when a single timestep is needed.
+        vmin: Lower bound for GT/prediction colour scale (None = infer).
+        vmax: Upper bound for GT/prediction colour scale (None = infer).
+        colourbar_location: "vertical" or "horizontal".
+        colourbar_strategy: "shared" or "separate" colourbars.
+        outside_warn: Threshold for “values outside display range” warnings.
+        severe_outside: Severe threshold for clipping warnings.
+        include_shared_range_mismatch_check: If True, add magnitude mismatch nudges.
+
+    """
+
     variable: str
     title_groundtruth: str = "Ground Truth"
     title_prediction: str = "Prediction"
     title_difference: str = "Difference"
 
-    # Rendering
     n_contour_levels: int = 51
     colourmap: str = "viridis"
 
@@ -71,7 +98,7 @@ class PlotSpec:
     diff_strategy: DiffStrategy = "precompute"
     selected_timestep: int = 0
 
-    # Ranges: Optional to allow inference upstream; defaults pin to [0,1]
+    # Colourscale ranges: defaults to [0,1]
     vmin: float | None = 0.0
     vmax: float | None = 1.0
 

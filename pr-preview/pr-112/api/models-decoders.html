@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; Ice Station Zebra API Documentation</title>
+    <title>Decoders &#8212; Ice Station Zebra API Documentation</title>
   
   
   
@@ -57,11 +57,11 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/models-decoders';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Data Loaders" href="data_loaders.html" />
-    <link rel="prev" title="CLI Commands" href="../cli.html" />
+    <link rel="next" title="Processors" href="models-processors.html" />
+    <link rel="prev" title="Encoders" href="models-encoders.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -177,12 +177,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../adding-new-models.html">Adding new models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI Commands</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="data_loaders.html">Data Loaders</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models-common.html">Common Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models-encoders.html">Encoders</a></li>
-<li class="toctree-l2"><a class="reference internal" href="models-decoders.html">Decoders</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Decoders</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models-processors.html">Processors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models-diffusion.html">Diffusion Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training.html">Training</a></li>
@@ -245,7 +245,7 @@
       
       
       
-      <li><a href="../_sources/api/index.md" target="_blank"
+      <li><a href="../_sources/api/models-decoders.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -255,7 +255,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.md</span>
+<span class="btn__text-container">.rst</span>
 </a>
 </li>
       
@@ -329,7 +329,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>API Reference</h1>
+    <h1>Decoders</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -339,14 +339,22 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">Modules</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-loaders">Data Loaders</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-processors">Data Processors</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#models">Models</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training">Training</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluation">Evaluation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisations">Visualisations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basedecoder">BaseDecoder</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder"><code class="docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.forward"><code class="docutils literal notranslate"><span class="pre">BaseDecoder.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.rollout"><code class="docutils literal notranslate"><span class="pre">BaseDecoder.rollout()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cnndecoder">CNNDecoder</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder"><code class="docutils literal notranslate"><span class="pre">CNNDecoder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder.rollout"><code class="docutils literal notranslate"><span class="pre">CNNDecoder.rollout()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -360,76 +368,117 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h1>
-<p>This section contains detailed documentation for all classes and functions in the Ice Station Zebra framework.</p>
-<section id="modules">
-<h2>Modules<a class="headerlink" href="#modules" title="Link to this heading">#</a></h2>
-<section id="data-loaders">
-<h3>Data Loaders<a class="headerlink" href="#data-loaders" title="Link to this heading">#</a></h3>
-<p>Classes for loading and managing datasets:</p>
-<ul class="simple">
-<li><p><strong>CombinedDataset</strong> - Combines multiple ZebraDatasets for training</p></li>
-<li><p><strong>ZebraDataModule</strong> - Lightning DataModule for dataset management</p></li>
-<li><p><strong>ZebraDataset</strong> - Base dataset class for individual datasets</p></li>
+  <section id="decoders">
+<h1>Decoders<a class="headerlink" href="#decoders" title="Link to this heading">#</a></h1>
+<p>The decoders module provides classes for decoding latent space representations back to output data.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<section id="basedecoder">
+<h3>BaseDecoder<a class="headerlink" href="#basedecoder" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.decoders.base_decoder.BaseDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.decoders.base_decoder.</span></span><span class="sig-name descname"><span class="pre">BaseDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_space_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_space_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_forecast_steps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialise a BaseDecoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_space_in</strong> (<em>DataSpace</em>)</p></li>
+<li><p><strong>data_space_out</strong> (<em>DataSpace</em>)</p></li>
+<li><p><strong>n_forecast_steps</strong> (<em>int</em>)</p></li>
 </ul>
-</section>
-<section id="data-processors">
-<h3>Data Processors<a class="headerlink" href="#data-processors" title="Link to this heading">#</a></h3>
-<p>Classes for preprocessing and transforming data:</p>
-<ul class="simple">
-<li><p><strong>ZebraDataProcessor</strong> - Main data processing pipeline</p></li>
-<li><p><strong>ZebraDataProcessorFactory</strong> - Factory for creating processors</p></li>
-</ul>
-</section>
-<section id="models">
-<h3>Models<a class="headerlink" href="#models" title="Link to this heading">#</a></h3>
-<p>Neural network models and architectures:</p>
-<ul class="simple">
-<li><p><strong><a class="reference internal" href="#models.md"><span class="xref myst">Main Models</span></a></strong> - Core model classes (ZebraModel, EncodeProcessDecode, Persistence)</p></li>
-<li><p><strong><a class="reference internal" href="#models-common.md"><span class="xref myst">Common Components</span></a></strong> - Building blocks and utilities</p></li>
-<li><p><strong><a class="reference internal" href="#models-encoders.md"><span class="xref myst">Encoders</span></a></strong> - Input encoding components</p></li>
-<li><p><strong><a class="reference internal" href="#models-decoders.md"><span class="xref myst">Decoders</span></a></strong> - Output decoding components</p></li>
-<li><p><strong><a class="reference internal" href="#models-processors.md"><span class="xref myst">Processors</span></a></strong> - Latent space processing components</p></li>
-<li><p><strong><a class="reference internal" href="#models-diffusion.md"><span class="xref myst">Diffusion Models</span></a></strong> - Diffusion-based forecasting algorithms</p></li>
-</ul>
-</section>
-<section id="training">
-<h3>Training<a class="headerlink" href="#training" title="Link to this heading">#</a></h3>
-<p>Training utilities and trainers:</p>
-<ul class="simple">
-<li><p><strong>ZebraTrainer</strong> - Main training class</p></li>
-</ul>
-</section>
-<section id="evaluation">
-<h3>Evaluation<a class="headerlink" href="#evaluation" title="Link to this heading">#</a></h3>
-<p>Evaluation metrics and utilities:</p>
-<ul class="simple">
-<li><p><strong>ZebraEvaluator</strong> - Model evaluation class</p></li>
-</ul>
-</section>
-<section id="types">
-<h3>Types<a class="headerlink" href="#types" title="Link to this heading">#</a></h3>
-<p>Type definitions and data structures:</p>
-<ul class="simple">
-<li><p><strong>ArrayTCHW</strong> - Time-Channel-Height-Width array type</p></li>
-<li><p><strong>DataSpace</strong> - Data space definition</p></li>
-<li><p><strong>DataloaderArgs</strong> - DataLoader arguments</p></li>
-</ul>
-</section>
-<section id="visualisations">
-<h3>Visualisations<a class="headerlink" href="#visualisations" title="Link to this heading">#</a></h3>
-<p>Plotting and visualization utilities:</p>
-<ul class="simple">
-<li><p><strong>PlottingCore</strong> - Core plotting functionality</p></li>
-<li><p><strong>PlottingMaps</strong> - Map-based visualizations</p></li>
-<li><p><strong>Layout</strong> - Plot layout utilities</p></li>
-<li><p><strong>Convert</strong> - Data conversion utilities</p></li>
-</ul>
-</section>
-</section>
-<div class="toctree-wrapper compound">
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.decoders.base_decoder.BaseDecoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.forward" title="Link to this definition">#</a></dt>
+<dd><p>Forward step: decode latent space into output space.</p>
+<p>The default implementation simply calls <cite>self.rollout</cite> independently on each
+time slice. These are then stacked together to produce the final output.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x: TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)</p>
+</dd>
+<dt>Returns:</dt><dd><p>TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch time channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch time channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.decoders.base_decoder.BaseDecoder.rollout">
+<span class="sig-name descname"><span class="pre">rollout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.rollout" title="Link to this definition">#</a></dt>
+<dd><p>Single rollout step: decode NCHW latent data into NCHW output.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)</p>
+</dd>
+<dt>Returns:</dt><dd><p>TensorNCHW with (batch_size, output_channels, output_height, output_width)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
+</section>
+<section id="cnndecoder">
+<h3>CNNDecoder<a class="headerlink" href="#cnndecoder" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.decoders.cnn_decoder.</span></span><span class="sig-name descname"><span class="pre">CNNDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder" title="ice_station_zebra.models.decoders.base_decoder.BaseDecoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a></p>
+<p>Initialise a CNNDecoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder.rollout">
+<span class="sig-name descname"><span class="pre">rollout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder.rollout" title="Link to this definition">#</a></dt>
+<dd><p>Single rollout step: decode NCHW latent data into NCHW output.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x: TensorNCHW with (batch_size, input_channels, input_height, input_width)</p>
+</dd>
+<dt>Returns:</dt><dd><p>TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -463,20 +512,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../cli.html"
+       href="models-encoders.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">CLI Commands</p>
+        <p class="prev-next-title">Encoders</p>
       </div>
     </a>
     <a class="right-next"
-       href="data_loaders.html"
+       href="models-processors.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Data Loaders</p>
+        <p class="prev-next-title">Processors</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -496,14 +545,22 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">Modules</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-loaders">Data Loaders</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-processors">Data Processors</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#models">Models</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training">Training</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluation">Evaluation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types">Types</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisations">Visualisations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basedecoder">BaseDecoder</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder"><code class="docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.forward"><code class="docutils literal notranslate"><span class="pre">BaseDecoder.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.rollout"><code class="docutils literal notranslate"><span class="pre">BaseDecoder.rollout()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cnndecoder">CNNDecoder</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder"><code class="docutils literal notranslate"><span class="pre">CNNDecoder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder.rollout"><code class="docutils literal notranslate"><span class="pre">CNNDecoder.rollout()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

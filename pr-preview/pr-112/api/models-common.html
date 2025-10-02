@@ -1,0 +1,1102 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Common Components &#8212; Ice Station Zebra API Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/models-common';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Encoders" href="models-encoders.html" />
+    <link rel="prev" title="Models" href="models.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Ice Station Zebra API Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../intro.html">
+                    Weclome to Ice Station Zebra!
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../adding-new-models.html">Adding new models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI Commands</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data_loaders.html">Data Loaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Common Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models-encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models-decoders.html">Decoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models-processors.html">Processors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models-diffusion.html">Diffusion Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training.html">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualisations.html">Visualisations</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/models-common.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Common Components</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#commonconvblock">CommonConvBlock</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock"><code class="docutils literal notranslate"><span class="pre">CommonConvBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock.forward"><code class="docutils literal notranslate"><span class="pre">CommonConvBlock.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convnormact">ConvNormAct</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct"><code class="docutils literal notranslate"><span class="pre">ConvNormAct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct.forward"><code class="docutils literal notranslate"><span class="pre">ConvNormAct.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockdownsample">ConvBlockDownsample</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample"><code class="docutils literal notranslate"><span class="pre">ConvBlockDownsample</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockDownsample.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockupsample">ConvBlockUpsample</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsample</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsample.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockupsamplenaive">ConvBlockUpsampleNaive</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsampleNaive</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsampleNaive.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#patchembedding">PatchEmbedding</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding"><code class="docutils literal notranslate"><span class="pre">PatchEmbedding</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding.forward"><code class="docutils literal notranslate"><span class="pre">PatchEmbedding.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#resizingaveragepool2d">ResizingAveragePool2d</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d"><code class="docutils literal notranslate"><span class="pre">ResizingAveragePool2d</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d.forward"><code class="docutils literal notranslate"><span class="pre">ResizingAveragePool2d.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#resizinginterpolation">ResizingInterpolation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation"><code class="docutils literal notranslate"><span class="pre">ResizingInterpolation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation.forward"><code class="docutils literal notranslate"><span class="pre">ResizingInterpolation.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#timeembed">TimeEmbed</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.time_embed.TimeEmbed"><code class="docutils literal notranslate"><span class="pre">TimeEmbed</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.time_embed.TimeEmbed.forward"><code class="docutils literal notranslate"><span class="pre">TimeEmbed.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transformerencoderblock">TransformerEncoderBlock</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock.forward"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderBlock.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="common-components">
+<h1>Common Components<a class="headerlink" href="#common-components" title="Link to this heading">#</a></h1>
+<p>The common components module provides building blocks and utilities used across different model architectures.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<section id="commonconvblock">
+<h3>CommonConvBlock<a class="headerlink" href="#commonconvblock" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_common.CommonConvBlock">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.conv_block_common.</span></span><span class="sig-name descname"><span class="pre">CommonConvBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_subblocks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'batchnorm'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialise a CommonConvBlock.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>dropout_rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>n_subblocks</strong> (<em>int</em>)</p></li>
+<li><p><strong>norm_type</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_common.CommonConvBlock.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock.forward" title="Link to this definition">#</a></dt>
+<dd><p>Apply stacked ConvNormAct layers to input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="convnormact">
+<h3>ConvNormAct<a class="headerlink" href="#convnormact" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_norm_act.ConvNormAct">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.conv_norm_act.</span></span><span class="sig-name descname"><span class="pre">ConvNormAct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'batchnorm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'same'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialise a ConvNormAct mini-block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>dropout_rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>norm_type</strong> (<em>str</em>)</p></li>
+<li><p><strong>padding</strong> (<em>int</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>stride</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_norm_act.ConvNormAct.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct.forward" title="Link to this definition">#</a></dt>
+<dd><p>Apply ConvNormAct block to input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="convblockdownsample">
+<h3>ConvBlockDownsample<a class="headerlink" href="#convblockdownsample" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.conv_block_downsample.</span></span><span class="sig-name descname"><span class="pre">ConvBlockDownsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_input_channels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize the ConvBlockDownsample module.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>activation: the activation function to use.
+kernel_size: the size of the convolutional kernel.
+n_input_channels: the number of input channels.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_input_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="convblockupsample">
+<h3>ConvBlockUpsample<a class="headerlink" href="#convblockupsample" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.conv_block_upsample.</span></span><span class="sig-name descname"><span class="pre">ConvBlockUpsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_input_channels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_output_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize the ConvBlockUpsample module.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>activation: the activation function to use.
+kernel_size: the size of the convolutional kernel (odd numbers are preferable!).
+n_input_channels: the number of input channels.
+n_output_channels: the number of output channels (if None, half of n_input_channels).</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_input_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>n_output_channels</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="convblockupsamplenaive">
+<h3>ConvBlockUpsampleNaive<a class="headerlink" href="#convblockupsamplenaive" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.conv_block_upsample_naive.</span></span><span class="sig-name descname"><span class="pre">ConvBlockUpsampleNaive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'batchnorm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ReLU'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Upsampling block with upsample and convolution.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>in_channels (int): Input channel size.
+out_channels (int): Output channel size.
+kernel_size (int): Kernel size for the convolution after upsampling.
+norm_type (str): Type of normalization (“groupnorm”, “batchnorm”, or “none”).
+activation (str): Name of activation function.
+dropout_rate (float): Dropout probability for ConvNormAct.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>norm_type</strong> (<em>str</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+<li><p><strong>dropout_rate</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="patchembedding">
+<h3>PatchEmbedding<a class="headerlink" href="#patchembedding" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.patchembed.PatchEmbedding">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.patchembed.</span></span><span class="sig-name descname"><span class="pre">PatchEmbedding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emb_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize patch embedding layer that converts image patches into embeddings.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>in_channels (int): Number of latent channels
+patch_size (int): Size of each square patch
+emb_dim (int): Embedding dimension for each patch
+img_size (int): Size of input image</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>)</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>emb_dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>img_size</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.patchembed.PatchEmbedding.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding.forward" title="Link to this definition">#</a></dt>
+<dd><p>Convert input image into patch embeddings.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x (torch.Tensor): Input tensor of shape [B, C, H, W]</p>
+</dd>
+<dt>Returns:</dt><dd><p>torch.Tensor: Patch embeddings of shape [B, N, emb_dim] where N is number of patches</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="resizingaveragepool2d">
+<h3>ResizingAveragePool2d<a class="headerlink" href="#resizingaveragepool2d" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.resizing_average_pool_2d.</span></span><span class="sig-name descname"><span class="pre">ResizingAveragePool2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize the ResizingAveragePool2d module.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>input_size: the target input size in H x W format.
+output_size: the target output size in H x W format.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_size</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>output_size</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="resizinginterpolation">
+<h3>ResizingInterpolation<a class="headerlink" href="#resizinginterpolation" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.resizing_interpolation.</span></span><span class="sig-name descname"><span class="pre">ResizingInterpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_shape</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize the ResizingInterpolate module.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>output_shape: the target output size in H x W format.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_shape</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch channels height width'</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="timeembed">
+<h3>TimeEmbed<a class="headerlink" href="#timeembed" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.time_embed.TimeEmbed">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.time_embed.</span></span><span class="sig-name descname"><span class="pre">TimeEmbed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SiLU'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.time_embed.TimeEmbed" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize the time embedding module.</p>
+<p>This module takes pre-computed sinusoidal time embeddings (from _timestep_embedding())
+and projects them through fully-connected layers to learn a more useful representation
+for the diffusion task. The MLP uses a dim→4*dim→dim expansion to provide additional
+flexibility for adapting the fixed sinusoidal embeddings.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>dim (int, optional): Size of the input and output embedding dimension.</dt><dd><p>Defaults to 256.</p>
+</dd>
+<dt>activation (str, optional): Name of the activation function to use</dt><dd><p>(e.g., “SiLU”, “ReLU”). Defaults to “SiLU”.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.time_embed.TimeEmbed.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.time_embed.TimeEmbed.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="transformerencoderblock">
+<h3>TransformerEncoderBlock<a class="headerlink" href="#transformerencoderblock" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.common.transformerblock.</span></span><span class="sig-name descname"><span class="pre">TransformerEncoderBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlp_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize a single transformer encoder block with multi-head attention and MLP.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dim (int): Input and output dimension of the block
+heads (int): Number of attention heads
+mlp_dim (int): Hidden dimension of the MLP layer
+dropout (float): Dropout probability</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>heads</strong> (<em>int</em>)</p></li>
+<li><p><strong>mlp_dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>dropout</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock.forward" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass through transformer encoder block with residual connections.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>x (torch.Tensor): Input tensor of shape [B, N, dim]</p>
+</dd>
+<dt>Returns:</dt><dd><p>torch.Tensor: Output tensor of shape [B, N, dim]</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./api"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="models.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Models</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="models-encoders.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Encoders</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#commonconvblock">CommonConvBlock</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock"><code class="docutils literal notranslate"><span class="pre">CommonConvBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_common.CommonConvBlock.forward"><code class="docutils literal notranslate"><span class="pre">CommonConvBlock.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convnormact">ConvNormAct</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct"><code class="docutils literal notranslate"><span class="pre">ConvNormAct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_norm_act.ConvNormAct.forward"><code class="docutils literal notranslate"><span class="pre">ConvNormAct.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockdownsample">ConvBlockDownsample</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample"><code class="docutils literal notranslate"><span class="pre">ConvBlockDownsample</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockDownsample.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockupsample">ConvBlockUpsample</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsample</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsample.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convblockupsamplenaive">ConvBlockUpsampleNaive</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsampleNaive</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive.forward"><code class="docutils literal notranslate"><span class="pre">ConvBlockUpsampleNaive.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#patchembedding">PatchEmbedding</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding"><code class="docutils literal notranslate"><span class="pre">PatchEmbedding</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.patchembed.PatchEmbedding.forward"><code class="docutils literal notranslate"><span class="pre">PatchEmbedding.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#resizingaveragepool2d">ResizingAveragePool2d</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d"><code class="docutils literal notranslate"><span class="pre">ResizingAveragePool2d</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d.forward"><code class="docutils literal notranslate"><span class="pre">ResizingAveragePool2d.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#resizinginterpolation">ResizingInterpolation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation"><code class="docutils literal notranslate"><span class="pre">ResizingInterpolation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation.forward"><code class="docutils literal notranslate"><span class="pre">ResizingInterpolation.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#timeembed">TimeEmbed</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.time_embed.TimeEmbed"><code class="docutils literal notranslate"><span class="pre">TimeEmbed</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.time_embed.TimeEmbed.forward"><code class="docutils literal notranslate"><span class="pre">TimeEmbed.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transformerencoderblock">TransformerEncoderBlock</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock.forward"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderBlock.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Alan Turing Institute
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

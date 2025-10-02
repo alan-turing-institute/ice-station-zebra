@@ -179,6 +179,11 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/data_loaders.html">Data Loaders</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models-common.html">Common Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models-encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models-decoders.html">Decoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models-processors.html">Processors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models-diffusion.html">Diffusion Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/training.html">Training</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/evaluation.html">Evaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/types.html">Types</a></li>
@@ -292,6 +297,7 @@ document.write(`
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -303,8 +309,10 @@ document.write(`
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
  
@@ -317,10 +325,32 @@ document.write(`
   </ul></td>
 </tr></table>
 
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-decoders.html#ice_station_zebra.models.decoders.base_decoder.BaseDecoder">BaseDecoder (class in ice_station_zebra.models.decoders.base_decoder)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-encoders.html#ice_station_zebra.models.encoders.base_encoder.BaseEncoder">BaseEncoder (class in ice_station_zebra.models.encoders.base_encoder)</a>
+</li>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.base_processor.BaseProcessor">BaseProcessor (class in ice_station_zebra.models.processors.base_processor)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-diffusion.html#ice_station_zebra.models.diffusion.gaussian_diffusion.GaussianDiffusion.calculate_v">calculate_v() (ice_station_zebra.models.diffusion.gaussian_diffusion.GaussianDiffusion method)</a>
+</li>
+      <li><a href="api/models-decoders.html#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder">CNNDecoder (class in ice_station_zebra.models.decoders.cnn_decoder)</a>
+</li>
+      <li><a href="api/models-encoders.html#ice_station_zebra.models.encoders.cnn_encoder.CNNEncoder">CNNEncoder (class in ice_station_zebra.models.encoders.cnn_encoder)</a>
+</li>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset">CombinedDataset (class in ice_station_zebra.data_loaders.combined_dataset)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_common.CommonConvBlock">CommonConvBlock (class in ice_station_zebra.models.common.conv_block_common)</a>
 </li>
       <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.compute_difference">compute_difference() (in module ice_station_zebra.visualisations.plotting_core)</a>
 </li>
@@ -336,6 +366,14 @@ document.write(`
         <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.configure_optimizers">(ice_station_zebra.models.zebra_model.ZebraModel method)</a>
 </li>
       </ul></li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample">ConvBlockDownsample (class in ice_station_zebra.models.common.conv_block_downsample)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample">ConvBlockUpsample (class in ice_station_zebra.models.common.conv_block_upsample)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive">ConvBlockUpsampleNaive (class in ice_station_zebra.models.common.conv_block_upsample_naive)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_norm_act.ConvNormAct">ConvNormAct (class in ice_station_zebra.models.common.conv_norm_act)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -344,11 +382,13 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.datasets">datasets (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.date_from_index">date_from_index() (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.dates">dates (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
+</li>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.ddpm.DDPMProcessor">DDPMProcessor (class in ice_station_zebra.models.processors.ddpm)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -372,10 +412,38 @@ document.write(`
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/models.html#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward">forward() (ice_station_zebra.models.encode_process_decode.EncodeProcessDecode method)</a>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_common.CommonConvBlock.forward">forward() (ice_station_zebra.models.common.conv_block_common.CommonConvBlock method)</a>
 
       <ul>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample.forward">(ice_station_zebra.models.common.conv_block_downsample.ConvBlockDownsample method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample.forward">(ice_station_zebra.models.common.conv_block_upsample.ConvBlockUpsample method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive.forward">(ice_station_zebra.models.common.conv_block_upsample_naive.ConvBlockUpsampleNaive method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.conv_norm_act.ConvNormAct.forward">(ice_station_zebra.models.common.conv_norm_act.ConvNormAct method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.patchembed.PatchEmbedding.forward">(ice_station_zebra.models.common.patchembed.PatchEmbedding method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d.forward">(ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation.forward">(ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.time_embed.TimeEmbed.forward">(ice_station_zebra.models.common.time_embed.TimeEmbed method)</a>
+</li>
+        <li><a href="api/models-common.html#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock.forward">(ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock method)</a>
+</li>
+        <li><a href="api/models-decoders.html#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.forward">(ice_station_zebra.models.decoders.base_decoder.BaseDecoder method)</a>
+</li>
+        <li><a href="api/models-diffusion.html#ice_station_zebra.models.diffusion.unet_diffusion.UNetDiffusion.forward">(ice_station_zebra.models.diffusion.unet_diffusion.UNetDiffusion method)</a>
+</li>
+        <li><a href="api/models.html#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward">(ice_station_zebra.models.encode_process_decode.EncodeProcessDecode method)</a>
+</li>
+        <li><a href="api/models-encoders.html#ice_station_zebra.models.encoders.base_encoder.BaseEncoder.forward">(ice_station_zebra.models.encoders.base_encoder.BaseEncoder method)</a>
+</li>
         <li><a href="api/models.html#ice_station_zebra.models.persistence.Persistence.forward">(ice_station_zebra.models.persistence.Persistence method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.base_processor.BaseProcessor.forward">(ice_station_zebra.models.processors.base_processor.BaseProcessor method)</a>
 </li>
         <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.forward">(ice_station_zebra.models.zebra_model.ZebraModel method)</a>
 </li>
@@ -390,6 +458,8 @@ document.write(`
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-diffusion.html#ice_station_zebra.models.diffusion.gaussian_diffusion.GaussianDiffusion">GaussianDiffusion (class in ice_station_zebra.models.diffusion.gaussian_diffusion)</a>
+</li>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.combined_dataset.CombinedDataset.get_forecast_steps">get_forecast_steps() (ice_station_zebra.data_loaders.combined_dataset.CombinedDataset method)</a>
 </li>
   </ul></td>
@@ -462,6 +532,10 @@ document.write(`
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.name">name (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.null.NullProcessor">NullProcessor (class in ice_station_zebra.models.processors.null)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
@@ -475,10 +549,14 @@ document.write(`
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/models.html#ice_station_zebra.models.persistence.Persistence">Persistence (class in ice_station_zebra.models.persistence)</a>
+      <li><a href="api/models-diffusion.html#ice_station_zebra.models.diffusion.gaussian_diffusion.GaussianDiffusion.p_sample">p_sample() (ice_station_zebra.models.diffusion.gaussian_diffusion.GaussianDiffusion method)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.patchembed.PatchEmbedding">PatchEmbedding (class in ice_station_zebra.models.common.patchembed)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models.html#ice_station_zebra.models.persistence.Persistence">Persistence (class in ice_station_zebra.models.persistence)</a>
+</li>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.predict_dataloader">predict_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
 </li>
       <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.prepare_difference_stream">prepare_difference_stream() (in module ice_station_zebra.visualisations.plotting_core)</a>
@@ -486,9 +564,41 @@ document.write(`
   </ul></td>
 </tr></table>
 
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.resizing_average_pool_2d.ResizingAveragePool2d">ResizingAveragePool2d (class in ice_station_zebra.models.common.resizing_average_pool_2d)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.resizing_interpolation.ResizingInterpolation">ResizingInterpolation (class in ice_station_zebra.models.common.resizing_interpolation)</a>
+</li>
+      <li><a href="api/models-decoders.html#ice_station_zebra.models.decoders.base_decoder.BaseDecoder.rollout">rollout() (ice_station_zebra.models.decoders.base_decoder.BaseDecoder method)</a>
+
+      <ul>
+        <li><a href="api/models-decoders.html#ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder.rollout">(ice_station_zebra.models.decoders.cnn_decoder.CNNDecoder method)</a>
+</li>
+        <li><a href="api/models-encoders.html#ice_station_zebra.models.encoders.base_encoder.BaseEncoder.rollout">(ice_station_zebra.models.encoders.base_encoder.BaseEncoder method)</a>
+</li>
+        <li><a href="api/models-encoders.html#ice_station_zebra.models.encoders.cnn_encoder.CNNEncoder.rollout">(ice_station_zebra.models.encoders.cnn_encoder.CNNEncoder method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.base_processor.BaseProcessor.rollout">(ice_station_zebra.models.processors.base_processor.BaseProcessor method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.ddpm.DDPMProcessor.rollout">(ice_station_zebra.models.processors.ddpm.DDPMProcessor method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.null.NullProcessor.rollout">(ice_station_zebra.models.processors.null.NullProcessor method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.unet.UNetProcessor.rollout">(ice_station_zebra.models.processors.unet.UNetProcessor method)</a>
+</li>
+        <li><a href="api/models-processors.html#ice_station_zebra.models.processors.vit.VitProcessor.rollout">(ice_station_zebra.models.processors.vit.VitProcessor method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.ddpm.DDPMProcessor.sample">sample() (ice_station_zebra.models.processors.ddpm.DDPMProcessor method)</a>
+</li>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset.space">space (ice_station_zebra.data_loaders.zebra_dataset.ZebraDataset property)</a>
 </li>
   </ul></td>
@@ -509,11 +619,27 @@ document.write(`
 </li>
       <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.test_step">test_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
 </li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.time_embed.TimeEmbed">TimeEmbed (class in ice_station_zebra.models.common.time_embed)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_loaders.html#ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule.train_dataloader">train_dataloader() (ice_station_zebra.data_loaders.zebra_data_module.ZebraDataModule method)</a>
 </li>
       <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.training_step">training_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+      <li><a href="api/models-common.html#ice_station_zebra.models.common.transformerblock.TransformerEncoderBlock">TransformerEncoderBlock (class in ice_station_zebra.models.common.transformerblock)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-diffusion.html#ice_station_zebra.models.diffusion.unet_diffusion.UNetDiffusion">UNetDiffusion (class in ice_station_zebra.models.diffusion.unet_diffusion)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.unet.UNetProcessor">UNetProcessor (class in ice_station_zebra.models.processors.unet)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -530,6 +656,8 @@ document.write(`
       <li><a href="api/visualisations.html#ice_station_zebra.visualisations.plotting_core.validate_3d_streams">validate_3d_streams() (in module ice_station_zebra.visualisations.plotting_core)</a>
 </li>
       <li><a href="api/models.html#ice_station_zebra.models.zebra_model.ZebraModel.validation_step">validation_step() (ice_station_zebra.models.zebra_model.ZebraModel method)</a>
+</li>
+      <li><a href="api/models-processors.html#ice_station_zebra.models.processors.vit.VitProcessor">VitProcessor (class in ice_station_zebra.models.processors.vit)</a>
 </li>
   </ul></td>
 </tr></table>

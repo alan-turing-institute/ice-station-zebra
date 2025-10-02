@@ -9,17 +9,21 @@ Description:
     spatially-resolved predictions for specified forecast horizons.
 """
 
+from typing import Any
+
 import torch
 from torch import nn
 
 from ice_station_zebra.models.common import PatchEmbedding, TransformerEncoderBlock
 from ice_station_zebra.types import TensorNCHW
 
+from .base_processor import BaseProcessor
 
-class VitProcessor(nn.Module):
+
+# class VitProcessor(nn.Module):
+class VitProcessor(BaseProcessor):
     def __init__(  # noqa: PLR0913
         self,
-        n_latent_channels: int,
         start_out_channels: int,
         img_size: int,
         patch_size: int,
@@ -28,16 +32,17 @@ class VitProcessor(nn.Module):
         heads: int,
         mlp_dim: int,
         dropout: float,
+        **kwargs: Any,
     ) -> None:
         """Initialize Vision Transformer model for sea ice forecasting."""
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.img_size = img_size
         self.patch_size = patch_size
         self.out_channels = start_out_channels
 
         self.patch_embed = PatchEmbedding(
-            n_latent_channels, patch_size, emb_dim, self.img_size
+            self.data_space.channels, patch_size, emb_dim, self.img_size
         )
         num_patches = (self.img_size // patch_size) ** 2
 
@@ -58,7 +63,7 @@ class VitProcessor(nn.Module):
             nn.Linear(emb_dim, patch_size * patch_size * self.out_channels),
         )
 
-    def forward(self, x: TensorNCHW) -> TensorNCHW:
+    def rollout(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the ViT model for sea ice forecasting before decoder.
 
         Args:

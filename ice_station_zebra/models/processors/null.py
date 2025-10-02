@@ -27,8 +27,8 @@ class NullProcessor(BaseProcessor):
         super().__init__(**kwargs)
         self.model = nn.Identity()
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Apply identity to NCHW tensor.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: apply identity to NCHW tensor.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

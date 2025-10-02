@@ -33,8 +33,8 @@ class DDPMProcessor(BaseProcessor):
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Generate a single NCHW output with diffusion.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: generate NCHW output with diffusion for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

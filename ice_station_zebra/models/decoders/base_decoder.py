@@ -26,10 +26,23 @@ class BaseDecoder(nn.Module):
         self.data_space_out = data_space_out
         self.n_forecast_steps = n_forecast_steps
 
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: decode latent space into output space.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: decode latent space into output space for a single timestep.
 
-        The default implementation simply calls `self.rollout` independently on each
+        Args:
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
+
+        Returns:
+            TensorNCHW with (batch_size, output_channels, output_height, output_width)
+
+        """
+        msg = "If you are using the default rollout method, you must implement forward."
+        raise NotImplementedError(msg)
+
+    def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
+        """Decode latent space into output space across multiple timesteps.
+
+        The default implementation simply calls `self.forward` independently on each
         time slice. These are then stacked together to produce the final output.
 
         Args:
@@ -41,22 +54,9 @@ class BaseDecoder(nn.Module):
         """
         return stack(
             [
-                # Apply rollout to each NCHW slice in the NTCHW input
-                self.rollout(x[:, idx_t, :, :, :])
+                # Rollout the model over the input slices, producing an output for each one.
+                self.forward(x[:, idx_t, :, :, :])
                 for idx_t in range(self.n_forecast_steps)
             ],
             dim=1,
         )
-
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: decode NCHW latent data into NCHW output.
-
-        Args:
-            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
-
-        Returns:
-            TensorNCHW with (batch_size, output_channels, output_height, output_width)
-
-        """
-        msg = "If you are using the default forward method, you must implement rollout."
-        raise NotImplementedError(msg)

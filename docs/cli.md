@@ -125,4 +125,3 @@ Configuration files are located in `ice_station_zebra/config/` and define:
 - **Evaluation configurations**: Metrics, visualization, and output formats
 
 See the [Configuration Guide](configuration.md) for more details on creating and customizing configuration files.
-

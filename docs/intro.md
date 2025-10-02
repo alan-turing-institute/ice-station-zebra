@@ -12,7 +12,3 @@ Ice Station Zebra is a machine learning framework for sea ice forecasting and an
 - **[Adding New Models](adding-new-models.md)** - Guide to creating standalone and processor models
 - **[CLI Commands](cli.md)** - Command-line interface for dataset management, training, and evaluation
 - **[API Reference](api/index.md)** - Detailed information about all classes and functions
-
-
-
-

@@ -9,6 +9,7 @@ import pytest
 if TYPE_CHECKING:
     # Imports used only for type annotations
     from datetime import date
+
     import numpy as np
 
 mpl.use("Agg")

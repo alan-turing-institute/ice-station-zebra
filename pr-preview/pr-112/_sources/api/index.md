@@ -17,9 +17,12 @@ Classes for preprocessing and transforming data:
 
 ### Models
 Neural network models and architectures:
-- **ZebraModel** - Main model wrapper
-- **EncodeProcessDecode** - Encode-process-decode architecture
-- **Persistence** - Baseline persistence model
+- **[Main Models](models.md)** - Core model classes (ZebraModel, EncodeProcessDecode, Persistence)
+- **[Common Components](models-common.md)** - Building blocks and utilities
+- **[Encoders](models-encoders.md)** - Input encoding components
+- **[Decoders](models-decoders.md)** - Output decoding components
+- **[Processors](models-processors.md)** - Latent space processing components
+- **[Diffusion Models](models-diffusion.md)** - Diffusion-based forecasting algorithms
 
 ### Training
 Training utilities and trainers:

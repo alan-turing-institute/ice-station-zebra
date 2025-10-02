@@ -334,7 +334,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-model-classes">Main Model Classes</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebramodel">ZebraModel</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel"><code class="docutils literal notranslate"><span class="pre">ZebraModel</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">ZebraModel.configure_optimizers()</span></code></a></li>
@@ -343,6 +343,21 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.test_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.test_step()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.training_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.training_step()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.validation_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.validation_step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encodeprocessdecode">EncodeProcessDecode</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode"><code class="docutils literal notranslate"><span class="pre">EncodeProcessDecode</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward"><code class="docutils literal notranslate"><span class="pre">EncodeProcessDecode.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#persistence">Persistence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence"><code class="docutils literal notranslate"><span class="pre">Persistence</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">Persistence.configure_optimizers()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence.forward"><code class="docutils literal notranslate"><span class="pre">Persistence.forward()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -363,8 +378,8 @@ document.write(`
   <section id="models">
 <h1>Models<a class="headerlink" href="#models" title="Link to this heading">#</a></h1>
 <p>The models module provides neural network architectures and model classes for the Ice Station Zebra framework.</p>
-<section id="classes">
-<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<section id="main-model-classes">
+<h2>Main Model Classes<a class="headerlink" href="#main-model-classes" title="Link to this heading">#</a></h2>
 <section id="zebramodel">
 <h3>ZebraModel<a class="headerlink" href="#zebramodel" title="Link to this heading">#</a></h3>
 <div class="toggle docutils container">
@@ -536,6 +551,96 @@ TensorNTCHW with (batch_size, n_history_steps, C, H, W).</p>
 
 </div>
 </section>
+<section id="encodeprocessdecode">
+<h3>EncodeProcessDecode<a class="headerlink" href="#encodeprocessdecode" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.encode_process_decode.EncodeProcessDecode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.encode_process_decode.</span></span><span class="sig-name descname"><span class="pre">EncodeProcessDecode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ice_station_zebra.models.zebra_model.ZebraModel" title="ice_station_zebra.models.zebra_model.ZebraModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ZebraModel</span></code></a></p>
+<p>Initialise an EncodeProcessDecode model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>encoder</strong> (<em>DictConfig</em>)</p></li>
+<li><p><strong>processor</strong> (<em>DictConfig</em>)</p></li>
+<li><p><strong>decoder</strong> (<em>DictConfig</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward" title="Link to this definition">#</a></dt>
+<dd><p>Forward step of the model.</p>
+<ul class="simple">
+<li><p>start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, n_input_channels_k, H_input_k, W_input_k]</p></li>
+<li><p>encode inputs to [NTCHW] latent space [batch, n_history_steps, n_latent_channels, H_latent, W_latent]</p></li>
+<li><p>concatenate inputs in [NTCHW] latent space [batch, n_history_steps, n_latent_channels_total, H_latent, W_latent]</p></li>
+<li><p>process in latent space [NTCHW] [batch, n_forecast_steps, n_latent_channels_total, H_latent, W_latent]</p></li>
+<li><p>decode back to [NTCHW] output space [batch, n_forecast_steps, n_output_channels, H_output, W_output]</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch time channels height width'</em><em>]</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch time channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
+<section id="persistence">
+<h3>Persistence<a class="headerlink" href="#persistence" title="Link to this heading">#</a></h3>
+<div class="toggle docutils container">
+<dl class="py class">
+<dt class="sig sig-object py" id="ice_station_zebra.models.persistence.Persistence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ice_station_zebra.models.persistence.</span></span><span class="sig-name descname"><span class="pre">Persistence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.persistence.Persistence" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ice_station_zebra.models.zebra_model.ZebraModel" title="ice_station_zebra.models.zebra_model.ZebraModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ZebraModel</span></code></a></p>
+<p>Initialise a Persistence model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>Any</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.persistence.Persistence.configure_optimizers">
+<span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.persistence.Persistence.configure_optimizers" title="Link to this definition">#</a></dt>
+<dd><p>Persistence model does not need an optimizer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Optimizer</em> | <em>Sequence</em>[<em>Optimizer</em>] | tuple[<em>Sequence</em>[<em>Optimizer</em>], <em>Sequence</em>[<em>LRScheduler</em> | <em>ReduceLROnPlateau</em> | <em>LRSchedulerConfig</em>]] | <em>OptimizerConfig</em> | <em>OptimizerLRSchedulerConfig</em> | <em>Sequence</em>[<em>OptimizerConfig</em>] | <em>Sequence</em>[<em>OptimizerLRSchedulerConfig</em>] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ice_station_zebra.models.persistence.Persistence.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ice_station_zebra.models.persistence.Persistence.forward" title="Link to this definition">#</a></dt>
+<dd><p>Forward step of the model.</p>
+<ul class="simple">
+<li><p>start with multiple [NTCHW] inputs each with shape [batch, n_history_steps, C_input_k, H_input_k, W_input_k]</p></li>
+<li><p>find the input with the same name as the output space</p></li>
+<li><p>take the last time step and repeat it n_forecast_steps times</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Float</em><em>[</em><em>Tensor</em><em>, </em><em>'batch time channels height width'</em><em>]</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Float</em>[Tensor, ‘batch time channels height width’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</section>
 </section>
 </section>
 
@@ -603,7 +708,7 @@ TensorNTCHW with (batch_size, n_history_steps, C, H, W).</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-model-classes">Main Model Classes</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zebramodel">ZebraModel</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel"><code class="docutils literal notranslate"><span class="pre">ZebraModel</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">ZebraModel.configure_optimizers()</span></code></a></li>
@@ -612,6 +717,21 @@ TensorNTCHW with (batch_size, n_history_steps, C, H, W).</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.test_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.test_step()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.training_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.training_step()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.zebra_model.ZebraModel.validation_step"><code class="docutils literal notranslate"><span class="pre">ZebraModel.validation_step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encodeprocessdecode">EncodeProcessDecode</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode"><code class="docutils literal notranslate"><span class="pre">EncodeProcessDecode</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.encode_process_decode.EncodeProcessDecode.forward"><code class="docutils literal notranslate"><span class="pre">EncodeProcessDecode.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#persistence">Persistence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence"><code class="docutils literal notranslate"><span class="pre">Persistence</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">Persistence.configure_optimizers()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#ice_station_zebra.models.persistence.Persistence.forward"><code class="docutils literal notranslate"><span class="pre">Persistence.forward()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -57,6 +57,20 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
+        # If necessary, upscale the input until the post-convolution size is larger than
+        # or equal to the desired output size.
+        # N.B. dividing by a negative integer performs a ceiling division
+        minimal_shape = (
+            -(self.data_space_out.shape[0] // -layer_factor),
+            -(self.data_space_out.shape[1] // -layer_factor),
+        )
+        upscaled_initial_shape = (
+            max(minimal_shape[0], self.data_space_in.shape[0]),
+            max(minimal_shape[1], self.data_space_in.shape[1]),
+        )
+        if upscaled_initial_shape != self.data_space_in.shape:
+            layers.append(ResizingInterpolation(upscaled_initial_shape))
+
         # Add n_layers size-increasing convolutional blocks
         n_channels = self.data_space_in.channels
         for _ in range(n_layers):
@@ -68,9 +82,7 @@ class CNNDecoder(BaseDecoder):
             n_channels //= 2
 
         # If necessary, apply an interpolating resizing to get the correct output shape
-        conv_output_shape = tuple(
-            dim * layer_factor for dim in self.data_space_in.shape
-        )
+        conv_output_shape = tuple(dim * layer_factor for dim in upscaled_initial_shape)
         if conv_output_shape != self.data_space_out.shape:
             layers.append(ResizingInterpolation(self.data_space_out.shape))
 

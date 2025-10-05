@@ -23,6 +23,7 @@ class CNNDecoder(BaseDecoder):
     - Resize with interpolation (if needed)
     - n_layers of size-increasing convolutional blocks
     - Resize with interpolation (if needed)
+    - Convolve to number of output channels (if needed)
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -56,16 +57,6 @@ class CNNDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # If necessary, upscale the input until the post-convolution size is larger than
-        # or equal to the desired output size.
-        # N.B. dividing by a negative integer performs a ceiling division
-        upscaled_shape = (
-            -(self.data_space_out.shape[0] // -layer_factor),
-            -(self.data_space_out.shape[1] // -layer_factor),
-        )
-        if upscaled_shape != self.data_space_in.shape:
-            layers.append(ResizingInterpolation(upscaled_shape))
-
         # Add n_layers size-increasing convolutional blocks
         n_channels = self.data_space_in.channels
         for _ in range(n_layers):
@@ -76,14 +67,16 @@ class CNNDecoder(BaseDecoder):
             )
             n_channels //= 2
 
+        # If necessary, apply an interpolating resizing to get the correct output shape
+        conv_output_shape = tuple(
+            dim * layer_factor for dim in self.data_space_in.shape
+        )
+        if conv_output_shape != self.data_space_out.shape:
+            layers.append(ResizingInterpolation(self.data_space_out.shape))
+
         # If necessary, convolve to the required number of output channels
         if n_channels != self.data_space_out.channels:
             layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
-
-        # If necessary, apply an interpolating resizing to get the correct output shape
-        conv_output_shape = tuple(dim * layer_factor for dim in upscaled_shape)
-        if conv_output_shape != self.data_space_out.shape:
-            layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockDownsample, ResizingInterpolation
+from ice_station_zebra.models.common import ConvBlockDownsample, ResizingConvolution
 from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
@@ -11,7 +11,7 @@ from .base_encoder import BaseEncoder
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
-    - Resize with interpolation (if needed)
+    - Resize with convolution (if needed)
     - n_layers of size-reducing convolutional blocks
 
     Input space:
@@ -42,10 +42,16 @@ class CNNEncoder(BaseEncoder):
             self.data_space_out.shape[1] * (2**n_layers),
         )
         if self.data_space_in.shape != initial_required_shape:
-            layers.append(ResizingInterpolation(initial_required_shape))
+            layers.append(
+                ResizingConvolution(
+                    n_channels,
+                    self.data_space_in.shape,
+                    n_channels,
+                    initial_required_shape,
+                )
+            )
 
         # Add n_layers size-reducing convolutional blocks
-        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockDownsample(

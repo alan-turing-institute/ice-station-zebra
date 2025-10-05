@@ -11,7 +11,6 @@ from .base_encoder import BaseEncoder
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
-    - Normalise input
     - Resize with convolution (if needed)
     - n_layers of size-reducing convolutional blocks
 
@@ -36,10 +35,6 @@ class CNNEncoder(BaseEncoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Normalise the input across height and width separately for each channel
-        n_channels = self.data_space_in.channels
-        layers.append(nn.BatchNorm2d(n_channels))
-
         # If necessary, apply a convolutional resizing to get the correct input dimensions
         initial_required_shape = (
             self.data_space_out.shape[0] * (2**n_layers),
@@ -49,6 +44,7 @@ class CNNEncoder(BaseEncoder):
             layers.append(ResizingInterpolation(initial_required_shape))
 
         # Add n_layers size-reducing convolutional blocks
+        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockDownsample(

@@ -20,9 +20,10 @@ class CNNDecoder(BaseDecoder):
     The layers are (almost) the reverse of those in the CNNEncoder, but moving the
     channel reduction step to the end.
 
-    - Resize with interpolation (if needed)
+    - Normalise input
+    - Increase size with interpolation (if needed)
     - n_layers of size-increasing convolutional blocks
-    - Resize with interpolation (if needed)
+    - Decrease size with interpolation (if needed)
     - Convolve to number of output channels (if needed)
 
     Input space:
@@ -54,25 +55,30 @@ class CNNDecoder(BaseDecoder):
             )
             raise ValueError(msg)
 
-        # Construct list of layers
-        layers: list[nn.Module] = []
-
-        # If necessary, upscale the input until the post-convolution size is larger than
-        # or equal to the desired output size.
+        # Calculate the minimal input shape to produce at least the desired output shape
         # N.B. dividing by a negative integer performs a ceiling division
-        minimal_shape = (
+        minimal_input_shape = (
             -(self.data_space_out.shape[0] // -layer_factor),
             -(self.data_space_out.shape[1] // -layer_factor),
         )
+
+        # Construct list of layers
+        layers: list[nn.Module] = []
+
+        # Normalise the input across height and width separately for each channel
+        n_channels = self.data_space_in.channels
+        layers.append(nn.BatchNorm2d(n_channels))
+
+        # If necessary, increase the input size until the post-convolution size will be
+        # larger than or equal to the desired output size.
         upscaled_initial_shape = (
-            max(minimal_shape[0], self.data_space_in.shape[0]),
-            max(minimal_shape[1], self.data_space_in.shape[1]),
+            max(minimal_input_shape[0], self.data_space_in.shape[0]),
+            max(minimal_input_shape[1], self.data_space_in.shape[1]),
         )
         if upscaled_initial_shape != self.data_space_in.shape:
             layers.append(ResizingInterpolation(upscaled_initial_shape))
 
         # Add n_layers size-increasing convolutional blocks
-        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(

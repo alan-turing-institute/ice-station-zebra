@@ -57,6 +57,7 @@ class CNNDecoder(BaseDecoder):
 
         # Construct list of layers
         layers: list[nn.Module] = []
+        logger.debug("CNNDecoder (%s) with %d layers", self.name, n_layers)
 
         # If necessary, resize upwards until the post-convolution shape will be larger
         # than or equal to the desired output shape.
@@ -66,6 +67,11 @@ class CNNDecoder(BaseDecoder):
         )
         if shape != self.data_space_in.shape:
             layers.append(ResizingInterpolation(shape))
+            logger.debug(
+                "- ResizingInterpolation from %s to %s",
+                self.data_space_in.shape,
+                minimal_input_shape,
+            )
 
         # Add n_layers size-increasing convolutional blocks
         n_channels = self.data_space_in.channels
@@ -75,16 +81,32 @@ class CNNDecoder(BaseDecoder):
                     n_channels, activation=activation, kernel_size=kernel_size
                 )
             )
+            logger.debug(
+                "- ConvBlockUpsample (%s, %s) with %d channels",
+                activation,
+                kernel_size,
+                n_channels,
+            )
             n_channels //= 2
             shape = (shape[0] * 2, shape[1] * 2)
 
         # If necessary, resize downwards to match the output shape
         if shape != self.data_space_out.shape:
             layers.append(ResizingInterpolation(self.data_space_out.shape))
+            logger.debug(
+                "- ResizingInterpolation from %s to %s",
+                shape,
+                self.data_space_out.shape,
+            )
 
         # If necessary, convolve to the required number of output channels
         if n_channels != self.data_space_out.channels:
             layers.append(nn.Conv2d(n_channels, self.data_space_out.channels, 1))
+            logger.debug(
+                "- Channel convolution from %d to %d",
+                n_channels,
+                self.data_space_out.channels,
+            )
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

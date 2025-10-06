@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from torch import nn
@@ -6,6 +7,8 @@ from ice_station_zebra.models.common import ConvBlockDownsample, ResizingInterpo
 from ice_station_zebra.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
+
+logger = logging.getLogger(__name__)
 
 
 class CNNEncoder(BaseEncoder):
@@ -34,6 +37,7 @@ class CNNEncoder(BaseEncoder):
 
         # Construct list of layers
         layers: list[nn.Module] = []
+        logger.debug("CNNEncoder (%s) with %d layers", self.name, n_layers)
 
         # If necessary, apply a convolutional resizing to get the correct input dimensions
         initial_required_shape = (
@@ -42,6 +46,11 @@ class CNNEncoder(BaseEncoder):
         )
         if self.data_space_in.shape != initial_required_shape:
             layers.append(ResizingInterpolation(initial_required_shape))
+            logger.debug(
+                "- ResizingInterpolation from %s to %s",
+                self.data_space_in.shape,
+                initial_required_shape,
+            )
 
         # Add n_layers size-reducing convolutional blocks
         n_channels = self.data_space_in.channels
@@ -50,6 +59,12 @@ class CNNEncoder(BaseEncoder):
                 ConvBlockDownsample(
                     n_channels, activation=activation, kernel_size=kernel_size
                 )
+            )
+            logger.debug(
+                "- ConvBlockDownsample (%s, %s) with %d channels",
+                activation,
+                kernel_size,
+                n_channels,
             )
             n_channels *= 2
 

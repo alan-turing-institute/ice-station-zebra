@@ -159,7 +159,7 @@ class ZebraModel(LightningModule, ABC):
             A Tensor containing the loss for the batch.
 
         """
-        target = batch.pop("target")
+        target = batch["target"].clone().detach()
         prediction = self(batch)
         loss = self.loss(prediction, target)
         self.log("validation_loss", loss)

@@ -10,14 +10,12 @@ encoder:
 
 processor:
   _target_: ice_station_zebra.models.processors.VitProcessor
-  img_size: 192
   patch_size: 16
   emb_dim: 128
   depth: 3
   heads: 4
   mlp_dim: 256
   dropout: 0.3
-  start_out_channels: 28 # Initial number of channels
 
 decoder:
   _target_: ice_station_zebra.models.decoders.CNNDecoder

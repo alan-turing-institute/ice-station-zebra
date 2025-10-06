@@ -63,14 +63,14 @@ class VitProcessor(BaseProcessor):
             nn.Linear(emb_dim, patch_size * patch_size * self.out_channels),
         )
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Forward pass through the ViT model for sea ice forecasting before decoder.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward pass through the ViT model for a single timestep.
 
         Args:
-            x (torch.Tensor): Input tensor of shape [B, C, H, W]
+            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
-            torch.Tensor: Output tensor of shape [B, C, H, W]
+            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
         batch, _, height, _ = x.shape
@@ -92,10 +92,8 @@ class VitProcessor(BaseProcessor):
             self.patch_size,
             self.patch_size,
         )
-        x = x.permute(
-            0, 3, 1, 4, 2, 5
-        )  # (batch, out_channels, h_patches, patch_size, w_patches, patch_size)
+        # Shape is batch, out_channels, h_patches, patch_size, w_patches, patch_size
+        x = x.permute(0, 3, 1, 4, 2, 5)
 
-        return x.reshape(
-            batch, self.out_channels, self.img_size, self.img_size
-        )  # (B, C, H, W)
+        # Shape is batch, out_channels, height, width
+        return x.reshape(batch, self.out_channels, self.img_size, self.img_size)

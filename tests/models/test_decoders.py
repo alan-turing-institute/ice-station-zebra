@@ -42,7 +42,7 @@ class TestDecoders:
                 n_forecast_steps=test_n_forecast_steps,
             ),
         }[test_decoder_cls]
-        result: torch.Tensor = decoder(
+        result: torch.Tensor = decoder.rollout(
             torch.randn(
                 test_batch_size,
                 test_n_forecast_steps,

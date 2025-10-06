@@ -29,13 +29,13 @@ class DDPMProcessor(BaseProcessor):
 
         """
         super().__init__(**kwargs)
-        self.model = UNetDiffusion(self.n_latent_channels_total, timesteps)
+        self.model = UNetDiffusion(self.data_space.channels, timesteps)
         self.timesteps = timesteps
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Generate a single NCHW output with diffusion.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: generate NCHW output with diffusion for a single timestep.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

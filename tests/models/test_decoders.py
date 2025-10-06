@@ -12,37 +12,37 @@ from ice_station_zebra.types import DataSpace
 class TestDecoders:
     @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
     @pytest.mark.parametrize("test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder"])
-    @pytest.mark.parametrize("test_latent_shape", [(32, 32, 128), (200, 100, 3)])
+    @pytest.mark.parametrize("test_latent_chw", [(128, 32, 32), (2, 200, 100)])
     @pytest.mark.parametrize("test_n_forecast_steps", [1, 3, 5])
-    @pytest.mark.parametrize("test_output_shape", [(256, 256, 4), (100, 200, 1)])
+    @pytest.mark.parametrize("test_output_chw", [(4, 256, 256), (1, 100, 200)])
     def test_forward_shape(
         self,
         test_batch_size: int,
         test_decoder_cls: str,
-        test_latent_shape: tuple[int, int, int],
-        test_output_shape: tuple[int, int, int],
+        test_latent_chw: tuple[int, int, int],
         test_n_forecast_steps: int,
+        test_output_chw: tuple[int, int, int],
     ) -> None:
         latent_space = DataSpace(
-            name="latent", shape=test_latent_shape[0:2], channels=test_latent_shape[2]
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
         )
         output_space = DataSpace(
-            name="output", shape=test_output_shape[0:2], channels=test_output_shape[2]
+            name="output", channels=test_output_chw[0], shape=test_output_chw[1:]
         )
         decoder: BaseDecoder = {
             "CNNDecoder": CNNDecoder(
+                data_space_in=latent_space,
+                data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,
-                n_latent_channels_total=latent_space.channels,
                 n_layers=1,
-                output_space=output_space,
             ),
             "NaiveLinearDecoder": NaiveLinearDecoder(
+                data_space_in=latent_space,
+                data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,
-                n_latent_channels_total=latent_space.channels,
-                output_space=output_space,
             ),
         }[test_decoder_cls]
-        result: torch.Tensor = decoder(
+        result: torch.Tensor = decoder.rollout(
             torch.randn(
                 test_batch_size,
                 test_n_forecast_steps,
@@ -56,3 +56,26 @@ class TestDecoders:
             output_space.channels,
             *output_space.shape,
         )
+
+
+class TestCNNDecoder:
+    @pytest.mark.parametrize("test_latent_chw", [(3, 32, 32), (5, 200, 100)])
+    @pytest.mark.parametrize("test_n_layers", [1, 2, 5])
+    def test_latent_shape_errors(
+        self, test_latent_chw: tuple[int, int, int], test_n_layers: int
+    ) -> None:
+        test_n_forecast_steps = 1
+        latent_space = DataSpace(
+            name="latent", channels=test_latent_chw[0], shape=test_latent_chw[1:]
+        )
+        output_space = DataSpace(name="output", shape=(256, 256), channels=4)
+        with pytest.raises(
+            ValueError,
+            match=f"The number of input channels {test_latent_chw[0]} must be divisible by {2**test_n_layers}. Without this, it is not possible to apply {test_n_layers} convolutions.",
+        ):
+            CNNDecoder(
+                data_space_in=latent_space,
+                data_space_out=output_space,
+                n_forecast_steps=test_n_forecast_steps,
+                n_layers=test_n_layers,
+            )

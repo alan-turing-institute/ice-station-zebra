@@ -25,29 +25,29 @@ class DummyModel(ZebraModel):
 
 
 class TestZebraModel:
-    @pytest.mark.parametrize("test_input_shape", [(512, 512, 4), (10, 20, 1)])
-    @pytest.mark.parametrize("test_output_shape", [(432, 432, 1), (10, 20, 19)])
+    @pytest.mark.parametrize("test_input_chw", [(4, 512, 512), (1, 10, 20)])
+    @pytest.mark.parametrize("test_output_chw", [(1, 432, 432), (19, 10, 20)])
     @pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])
     @pytest.mark.parametrize("test_n_history_steps", [0, 1, 2, 5])
     def test_init(
         self,
-        test_input_shape: tuple[int, int, int],
-        test_output_shape: tuple[int, int, int],
+        test_input_chw: tuple[int, int, int],
         test_n_forecast_steps: int,
         test_n_history_steps: int,
+        test_output_chw: tuple[int, int, int],
     ) -> None:
         input_space = DictConfig(
             {
-                "channels": test_input_shape[2],
+                "channels": test_input_chw[0],
                 "name": "input",
-                "shape": test_input_shape[0:2],
+                "shape": test_input_chw[1:],
             }
         )
         output_space = DictConfig(
             {
-                "channels": test_output_shape[2],
+                "channels": test_output_chw[0],
                 "name": "target",
-                "shape": test_output_shape[0:2],
+                "shape": test_output_chw[1:],
             }
         )
 
@@ -91,14 +91,14 @@ class TestZebraModel:
         )
 
         assert model.name == "dummy"
-        assert model.input_spaces[0].channels == test_input_shape[2]
+        assert model.input_spaces[0].channels == test_input_chw[0]
         assert model.input_spaces[0].name == "input"
-        assert model.input_spaces[0].shape == test_input_shape[0:2]
+        assert model.input_spaces[0].shape == test_input_chw[1:]
         assert model.n_forecast_steps == test_n_forecast_steps
         assert model.n_history_steps == test_n_history_steps
-        assert model.output_space.channels == test_output_shape[2]
+        assert model.output_space.channels == test_output_chw[0]
         assert model.output_space.name == "target"
-        assert model.output_space.shape == test_output_shape[0:2]
+        assert model.output_space.shape == test_output_chw[1:]
 
     def test_loss(
         self, cfg_input_space: DictConfig, cfg_output_space: DictConfig

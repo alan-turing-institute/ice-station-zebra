@@ -2,14 +2,10 @@ _target_: ice_station_zebra.models.EncodeProcessDecode
 
 name: cnn-unet-cnn
 
-# Each dataset will be encoded into a latent space with these properties
-latent_space:
-  channels: 20
-  shape: [128, 128]
-
 encoder:
   _target_: ice_station_zebra.models.encoders.CNNEncoder
   kernel_size: 3 # Size of the kernel for convolutional layers
+  latent_space: [128, 128] # Shape of the latent space
   n_layers: 3 # Number of convolutional layers
 
 processor:

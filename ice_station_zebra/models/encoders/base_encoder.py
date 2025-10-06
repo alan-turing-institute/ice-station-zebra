@@ -1,6 +1,6 @@
 from torch import nn, stack
 
-from ice_station_zebra.types import TensorNCHW, TensorNTCHW
+from ice_station_zebra.types import DataSpace, TensorNCHW, TensorNTCHW
 
 
 class BaseEncoder(nn.Module):
@@ -13,16 +13,41 @@ class BaseEncoder(nn.Module):
         TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(self, *, name: str, n_history_steps: int) -> None:
+    def __init__(
+        self,
+        *,
+        data_space_in: DataSpace,
+        latent_space: tuple[int, int],
+        n_history_steps: int,
+    ) -> None:
         """Initialise a BaseEncoder."""
         super().__init__()
-        self.name = name
+        self.data_space_in = data_space_in
+        self.data_space_out = DataSpace(
+            name=f"latent_space_{data_space_in.name}",
+            channels=self.data_space_in.channels,
+            shape=latent_space,
+        )
+        self.name = data_space_in.name
         self.n_history_steps = n_history_steps
 
-    def forward(self, x: TensorNTCHW) -> TensorNTCHW:
-        """Forward step: encode input space into latent space.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: encode input space into latent space for a single timestep.
 
-        The default implementation simply calls `self.rollout` independently on each
+        Args:
+            x: TensorNCHW with (batch_size, input_channels, input_height, input_width)
+
+        Returns:
+            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
+
+        """
+        msg = "If you are using the default rollout method, you must implement forward."
+        raise NotImplementedError(msg)
+
+    def rollout(self, x: TensorNTCHW) -> TensorNTCHW:
+        """Encode input space into latent space across multiple timesteps.
+
+        The default implementation simply calls `self.forward` independently on each
         time slice. These are then stacked together to produce the final output.
 
         Args:
@@ -34,22 +59,9 @@ class BaseEncoder(nn.Module):
         """
         return stack(
             [
-                # Apply rollout to each NCHW slice in the NTCHW input
-                self.rollout(x[:, idx_t, :, :, :])
+                # Rollout the model over the input slices, producing an output for each one.
+                self(x[:, idx_t, :, :, :])
                 for idx_t in range(self.n_history_steps)
             ],
             dim=1,
         )
-
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: encode NCHW input into NCHW latent space.
-
-        Args:
-            x: TensorNCHW with (batch_size, input_channels, input_height, input_width)
-
-        Returns:
-            TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
-
-        """
-        msg = "If you are using the default forward method, you must implement rollout."
-        raise NotImplementedError(msg)

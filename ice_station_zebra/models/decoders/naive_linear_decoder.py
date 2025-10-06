@@ -2,7 +2,8 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.types import DataSpace, TensorNCHW
+from ice_station_zebra.models.common import ResizingInterpolation
+from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
 
@@ -17,12 +18,7 @@ class NaiveLinearDecoder(BaseDecoder):
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
-    def __init__(
-        self,
-        *,
-        output_space: DataSpace,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         """Initialise a NaiveLinearDecoder."""
         super().__init__(**kwargs)
 
@@ -30,16 +26,18 @@ class NaiveLinearDecoder(BaseDecoder):
         layers: list[nn.Module] = []
 
         # Convolve to the desired number of output channels
-        layers.append(nn.Conv2d(self.n_latent_channels_total, output_space.channels, 1))
+        layers.append(
+            nn.Conv2d(self.data_space_in.channels, self.data_space_out.channels, 1)
+        )
 
-        # Resample to the desired output shape
-        layers.append(nn.Upsample(output_space.shape))
+        # Resize to the desired output shape
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: decode NCHW latent data into NCHW output.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: decode latent space into output space with a linear transform.
 
         Args:
             x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)

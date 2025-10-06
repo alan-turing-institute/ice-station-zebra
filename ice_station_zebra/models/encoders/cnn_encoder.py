@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class CNNEncoder(BaseEncoder):
     """Encoder that uses a convolutional neural net (CNN) to translate data to a latent space.
 
-    - Resize with convolution (if needed)
+    - Resize with interpolation (if needed)
     - n_layers of size-reducing convolutional blocks
 
     Input space:

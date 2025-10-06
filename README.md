@@ -47,7 +47,7 @@
 | ice\_station\_zebra/models/common/time\_embed.py                        |        9 |        4 |     56% | 26-30, 37 |
 | ice\_station\_zebra/models/common/transformerblock.py                   |       12 |        7 |     42% |16-22, 40-42 |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
-| ice\_station\_zebra/models/decoders/base\_decoder.py                    |       13 |        2 |     85% |     61-62 |
+| ice\_station\_zebra/models/decoders/base\_decoder.py                    |       13 |        2 |     85% |     39-40 |
 | ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       22 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       14 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/\_\_init\_\_.py                    |        3 |        0 |    100% |           |
@@ -55,7 +55,7 @@
 | ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       70 |     11% |56-176, 197-241, 257-272, 285-288 |
 | ice\_station\_zebra/models/encode\_process\_decode.py                   |       21 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
-| ice\_station\_zebra/models/encoders/base\_encoder.py                    |       14 |        2 |     86% |     66-67 |
+| ice\_station\_zebra/models/encoders/base\_encoder.py                    |       14 |        2 |     86% |     44-45 |
 | ice\_station\_zebra/models/encoders/cnn\_encoder.py                     |       20 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/naive\_linear\_encoder.py           |       14 |        0 |    100% |           |
 | ice\_station\_zebra/models/persistence.py                               |       16 |        0 |    100% |           |

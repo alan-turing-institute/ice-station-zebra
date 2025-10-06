@@ -64,8 +64,8 @@
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="z_99eb59eef2d5f9c8___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.6">coverage.py v7.10.6</a>,
-            created at 2025-10-02 13:37 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.7">coverage.py v7.10.7</a>,
+            created at 2025-10-06 10:13 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -162,20 +162,24 @@
     <p class="pln"><span class="n"><a id="t80" href="#t80">80</a></span><span class="t"><span class="str">        """</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t81" href="#t81">81</a></span><span class="t">        <span class="com"># Encode inputs into latent space: list of tensors with (batch_size, n_history_steps, n_latent_channels, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t82" href="#t82">82</a></span><span class="t">        <span class="nam">latent_inputs</span><span class="op">:</span> <span class="nam">list</span><span class="op">[</span><span class="nam">TensorNTCHW</span><span class="op">]</span> <span class="op">=</span> <span class="op">[</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t83" href="#t83">83</a></span><span class="t">            <span class="nam">encoder</span><span class="op">(</span><span class="nam">inputs</span><span class="op">[</span><span class="nam">encoder</span><span class="op">.</span><span class="nam">name</span><span class="op">]</span><span class="op">)</span> <span class="key">for</span> <span class="nam">encoder</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">encoders</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t83" href="#t83">83</a></span><span class="t">            <span class="nam">encoder</span><span class="op">.</span><span class="nam">rollout</span><span class="op">(</span><span class="nam">inputs</span><span class="op">[</span><span class="nam">encoder</span><span class="op">.</span><span class="nam">name</span><span class="op">]</span><span class="op">)</span> <span class="key">for</span> <span class="nam">encoder</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">encoders</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t84" href="#t84">84</a></span><span class="t">        <span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t85" href="#t85">85</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">        <span class="com"># Combine in the variable dimension: tensor with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">        <span class="nam">latent_input_combined</span><span class="op">:</span> <span class="nam">TensorNTCHW</span> <span class="op">=</span> <span class="nam">torch</span><span class="op">.</span><span class="nam">cat</span><span class="op">(</span><span class="nam">latent_inputs</span><span class="op">,</span> <span class="nam">dim</span><span class="op">=</span><span class="num">2</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t">        <span class="com"># Process in latent space: tensor with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t90" href="#t90">90</a></span><span class="t">        <span class="nam">latent_output</span><span class="op">:</span> <span class="nam">TensorNTCHW</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">processor</span><span class="op">(</span><span class="nam">latent_input_combined</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t91" href="#t91">91</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t92" href="#t92">92</a></span><span class="t">        <span class="com"># Decode to output space: tensor with (batch_size, n_forecast_steps, n_output_channels, output_height, output_width)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t93" href="#t93">93</a></span><span class="t">        <span class="nam">output</span><span class="op">:</span> <span class="nam">TensorNTCHW</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">decoder</span><span class="op">(</span><span class="nam">latent_output</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t94" href="#t94">94</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t95" href="#t95">95</a></span><span class="t">        <span class="com"># Return</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">        <span class="key">return</span> <span class="nam">output</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t">        <span class="com"># Process in latent space:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t90" href="#t90">90</a></span><span class="t">        <span class="com"># combined input tensor with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t91" href="#t91">91</a></span><span class="t">        <span class="com"># target tensor with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width) or None</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t92" href="#t92">92</a></span><span class="t">        <span class="nam">latent_output</span><span class="op">:</span> <span class="nam">TensorNTCHW</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">processor</span><span class="op">.</span><span class="nam">rollout</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t93" href="#t93">93</a></span><span class="t">            <span class="nam">latent_input_combined</span><span class="op">,</span> <span class="nam">inputs</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">"target"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t94" href="#t94">94</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t95" href="#t95">95</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">        <span class="com"># Decode to output space: tensor with (batch_size, n_forecast_steps, n_output_channels, output_height, output_width)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">        <span class="nam">output</span><span class="op">:</span> <span class="nam">TensorNTCHW</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">decoder</span><span class="op">.</span><span class="nam">rollout</span><span class="op">(</span><span class="nam">latent_output</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t98" href="#t98">98</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">        <span class="com"># Return</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t100" href="#t100">100</a></span><span class="t">        <span class="key">return</span> <span class="nam">output</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -184,8 +188,8 @@
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a class="nav" href="z_99eb59eef2d5f9c8___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.6">coverage.py v7.10.6</a>,
-            created at 2025-10-02 13:37 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.7">coverage.py v7.10.7</a>,
+            created at 2025-10-06 10:13 +0000
         </p>
     </div>
 </footer>

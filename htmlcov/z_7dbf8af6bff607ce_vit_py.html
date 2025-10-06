@@ -64,8 +64,8 @@
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="z_69989ddd4b7b5738_zebra_model_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.6">coverage.py v7.10.6</a>,
-            created at 2025-10-02 13:37 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.7">coverage.py v7.10.7</a>,
+            created at 2025-10-06 10:13 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -145,14 +145,14 @@
     <p class="mis mis2 show_mis"><span class="n"><a id="t63" href="#t63">63</a></span><span class="t">            <span class="nam">nn</span><span class="op">.</span><span class="nam">Linear</span><span class="op">(</span><span class="nam">emb_dim</span><span class="op">,</span> <span class="nam">patch_size</span> <span class="op">*</span> <span class="nam">patch_size</span> <span class="op">*</span> <span class="nam">self</span><span class="op">.</span><span class="nam">out_channels</span><span class="op">)</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis mis2 show_mis"><span class="n"><a id="t64" href="#t64">64</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t65" href="#t65">65</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t66" href="#t66">66</a></span><span class="t">    <span class="key">def</span> <span class="nam">rollout</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">x</span><span class="op">:</span> <span class="nam">TensorNCHW</span><span class="op">)</span> <span class="op">-></span> <span class="nam">TensorNCHW</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t67" href="#t67">67</a></span><span class="t">        <span class="str">"""Forward pass through the ViT model for sea ice forecasting before decoder.</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t66" href="#t66">66</a></span><span class="t">    <span class="key">def</span> <span class="nam">forward</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">x</span><span class="op">:</span> <span class="nam">TensorNCHW</span><span class="op">)</span> <span class="op">-></span> <span class="nam">TensorNCHW</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t67" href="#t67">67</a></span><span class="t">        <span class="str">"""Forward pass through the ViT model for a single timestep.</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t68" href="#t68">68</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t69" href="#t69">69</a></span><span class="t"><span class="str">        Args:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t"><span class="str">            x (torch.Tensor): Input tensor of shape [B, C, H, W]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t"><span class="str">            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t"><span class="str">        Returns:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t"><span class="str">            torch.Tensor: Output tensor of shape [B, C, H, W]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t"><span class="str">            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t"><span class="str">        """</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">        <span class="nam">batch</span><span class="op">,</span> <span class="nam">_</span><span class="op">,</span> <span class="nam">height</span><span class="op">,</span> <span class="nam">_</span> <span class="op">=</span> <span class="nam">x</span><span class="op">.</span><span class="nam">shape</span>&nbsp;</span><span class="r"></span></p>
@@ -174,13 +174,11 @@
     <p class="mis mis2 show_mis"><span class="n"><a id="t92" href="#t92">92</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">patch_size</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis mis2 show_mis"><span class="n"><a id="t93" href="#t93">93</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">patch_size</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis mis2 show_mis"><span class="n"><a id="t94" href="#t94">94</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t95" href="#t95">95</a></span><span class="t">        <span class="nam">x</span> <span class="op">=</span> <span class="nam">x</span><span class="op">.</span><span class="nam">permute</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">            <span class="num">0</span><span class="op">,</span> <span class="num">3</span><span class="op">,</span> <span class="num">1</span><span class="op">,</span> <span class="num">4</span><span class="op">,</span> <span class="num">2</span><span class="op">,</span> <span class="num">5</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">        <span class="op">)</span>  <span class="com"># (batch, out_channels, h_patches, patch_size, w_patches, patch_size)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t98" href="#t98">98</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">        <span class="key">return</span> <span class="nam">x</span><span class="op">.</span><span class="nam">reshape</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t100" href="#t100">100</a></span><span class="t">            <span class="nam">batch</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">out_channels</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">img_size</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">img_size</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t101" href="#t101">101</a></span><span class="t">        <span class="op">)</span>  <span class="com"># (B, C, H, W)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t95" href="#t95">95</a></span><span class="t">        <span class="com"># Shape is batch, out_channels, h_patches, patch_size, w_patches, patch_size</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">        <span class="nam">x</span> <span class="op">=</span> <span class="nam">x</span><span class="op">.</span><span class="nam">permute</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="num">3</span><span class="op">,</span> <span class="num">1</span><span class="op">,</span> <span class="num">4</span><span class="op">,</span> <span class="num">2</span><span class="op">,</span> <span class="num">5</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t98" href="#t98">98</a></span><span class="t">        <span class="com"># Shape is batch, out_channels, height, width</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">        <span class="key">return</span> <span class="nam">x</span><span class="op">.</span><span class="nam">reshape</span><span class="op">(</span><span class="nam">batch</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">out_channels</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">img_size</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">img_size</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -189,8 +187,8 @@
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a class="nav" href="z_69989ddd4b7b5738_zebra_model_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.6">coverage.py v7.10.6</a>,
-            created at 2025-10-02 13:37 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.10.7">coverage.py v7.10.7</a>,
+            created at 2025-10-06 10:13 +0000
         </p>
     </div>
 </footer>

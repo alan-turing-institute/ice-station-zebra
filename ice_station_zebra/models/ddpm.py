@@ -7,9 +7,8 @@ from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 from ice_station_zebra.types import TensorNCHW
 
-from .zebra_model import ZebraModel
-
 from .losses import WeightedMSELoss
+from .zebra_model import ZebraModel
 
 
 class DDPMProcessor(ZebraModel):
@@ -43,8 +42,12 @@ class DDPMProcessor(ZebraModel):
         self.n_output_classes = model.n_output_classes
 
         metrics = {
-            "val_accuracy": IceNetAccuracy(leadtimes_to_evaluate=list(range(self.model.n_forecast_days))),
-            "val_sieerror": SIEError(leadtimes_to_evaluate=list(range(self.model.n_forecast_days)))
+            "val_accuracy": IceNetAccuracy(
+                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+            ),
+            "val_sieerror": SIEError(
+                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+            ),
         }
         for i in range(self.model.n_forecast_days):
             metrics[f"val_accuracy_{i}"] = IceNetAccuracy(leadtimes_to_evaluate=[i])
@@ -52,11 +55,17 @@ class DDPMProcessor(ZebraModel):
         self.metrics = MetricCollection(metrics)
 
         test_metrics = {
-            "test_accuracy": IceNetAccuracy(leadtimes_to_evaluate=list(range(self.model.n_forecast_days))),
-            "test_sieerror": SIEError(leadtimes_to_evaluate=list(range(self.model.n_forecast_days)))
+            "test_accuracy": IceNetAccuracy(
+                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+            ),
+            "test_sieerror": SIEError(
+                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+            ),
         }
         for i in range(self.model.n_forecast_days):
-            test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(leadtimes_to_evaluate=[i])
+            test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(
+                leadtimes_to_evaluate=[i]
+            )
             test_metrics[f"test_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.test_metrics = MetricCollection(test_metrics)
 
@@ -117,7 +126,6 @@ class DDPMProcessor(ZebraModel):
         sample_weight = getattr(self, "sample_weight", torch.ones_like(prediction))
         return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
 
-    # def training_step(self, batch):
     def training_step(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """One training step using DDPM loss (predicted noise vs. true noise).
 
@@ -132,11 +140,13 @@ class DDPMProcessor(ZebraModel):
 
         """
         # x, y, sample_weight = batch
-        
+
         # Extract components
         x = batch["inputs"]
-        y = batch["target"].squeeze(-1) 
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))  # default if not provided
+        y = batch["target"].squeeze(-1)
+        sample_weight = batch.get(
+            "sample_weight", torch.ones_like(y)
+        )  # default if not provided
 
         y = y.squeeze(-1)
 
@@ -172,7 +182,6 @@ class DDPMProcessor(ZebraModel):
         )
         return {"loss": loss}
 
-    # def validation_step(self, batch):
     def validation_step(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """One validation step using the specified loss function defined in the criterion.
 
@@ -186,13 +195,13 @@ class DDPMProcessor(ZebraModel):
             dict: {"val_loss": loss}
 
         """
-        # x, y, sample_weight = batch
-        
         # Extract components
         x = batch["inputs"]
-        y = batch["target"].squeeze(-1) 
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))  # default if not provided
-        
+        y = batch["target"].squeeze(-1)
+        sample_weight = batch.get(
+            "sample_weight", torch.ones_like(y)
+        )  # default if not provided
+
         y = y.squeeze(-1)  # Removes the last dimension (size 1)
 
         # Generate samples (returns [-1, 1] range)
@@ -217,8 +226,9 @@ class DDPMProcessor(ZebraModel):
         self.metrics.update(y_hat, y, sample_weight)
         return {"val_loss": loss}
 
-    # def test_step(self, batch, batch_idx):
-    def test_step(self, batch: dict[str, TensorNTCHW], _batch_idx: int) -> ModelTestOutput:
+    def test_step(
+        self, batch: dict[str, TensorNTCHW], _batch_idx: int
+    ) -> ModelTestOutput:
         """One test step using the specified loss function and full metric evaluation.
 
         Args:
@@ -229,12 +239,10 @@ class DDPMProcessor(ZebraModel):
             torch.Tensor: Loss value.
 
         """
-        # x, y, sample_weight = batch
-
         x = batch["inputs"]
         y = batch["target"].squeeze(-1)
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
-        
+
         y = y.squeeze(-1)
 
         outputs = self.sample(x, sample_weight)
@@ -252,13 +260,10 @@ class DDPMProcessor(ZebraModel):
             prog_bar=True,
             sync_dist=True,
         )
-        # self.test_metrics.update(y_hat, y, sample_weight)
-
-        if hasattr(self, "test_metrics"):
-            self.test_metrics.update(y_hat, y, sample_weight)
+        
+        self.test_metrics.update(y_hat, y, sample_weight)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)
-        # return loss
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         """Perform prediction on a single batch.
@@ -277,7 +282,7 @@ class DDPMProcessor(ZebraModel):
         x = batch["inputs"]
         y = batch["target"].squeeze(-1)
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
-    
+
         y = y.squeeze(-1)  # Removes the last dimension (size 1)
 
         outputs = self.sample(x, sample_weight)

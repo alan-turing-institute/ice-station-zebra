@@ -65,6 +65,19 @@ def cfg_processor() -> DictConfig:
     return DictConfig({"_target_": "ice_station_zebra.models.processors.NullProcessor"})
 
 
+@pytest.fixture
+def cfg_scheduler() -> DictConfig:
+    """Test configuration for a scheduler."""
+    return DictConfig(
+        {
+            "_target_": "torch.optim.lr_scheduler.LinearLR",
+            "frequency": 1,
+            "interval": "epoch",
+            "scheduler_parameters": {"start_factor": 0.2, "end_factor": 0.8},
+        }
+    )
+
+
 @pytest.fixture(scope="session")
 def mock_data() -> dict[str, dict[str, Any]]:
     """Fixture to create a mock dataset for testing."""

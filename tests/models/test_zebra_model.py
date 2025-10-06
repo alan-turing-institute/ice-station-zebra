@@ -63,6 +63,7 @@ class TestZebraModel:
                     n_history_steps=test_n_history_steps,
                     output_space=output_space,
                     optimizer=DictConfig({}),
+                    scheduler=DictConfig({}),
                 )
             return
 
@@ -78,6 +79,7 @@ class TestZebraModel:
                     n_history_steps=test_n_history_steps,
                     output_space=output_space,
                     optimizer=DictConfig({}),
+                    scheduler=DictConfig({}),
                 )
             return
 
@@ -88,6 +90,7 @@ class TestZebraModel:
             n_history_steps=test_n_history_steps,
             output_space=output_space,
             optimizer=DictConfig({}),
+            scheduler=DictConfig({}),
         )
 
         assert model.name == "dummy"
@@ -110,6 +113,7 @@ class TestZebraModel:
             n_history_steps=1,
             output_space=cfg_output_space,
             optimizer=DictConfig({}),
+            scheduler=DictConfig({}),
         )
         # Test loss
         prediction = torch.zeros(1, 1, 1, 1)
@@ -129,17 +133,47 @@ class TestZebraModel:
             n_history_steps=1,
             output_space=cfg_output_space,
             optimizer=cfg_optimizer,
+            scheduler=DictConfig({}),
         )
-        optimizer = model.configure_optimizers()
+        opt_sched_cfg = model.configure_optimizers()
+        assert isinstance(opt_sched_cfg, dict)
+        optimizer = opt_sched_cfg.get("optimizer", None)
         assert isinstance(optimizer, torch.optim.Optimizer)
         assert isinstance(optimizer, torch.optim.AdamW)
         assert optimizer.defaults["lr"] == 5e-4
+
+    def test_scheduler(
+        self,
+        cfg_input_space: DictConfig,
+        cfg_optimizer: DictConfig,
+        cfg_output_space: DictConfig,
+        cfg_scheduler: DictConfig,
+    ) -> None:
+        model = DummyModel(
+            name="dummy",
+            input_spaces=[cfg_input_space],
+            n_forecast_steps=1,
+            n_history_steps=1,
+            output_space=cfg_output_space,
+            optimizer=cfg_optimizer,
+            scheduler=cfg_scheduler,
+        )
+        opt_sched_cfg = model.configure_optimizers()
+        assert isinstance(opt_sched_cfg, dict)
+        lr_scheduler_cfg = opt_sched_cfg.get("lr_scheduler", None)
+        assert isinstance(lr_scheduler_cfg, dict)
+        scheduler = lr_scheduler_cfg.get("scheduler", None)
+        assert isinstance(scheduler, torch.optim.lr_scheduler.LRScheduler)
+        assert isinstance(scheduler, torch.optim.lr_scheduler.LinearLR)
+        assert scheduler.start_factor == 0.2
+        assert scheduler.end_factor == 0.8
 
     def test_test_step(
         self,
         cfg_input_space: DictConfig,
         cfg_output_space: DictConfig,
         cfg_optimizer: DictConfig,
+        cfg_scheduler: DictConfig,
     ) -> None:
         batch_size = n_history_steps = n_forecast_steps = 1
         batch = {
@@ -165,6 +199,7 @@ class TestZebraModel:
             n_history_steps=n_history_steps,
             output_space=cfg_output_space,
             optimizer=cfg_optimizer,
+            scheduler=cfg_scheduler,
         )
         output_shape = batch["target"].shape
         output = model.test_step(batch, 0)
@@ -178,6 +213,7 @@ class TestZebraModel:
         cfg_input_space: DictConfig,
         cfg_output_space: DictConfig,
         cfg_optimizer: DictConfig,
+        cfg_scheduler: DictConfig,
     ) -> None:
         batch_size = n_history_steps = n_forecast_steps = 1
         batch = {
@@ -203,6 +239,7 @@ class TestZebraModel:
             n_history_steps=n_history_steps,
             output_space=cfg_output_space,
             optimizer=cfg_optimizer,
+            scheduler=cfg_scheduler,
         )
         output = model.training_step(batch, 0)
         assert isinstance(output, torch.Tensor)
@@ -213,6 +250,7 @@ class TestZebraModel:
         cfg_input_space: DictConfig,
         cfg_output_space: DictConfig,
         cfg_optimizer: DictConfig,
+        cfg_scheduler: DictConfig,
     ) -> None:
         batch_size = n_history_steps = n_forecast_steps = 1
         batch = {
@@ -238,6 +276,7 @@ class TestZebraModel:
             n_history_steps=n_history_steps,
             output_space=cfg_output_space,
             optimizer=cfg_optimizer,
+            scheduler=cfg_scheduler,
         )
         output = model.validation_step(batch, 0)
         assert isinstance(output, torch.Tensor)

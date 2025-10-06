@@ -23,5 +23,9 @@ class ResizingInterpolation(nn.Module):
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         return nn.functional.interpolate(
-            x, size=self.output_shape, mode="bilinear", align_corners=True
+            x,
+            size=self.output_shape,
+            mode="bilinear",
+            align_corners=True,
+            antialias=True,
         )

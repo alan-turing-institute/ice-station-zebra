@@ -1,0 +1,3 @@
+_target_: ice_station_zebra.models.ddpm
+
+name: ddpm

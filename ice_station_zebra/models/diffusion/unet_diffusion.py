@@ -75,7 +75,8 @@ class UNetDiffusion(nn.Module):
 
         # Encoder
         self.conv1 = CommonConvBlock(
-            in_channels=input_channels + output_channels, #input_channels (n_input_days * n_input_channels), output_channels (n_output_classes * n_forecast_days)
+            in_channels=input_channels
+            + output_channels,  # input_channels (n_input_days * n_input_channels), output_channels (n_output_classes * n_forecast_days)
             out_channels=channels[0],
             kernel_size=kernel_size,
             norm_type=normalization,

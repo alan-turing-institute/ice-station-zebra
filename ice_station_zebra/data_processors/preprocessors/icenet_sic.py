@@ -79,8 +79,9 @@ class IceNetSICPreprocessor(IPreprocessor):
             / "siconca"
         )
         last_filepath: None | Path = None
+        ftp_client = FTP("osisaf.met.no", "anonymous")  # noqa: S321
         for mask_month in range(1, 13):
-            ftp = FTP("osisaf.met.no", "anonymous")  # noqa: S321
+            # Create the directory we will download to
             filename_stem = f"ice_conc_{'nh' if self.is_north else 'sh'}_ease2-250_cdr-v2p0_{mask_year:04d}{mask_month:02d}"
             local_filepath = (
                 mask_base_path
@@ -92,7 +93,9 @@ class IceNetSICPreprocessor(IPreprocessor):
             # Try to change to the directory for this month, copying the last month if
             # it does not exist
             try:
-                ftp.cwd(f"reprocessed/ice/conc/v2p0/{mask_year:04d}/{mask_month:02d}")
+                ftp_client.cwd(
+                    f"reprocessed/ice/conc/v2p0/{mask_year:04d}/{mask_month:02d}"
+                )
             except error_perm as e:
                 if last_filepath is None:
                     msg = f"No mask found for {mask_year}-{mask_month}, and no previous month to copy from."
@@ -110,7 +113,7 @@ class IceNetSICPreprocessor(IPreprocessor):
                     with local_filepath.open("wb") as fp:
                         try:
                             remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
-                            ftp.retrbinary(f"RETR {remote_filename}", fp.write)
+                            ftp_client.retrbinary(f"RETR {remote_filename}", fp.write)
                             logger.info(
                                 "Using mask from day %s for %02d-%02d.",
                                 mask_day,

@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from ftplib import FTP, error_perm
 from pathlib import Path
 
@@ -43,11 +44,11 @@ class IceNetSICPreprocessor(IPreprocessor):
             # Generate polar masks: note that only 1979-2015 are available
             masks = Masks(north=self.is_north, south=self.is_south)
             mask_year = max(1979, min(year, 2015))
-            logger.info("Generating polar masks for %s.", mask_year)
+            logger.info("Downloading polar masks for %04d.", mask_year)
             self.pre_download_masks(mask_year, icenet_path)
             masks.generate(year=mask_year)
 
-            logger.info("Downloading %04d sea ice concentration data.", year)
+            logger.info("Downloading sea ice concentration data for %04d.", year)
             sic = SICDownloader(
                 dates=[
                     pd.to_datetime(date).date()
@@ -77,25 +78,38 @@ class IceNetSICPreprocessor(IPreprocessor):
             / ("north" if self.is_north else "south")
             / "siconca"
         )
+        last_filepath = None
         for mask_month in range(1, 13):
             ftp = FTP("osisaf.met.no", "anonymous")  # noqa: S321
-            ftp.cwd(f"reprocessed/ice/conc/v2p0/{mask_year:04d}/{mask_month:02d}")
             filename_stem = f"ice_conc_{'nh' if self.is_north else 'sh'}_ease2-250_cdr-v2p0_{mask_year:04d}{mask_month:02d}"
-            local_filename = (
+            local_filepath = (
                 mask_base_path
                 / f"{mask_year:04d}"
                 / f"{mask_month:02d}"
                 / f"{filename_stem}021200.nc"
             )
-            local_filename.parent.mkdir(parents=True, exist_ok=True)
+            local_filepath.parent.mkdir(parents=True, exist_ok=True)
+            # Try to change to the directory for this month, copying the last month if
+            # it does not exist
+            try:
+                ftp.cwd(f"reprocessed/ice/conc/v2p0/{mask_year:04d}/{mask_month:02d}")
+            except error_perm:
+                logger.warning(
+                    "No mask found for %02d-%02d, using previous month.",
+                    mask_year,
+                    mask_month,
+                )
+                shutil.copyfile(last_filepath, local_filepath)
+                continue
+            # Try to download for each day of the month until we find one that exists
             for mask_day in range(1, 29):
-                if not (local_filename.is_file() and local_filename.stat().st_size):
-                    with local_filename.open("wb") as fp:
+                if not (local_filepath.is_file() and local_filepath.stat().st_size):
+                    with local_filepath.open("wb") as fp:
                         try:
                             remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
                             ftp.retrbinary(f"RETR {remote_filename}", fp.write)
                             logger.info(
-                                "Using masks from day %s for %02d-%02d.",
+                                "Using mask from day %s for %02d-%02d.",
                                 mask_day,
                                 mask_year,
                                 mask_month,
@@ -107,3 +121,5 @@ class IceNetSICPreprocessor(IPreprocessor):
                                 mask_year,
                                 mask_month,
                             )
+                else:
+                    last_filepath = local_filepath

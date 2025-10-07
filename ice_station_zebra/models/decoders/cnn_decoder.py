@@ -3,7 +3,11 @@ from typing import Any
 
 from torch import nn
 
-from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
+from ice_station_zebra.models.common import (
+    ConvBlockUpsample,
+    ResizingInterpolation,
+    ResizingShuffle,
+)
 from ice_station_zebra.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -51,7 +55,7 @@ class CNNDecoder(BaseDecoder):
         # Calculate the smallest input shape that would produce an output at least as
         # large as the desired output shape. Note that this may not be exact, since we
         # double the size at each layer.
-        minimal_input_shape = (
+        preferred_input_shape = (
             -(self.data_space_out.shape[0] // -layer_factor),
             -(self.data_space_out.shape[1] // -layer_factor),
         )
@@ -60,23 +64,26 @@ class CNNDecoder(BaseDecoder):
         layers: list[nn.Module] = []
         logger.debug("CNNDecoder (%s) with %d layers", self.name, n_layers)
 
-        # If necessary, resize until we reach the minimal input shape. This ensures that
-        # the post-convolution shape will be at least as large as the desired output
-        # shape so any further resizing will be a size decrease.
-        shape = (
-            max(minimal_input_shape[0], self.data_space_in.shape[0]),
-            max(minimal_input_shape[1], self.data_space_in.shape[1]),
-        )
-        if shape != self.data_space_in.shape:
-            layers.append(ResizingInterpolation(shape))
+        # Resize the input to the preferred shape
+        n_channels = self.data_space_in.channels
+        if preferred_input_shape != self.data_space_in.shape:
+            shuffle = ResizingShuffle(
+                self.data_space_in.channels,
+                self.data_space_in.shape,
+                preferred_input_shape,
+            )
+            layers.append(shuffle)
+            shape = preferred_input_shape
+            n_channels = shuffle.output_channels
             logger.debug(
-                "- ResizingInterpolation from %s to %s",
+                "- ResizingShuffle from %s to %s and from %d to %d channels",
                 self.data_space_in.shape,
                 shape,
+                self.data_space_in.channels,
+                n_channels,
             )
 
         # Add n_layers size-increasing convolutional blocks
-        n_channels = self.data_space_in.channels
         for _ in range(n_layers):
             layers.append(
                 ConvBlockUpsample(

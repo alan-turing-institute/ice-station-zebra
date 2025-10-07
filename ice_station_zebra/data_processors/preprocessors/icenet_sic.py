@@ -35,6 +35,7 @@ class IceNetSICPreprocessor(IPreprocessor):
         icenet_path.mkdir(parents=True, exist_ok=True)
         current_directory = Path.cwd()
         os.chdir(icenet_path)
+        logger.info("OSISAF SIC data will be downloaded to %s.", icenet_path)
 
         # Treat each year separately
         for year in sorted({date.year for date in self.date_range}):
@@ -46,7 +47,7 @@ class IceNetSICPreprocessor(IPreprocessor):
             self.pre_download_masks(mask_year, icenet_path)
             masks.generate(year=mask_year)
 
-            logger.info("Downloading sea ice concentration data to %s.", icenet_path)
+            logger.info("Downloading %04d sea ice concentration data.", year)
             sic = SICDownloader(
                 dates=[
                     pd.to_datetime(date).date()
@@ -94,14 +95,14 @@ class IceNetSICPreprocessor(IPreprocessor):
                             remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
                             ftp.retrbinary(f"RETR {remote_filename}", fp.write)
                             logger.info(
-                                "Using masks from day %s for %s-%s.",
+                                "Using masks from day %s for %02d-%02d.",
                                 mask_day,
                                 mask_year,
                                 mask_month,
                             )
                         except error_perm:
                             logger.warning(
-                                "Mask for day %s does not exist for %s-%s.",
+                                "Mask for day %s does not exist for %02d-%02d.",
                                 mask_day,
                                 mask_year,
                                 mask_month,

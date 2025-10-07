@@ -1,6 +1,5 @@
 import logging
 import os
-from contextlib import suppress
 from ftplib import FTP, error_perm
 from pathlib import Path
 
@@ -90,12 +89,20 @@ class IceNetSICPreprocessor(IPreprocessor):
             local_filename.parent.mkdir(parents=True, exist_ok=True)
             for mask_day in range(1, 29):
                 if not (local_filename.is_file() and local_filename.stat().st_size):
-                    remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
-                    with suppress(error_perm), local_filename.open("wb") as fp:
-                        ftp.retrbinary(f"RETR {remote_filename}", fp.write)
-                        logger.info(
-                            "Using masks from day %s for %s-%s.",
-                            mask_day,
-                            mask_year,
-                            mask_month,
-                        )
+                    with local_filename.open("wb") as fp:
+                        try:
+                            remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
+                            ftp.retrbinary(f"RETR {remote_filename}", fp.write)
+                            logger.info(
+                                "Using masks from day %s for %s-%s.",
+                                mask_day,
+                                mask_year,
+                                mask_month,
+                            )
+                        except error_perm:
+                            logger.warning(
+                                "Mask for day %s does not exist for %s-%s.",
+                                mask_day,
+                                mask_year,
+                                mask_month,
+                            )

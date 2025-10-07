@@ -25,6 +25,7 @@ class BaseDecoder(nn.Module):
         self.data_space_in = data_space_in
         self.data_space_out = data_space_out
         self.n_forecast_steps = n_forecast_steps
+        self.name = data_space_out.name
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: decode latent space into output space for a single timestep.

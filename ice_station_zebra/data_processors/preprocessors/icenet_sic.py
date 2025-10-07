@@ -78,7 +78,7 @@ class IceNetSICPreprocessor(IPreprocessor):
             / ("north" if self.is_north else "south")
             / "siconca"
         )
-        last_filepath = None
+        last_filepath: None | Path = None
         for mask_month in range(1, 13):
             ftp = FTP("osisaf.met.no", "anonymous")  # noqa: S321
             filename_stem = f"ice_conc_{'nh' if self.is_north else 'sh'}_ease2-250_cdr-v2p0_{mask_year:04d}{mask_month:02d}"
@@ -93,7 +93,10 @@ class IceNetSICPreprocessor(IPreprocessor):
             # it does not exist
             try:
                 ftp.cwd(f"reprocessed/ice/conc/v2p0/{mask_year:04d}/{mask_month:02d}")
-            except error_perm:
+            except error_perm as e:
+                if last_filepath is None:
+                    msg = f"No mask found for {mask_year}-{mask_month}, and no previous month to copy from."
+                    raise RuntimeError(msg) from e
                 logger.warning(
                     "No mask found for %02d-%02d, using previous month.",
                     mask_year,

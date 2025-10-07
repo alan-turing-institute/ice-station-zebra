@@ -35,23 +35,29 @@ class IceNetSICPreprocessor(IPreprocessor):
         current_directory = Path.cwd()
         os.chdir(icenet_path)
 
-        # Generate polar masks: note that only 1979-2015 are available
-        masks = Masks(north=self.is_north, south=self.is_south)
-        mask_year = max(max(1979, min(date.year, 2015)) for date in self.date_range)
-        logger.info("Generating polar masks for %s.", mask_year)
-        masks.generate(year=mask_year)
+        # Treat each year separately
+        for year in sorted({date.year for date in self.date_range}):
+            logger.info("Preparing to download data for %s.", year)
 
-        logger.info("Downloading sea ice concentration data to %s.", icenet_path)
-        sic = SICDownloader(
-            dates=[
-                pd.to_datetime(date).date() for date in self.date_range
-            ],  # Dates to download SIC data for
-            delete_tempfiles=True,  # Delete temporary downloaded files after use
-            north=self.is_north,  # Use mask for the Northern Hemisphere (set to True if needed)
-            south=self.is_south,  # Use mask for the Southern Hemisphere
-            parallel_opens=False,  # Concatenation is not working correctly with dask
-        )
-        sic.download()
+            # Generate polar masks: note that only 1979-2015 are available
+            masks = Masks(north=self.is_north, south=self.is_south)
+            mask_year = max(1979, min(year, 2015))
+            logger.info("Generating polar masks for %s.", mask_year)
+            masks.generate(year=mask_year)
+
+            logger.info("Downloading sea ice concentration data to %s.", icenet_path)
+            sic = SICDownloader(
+                dates=[
+                    pd.to_datetime(date).date()
+                    for date in self.date_range
+                    if date.year == year
+                ],  # Dates to download SIC data for
+                delete_tempfiles=True,  # Delete temporary downloaded files after use
+                north=self.is_north,  # Use mask for the Northern Hemisphere (set to True if needed)
+                south=self.is_south,  # Use mask for the Southern Hemisphere
+                parallel_opens=False,  # Concatenation is not working correctly with dask
+            )
+            sic.download()
 
         # Change back to the original directory
         os.chdir(current_directory)

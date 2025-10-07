@@ -89,7 +89,7 @@ class IceNetSICPreprocessor(IPreprocessor):
             )
             local_filename.parent.mkdir(parents=True, exist_ok=True)
             for mask_day in range(1, 29):
-                if not local_filename.stat().st_size:
+                if not (local_filename.is_file() and local_filename.stat().st_size):
                     remote_filename = f"{filename_stem}{mask_day:02d}1200.nc"
                     with suppress(error_perm), local_filename.open("wb") as fp:
                         ftp.retrbinary(f"RETR {remote_filename}", fp.write)

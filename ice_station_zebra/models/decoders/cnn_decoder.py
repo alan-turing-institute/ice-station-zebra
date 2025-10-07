@@ -48,8 +48,9 @@ class CNNDecoder(BaseDecoder):
             )
             raise ValueError(msg)
 
-        # Calculate the minimal input shape to produce at least the desired output shape
-        # N.B. dividing by a negative integer performs a ceiling division
+        # Calculate the smallest input shape that would produce an output at least as
+        # large as the desired output shape. Note that this may not be exact, since we
+        # double the size at each layer.
         minimal_input_shape = (
             -(self.data_space_out.shape[0] // -layer_factor),
             -(self.data_space_out.shape[1] // -layer_factor),
@@ -59,8 +60,9 @@ class CNNDecoder(BaseDecoder):
         layers: list[nn.Module] = []
         logger.debug("CNNDecoder (%s) with %d layers", self.name, n_layers)
 
-        # If necessary, resize upwards until the post-convolution shape will be larger
-        # than or equal to the desired output shape.
+        # If necessary, resize until we reach the minimal input shape. This ensures that
+        # the post-convolution shape will be at least as large as the desired output
+        # shape so any further resizing will be a size decrease.
         shape = (
             max(minimal_input_shape[0], self.data_space_in.shape[0]),
             max(minimal_input_shape[1], self.data_space_in.shape[1]),
@@ -70,7 +72,7 @@ class CNNDecoder(BaseDecoder):
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 self.data_space_in.shape,
-                minimal_input_shape,
+                shape,
             )
 
         # Add n_layers size-increasing convolutional blocks

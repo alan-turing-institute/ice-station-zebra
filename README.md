@@ -24,7 +24,7 @@
 | ice\_station\_zebra/data\_processors/filters/\_\_init\_\_.py            |        5 |        1 |     80% |         8 |
 | ice\_station\_zebra/data\_processors/filters/doubling\_filter.py        |       11 |        4 |     64% |16-17, 21-22 |
 | ice\_station\_zebra/data\_processors/preprocessors/\_\_init\_\_.py      |        4 |        0 |    100% |           |
-| ice\_station\_zebra/data\_processors/preprocessors/icenet\_sic.py       |       30 |       16 |     47% |18-24, 28, 33-57 |
+| ice\_station\_zebra/data\_processors/preprocessors/icenet\_sic.py       |       63 |       46 |     27% |20-26, 30, 35-66, 74-131 |
 | ice\_station\_zebra/data\_processors/preprocessors/ipreprocessor.py     |        9 |        2 |     78% |     10-11 |
 | ice\_station\_zebra/data\_processors/preprocessors/null.py              |        5 |        1 |     80% |         9 |
 | ice\_station\_zebra/data\_processors/zebra\_data\_processor.py          |       33 |       18 |     45% |25-31, 35-45, 49-51, 60-61 |
@@ -79,7 +79,7 @@
 | ice\_station\_zebra/visualisations/layout.py                            |      158 |      132 |     16% |115-318, 338-347, 363-365, 379-381, 430-503, 536-553, 571-575, 610-626 |
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      102 |       90 |     12% |23-25, 45-53, 79-115, 152-190, 213-219, 239-245, 252-272, 279-289 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |       88 |       69 |     22% |82-121, 169-262, 307-409, 430, 446-447 |
-|                                                               **TOTAL** | **1838** |  **848** | **54%** |           |
+|                                                               **TOTAL** | **1871** |  **878** | **53%** |           |
 
 
 ## Setup coverage badge

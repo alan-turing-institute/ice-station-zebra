@@ -1,7 +1,7 @@
 import warnings
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import hydra
 import matplotlib as mpl
@@ -12,8 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
-
-from .test_dummy_arctic import make_circular_arctic
+from tests.conftest import make_varying_sic_stream
 
 mpl.use("Agg")
 
@@ -23,7 +22,6 @@ warnings.filterwarnings(
     "ignore",
     message="Animation was deleted without rendering anything",
     category=UserWarning,
-    module="matplotlib.animation",
 )
 
 TEST_DATE = date(2020, 1, 15)
@@ -59,8 +57,33 @@ def sic_pair_warning_2d() -> tuple[np.ndarray, np.ndarray, date]:
     return gt, pred, TEST_DATE
 
 
+class MakeCircularArctic(Protocol):
+    def __call__(
+        self,
+        height: int,
+        width: int,
+        *,
+        rng: np.random.Generator,
+        ring_width: int = ...,
+        noise: float = ...,
+    ) -> np.ndarray: ...
+
+
+def make_central_distance_grid(height: int, width: int) -> np.ndarray:
+    """Return per-pixel Euclidean distance from the image centre.
+
+    The centre is defined as ((H-1)/2, (W-1)/2) so that distances are symmetric
+    for even-sized grids.
+    """
+    cy, cx = (height - 1) / 2.0, (width - 1) / 2.0
+    yy, xx = np.meshgrid(np.arange(height), np.arange(width), indexing="ij")
+    return np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+
+
 @pytest.fixture
-def sic_pair_3d_stream() -> tuple[np.ndarray, np.ndarray, list[date]]:
+def sic_pair_3d_stream(
+    make_circular_arctic: MakeCircularArctic,
+) -> tuple[np.ndarray, np.ndarray, list[date]]:
     """Short 3D streams (time, height, width) and dates for animations.
 
     Shape (4, 48, 48), values in [0, 1]. Frames drift slightly over time
@@ -69,36 +92,28 @@ def sic_pair_3d_stream() -> tuple[np.ndarray, np.ndarray, list[date]]:
     rng = np.random.default_rng(100)
     timesteps, height, width = 4, 48, 48
 
-    groundtruth_frames = []
+    dist = make_central_distance_grid(height, width)
+
+    coastline_base_radius = min(height, width) * 0.25
+
+    # Generate ground truth stream using oscillating sea-ice radius.
+    ground_truth_stream = make_varying_sic_stream(
+        dist_grid=dist,
+        timesteps=timesteps,
+        base_radius=coastline_base_radius,
+        rng=rng,
+        ring_width=6.0,
+        noise_std=0.03,
+        radius_oscillation_amplitude=0.5,
+        radius_oscillation_frequency=0.7,
+    )
+
+    # Prediction: same circle shape as ground truth, but randomised ice distribution noise
     prediction_frames = []
-    cy, cx = (height - 1) / 2.0, (width - 1) / 2.0
-    yy, xx = np.meshgrid(np.arange(height), np.arange(width), indexing="ij")
-    dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
-
-    base_radius = min(height, width) * 0.25
-    for t in range(timesteps):
-        # Ground truth: small daily wiggle of the coastline
-        radius_t = base_radius + 0.5 * np.sin(0.7 * t)
-        d_outside_t = np.maximum(0.0, dist - radius_t)
-        groundtruth_t = np.exp(-(d_outside_t / 6.0)) + rng.normal(
-            0.0, 0.03, size=(height, width)
-        )
-        groundtruth_t = np.clip(groundtruth_t, 0.0, 1.0)
-        # Note: When land masking is implemented, uncomment the line below and remove the 0.0 line
-        # Sould be:groundtruth_t[dist < radius_t] = np.nan
-        groundtruth_t[dist < radius_t] = (
-            0.0  # Temporary: set land to 0 SIC to match current code behavior
-        )
-
-        # Prediction: same circle shape as ground truth, but different ice distribution noise
-        prediction_t = make_circular_arctic(
-            height, width, rng=rng, noise=0.08
-        )  # Different noise level
-
-        groundtruth_frames.append(groundtruth_t.astype(np.float32))
+    for _ in range(timesteps):
+        prediction_t = make_circular_arctic(height, width, rng=rng, noise=0.08)
         prediction_frames.append(prediction_t.astype(np.float32))
 
-    ground_truth_stream = np.stack(groundtruth_frames, axis=0)
     prediction_stream = np.stack(prediction_frames, axis=0)
     dates = [TEST_DATE + timedelta(days=int(d)) for d in range(timesteps)]
     return ground_truth_stream, prediction_stream, dates
@@ -180,9 +195,9 @@ def plotting_data(
     checkpoint_data: tuple[np.ndarray, np.ndarray, date] | None,
     sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
 ) -> tuple[np.ndarray, np.ndarray, date]:
-    """Choose between checkpoint data or dummy data for plotting tests.
+    """Choose between checkpoint data or fake data data for plotting tests.
 
-    Returns checkpoint data if available and --use-checkpoint is set, otherwise dummy data.
+    Returns checkpoint data if available and --use-checkpoint is set, otherwise fake data data.
     """
     if checkpoint_data is not None:
         return checkpoint_data
@@ -192,14 +207,14 @@ def plotting_data(
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add command-line options for plotting tests.
 
-    --use-checkpoint: prefer loading a model checkpoint instead of dummy data
+    --use-checkpoint: prefer loading a model checkpoint instead of fake data data
     --checkpoint-path: explicit path to a checkpoint (.ckpt)
     """
     parser.addoption(
         "--use-checkpoint",
         action="store_true",
         default=False,
-        help="Use a model checkpoint instead of dummy SIC arrays.",
+        help="Use a model checkpoint instead of fake data SIC arrays.",
     )
     parser.addoption(
         "--checkpoint-path",
@@ -211,7 +226,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 @pytest.fixture
 def use_checkpoint(pytestconfig: pytest.Config) -> bool:
-    """Whether tests should use a checkpoint instead of dummy data."""
+    """Whether tests should use a checkpoint instead of fake data data."""
     return bool(pytestconfig.getoption("--use-checkpoint"))
 
 

@@ -1,7 +1,8 @@
 import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
+import numpy as np
 import pytest
 import xarray as xr
 from anemoi.datasets.commands.create import Create
@@ -116,7 +117,7 @@ def mock_dataset(
 ) -> Path:
     """Fixture to create a mock file for testing."""
     # Use the mock data to create a NetCDF file
-    netcdf_path = tmpdir_factory.mktemp("data").join("dummy.nc")
+    netcdf_path = tmpdir_factory.mktemp("data").join("fake data.nc")
     xr.Dataset.from_dict(mock_data).to_netcdf(netcdf_path)
     config = DictConfig(
         {
@@ -133,7 +134,7 @@ def mock_dataset(
         }
     )
     # Create an Anemoi dataset from the NetCDF file
-    zarr_path = tmpdir_factory.mktemp("data").join("dummy.zarr")
+    zarr_path = tmpdir_factory.mktemp("data").join("fake data.zarr")
     Create().run(
         AnemoiCreateArgs(
             path=str(zarr_path),
@@ -142,3 +143,128 @@ def mock_dataset(
         )
     )
     return Path(str(zarr_path))
+
+
+class MakeCircularArctic(Protocol):
+    def __call__(
+        self,
+        height: int,
+        width: int,
+        *,
+        rng: np.random.Generator,
+        ring_width: int = ...,
+        noise: float = ...,
+    ) -> np.ndarray: ...
+
+
+class CircularArcticFactory:
+    """Callable factory for generating circular Arctic SIC maps.
+
+    Defaults are provided at construction, but can be overridden per-call.
+    Satisfies the `MakeCircularArctic` protocol.
+    """
+
+    def __init__(self, ring_width: int = 6, noise: float = 0.05) -> None:
+        """Initialise the factory with default parameters.
+
+        Args:
+            ring_width: Width of the ring.
+            noise: Noise level.
+
+        """
+        self.ring_width = ring_width
+        self.noise = noise
+
+    def __call__(
+        self,
+        height: int,
+        width: int,
+        *,
+        rng: np.random.Generator,
+        ring_width: int | None = None,
+        noise: float | None = None,
+    ) -> np.ndarray:
+        """Generate a circular Arctic SIC map.
+
+        Args:
+            height: Height of the map.
+            width: Width of the map.
+            rng: Random number generator.
+            ring_width: Width of the ring.
+            noise: Noise level.
+
+        """
+        # Resolve per-call overrides or fall back to defaults
+        effective_ring_width = self.ring_width if ring_width is None else ring_width
+        effective_noise = self.noise if noise is None else noise
+
+        # Create a grid of distances from the centre
+        cy, cx = (height - 1) / 2.0, (width - 1) / 2.0
+        yy, xx = np.meshgrid(np.arange(height), np.arange(width), indexing="ij")
+        dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+
+        # Choose a radius so the land takes most of the centre
+        radius = min(height, width) * 0.25
+
+        # Distance from the coastline (ring at the circle): 0 on the ring, >0 outside
+        d_outside = np.maximum(0.0, dist - radius)
+
+        # Ice strength: 1 at the ring, then smoothly falls to 0 with distance
+        falloff = np.exp(-(d_outside / max(1.0, float(effective_ring_width))))
+
+        # Add a tiny bit of texture so the ring looks less perfect
+        texture = rng.normal(0.0, effective_noise, size=(height, width))
+        sic = np.clip(falloff + texture, 0.0, 1.0)
+
+        # Land mask: everything strictly inside the circle is NaN (temporary: set to 0)
+        # Note: When land masking is implemented, set to np.nan instead of 0.0
+        sic[dist < radius] = 0.0
+        return sic.astype(np.float32)
+
+
+@pytest.fixture
+def make_circular_arctic() -> MakeCircularArctic:
+    """Return a callable that creates a simple circular Arctic SIC map.
+
+    Signature:
+        (height: int, width: int, *, rng: np.random.Generator, ring_width: int = 6, noise: float = 0.05) -> np.ndarray
+    """
+    return CircularArcticFactory()
+
+
+def make_varying_sic_stream(
+    *,
+    dist_grid: np.ndarray,
+    timesteps: int,
+    base_radius: float,
+    rng: np.random.Generator,
+    ring_width: float = 6.0,
+    noise_std: float = 0.03,
+    radius_oscillation_amplitude: float = 0.5,
+    radius_oscillation_frequency: float = 0.7,
+) -> np.ndarray:
+    """Vectorized [T, H, W] sea-ice concentration with oscillating coastline radius.
+
+    - Coastline radius varies sinusoidally over time about base_radius
+    - Concentration decays exponentially with distance outside the coastline
+    - Adds small Gaussian noise and masks land (inside radius) to 0.0
+    """
+    height, width = dist_grid.shape
+
+    t_idx = np.arange(timesteps, dtype=float)
+    radius_t = base_radius + radius_oscillation_amplitude * np.sin(
+        radius_oscillation_frequency * t_idx
+    )  # [T]
+
+    dist_b = dist_grid[None, :, :]  # [1,H,W]
+    radius_b = radius_t[:, None, None]  # [T,1,1]
+
+    outside = np.maximum(0.0, dist_b - radius_b)  # [T,H,W]
+    falloff = np.exp(-(outside / max(1.0, float(ring_width))))
+
+    noise = rng.normal(0.0, noise_std, size=(timesteps, height, width))
+    sic = np.clip(falloff + noise, 0.0, 1.0)
+
+    # Land mask: inside coastline set to 0.0 (temporary until NaN land masking)
+    sic[dist_b < radius_b] = 0.0
+    return sic.astype(np.float32)

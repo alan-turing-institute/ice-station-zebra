@@ -33,7 +33,7 @@ class TestBaseProcessor:
             NotImplementedError,
             match="If you are using the default forward method, you must implement rollout.",
         ):
-            processor(
+            processor.rollout(
                 torch.randn(
                     test_batch_size,
                     test_n_history_steps,
@@ -62,7 +62,7 @@ class TestNullProcessor:
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
         )
-        result: torch.Tensor = processor(
+        result: torch.Tensor = processor.rollout(
             torch.randn(
                 test_batch_size,
                 test_n_history_steps,
@@ -145,9 +145,9 @@ class TestUNetProcessor:
         if height % 16 or width % 16:
             msg = f"Latent space height and width must be divisible by 16 with a factor more than 1, got {height} and {width}."
             with pytest.raises(ValueError, match=msg):
-                processor(x)
+                processor.rollout(x)
         else:
-            result: torch.Tensor = processor(x)
+            result: torch.Tensor = processor.rollout(x)
             assert result.shape == (
                 test_batch_size,
                 test_n_forecast_steps,

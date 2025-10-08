@@ -34,8 +34,8 @@ class NaiveLinearEncoder(BaseEncoder):
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
-        """Single rollout step: encode NCHW input into NCHW latent space.
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
+        """Forward step: encode input space into latent space with a linear transform.
 
         Args:
             x: TensorNCHW with (batch_size, input_channels, input_height, input_width)

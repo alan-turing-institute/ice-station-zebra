@@ -12,7 +12,7 @@ from ice_station_zebra.visualisations.plotting_maps import (
     plot_maps,
     video_maps,
 )
-from ice_station_zebra.visualisations.sanity import compute_sanity_report
+from ice_station_zebra.visualisations.range_check import compute_range_check_report
 
 # Silence Matplotlib animation warning in this test module
 pytestmark = pytest.mark.filterwarnings(
@@ -47,9 +47,9 @@ def test_plot_maps_returns_image(
 def test_plot_maps_emits_warning_badge(
     sic_pair_warning_2d: tuple[np.ndarray, np.ndarray, date],
 ) -> None:
-    """plot_maps should add a red warning text when sanity report warns.
+    """plot_maps should add a red warning text when range_check report warns.
 
-    We assert by recomputing the sanity report for the same inputs and
+    We assert by recomputing the range_check report for the same inputs and
     requiring that warnings are non-empty. The function draws the warning text
     directly onto the figure; we avoid brittle image text OCR here.
     """
@@ -58,12 +58,12 @@ def test_plot_maps_emits_warning_badge(
         DEFAULT_SIC_SPEC, include_difference=True, colourbar_strategy="shared"
     )
 
-    # Sanity report should have warnings under shared [0,1]
+    # Range Check report should have warnings under shared [0,1]
     (gt_min, gt_max), _ = (
         (0.0, 1.0),
         (0.0, 1.0),
     )  # shared strategy uses spec range for both
-    report = compute_sanity_report(
+    report = compute_range_check_report(
         ground_truth,
         prediction,
         vmin=gt_min,

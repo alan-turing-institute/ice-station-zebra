@@ -6,7 +6,7 @@ import numpy as np
 
 
 @dataclass(frozen=True)
-class SanityReport:
+class RangeCheckReport:
     """Summarise basic range checks for ground truth and prediction.
 
     Attributes:
@@ -56,7 +56,7 @@ def _robust_p2_p98(data: np.ndarray) -> tuple[float, float]:
     return float(np.percentile(values, 2)), float(np.percentile(values, 98))
 
 
-def compute_sanity_report(  # noqa: PLR0913
+def compute_range_check_report(  # noqa: PLR0913
     groundtruth: np.ndarray,
     prediction: np.ndarray,
     *,
@@ -65,8 +65,8 @@ def compute_sanity_report(  # noqa: PLR0913
     outside_warn: float = 0.05,
     severe_outside: float = 0.20,
     include_shared_range_mismatch_check: bool = True,
-) -> SanityReport:
-    """Produce a concise sanity report under a shared display range.
+) -> RangeCheckReport:
+    """Produce a concise range_check report under a shared display range.
 
     Uses a single display interval [vmin, vmax] to:
     - Report numeric minima and maxima for both arrays
@@ -84,7 +84,7 @@ def compute_sanity_report(  # noqa: PLR0913
             appears systematically lower or higher than ground truth under the shared scale.
 
     Returns:
-        A `SanityReport` containing basic ranges, outside fractions, and short warnings
+        A `RangeCheckReport` containing basic ranges, outside fractions, and short warnings
         suitable for rendering in a figure badge.
 
     """
@@ -156,7 +156,7 @@ def compute_sanity_report(  # noqa: PLR0913
                     f"(pred 2-98%: {pr_p2:.2f}-{pr_p98:.2f}, gt 2-98%: {gt_p2:.2f}-{gt_p98:.2f})."
                 )
 
-    return SanityReport(
+    return RangeCheckReport(
         groundtruth_min=groundtruth_min,
         groundtruth_max=groundtruth_max,
         prediction_min=prediction_min,

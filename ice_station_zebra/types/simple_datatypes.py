@@ -106,7 +106,7 @@ class PlotSpec:
     colourbar_location: Literal["vertical", "horizontal"] = "horizontal"
     colourbar_strategy: Literal["shared", "separate"] = "shared"
 
-    # Sanity/warnings in badge
+    # Range Check/warnings in badge
     outside_warn: float = 0.05
     severe_outside: float = 0.20
     include_shared_range_mismatch_check: bool = True

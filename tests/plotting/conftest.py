@@ -41,7 +41,7 @@ def sic_pair_2d(
 
 @pytest.fixture
 def sic_pair_warning_2d() -> tuple[np.ndarray, np.ndarray, date]:
-    """Construct arrays that should trigger sanity-report warnings.
+    """Construct arrays that should trigger range_check-report warnings.
 
     Ground truth stays in [0,1]. Prediction has a stripe with values > 1.5 to
     ensure >5% of values are outside the display range when using shared 0..1.

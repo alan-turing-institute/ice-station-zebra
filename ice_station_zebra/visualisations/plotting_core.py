@@ -118,9 +118,9 @@ def make_diff_colourmap(
     raise ValueError(msg)
 
 
-# ---- Sanity check for colourmap ----
+# ---- Range check for colourmap ----
 """
-The sanity-report API has been moved to visualisations/sanity.py.
+The range_check-report API has been moved to visualisations/range_check.py.
 This module imports and re-exports the symbols for backward compatibility.
 """
 

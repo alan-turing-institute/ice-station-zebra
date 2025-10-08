@@ -35,7 +35,7 @@ from .plotting_core import (
     validate_2d_pair,
     validate_3d_streams,
 )
-from .sanity import compute_sanity_report
+from .range_check import compute_range_check_report
 
 # Keep strong references to animation objects during save to avoid GC-related warnings
 _ANIM_CACHE: list[animation.FuncAnimation] = []
@@ -124,11 +124,11 @@ def plot_maps(
     _set_axes_limits(axs, width=width, height=height)
     fig.suptitle(_format_date_to_string(date))
 
-    # Include sanity report
+    # Include range_check report
     (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
         compute_display_ranges(ground_truth, prediction, plot_spec)
     )
-    sanity_report = compute_sanity_report(
+    range_check_report = compute_range_check_report(
         ground_truth,
         prediction,
         vmin=groundtruth_min,
@@ -141,8 +141,8 @@ def plot_maps(
     )
     badge = (
         ""
-        if not sanity_report.warnings
-        else "Warnings: " + ", ".join(sanity_report.warnings)
+        if not range_check_report.warnings
+        else "Warnings: " + ", ".join(range_check_report.warnings)
     )
     if badge:
         # Place the warning just below the title

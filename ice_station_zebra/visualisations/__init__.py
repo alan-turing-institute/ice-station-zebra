@@ -5,12 +5,12 @@ from .plotting_maps import (
     plot_maps,
     video_maps,
 )
-from .sanity import compute_sanity_report
+from .range_check import compute_range_check_report
 
 __all__ = [
     "DEFAULT_SIC_SPEC",
     "PlotSpec",
-    "compute_sanity_report",
+    "compute_range_check_report",
     "plot_maps",
     "video_maps",
 ]

@@ -8,12 +8,17 @@ from typing import TYPE_CHECKING
 import matplotlib as mpl
 import pytest
 
-mpl.use("Agg")
-
 from ice_station_zebra.visualisations.layout import _build_layout
 from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 
 from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
+
+mpl.use("Agg")
+
+# Silence Matplotlib animation warning in this test module
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:Animation was deleted without rendering anything:UserWarning:matplotlib.animation"
+)
 
 if TYPE_CHECKING:
     # Imports used only for type annotations

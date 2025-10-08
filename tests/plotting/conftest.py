@@ -1,3 +1,4 @@
+import warnings
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, cast
@@ -15,6 +16,15 @@ from ice_station_zebra.data_loaders import ZebraDataModule
 from .test_dummy_arctic import make_circular_arctic
 
 mpl.use("Agg")
+
+# Suppress Matplotlib animation warning during tests; we intentionally do not keep
+# long-lived references to animation objects beyond saving to buffer.
+warnings.filterwarnings(
+    "ignore",
+    message="Animation was deleted without rendering anything",
+    category=UserWarning,
+    module="matplotlib.animation",
+)
 
 TEST_DATE = date(2020, 1, 15)
 

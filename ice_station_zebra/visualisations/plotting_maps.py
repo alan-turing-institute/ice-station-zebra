@@ -294,6 +294,8 @@ def video_maps(
         blit=False,
         repeat=True,
     )
+    # Keep a strong reference to avoid Matplotlib warning in tests
+    fig._anim = animation_object
 
     # Save -> BytesIO and clean up temp file
     try:

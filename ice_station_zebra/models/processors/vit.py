@@ -66,6 +66,10 @@ class VitProcessor(BaseProcessor):
             nn.Linear(emb_dim, patch_size * patch_size * self.out_channels),
         )
 
+        self.smooth = nn.Conv2d(
+            self.out_channels, self.out_channels, kernel_size=3, padding=1
+        )
+
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the ViT model for a single timestep.
 
@@ -99,4 +103,6 @@ class VitProcessor(BaseProcessor):
         x = x.permute(0, 3, 1, 4, 2, 5)
 
         # Shape is batch, out_channels, height, width
-        return x.reshape(batch, self.out_channels, self.img_size, self.img_size)
+        x = x.reshape(batch, self.out_channels, self.img_size, self.img_size)
+
+        return self.smooth(x)

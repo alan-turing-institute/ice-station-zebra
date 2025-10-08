@@ -14,6 +14,11 @@ from ice_station_zebra.visualisations.plotting_maps import (
 )
 from ice_station_zebra.visualisations.sanity import compute_sanity_report
 
+# Silence Matplotlib animation warning in this test module
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:Animation was deleted without rendering anything:UserWarning"
+)
+
 if TYPE_CHECKING:
     # Imports used only for type annotations
     from collections.abc import Callable, Sequence

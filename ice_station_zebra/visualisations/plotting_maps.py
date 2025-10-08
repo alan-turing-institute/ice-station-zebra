@@ -8,6 +8,7 @@
 
 """
 
+import contextlib
 import io
 from collections.abc import Sequence
 from datetime import date, datetime
@@ -35,6 +36,9 @@ from .plotting_core import (
     validate_3d_streams,
 )
 from .sanity import compute_sanity_report
+
+# Keep strong references to animation objects during save to avoid GC-related warnings
+_ANIM_CACHE: list[animation.FuncAnimation] = []
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -294,8 +298,8 @@ def video_maps(
         blit=False,
         repeat=True,
     )
-    # Keep a strong reference to avoid Matplotlib warning in tests
-    fig._anim = animation_object
+    # Keep a strong reference without touching figure attributes (ruff-friendly)
+    _ANIM_CACHE.append(animation_object)
 
     # Save -> BytesIO and clean up temp file
     try:
@@ -304,6 +308,9 @@ def video_maps(
         )
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
+        # Drop strong reference now that saving is done
+        with contextlib.suppress(ValueError):
+            _ANIM_CACHE.remove(animation_object)
         plt.close(fig)
 
 

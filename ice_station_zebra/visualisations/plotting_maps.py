@@ -298,7 +298,7 @@ def video_maps(
         blit=False,
         repeat=True,
     )
-    # Keep a strong reference without touching figure attributes (ruff-friendly)
+    # Keep a strong reference without touching figure attributes (ruff-fix)
     _ANIM_CACHE.append(animation_object)
 
     # Save -> BytesIO and clean up temp file

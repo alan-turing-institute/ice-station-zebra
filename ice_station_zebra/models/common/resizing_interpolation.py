@@ -11,17 +11,31 @@ class ResizingInterpolation(nn.Module):
     The output shape must be specified at initialisation time.
     """
 
-    def __init__(self, output_shape: Sequence[int]) -> None:
+    def __init__(
+        self,
+        output_shape: Sequence[int],
+        *,
+        align_corners: bool = True,
+        antialias: bool = True,
+    ) -> None:
         """Initialize the ResizingInterpolate module.
 
         Args:
             output_shape: the target output size in H x W format.
+            align_corners: whether to align the corner pixels of the input and output tensors. Default: True.
+            antialias: whether to perform antialiasing during interpolation. Default: True.
 
         """
         super().__init__()
+        self.align_corners = align_corners
+        self.antialias = antialias
         self.output_shape = (output_shape[0], output_shape[1])
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         return nn.functional.interpolate(
-            x, size=self.output_shape, mode="bilinear", align_corners=True
+            x,
+            size=self.output_shape,
+            mode="bilinear",
+            align_corners=self.align_corners,
+            antialias=self.antialias,
         )

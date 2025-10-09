@@ -1,3 +1,4 @@
+# paste into ice_station_zebra/visualisations/range_check.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,163 +6,172 @@ from dataclasses import dataclass
 import numpy as np
 
 
-@dataclass(frozen=True)
+@dataclass
 class RangeCheckReport:
-    """Summarise basic range checks for ground truth and prediction.
+    """Simple container for range-check results."""
 
-    Attributes:
-        groundtruth_min: Minimum value observed in the ground truth array.
-        groundtruth_max: Maximum value observed in the ground truth array.
-        prediction_min: Minimum value observed in the prediction array.
-        prediction_max: Maximum value observed in the prediction array.
-        outside_fraction_groundtruth: Fraction of finite ground truth values outside the display range.
-        outside_fraction_prediction: Fraction of finite prediction values outside the display range.
-        warnings: Tuple of short, user-facing warning strings suitable for a plot badge.
-
-    """
-
-    groundtruth_min: float
-    groundtruth_max: float
-    prediction_min: float
-    prediction_max: float
-
-    outside_fraction_groundtruth: float
-    outside_fraction_prediction: float
-
-    warnings: tuple[str, ...]
+    warnings: list[str]
 
 
-def _frac_outside(data: np.ndarray, *, vmin: float, vmax: float) -> float:
-    """Return fraction of finite values outside [vmin, vmax]."""
-    data = data.astype(float)
-    finite = np.isfinite(data)
-    n = int(np.count_nonzero(finite))
-    if n == 0:
-        return 0.0
-    values = data[finite]
-    return float(np.count_nonzero((values < vmin) | (values > vmax))) / n
+# Constants for range check thresholds
+_ZERO_THRESHOLD = 1e-12
+_MAGNITUDE_LOW_THRESHOLD = 0.1
+_MAGNITUDE_HIGH_THRESHOLD = 10.0
+_SIGNIFICANT_VALUE_THRESHOLD = 1e-6
 
 
-def _robust_p2_p98(data: np.ndarray) -> tuple[float, float]:
-    """Estimate a robust central band using the 2nd and 98th percentiles.
+def _check_magnitude_mismatch(
+    ground_truth: np.ndarray, prediction: np.ndarray
+) -> list[str]:
+    """Check for magnitude/units mismatch between ground truth and prediction."""
+    warnings: list[str] = []
 
-    This provides a quick sense of the typical magnitude while remaining
-    tolerant to heavy tails and a modest amount of outliers.
-    """
-    data = data.astype(float)
-    finite = np.isfinite(data)
-    if not np.any(finite):
-        return 0.0, 0.0
-    values = data[finite]
-    return float(np.percentile(values, 2)), float(np.percentile(values, 98))
+    def _robust_median(arr: np.ndarray) -> float:
+        vals = arr[np.isfinite(arr)]
+        if vals.size == 0:
+            return 0.0
+        return float(np.nanmedian(vals))
+
+    def _robust_percentile(arr: np.ndarray, p: float) -> float:
+        vals = arr[np.isfinite(arr)]
+        if vals.size == 0:
+            return 0.0
+        return float(np.nanpercentile(vals, p))
+
+    gt_med = _robust_median(ground_truth)
+    pred_med = _robust_median(prediction)
+
+    # Try to avoid false positives when GT median is zero by falling back to 90th percentiles
+    if abs(gt_med) < _ZERO_THRESHOLD:
+        gt_ref = _robust_percentile(ground_truth, 90.0)
+        pred_ref = _robust_percentile(prediction, 90.0)
+    else:
+        gt_ref = gt_med
+        pred_ref = pred_med
+
+    # Only examine when we have meaningful reference values
+    if gt_ref > 0:
+        ratio = pred_ref / gt_ref
+        if ratio < _MAGNITUDE_LOW_THRESHOLD:
+            warnings.append(f"MAGNITUDE: Prediction values too low (~{ratio:.2g}x)")
+        elif ratio > _MAGNITUDE_HIGH_THRESHOLD:
+            warnings.append(f"MAGNITUDE: Prediction values too high (~{ratio:.2g}x)")
+    else:
+        # If GT reference is zero, still warn if predictions have significant non-zero mass
+        pred90 = _robust_percentile(prediction, 90.0)
+        if pred90 > _SIGNIFICANT_VALUE_THRESHOLD:
+            warnings.append(
+                "MAGNITUDE: Ground truth median is zero but predictions have substantial values "
+                f"(90th percentile ≈ {pred90:.3g})."
+            )
+
+    return warnings
+
+
+def _check_display_clipping(
+    prediction: np.ndarray,
+    vmin: float,
+    vmax: float,
+    outside_warn: float,
+    severe_outside: float,
+) -> list[str]:
+    """Check for display clipping issues with shared colorbar."""
+    warnings: list[str] = []
+
+    pred_finite = np.isfinite(prediction)
+    total_pred = float(np.sum(pred_finite))
+
+    if total_pred > 0:
+        pred_flat = prediction[np.isfinite(prediction)]
+        frac_below = float(np.sum(pred_flat < vmin)) / pred_flat.size
+        frac_above = float(np.sum(pred_flat > vmax)) / pred_flat.size
+
+        # Above-vmax checks
+        if frac_above >= severe_outside:
+            warnings.append(
+                f"COLOUR ISSUE: !!! {frac_above:.0%} of prediction values above colour limit={vmax}"
+            )
+        elif frac_above >= outside_warn:
+            warnings.append(
+                f"COLOUR ISSUE: Clipping likely: {frac_above:.0%} of prediction values above colour limit={vmax}"
+            )
+
+        # Below-vmin checks
+        if frac_below >= severe_outside:
+            warnings.append(
+                f"COLOUR ISSUE: !!! {frac_below:.0%} of prediction values below colour limit={vmin}"
+            )
+        elif frac_below >= outside_warn:
+            warnings.append(
+                f"COLOUR ISSUE: Clipping likely: {frac_below:.0%} of prediction values below colour limit={vmin}"
+            )
+    else:
+        # No finite predictions -> warn the user
+        warnings.append("COLOUR ISSUE: No finite prediction values found.")
+
+    return warnings
 
 
 def compute_range_check_report(  # noqa: PLR0913
-    groundtruth: np.ndarray,
+    ground_truth: np.ndarray,
     prediction: np.ndarray,
     *,
-    vmin: float,
-    vmax: float,
+    vmin: float = 0.0,
+    vmax: float = 1.0,
     outside_warn: float = 0.05,
     severe_outside: float = 0.20,
     include_shared_range_mismatch_check: bool = True,
 ) -> RangeCheckReport:
-    """Produce a concise range_check report under a shared display range.
+    """Compute warnings about display/clipping and magnitude mismatches between ground truth and prediction arrays.
 
-    Uses a single display interval [vmin, vmax] to:
-    - Report numeric minima and maxima for both arrays
-    - Compute fractions of values falling outside the display interval
-    - Optionally add low level warnings when magnitudes appear mismatched
-
-    Args:
-        groundtruth: Ground-truth data array.
-        prediction: Prediction data array.
-        vmin: Lower bound of the shared display range.
-        vmax: Upper bound of the shared display range.
-        outside_warn: Threshold for issuing a soft "outside range" warning.
-        severe_outside: Higher threshold that triggers a stronger warning.
-        include_shared_range_mismatch_check: If True, add hints when the prediction
-            appears systematically lower or higher than ground truth under the shared scale.
-
-    Returns:
-        A `RangeCheckReport` containing basic ranges, outside fractions, and short warnings
-        suitable for rendering in a figure badge.
-
+    This function returns a RangeCheckReport containing a list of user-facing warning
+    strings. It always runs:
+      - a *magnitude mismatch* check (possible units/scaling error),
+      - a *shared-scale clipping* check (many prediction values outside [vmin,vmax]),
+    and annotates each warning to clarify whether the issue is about *display* (i.e. values
+    will be clipped under a shared colourbar) or about *absolute magnitude* (possible scaling).
     """
-    # Numeric ranges
-    groundtruth_min = (
-        float(np.nanmin(groundtruth))
-        if np.isfinite(np.nanmin(groundtruth))
-        else float("nan")
-    )
-    groundtruth_max = (
-        float(np.nanmax(groundtruth))
-        if np.isfinite(np.nanmax(groundtruth))
-        else float("nan")
-    )
-    prediction_min = (
-        float(np.nanmin(prediction))
-        if np.isfinite(np.nanmin(prediction))
-        else float("nan")
-    )
-    prediction_max = (
-        float(np.nanmax(prediction))
-        if np.isfinite(np.nanmax(prediction))
-        else float("nan")
-    )
+    warnings: list[str] = []
 
-    # Fractions outside display
-    outside_fraction_groundtruth = _frac_outside(groundtruth, vmin=vmin, vmax=vmax)
-    outside_fraction_prediction = _frac_outside(prediction, vmin=vmin, vmax=vmax)
+    # --- 1) Magnitude / units mismatch check (absolute magnitude) ---
+    warnings.extend(_check_magnitude_mismatch(ground_truth, prediction))
 
-    warnings_list: list[str] = []
-
-    # 1) Outside-range warnings
-    if outside_fraction_prediction > severe_outside:
-        warnings_list.append(
-            f"Prediction range {prediction_min:.2f}-{prediction_max:.2f} lies far outside display [{vmin:.2f}, {vmax:.2f}] "
-            f"({outside_fraction_prediction:.0%} of values clipped)."
-        )
-    elif outside_fraction_prediction > outside_warn:
-        warnings_list.append(
-            f"Prediction has values outside display [{vmin:.2f}, {vmax:.2f}] "
-            f"({outside_fraction_prediction:.0%} clipped; range {prediction_min:.2f}-{prediction_max:.2f})."
-        )
-
-    if outside_fraction_groundtruth > severe_outside:
-        warnings_list.append(
-            f"Ground truth range {groundtruth_min:.2f}-{groundtruth_max:.2f} lies far outside display [{vmin:.2f}, {vmax:.2f}] "
-            f"({outside_fraction_groundtruth:.0%} of values clipped)."
-        )
-    elif outside_fraction_groundtruth > outside_warn:
-        warnings_list.append(
-            f"Ground truth has values outside display [{vmin:.2f}, {vmax:.2f}] "
-            f"({outside_fraction_groundtruth:.0%} clipped; range {groundtruth_min:.2f}-{groundtruth_max:.2f})."
-        )
-
-    # 2) Optional shared-range mismatch low-level warning
+    # --- 2) Shared-scale clipping / display mismatch check ---
     if include_shared_range_mismatch_check:
-        span = vmax - vmin
-        if span > 0 and np.isfinite(span):
-            gt_p2, gt_p98 = _robust_p2_p98(groundtruth)
-            pr_p2, pr_p98 = _robust_p2_p98(prediction)
-            if (pr_p98 < vmin + 0.05 * span) and (gt_p2 > vmin + 0.15 * span):
-                warnings_list.append(
-                    "Prediction magnitude appears much lower than ground truth under the shared scale "
-                    f"(pred 2-98%: {pr_p2:.2f}-{pr_p98:.2f}, gt 2-98%: {gt_p2:.2f}-{gt_p98:.2f})."
+        # Compute the display bounds to use for the clipping check.
+        # If callers passed None, fall back to the conventional 0..1 sea-ice range.
+        vmin_for_check = 0.0 if vmin is None else float(vmin)
+        vmax_for_check = 1.0 if vmax is None else float(vmax)
+        if vmax_for_check <= vmin_for_check:
+            # Invalid interval: we cannot run the clipping check, but inform the user.
+            warnings.append("COLOUR ISSUE: Shared display range invalid.")
+        else:
+            warnings.extend(
+                _check_display_clipping(
+                    prediction,
+                    vmin_for_check,
+                    vmax_for_check,
+                    outside_warn,
+                    severe_outside,
                 )
-            if (pr_p2 > vmax - 0.05 * span) and (gt_p98 < vmax - 0.15 * span):
-                warnings_list.append(
-                    "Prediction magnitude appears much higher than ground truth under the shared scale "
-                    f"(pred 2-98%: {pr_p2:.2f}-{pr_p98:.2f}, gt 2-98%: {gt_p2:.2f}-{gt_p98:.2f})."
-                )
+            )
 
-    return RangeCheckReport(
-        groundtruth_min=groundtruth_min,
-        groundtruth_max=groundtruth_max,
-        prediction_min=prediction_min,
-        prediction_max=prediction_max,
-        outside_fraction_groundtruth=outside_fraction_groundtruth,
-        outside_fraction_prediction=outside_fraction_prediction,
-        warnings=tuple(warnings_list),
-    )
+    # Post-process: keep category prefix only on first occurrence per category
+    processed: list[str] = []
+    prefixes: tuple[str, ...] = ("MAGNITUDE:", "COLOUR ISSUE:")
+    seen: set[str] = set()
+
+    for msg in warnings:
+        for prefix in prefixes:
+            if msg.startswith(prefix):
+                if prefix in seen:
+                    processed.append(msg[len(prefix) :].lstrip())
+                else:
+                    processed.append(msg)
+                    seen.add(prefix)
+                break
+        else:
+            processed.append(msg)
+
+    # Final container
+    return RangeCheckReport(warnings=processed)

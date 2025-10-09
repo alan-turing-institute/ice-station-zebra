@@ -77,18 +77,21 @@ def make_diff_colourmap(
 
     """
     if mode == "signed":
-        # Use actual data range centred on zero
+        # Force symmetric limits around zero so 0 is the literal midpoint
         if isinstance(sample, (float, int)):
-            # For scalar input (two-pass strategy), make symmetric
             max_abs = max(1.0, float(abs(sample)))
             vmin, vmax = -max_abs, max_abs
         else:
-            # For array input (precompute strategy), use actual data range
-            vmin = float(np.nanmin(sample) or -1.0)
-            vmax = float(np.nanmax(sample) or 1.0)
-            # Ensure we span at least -1 to 1 for meaningful visualization
-            vmin = min(vmin, -1.0)
-            vmax = max(vmax, 1.0)
+            # Find the min and max values of the sample array
+            vmin_data = float(
+                np.nanmin(sample) if np.nanmin(sample) is not None else -1.0
+            )
+            vmax_data = float(
+                np.nanmax(sample) if np.nanmax(sample) is not None else 1.0
+            )
+            # Find the maximum absolute value of the sample array
+            max_abs = max(1.0, abs(vmin_data), abs(vmax_data))
+            vmin, vmax = -max_abs, max_abs
 
         return DiffColourmapSpec(
             norm=TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax),
@@ -113,6 +116,13 @@ def make_diff_colourmap(
 
     msg = f"Unknown difference mode: {mode}"
     raise ValueError(msg)
+
+
+# ---- Range check for colourmap ----
+"""
+The range_check-report API has been moved to visualisations/range_check.py.
+This module imports and re-exports the symbols for backward compatibility.
+"""
 
 
 # ---- Handling the difference stream ----
@@ -248,7 +258,20 @@ def validate_3d_streams(
 def compute_display_ranges(
     ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Compute vmin/vmax for ground truth and prediction based on strategy."""
+    """Compute vmin/vmax for ground truth and prediction based on strategy.
+
+    Args:
+        ground_truth: The ground truth array. [H,W]
+        prediction: The prediction array. [H,W]
+        plot_spec: The plotting specification.
+
+    Returns:
+        The display ranges. (vmin, vmax)
+
+    Raises:
+        InvalidArrayError: If the arrays are not 2D or have different shapes.
+
+    """
     if plot_spec.colourbar_strategy == "shared":
         # Both panels use spec vmin/vmax (current behavior)
         vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
@@ -275,7 +298,20 @@ def compute_display_ranges(
 def compute_display_ranges_stream(
     ground_truth_stream: np.ndarray, prediction_stream: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Compute stable vmin/vmax for GT and Prediction over the entire video."""
+    """Compute stable vmin/vmax for Ground Truth and Prediction over the entire video.
+
+    Args:
+        ground_truth_stream: The ground truth array. [T,H,W]
+        prediction_stream: The prediction array. [T,H,W]
+        plot_spec: The plotting specification.
+
+    Returns:
+        The display ranges. (vmin, vmax)
+
+    Raises:
+        InvalidArrayError: If the arrays are not 3D or have different shapes.
+
+    """
     if plot_spec.colourbar_strategy == "shared":
         vmin = plot_spec.vmin if plot_spec.vmin is not None else 0.0
         vmax = plot_spec.vmax if plot_spec.vmax is not None else 1.0

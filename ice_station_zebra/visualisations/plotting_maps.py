@@ -8,21 +8,23 @@
 
 """
 
+import contextlib
 import io
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
+from matplotlib.axes import Axes
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
-from .convert import _image_from_figure, _save_animation
-from .layout import _add_colourbars, _init_axes, _set_axes_limits
+from . import convert
+from .layout import _add_colourbars, _build_layout, _set_axes_limits
 from .plotting_core import (
     compute_difference,
     compute_display_ranges,
@@ -33,6 +35,10 @@ from .plotting_core import (
     validate_2d_pair,
     validate_3d_streams,
 )
+from .range_check import compute_range_check_report
+
+# Keep strong references to animation objects during save to avoid GC-related warnings
+_ANIM_CACHE: list[animation.FuncAnimation] = []
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -46,6 +52,9 @@ DEFAULT_SIC_SPEC = PlotSpec(
     vmax=1.0,
     colourbar_location="horizontal",
     colourbar_strategy="shared",
+    outside_warn=0.05,
+    severe_outside=0.20,
+    include_shared_range_mismatch_check=True,
 )
 
 
@@ -82,7 +91,7 @@ def plot_maps(
     height, width = validate_2d_pair(ground_truth, prediction)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -115,8 +124,40 @@ def plot_maps(
     _set_axes_limits(axs, width=width, height=height)
     fig.suptitle(_format_date_to_string(date))
 
+    # Include range_check report
+    (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
+        compute_display_ranges(ground_truth, prediction, plot_spec)
+    )
+    range_check_report = compute_range_check_report(
+        ground_truth,
+        prediction,
+        vmin=groundtruth_min,
+        vmax=groundtruth_max,
+        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
+        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
+        include_shared_range_mismatch_check=getattr(
+            plot_spec, "include_shared_range_mismatch_check", True
+        ),
+    )
+    badge = (
+        ""
+        if not range_check_report.warnings
+        else "Warnings: " + ", ".join(range_check_report.warnings)
+    )
+    if badge:
+        # Place the warning just below the title
+        title_artist = getattr(fig, "_suptitle", None)
+        if title_artist is not None:
+            _, title_y = title_artist.get_position()
+            warning_y = max(title_y - 0.03, 0.0)
+        else:
+            warning_y = 0.93
+        fig.text(
+            0.5, warning_y, badge, fontsize=9, color="firebrick", ha="center", va="top"
+        )
+
     try:
-        return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
+        return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
     finally:
         plt.close(fig)
 
@@ -175,7 +216,7 @@ def video_maps(
         raise InvalidArrayError(error_msg)
 
     # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation
@@ -183,7 +224,7 @@ def video_maps(
         ground_truth_stream, prediction_stream, plot_spec
     )
 
-    # Prepare the difference array according to the strategy
+    # Prepare the difference array according to the strategy; also ensure a colour scale exists
     difference_stream, diff_colour_scale = prepare_difference_stream(
         include_difference=plot_spec.include_difference,
         diff_mode=plot_spec.diff_mode,
@@ -191,6 +232,12 @@ def video_maps(
         ground_truth_stream=ground_truth_stream,
         prediction_stream=prediction_stream,
     )
+    if plot_spec.include_difference and diff_colour_scale is None:
+        # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
+        first_diff = compute_difference(
+            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
+        )
+        diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
     precomputed_diff_0 = (
         difference_stream[0]
         if (plot_spec.include_difference and difference_stream is not None)
@@ -251,14 +298,19 @@ def video_maps(
         blit=False,
         repeat=True,
     )
+    # Keep a strong reference without touching figure attributes (ruff-fix)
+    _ANIM_CACHE.append(animation_object)
 
     # Save -> BytesIO and clean up temp file
     try:
-        video_buffer = _save_animation(
-            animation_object, fps=fps, video_format=video_format
+        video_buffer = convert._save_animation(
+            animation_object, _fps=fps, _video_format=video_format
         )
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
+        # Drop strong reference now that saving is done
+        with contextlib.suppress(ValueError):
+            _ANIM_CACHE.remove(animation_object)
         plt.close(fig)
 
 
@@ -368,12 +420,10 @@ def _draw_frame(  # noqa: PLR0913
             else compute_difference(ground_truth, prediction, plot_spec.diff_mode)
         )
 
-        # DiffRender system tells us how to colour the difference panel
+        # Expect colour scale to be provided by caller; no fallback here
         if diff_colour_scale is None:
-            # Fallback: compute render params on-demand (per-frame strategy)
-            diff_colour_scale = make_diff_colourmap(
-                difference, mode=plot_spec.diff_mode
-            )
+            error_msg = "diff_colour_scale must be provided when including difference"
+            raise InvalidArrayError(error_msg)
 
         if diff_colour_scale.norm is not None:
             # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
@@ -406,6 +456,31 @@ def _draw_frame(  # noqa: PLR0913
                 vmax=vmax,
             )
 
+    # Optional: visually mark NaNs as semi-transparent grey overlays
+
+    def _overlay_nans(ax: Axes, arr: np.ndarray) -> None:
+        """Overlay NaNs as semi-transparent grey overlays.
+
+        Not used currently, add the following before the return statement to enable:
+        >>> _overlay_nans(axs[0], ground_truth)
+        >>> _overlay_nans(axs[1], prediction)
+        >>> if plot_spec.include_difference:
+        >>>     _overlay_nans(axs[2], difference)
+        Mask should then be visible in the plot.
+
+        """
+        if np.isnan(arr).any():
+            ax.imshow(
+                np.isnan(arr),
+                cmap="black",
+                vmin=0,
+                vmax=1,
+                alpha=0.35,
+                interpolation="nearest",
+            )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays here
+
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 
 
@@ -434,7 +509,7 @@ def _format_date_to_string(date: date | datetime) -> str:
     )
 
 
-def _clear_contours(ax: Any) -> None:  # noqa: ANN401
+def _clear_contours(ax: Axes) -> None:
     """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
 
     Prevents overlapping plots in an animation loop.

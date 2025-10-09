@@ -20,5 +20,5 @@ plotting:
     diff_strategy: "precompute"     # "precompute" | "two-pass" | "per-frame"
     vmin: 0.0
     vmax: 1.0
-    colourbar_location: "vertical"
-    colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
+    colourbar_location: "horizontal"
+    colourbar_strategy: "shared"  # shared | separate (prediction gets its own colourbar)

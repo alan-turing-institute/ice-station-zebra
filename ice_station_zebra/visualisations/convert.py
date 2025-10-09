@@ -37,22 +37,35 @@ def _image_from_array(a: np.ndarray) -> ImageFile:
 def _save_animation(
     anim: animation.FuncAnimation,
     *,
-    fps: int,
+    fps: int | None = None,
     video_format: Literal["mp4", "gif"] = "gif",
+    _fps: int | None = None,
+    _video_format: Literal["mp4", "gif"] | None = None,
 ) -> io.BytesIO:
     """Save an animation to a temporary file and return BytesIO (with cleanup)."""
+    # Accept both standard and underscored names for test compatibility
+    fps_value: int = int(fps if fps is not None else (_fps if _fps is not None else 2))
+    if _video_format is not None:
+        video_format = _video_format  # prefer underscored override if provided
     suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
         try:
             # Save video to tempfile
             writer: animation.AbstractMovieWriter = (
-                animation.PillowWriter(fps=fps)
+                animation.PillowWriter(fps=fps_value)
                 if suffix == ".gif"
                 else animation.FFMpegWriter(
-                    fps=fps,
+                    fps=fps_value,
                     codec="libx264",
                     bitrate=1800,
-                    extra_args=["-pix_fmt", "yuv420p"],
+                    # Ensure dimensions are compatible with yuv420p (even width/height)
+                    # by applying a scale filter that truncates to the nearest even integers.
+                    extra_args=[
+                        "-pix_fmt",
+                        "yuv420p",
+                        "-vf",
+                        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                    ],
                 )
             )
             anim.save(tmp.name, writer=writer, dpi=DEFAULT_DPI)

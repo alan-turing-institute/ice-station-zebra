@@ -134,14 +134,16 @@ def checkpoint_data(
         # Load config (try checkpoint dir first, fallback to default)
         config_path = example_checkpoint_path.parent.parent / "model_config.yaml"
         if config_path.exists():
-            config = cast("DictConfig", OmegaConf.load(config_path))
+            config = OmegaConf.load(config_path)
+            assert isinstance(config, DictConfig)
         else:
             # Fallback to default config
             # Look for a file ending with local.yaml
             config_dir = Path("ice_station_zebra/config/")
             yaml_iter = config_dir.glob("*.local.yaml")
             local_yaml = next(yaml_iter)
-            config = cast("DictConfig", OmegaConf.load(local_yaml))
+            config = OmegaConf.load(local_yaml)
+            assert isinstance(config, DictConfig)
 
         # Load model from checkpoint
         model_dict = cast(

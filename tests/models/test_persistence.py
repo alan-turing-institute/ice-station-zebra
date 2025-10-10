@@ -35,6 +35,7 @@ class TestPersistence:
             n_history_steps=test_n_history_steps,
             output_space=output_space,
             optimizer={},
+            scheduler={},
         )
         batch = {
             "input": torch.randn(
@@ -73,6 +74,7 @@ class TestPersistence:
                 "shape": (1, 1),
             },
             optimizer={},
+            scheduler={},
         )
         assert model.configure_optimizers() is None, (
             "No optimizer should be initialized"

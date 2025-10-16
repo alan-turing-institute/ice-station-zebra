@@ -6,10 +6,10 @@ predict:
     end: null
 
 # This data is a test set used to compare fully-trained models (e.g. on the project leaderboard)
-# Data from 2019-01
+# Data from 2019
 test:
   - start: 2019-01-01
-    end: 2019-01-31
+    end: 2019-12-31
 
 # This data is used for training the model
 # Data from 2017

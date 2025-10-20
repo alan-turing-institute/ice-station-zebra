@@ -136,7 +136,6 @@ Pros:
 
 Cons:
 - input variables have been transformed into latent space
-- time-step information has been compressed into the latent space
 
 ## Jupyter notebooks
 

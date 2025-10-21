@@ -32,4 +32,4 @@ def to_bool(v: Any) -> bool:
             return True
         if s in {"false"}:
             return False
-    # raise ValueError(f"Cannot convert {v!r} to bool")
+    raise ValueError(f"Cannot convert {v!r} to bool")

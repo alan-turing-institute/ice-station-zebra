@@ -2,6 +2,7 @@ from typing import Any
 
 from torch import nn
 
+from omegaconf import DictConfig
 from ice_station_zebra.models.common import ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
@@ -22,7 +23,7 @@ class NaiveLinearDecoder(BaseDecoder):
         """Initialise a NaiveLinearDecoder."""
         antialias=kwargs.pop("antialias", True)
         super().__init__(**kwargs)
-
+        
         # List of layers
         layers: list[nn.Module] = []
 

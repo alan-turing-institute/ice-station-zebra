@@ -1,16 +1,17 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
+mod_antialias: ${..antialias_val}
 
 name: naive-null-naive
 
 encoder:
   _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
   latent_space: [128, 128] # Shape of the latent space
-  antialias: ${oc.decode:...antialias}
+  antialias: ${mod_antialias}
 
 processor:
   _target_: ice_station_zebra.models.processors.NullProcessor
 
 decoder:
   _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder
-  antialias: ${oc.decode:...antialias}
+  antialias: ${mod_antialias}
 

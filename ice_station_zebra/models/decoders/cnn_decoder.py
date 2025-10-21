@@ -35,6 +35,7 @@ class CNNDecoder(BaseDecoder):
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNDecoder."""
+        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
 
         # Calculate the factor by which the scale changes after n_layers
@@ -68,7 +69,7 @@ class CNNDecoder(BaseDecoder):
             max(minimal_input_shape[1], self.data_space_in.shape[1]),
         )
         if shape != self.data_space_in.shape:
-            layers.append(ResizingInterpolation(shape))
+            layers.append(ResizingInterpolation(shape, antialias=antialias))
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 self.data_space_in.shape,

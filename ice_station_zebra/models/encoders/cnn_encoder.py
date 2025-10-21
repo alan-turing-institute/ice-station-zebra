@@ -33,6 +33,7 @@ class CNNEncoder(BaseEncoder):
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNEncoder."""
+        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
 
         # Construct list of layers
@@ -45,7 +46,9 @@ class CNNEncoder(BaseEncoder):
             self.data_space_out.shape[1] * (2**n_layers),
         )
         if self.data_space_in.shape != initial_required_shape:
-            layers.append(ResizingInterpolation(initial_required_shape))
+            layers.append(
+                ResizingInterpolation(initial_required_shape, antialias=antialias)
+            )
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 self.data_space_in.shape,

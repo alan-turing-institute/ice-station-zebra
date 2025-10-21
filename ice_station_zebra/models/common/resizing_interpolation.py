@@ -39,7 +39,7 @@ class ResizingInterpolation(nn.Module):
         if self.antialias and x.device.type == "mps":
             logger.warning(
                 "There may be issues with anti-aliased bilinear upsampling on MPS devices. "
-                "If you get a NotImplementedError, set `antialias=False` in your local config.",
+                "If you get a NotImplementedError, set `antialias=false` in your local config.",
             )
         return nn.functional.interpolate(
             x,

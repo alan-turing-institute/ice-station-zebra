@@ -3,8 +3,6 @@ from datetime import UTC, datetime
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
 
-from typing import Any
-
 
 def generate_run_name() -> str:
     """Generate a unique run name based on the current timestamp."""
@@ -23,7 +21,9 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
             return logger
     return None
 
-def to_bool(v: Any) -> bool:
+
+def to_bool(v: object) -> bool:
+    """Convert a text string to a boolean."""
     if isinstance(v, bool):
         return v
     if isinstance(v, str):
@@ -32,4 +32,5 @@ def to_bool(v: Any) -> bool:
             return True
         if s in {"false"}:
             return False
-    raise ValueError(f"Cannot convert {v!r} to bool")
+    msg = f"Cannot convert {v!r} to bool"
+    raise ValueError(msg)

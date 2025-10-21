@@ -14,4 +14,3 @@ processor:
 decoder:
   _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder
   antialias: ${mod_antialias}
-

@@ -2,7 +2,6 @@ from typing import Any
 
 from torch import nn
 
-from omegaconf import DictConfig
 from ice_station_zebra.models.common import ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
 
@@ -21,9 +20,9 @@ class NaiveLinearDecoder(BaseDecoder):
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialise a NaiveLinearDecoder."""
-        antialias=kwargs.pop("antialias", True)
+        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
-        
+
         # List of layers
         layers: list[nn.Module] = []
 
@@ -33,7 +32,9 @@ class NaiveLinearDecoder(BaseDecoder):
         )
 
         # Resize to the desired output shape
-        layers.append(ResizingInterpolation(self.data_space_out.shape, antialias=antialias))
+        layers.append(
+            ResizingInterpolation(self.data_space_out.shape, antialias=antialias)
+        )
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

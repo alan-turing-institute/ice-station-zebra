@@ -1,12 +1,13 @@
 import itertools
 from abc import ABC, abstractmethod
+from typing import Any
 
 import hydra
 import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
 from omegaconf import DictConfig
-from typing import Any
+
 from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -22,7 +23,7 @@ class ZebraModel(LightningModule, ABC):
         n_history_steps: int,
         output_space: DictConfig,
         optimizer: DictConfig,
-        **kwargs: Any,
+        **_kwargs: Any,
     ) -> None:
         """Initialise a ZebraModel.
 

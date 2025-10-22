@@ -95,7 +95,9 @@ class CNNDecoder(BaseDecoder):
 
         # If necessary, resize downwards to match the output shape
         if shape != self.data_space_out.shape:
-            layers.append(ResizingInterpolation(self.data_space_out.shape, antialias=antialias))
+            layers.append(
+                ResizingInterpolation(self.data_space_out.shape, antialias=antialias)
+            )
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 shape,

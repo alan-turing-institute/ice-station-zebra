@@ -3,5 +3,6 @@ defaults:
     - device_stats
     - ema_weight_averaging
   - optimizer: default
+  - scheduler: default
   - trainer: default
   - _self_

@@ -70,6 +70,40 @@ class VitProcessor(BaseProcessor):
             self.out_channels, self.out_channels, kernel_size=3, padding=1
         )
 
+    def _overlap_(
+        self, 
+        patches: torch.Tensor, 
+        batch: int, 
+        height: int,
+    ) ->torch.Tensor:
+        "Reconstruct image from patches with overlapping"
+        # print(f"patches.shape in _overlap_: {patches.shape}")
+        h_patches, w_patches = patches.shape[2], patches.shape[4]
+        
+        output = torch.zeros(
+            batch, self.out_channels, height, height, 
+            device=patches.device, dtype=patches.dtype
+        )
+        count = torch.zeros(
+            batch, self.out_channels, height, height, 
+            device=patches.device, dtype=patches.dtype
+        )
+
+        for i in range(h_patches):
+            for j in range(w_patches):
+                h_start = i * self.stride
+                w_start = j * self.stride
+                h_end = h_start + self.patch_size
+                w_end = w_start + self.patch_size
+
+                patch = patches[:, :, i, :, j, :]
+                
+                output[:, :, h_start:h_end, w_start:w_end] += patch
+                count[:, :, h_start:h_end, w_start:w_end] += 1
+        output = output / count.clamp(min=1)
+
+        return output
+
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the ViT model for a single timestep.
 
@@ -104,5 +138,5 @@ class VitProcessor(BaseProcessor):
 
         # Shape is batch, out_channels, height, width
         x = x.reshape(batch, self.out_channels, self.img_size, self.img_size)
-
+        # return self._overlap_(x, batch, height)
         return self.smooth(x)

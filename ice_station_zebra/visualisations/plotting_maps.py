@@ -607,7 +607,7 @@ def _draw_frame(  # noqa: PLR0913
     if land_mask is not None:
         _overlay_nans(axs[0], ground_truth)
         _overlay_nans(axs[1], prediction)
-        if plot_spec.include_difference:
+        if plot_spec.include_difference and difference is not None:
             _overlay_nans(axs[2], difference)
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale

@@ -179,7 +179,7 @@ def _build_layout(  # noqa: PLR0913
             else DEFAULT_FIGSIZE_TWO_PANELS
         )
 
-    fig = plt.figure(figsize=fig_size, constrained_layout=False)
+    fig = plt.figure(figsize=fig_size, constrained_layout=False, facecolor="none")
 
     if orientation == "vertical":
         # Delegate to the vertical builder which organises columns for panels and colourbars

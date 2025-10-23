@@ -1,8 +1,12 @@
+import logging
 from collections.abc import Sequence
 
 from torch import nn
 
 from ice_station_zebra.types import TensorNCHW
+from ice_station_zebra.utils import to_bool
+
+logger = logging.getLogger(__name__)
 
 
 class ResizingInterpolation(nn.Module):
@@ -28,14 +32,19 @@ class ResizingInterpolation(nn.Module):
         """
         super().__init__()
         self.align_corners = align_corners
-        self.antialias = antialias
         self.output_shape = (output_shape[0], output_shape[1])
+        self.antialias = antialias
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
+        if self.antialias and x.device.type == "mps":
+            logger.warning(
+                "There may be issues with anti-aliased bilinear upsampling on MPS devices. "
+                "If you get a NotImplementedError, set `antialias=false` in your local config.",
+            )
         return nn.functional.interpolate(
             x,
             size=self.output_shape,
             mode="bilinear",
             align_corners=self.align_corners,
-            antialias=self.antialias,
+            antialias=to_bool(self.antialias),
         )

@@ -26,7 +26,7 @@ base_path: /local/path/to/my/data
 You can then run this with, e.g.:
 
 ```bash
-uv run zebra datasets create --config-name <your local config>.yaml
+uv run zebra <command> --config-name <your local config>.yaml
 ```
 You can also use this config to override other options in the `base.yaml` file, as shown below:
 
@@ -46,7 +46,7 @@ base_path: /local/path/to/my/data
 Alternatively, you can apply overrides to specific options at the command line like this:
 
 ```bash
-uv run zebra datasets create ++base_path=/local/path/to/my/data
+uv run zebra <command> ++base_path=/local/path/to/my/data
 ```
 
 Note that `persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.

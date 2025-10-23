@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import io
+import tempfile
 from dataclasses import replace
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+import numpy as np
 import pytest
 
+from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.visualisations import convert
 from ice_station_zebra.visualisations.plotting_maps import (
     DEFAULT_SIC_SPEC,
@@ -23,8 +27,6 @@ if TYPE_CHECKING:
     # Imports used only for type annotations
     from collections.abc import Callable, Sequence
     from datetime import date
-
-    import numpy as np
 
 
 def test_plot_maps_returns_image(
@@ -123,3 +125,61 @@ def test_video_maps_returns_buffer_fast(
     buffer = result["sea-ice_concentration-video-maps"]
     assert isinstance(buffer, io.BytesIO)
     assert buffer.getvalue()  # not empty
+
+
+def test_plot_maps_with_land_mask(
+    sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
+) -> None:
+    """plot_maps should work with land mask overlay."""
+    ground_truth, prediction, date = sic_pair_2d
+    height, width = ground_truth.shape
+
+    # Create a simple land mask with land in the center
+    land_mask = np.zeros((height, width), dtype=bool)
+    center_h, center_w = height // 2, width // 2
+    land_mask[center_h - 5 : center_h + 5, center_w - 5 : center_w + 5] = True
+
+    # Save land mask to temporary file
+    with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_file:
+        np.save(tmp_file.name, land_mask)
+        land_mask_path = tmp_file.name
+
+    try:
+        spec = replace(
+            DEFAULT_SIC_SPEC, include_difference=True, land_mask_path=land_mask_path
+        )
+
+        result = plot_maps(spec, ground_truth, prediction, date)
+
+        assert "sea-ice_concentration-static-maps" in result
+        images = result["sea-ice_concentration-static-maps"]
+        assert len(images) == 1
+        image = images[0]
+        assert image.width > 0
+        assert image.height > 0
+    finally:
+        # Clean up temporary file
+        Path(land_mask_path).unlink(missing_ok=True)
+
+
+def test_plot_maps_with_invalid_land_mask_shape(
+    sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
+) -> None:
+    """plot_maps should raise InvalidArrayError for wrong land mask shape."""
+    ground_truth, prediction, date = sic_pair_2d
+
+    # Create land mask with wrong shape
+    wrong_shape_mask = np.zeros((10, 10), dtype=bool)
+
+    with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_file:
+        np.save(tmp_file.name, wrong_shape_mask)
+        land_mask_path = tmp_file.name
+
+    try:
+        spec = replace(DEFAULT_SIC_SPEC, land_mask_path=land_mask_path)
+
+        with pytest.raises(InvalidArrayError):  # Should raise InvalidArrayError
+            plot_maps(spec, ground_truth, prediction, date)
+    finally:
+        # Clean up temporary file
+        Path(land_mask_path).unlink(missing_ok=True)

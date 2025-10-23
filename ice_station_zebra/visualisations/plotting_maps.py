@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
 from matplotlib.axes import Axes
+from matplotlib.colors import ListedColormap
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
@@ -30,6 +31,7 @@ from .plotting_core import (
     compute_display_ranges,
     compute_display_ranges_stream,
     levels_from_spec,
+    load_land_mask,
     make_diff_colourmap,
     prepare_difference_stream,
     validate_2d_pair,
@@ -90,6 +92,9 @@ def plot_maps(
     # Check the shapes of the arrays
     height, width = validate_2d_pair(ground_truth, prediction)
 
+    # Load land mask if specified
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
     # Initialise the figure and axes
     fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
@@ -109,6 +114,7 @@ def plot_maps(
         diff_colour_scale,
         precomputed_difference=difference if plot_spec.include_difference else None,
         levels_override=levels,
+        land_mask=land_mask,
     )
 
     # Colourbars and title
@@ -215,6 +221,15 @@ def video_maps(
         )
         raise InvalidArrayError(error_msg)
 
+    # Load land mask if specified
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
+    # Apply land mask to data streams if provided
+    if land_mask is not None:
+        # Mask out land areas by setting them to NaN
+        ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
+        prediction_stream = np.where(land_mask, np.nan, prediction_stream)
+
     # Initialise the figure and axes
     fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
     levels = levels_from_spec(plot_spec)
@@ -254,6 +269,7 @@ def video_maps(
         precomputed_diff_0,
         levels,
         display_ranges_override=display_ranges,
+        land_mask=land_mask,
     )
     # Colourbars and title
     _add_colourbars(
@@ -284,6 +300,7 @@ def video_maps(
             precomputed_diff_tt,
             levels,
             display_ranges_override=display_ranges,
+            land_mask=land_mask,
         )
 
         fig.suptitle(_format_date_to_string(dates[tt]))
@@ -315,60 +332,87 @@ def video_maps(
 
 
 # ---- Helper functions ----
-def _draw_frame(  # noqa: PLR0913
+
+
+def _apply_land_mask(
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    difference: np.ndarray | None,
+    land_mask: np.ndarray | None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+    """Apply land mask to data arrays by setting land areas to NaN.
+
+    Args:
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        difference: Optional difference data array.
+        land_mask: Optional land mask where True indicates land areas.
+
+    Returns:
+        Tuple of (masked_ground_truth, masked_prediction, masked_difference).
+
+    """
+    if land_mask is not None:
+        ground_truth = np.where(land_mask, np.nan, ground_truth)
+        prediction = np.where(land_mask, np.nan, prediction)
+        if difference is not None:
+            difference = np.where(land_mask, np.nan, difference)
+
+    return ground_truth, prediction, difference
+
+
+def _compute_display_ranges(
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    plot_spec: PlotSpec,
+    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
+    | None = None,
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Compute display ranges for ground truth and prediction plots.
+
+    Args:
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        plot_spec: Plotting specification.
+        display_ranges_override: Optional override ranges for stable animation.
+
+    Returns:
+        Tuple of ((gt_vmin, gt_vmax), (pred_vmin, pred_vmax)).
+
+    """
+    if display_ranges_override is not None:
+        return display_ranges_override
+    return compute_display_ranges(ground_truth, prediction, plot_spec)
+
+
+def _draw_main_panels(  # noqa: PLR0913
     axs: list,
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     plot_spec: PlotSpec,
-    diff_colour_scale: DiffColourmapSpec | None = None,
-    precomputed_difference: np.ndarray | None = None,
+    groundtruth_vmin: float,
+    groundtruth_vmax: float,
+    prediction_vmin: float,
+    prediction_vmax: float,
     levels_override: np.ndarray | None = None,
-    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
-    | None = None,
 ) -> tuple:
-    """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
-
-    Creates contour plots for ground truth and prediction data, and optionally computes
-    and displays their difference. It handles colour normalisation, contour levels, and
-    proper cleanup of previous plot elements.
+    """Draw ground truth and prediction panels.
 
     Args:
-        axs: List of matplotlib axes objects where plots will be drawn. Expected to have
-            at least 2 axes (ground truth, prediction) and optionally 3 (with difference).
-        ground_truth: 2D array of ground truth values to plot.
-        prediction: 2D array of predicted values to plot.
-        plot_spec: Plotting specification containing colourmap, value ranges, and other
-            display parameters.
-        include_difference: Whether to compute and plot the difference between ground
-            truth and prediction.
-        diff_colour_scale: Optional DiffColourmapSpec containing normalisation and colour
-            mapping parameters for difference plots.
-        precomputed_difference: Optional pre-computed difference array. If None and
-            difference is included, the difference will be computed on-demand.
-        levels_override: Optional custom contour levels. If None, levels are derived
-            from plot_spec.
-        display_ranges_override: Optional custom display ranges for stable animation.
-            If None, ranges are computed from the data.
+        axs: List of matplotlib axes objects.
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        plot_spec: Plotting specification.
+        groundtruth_vmin: Minimum value for ground truth display.
+        groundtruth_vmax: Maximum value for ground truth display.
+        prediction_vmin: Minimum value for prediction display.
+        prediction_vmax: Maximum value for prediction display.
+        levels_override: Optional custom contour levels.
 
     Returns:
-        Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
-        The image objects are matplotlib contour collections, and image_difference may be None
-        if include_difference is False. diff_colour_scale is returned for reuse in animations.
+        Tuple of (image_groundtruth, image_prediction).
 
     """
-    for ax in axs:
-        _clear_contours(ax)
-
-    # Compute display ranges - use override if provided for stable animation
-    if display_ranges_override is not None:
-        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
-            display_ranges_override
-        )
-    else:
-        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
-            compute_display_ranges(ground_truth, prediction, plot_spec)
-        )
-
     # Use PlotSpec levels for ground_truth and prediction unless overridden
     levels = levels_from_spec(plot_spec) if levels_override is None else levels_override
 
@@ -412,13 +456,86 @@ def _draw_frame(  # noqa: PLR0913
             vmax=prediction_vmax,
         )
 
+    return image_groundtruth, image_prediction
+
+
+def _draw_frame(  # noqa: PLR0913
+    axs: list,
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    plot_spec: PlotSpec,
+    diff_colour_scale: DiffColourmapSpec | None = None,
+    precomputed_difference: np.ndarray | None = None,
+    levels_override: np.ndarray | None = None,
+    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
+    | None = None,
+    land_mask: np.ndarray | None = None,
+) -> tuple:
+    """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
+
+    Creates contour plots for ground truth and prediction data, and optionally computes
+    and displays their difference. It handles colour normalisation, contour levels, and
+    proper cleanup of previous plot elements. Can overlay grey land areas using a land mask.
+
+    Args:
+        axs: List of matplotlib axes objects where plots will be drawn. Expected to have
+            at least 2 axes (ground truth, prediction) and optionally 3 (with difference).
+        ground_truth: 2D array of ground truth values to plot.
+        prediction: 2D array of predicted values to plot.
+        plot_spec: Plotting specification containing colourmap, value ranges, and other
+            display parameters.
+        diff_colour_scale: Optional DiffColourmapSpec containing normalisation and colour
+            mapping parameters for difference plots.
+        precomputed_difference: Optional pre-computed difference array. If None and
+            difference is included, the difference will be computed on-demand.
+        levels_override: Optional custom contour levels. If None, levels are derived
+            from plot_spec.
+        display_ranges_override: Optional custom display ranges for stable animation.
+            If None, ranges are computed from the data.
+        land_mask: Optional 2D boolean array where True indicates land areas to overlay
+            in grey. If None, no land overlay is applied.
+
+    Returns:
+        Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
+        The image objects are matplotlib contour collections, and image_difference may be None
+        if include_difference is False. diff_colour_scale is returned for reuse in animations.
+
+    """
+    for ax in axs:
+        _clear_contours(ax)
+
+    # Apply land mask to data if provided
+    ground_truth, prediction, difference = _apply_land_mask(
+        ground_truth, prediction, precomputed_difference, land_mask
+    )
+
+    # Compute display ranges - use override if provided for stable animation
+    (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
+        _compute_display_ranges(
+            ground_truth, prediction, plot_spec, display_ranges_override
+        )
+    )
+
+    # Draw ground truth and prediction panels
+    image_groundtruth, image_prediction = _draw_main_panels(
+        axs,
+        ground_truth,
+        prediction,
+        plot_spec,
+        groundtruth_vmin,
+        groundtruth_vmax,
+        prediction_vmin,
+        prediction_vmax,
+        levels_override,
+    )
+
     image_difference = None
     if plot_spec.include_difference:
-        difference = (
-            precomputed_difference
-            if precomputed_difference is not None
-            else compute_difference(ground_truth, prediction, plot_spec.diff_mode)
-        )
+        # Use the difference from land mask application, or compute if not available
+        if difference is None:
+            difference = compute_difference(
+                ground_truth, prediction, plot_spec.diff_mode
+            )
 
         # Expect colour scale to be provided by caller; no fallback here
         if diff_colour_scale is None:
@@ -470,16 +587,28 @@ def _draw_frame(  # noqa: PLR0913
 
         """
         if np.isnan(arr).any():
+            # Create overlay for NaN areas (land mask)
+            nan_mask = np.isnan(arr).astype(float)
+            # Create a custom colormap: 0=transparent, 1=land color
+
+            # Land colour options: 'white' for white land, 'grey' for grey land
+            colors = ["white", "white"]  # 0=white (transparent), 1=land color
+            cmap = ListedColormap(colors)
             ax.imshow(
-                np.isnan(arr),
-                cmap="black",
+                nan_mask,
+                cmap=cmap,
                 vmin=0,
                 vmax=1,
-                alpha=0.35,
+                alpha=1.0,  # Fully opaque white land areas
                 interpolation="nearest",
             )
 
     # Optional: visually mark NaNs as semi-transparent grey overlays here
+    if land_mask is not None:
+        _overlay_nans(axs[0], ground_truth)
+        _overlay_nans(axs[1], prediction)
+        if plot_spec.include_difference:
+            _overlay_nans(axs[2], difference)
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 

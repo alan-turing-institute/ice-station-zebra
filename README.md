@@ -126,7 +126,7 @@ The `k` encoded datasets can then be combined in latent space to give a single d
 
 This is then passed to the processor, which must accept input of shape `(N, T, k * C_latent, H_latent, W_latent)` and produce output of the same shape.
 
-This output is then passed to one or more output-specific decoders which take input of shape `(N, T, k * C_latent, H_latent, W_latent)` and produce output of shape `(N, T, C_out, H_out, W_out)`, regenerating the time dimension.
+This output is then passed to one or more output-specific decoders which take input of shape `(N, T, k * C_latent, H_latent, W_latent)` and produce output of shape `(N, T, C_out, H_out, W_out)`.
 
 ![image](docs/assets/pipeline-encode-process-decode.png)
 

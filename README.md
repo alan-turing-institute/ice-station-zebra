@@ -42,21 +42,21 @@
 | ice\_station\_zebra/models/common/conv\_block\_upsample\_naive.py       |        8 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/conv\_norm\_act.py                    |       20 |        4 |     80% | 41-46, 73 |
 | ice\_station\_zebra/models/common/patchembed.py                         |       13 |        8 |     38% |19-24, 38-40 |
-| ice\_station\_zebra/models/common/resizing\_interpolation.py            |       11 |        0 |    100% |           |
+| ice\_station\_zebra/models/common/resizing\_interpolation.py            |       16 |        1 |     94% |        40 |
 | ice\_station\_zebra/models/common/time\_embed.py                        |        9 |        4 |     56% | 26-30, 37 |
 | ice\_station\_zebra/models/common/transformerblock.py                   |       12 |        7 |     42% |16-22, 40-42 |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/base\_decoder.py                    |       14 |        2 |     86% |     40-41 |
-| ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       36 |        0 |    100% |           |
-| ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       14 |        0 |    100% |           |
+| ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       37 |        0 |    100% |           |
+| ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       15 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/\_\_init\_\_.py                    |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/gaussian\_diffusion.py             |       46 |       36 |     22% |41-74, 93-98, 117-137, 153-156, 177-182 |
 | ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       70 |     11% |56-176, 197-241, 257-272, 285-288 |
 | ice\_station\_zebra/models/encode\_process\_decode.py                   |       21 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/base\_encoder.py                    |       14 |        2 |     86% |     44-45 |
-| ice\_station\_zebra/models/encoders/cnn\_encoder.py                     |       25 |        0 |    100% |           |
-| ice\_station\_zebra/models/encoders/naive\_linear\_encoder.py           |       14 |        0 |    100% |           |
+| ice\_station\_zebra/models/encoders/cnn\_encoder.py                     |       26 |        0 |    100% |           |
+| ice\_station\_zebra/models/encoders/naive\_linear\_encoder.py           |       15 |        0 |    100% |           |
 | ice\_station\_zebra/models/persistence.py                               |       16 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        6 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/base\_processor.py                |       18 |        0 |    100% |           |
@@ -64,7 +64,7 @@
 | ice\_station\_zebra/models/processors/null.py                           |       10 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/vit.py                            |       36 |       27 |     25% |36-69, 83-108 |
-| ice\_station\_zebra/models/zebra\_model.py                              |       45 |        0 |    100% |           |
+| ice\_station\_zebra/models/zebra\_model.py                              |       46 |        0 |    100% |           |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |29-101, 104-105 |
@@ -73,14 +73,14 @@
 | ice\_station\_zebra/types/enums.py                                      |        7 |        0 |    100% |           |
 | ice\_station\_zebra/types/simple\_datatypes.py                          |       52 |        0 |    100% |           |
 | ice\_station\_zebra/types/typedefs.py                                   |       11 |        0 |    100% |           |
-| ice\_station\_zebra/utils.py                                            |       12 |        6 |     50% |9, 14, 19-22 |
+| ice\_station\_zebra/utils.py                                            |       23 |       14 |     39% |9, 14, 19-22, 29-36 |
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        4 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |       40 |       21 |     48% |28-34, 47-79 |
 | ice\_station\_zebra/visualisations/layout.py                            |      195 |       27 |     86% |176, 404, 410, 424, 504-507, 509, 564-581, 593, 617, 632, 640-642, 694-699 |
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      103 |       48 |     53% |47-53, 82-83, 106, 117-118, 163, 173-200, 224-225, 227-228, 250-251, 253-254, 292-295, 321-325 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      112 |       22 |     80% |154, 213-216, 237-240, 273-290, 377-391, 425-426, 443-451, 472-473, 522 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2021** |  **701** | **65%** |           |
+|                                                               **TOTAL** | **2042** |  **710** | **65%** |           |
 
 
 ## Setup coverage badge

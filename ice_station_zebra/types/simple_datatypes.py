@@ -110,3 +110,6 @@ class PlotSpec:
     outside_warn: float = 0.05
     severe_outside: float = 0.20
     include_shared_range_mismatch_check: bool = True
+
+    # Land mask overlay
+    land_mask_path: str | None = None

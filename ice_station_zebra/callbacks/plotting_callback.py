@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
@@ -15,6 +16,7 @@ from ice_station_zebra.types import ModelTestOutput, TensorDimensions
 from ice_station_zebra.visualisations import (
     DEFAULT_SIC_SPEC,
     PlotSpec,
+    detect_land_mask_path,
     plot_maps,
     video_maps,
 )
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 class PlottingCallback(Callback):
     """A callback to create plots during evaluation."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         frequency: int = 10,
@@ -37,6 +39,7 @@ class PlottingCallback(Callback):
         video_fps: int = 2,
         video_format: Literal["mp4", "gif"] = "mp4",
         plot_spec: PlotSpec | None = None,
+        config: dict | None = None,
     ) -> None:
         """Create plots during evaluation.
 
@@ -48,6 +51,7 @@ class PlottingCallback(Callback):
             video_format: Format for video plots (mp4 or gif).
             plot_spec: Plotting specification to use (contains difference settings,
                       timestep selection, etc.).
+            config: Configuration dictionary for land mask detection.
 
         """
         super().__init__()
@@ -56,7 +60,46 @@ class PlottingCallback(Callback):
         self.make_video_plots = make_video_plots
         self.video_fps = video_fps
         self.video_format = video_format
-        self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
+        # Ensure plot_spec is a PlotSpec instance, not a dict
+        if plot_spec is None:
+            self.plot_spec = DEFAULT_SIC_SPEC
+        else:
+            self.plot_spec = plot_spec
+        self.config = config or {}
+        self._land_mask_path_detected = False
+
+    def _detect_land_mask_path(
+        self,
+        dataset: CombinedDataset,
+        trainer: Trainer,  # noqa: ARG002
+    ) -> None:
+        """Detect and set the land mask path based on the dataset configuration."""
+        if self._land_mask_path_detected:
+            return
+
+        # Get base path from callback config or use default
+        base_path = self.config.get("base_path", "../ice-station-zebra/data")
+
+        # Try to get dataset name from the target dataset
+        dataset_name = None
+        if hasattr(dataset, "target") and hasattr(dataset.target, "name"):
+            dataset_name = dataset.target.name
+
+        # Detect land mask path
+        land_mask_path = detect_land_mask_path(base_path, dataset_name)
+
+        if land_mask_path:
+            # Update the plot_spec with the detected land mask path
+            # Use dataclasses.replace to create a new PlotSpec instance with updated land_mask_path
+
+            self.plot_spec = dataclasses.replace(
+                self.plot_spec, land_mask_path=land_mask_path
+            )
+            logger.info("Auto-detected land mask: %s", land_mask_path)
+        else:
+            logger.debug("No land mask found for dataset: %s", dataset_name)
+
+        self._land_mask_path_detected = True
 
     # --- Lightning Hook ---
     def on_test_batch_end(
@@ -97,6 +140,9 @@ class PlottingCallback(Callback):
             dataset.date_from_index(batch_size * batch_idx + tt)
             for tt in range(n_timesteps)
         ]
+
+        # Detect land mask path if not already done
+        self._detect_land_mask_path(dataset, trainer)
 
         # Log static and video plots
         self.log_static_plots(outputs, dates, trainer.loggers)

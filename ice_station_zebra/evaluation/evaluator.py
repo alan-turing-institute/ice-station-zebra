@@ -46,10 +46,13 @@ class ZebraEvaluator:
         self.data_module = ZebraDataModule(config)
 
         # Add callbacks
-        callbacks: list[Callback] = [
-            hydra.utils.instantiate(cfg)
-            for cfg in config["evaluate"].get("callbacks", {}).values()
-        ]
+        callbacks: list[Callback] = []
+        for cfg in config["evaluate"].get("callbacks", {}).values():
+            callback = hydra.utils.instantiate(cfg)
+            # Pass config to PlottingCallback for land mask detection
+            if callback.__class__.__name__ == "PlottingCallback":
+                callback.config = OmegaConf.to_container(config, resolve=True)
+            callbacks.append(callback)
         for callback in callbacks:
             logger.debug("Adding evaluation callback %s.", callback.__class__.__name__)
 

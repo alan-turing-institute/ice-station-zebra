@@ -1,8 +1,13 @@
+from pathlib import Path
+
 import numpy as np
 from matplotlib.colors import TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, DiffMode, DiffStrategy, PlotSpec
+
+# Constants for land mask validation
+EXPECTED_LAND_MASK_DIMENSIONS = 2
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
@@ -323,3 +328,112 @@ def compute_display_ranges_stream(
     prediction_min = float(np.nanmin(prediction_stream))
     prediction_max = float(np.nanmax(prediction_stream))
     return (groundtruth_min, groundtruth_max), (prediction_min, prediction_max)
+
+
+def detect_land_mask_path(
+    base_path: str | Path,
+    dataset_name: str | None = None,
+    hemisphere: str | None = None,
+) -> str | None:
+    """Automatically detect the land mask path based on dataset configuration.
+
+    This function looks for land mask files in the expected locations based on
+    the dataset name and hemisphere. It follows the pattern:
+    - {base_path}/data/preprocessing/{dataset_name}/IceNetSIC/data/masks/{hemisphere}/masks/land_mask.npy
+    - {base_path}/data/preprocessing/IceNetSIC/data/masks/{hemisphere}/masks/land_mask.npy
+
+    Args:
+        base_path: Base path to the data directory.
+        dataset_name: Name of the dataset (e.g., 'samp-sicsouth-osisaf-25k-2017-2019-24h-v1').
+        hemisphere: Hemisphere ('north' or 'south').
+
+    Returns:
+        Path to the land mask file if found, None otherwise.
+
+    """
+    base_path = Path(base_path)
+
+    # Try to infer hemisphere from dataset name if not provided
+    if hemisphere is None and dataset_name is not None:
+        if "south" in dataset_name.lower():
+            hemisphere = "south"
+        elif "north" in dataset_name.lower():
+            hemisphere = "north"
+
+    if hemisphere is None:
+        return None
+
+    # Try dataset-specific path first
+    if dataset_name is not None:
+        dataset_specific_path = (
+            base_path
+            / "data"
+            / "preprocessing"
+            / dataset_name
+            / "IceNetSIC"
+            / "data"
+            / "masks"
+            / hemisphere
+            / "masks"
+            / "land_mask.npy"
+        )
+        if dataset_specific_path.exists():
+            return str(dataset_specific_path)
+
+    # Try general IceNetSIC path
+    general_path = (
+        base_path
+        / "data"
+        / "preprocessing"
+        / "IceNetSIC"
+        / "data"
+        / "masks"
+        / hemisphere
+        / "masks"
+        / "land_mask.npy"
+    )
+    if general_path.exists():
+        return str(general_path)
+
+    return None
+
+
+def load_land_mask(
+    land_mask_path: str | None, expected_shape: tuple[int, int]
+) -> np.ndarray | None:
+    """Load and validate a land mask from a numpy file.
+
+    Args:
+        land_mask_path: Path to the land mask .npy file. If None, returns None.
+        expected_shape: Expected shape (height, width) of the land mask.
+
+    Returns:
+        Land mask array with shape (height, width) where True indicates land areas,
+        or None if no land mask path is provided.
+
+    Raises:
+        InvalidArrayError: If the land mask file cannot be loaded or has wrong shape.
+
+    """
+    if land_mask_path is None:
+        return None
+
+    try:
+        land_mask = np.load(land_mask_path)
+    except (OSError, ValueError) as e:
+        msg = f"Failed to load land mask from {land_mask_path}: {e}"
+        raise InvalidArrayError(msg) from e
+
+    if land_mask.ndim != EXPECTED_LAND_MASK_DIMENSIONS:
+        msg = f"Land mask must be 2D, got shape {land_mask.shape}"
+        raise InvalidArrayError(msg)
+
+    if land_mask.shape != expected_shape:
+        msg = f"Land mask shape {land_mask.shape} does not match expected shape {expected_shape}"
+        raise InvalidArrayError(msg)
+
+    # Convert to boolean if it's not already
+    if land_mask.dtype != bool:
+        land_mask = land_mask.astype(bool)
+
+    return land_mask

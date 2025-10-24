@@ -125,7 +125,7 @@ def test_axes_have_reasonable_gaps(
 
 
 def test_y_axis_orientation_for_geographical_data() -> None:
-    """Test that y-axis is oriented correctly for geographical data (North at top)."""
+    """Test that y-axis is oriented correctly for geographical data following polar mapping conventions."""
     # Create a simple figure with axes
     fig, ax = plt.subplots()
 
@@ -136,23 +136,20 @@ def test_y_axis_orientation_for_geographical_data() -> None:
     _set_axes_limits([ax], width=width, height=height)
 
     # Check that y-axis is inverted for geographical convention
-    # North (higher values) should be at top, South (lower values) at bottom
+    # For polar data (both Arctic and Antarctic), higher latitude values should be
+    # positioned at the top of the display, following environmental science conventions
     y_min, y_max = ax.get_ylim()
 
     # Check if the axis is properly oriented for geographical data
-    # We want North (higher values) at the top
+    # We want higher latitude values (pole-ward) at the top of the display
     if y_max > y_min:
         # Normal orientation: y_max at top
-        assert y_max == height, (
-            f"Y-axis maximum should be {height} (North at top), got {y_max}"
-        )
-        assert y_min == 0, f"Y-axis minimum should be 0 (South at bottom), got {y_min}"
+        assert y_max == height, f"Y-axis maximum should be {height}, got {y_max}"
+        assert y_min == 0, f"Y-axis minimum should be 0 , got {y_min}"
     else:
         # Inverted orientation: y_min at top
-        assert y_min == height, (
-            f"Y-axis minimum should be {height} (North at top), got {y_min}"
-        )
-        assert y_max == 0, f"Y-axis maximum should be 0 (South at bottom), got {y_max}"
+        assert y_min == height, f"Y-axis minimum should be {height}, got {y_min}"
+        assert y_max == 0, f"Y-axis maximum should be 0 , got {y_max}"
 
     # Check x-axis is still normal (left to right)
     x_min, x_max = ax.get_xlim()

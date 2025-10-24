@@ -482,12 +482,17 @@ def _style_axes(axs: Sequence[Axes]) -> None:
 def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
     """Set consistent axis limits across all plot panels.
 
-    Ensures all axes display the same spatial extent.
+    Ensures all axes display the same spatial extent following polar mapping conventions.
 
     Args:
         axs: List of matplotlib Axes objects to configure
         width: Width of the data array (sets x-axis limits: 0 to width)
-        height: Height of the data array (sets y-axis limits: height to 0 for geographical data)
+        height: Height of the data array (sets y-axis limits: height to 0 for polar data)
+
+    Note:
+        The y-axis is inverted (height to 0) to follow environmental science conventions
+        for polar data visualisation, where higher latitude values are
+        positioned at the top of the display for both Arctic and Antarctic regions.
 
     """
     for ax in axs:

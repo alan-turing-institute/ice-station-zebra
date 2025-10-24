@@ -431,6 +431,7 @@ def _draw_main_panels(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
+            origin="lower",
         )
         image_prediction = axs[1].contourf(
             prediction,
@@ -438,6 +439,7 @@ def _draw_main_panels(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
+            origin="lower",
         )
     else:
         # For shared strategy, use same levels for both panels
@@ -447,6 +449,7 @@ def _draw_main_panels(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
+            origin="lower",
         )
         image_prediction = axs[1].contourf(
             prediction,
@@ -454,6 +457,7 @@ def _draw_main_panels(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
+            origin="lower",
         )
 
     return image_groundtruth, image_prediction
@@ -554,6 +558,7 @@ def _draw_frame(  # noqa: PLR0913
                 cmap=diff_colour_scale.cmap,
                 vmin=diff_vmin,
                 vmax=diff_vmax,
+                origin="lower",
             )
         else:
             # Non-negative differences with vmin/vmax
@@ -571,6 +576,7 @@ def _draw_frame(  # noqa: PLR0913
                 cmap=diff_colour_scale.cmap,
                 vmin=vmin,
                 vmax=vmax,
+                origin="lower",
             )
 
     # Optional: visually mark NaNs as semi-transparent grey overlays

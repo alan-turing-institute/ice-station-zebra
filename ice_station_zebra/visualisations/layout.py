@@ -487,12 +487,14 @@ def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
     Args:
         axs: List of matplotlib Axes objects to configure
         width: Width of the data array (sets x-axis limits: 0 to width)
-        height: Height of the data array (sets y-axis limits: 0 to height)
+        height: Height of the data array (sets y-axis limits: height to 0 for geographical data)
 
     """
     for ax in axs:
         ax.set_xlim(0, width)  # X-axis: left edge to right edge
-        ax.set_ylim(0, height)  # Y-axis: bottom edge to top edge
+        ax.set_ylim(
+            height, 0
+        )  # Y-axis: top edge to bottom edge (geographical convention)
 
 
 # --- Colourbar Functions ---

@@ -11,5 +11,5 @@ defaults:
   - train: default
   - _self_
 
-base_path: /my_data
-antialias_val: true # Global setting for antialiasing in encoders/decoders - fixing Mac bug
+base_path: ../my_data
+antialias_val: false # Global setting for antialiasing in encoders/decoders - fixing Mac bug

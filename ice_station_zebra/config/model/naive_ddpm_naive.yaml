@@ -6,7 +6,7 @@ name: naive-ddpm-naive
 encoder:
   _target_: ice_station_zebra.models.encoders.NaiveLinearEncoder
   latent_space: [128, 128] # Shape of the latent space
-  antialias: ${mod_antialias}
+  antialias: ${..mod_antialias}
 
 processor:
   _target_: ice_station_zebra.models.processors.DDPMProcessor
@@ -14,4 +14,4 @@ processor:
 
 decoder:
   _target_: ice_station_zebra.models.decoders.NaiveLinearDecoder
-  antialias: ${mod_antialias}
+  antialias: ${..mod_antialias}

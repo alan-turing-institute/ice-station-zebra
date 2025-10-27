@@ -26,7 +26,7 @@ base_path: /local/path/to/my/data
 You can then run this with, e.g.:
 
 ```bash
-uv run zebra datasets create --config-name <your local config>.yaml
+uv run zebra <command> --config-name <your local config>.yaml
 ```
 You can also use this config to override other options in the `base.yaml` file, as shown below:
 
@@ -46,7 +46,7 @@ base_path: /local/path/to/my/data
 Alternatively, you can apply overrides to specific options at the command line like this:
 
 ```bash
-uv run zebra datasets create ++base_path=/local/path/to/my/data
+uv run zebra <command> ++base_path=/local/path/to/my/data
 ```
 
 Note that `persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
@@ -121,12 +121,12 @@ Cons:
 A processor model is part of a larger encode-process-decode step.
 Start by defining a latent space as `(C_latent, H_latent, W_latent)` - in the example below, this has been set to `(10, 64, 64)`.
 The encode-process-decode model automatically creates one encoder for each input and one decoder for each output.
-The dataset-specific encoder takes the input data and converts it to shape `(N, C_latent, H_latent, W_latent)`, compressing the time and channels dimensions.
-The `k` encoded datasets can then be combined in latent space to give a single dataset of shape `(N, k * C_latent, H_latent, W_latent)`.
+The dataset-specific encoder takes the input data and converts it to shape `(N, T, C_latent, H_latent, W_latent)`.
+The `k` encoded datasets can then be combined in latent space to give a single dataset of shape `(N, T, k * C_latent, H_latent, W_latent)`.
 
-This is then passed to the processor, which must accept input of shape `(N, k * C_latent, H_latent, W_latent)` and produce output of the same shape.
+This is then passed to the processor, which must accept input of shape `(N, T, k * C_latent, H_latent, W_latent)` and produce output of the same shape.
 
-This output is then passed to one or more output-specific decoders which take input of shape `(N, k * C_latent, H_latent, W_latent)` and produce output of shape `(N, T, C_out, H_out, W_out)`, regenerating the time dimension.
+This output is then passed to one or more output-specific decoders which take input of shape `(N, T, k * C_latent, H_latent, W_latent)` and produce output of shape `(N, T, C_out, H_out, W_out)`.
 
 ![image](docs/assets/pipeline-encode-process-decode.png)
 
@@ -136,7 +136,6 @@ Pros:
 
 Cons:
 - input variables have been transformed into latent space
-- time-step information has been compressed into the latent space
 
 ## Jupyter notebooks
 

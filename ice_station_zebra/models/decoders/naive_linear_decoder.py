@@ -20,6 +20,7 @@ class NaiveLinearDecoder(BaseDecoder):
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialise a NaiveLinearDecoder."""
+        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
 
         # List of layers
@@ -31,7 +32,9 @@ class NaiveLinearDecoder(BaseDecoder):
         )
 
         # Resize to the desired output shape
-        layers.append(ResizingInterpolation(self.data_space_out.shape))
+        layers.append(
+            ResizingInterpolation(self.data_space_out.shape, antialias=antialias)
+        )
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

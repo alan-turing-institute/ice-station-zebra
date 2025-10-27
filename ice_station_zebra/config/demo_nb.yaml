@@ -11,5 +11,9 @@ defaults:
   - train: default
   - _self_
 
+train:
+  trainer:
+    max_epochs: 10
+
 base_path: ../my_data
 antialias_val: false # Global setting for antialiasing in encoders/decoders - fixing Mac bug

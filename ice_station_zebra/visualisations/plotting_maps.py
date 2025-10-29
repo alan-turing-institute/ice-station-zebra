@@ -10,6 +10,7 @@
 
 import contextlib
 import io
+import logging
 from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Literal
@@ -26,7 +27,7 @@ from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
 from . import convert
-from .layout import _add_colourbars, _build_layout, _set_axes_limits
+from .layout import _add_colourbars, _build_layout, _set_axes_limits, _set_titles
 from .plotting_core import (
     compute_difference,
     compute_display_ranges,
@@ -39,6 +40,9 @@ from .plotting_core import (
     validate_3d_streams,
 )
 from .range_check import compute_range_check_report
+
+logger = logging.getLogger(__name__)
+
 
 # Keep strong references to animation objects during save to avoid GC-related warnings
 _ANIM_CACHE: list[animation.FuncAnimation] = []
@@ -118,6 +122,9 @@ def plot_maps(
         land_mask=land_mask,
     )
 
+    # Restore axis titles after drawing (they were cleared in _draw_frame)
+    _set_titles(axs, plot_spec)
+
     # Colourbars and title
     _add_colourbars(
         axs,
@@ -129,7 +136,11 @@ def plot_maps(
     )
 
     _set_axes_limits(axs, width=width, height=height)
-    title_text = _set_suptitle_with_box(fig, _format_date_to_string(date))
+    try:
+        title_text = _set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
+    except Exception:
+        logger.exception("Failed to draw suptitle; continuing without title.")
+        title_text = None
 
     # Include range_check report
     (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
@@ -155,9 +166,10 @@ def plot_maps(
         # Place the warning just below the title
         if title_text is not None:
             _, title_y = title_text.get_position()
-            warning_y = max(title_y - 0.03, 0.0)
+            n_lines = title_text.get_text().count("\n") + 1
+            warning_y = max(title_y - (0.08 + 0.03 * (n_lines - 1)), 0.0)
         else:
-            warning_y = 0.93
+            warning_y = 0.90
         _draw_badge_with_box(fig, 0.5, warning_y, badge)
 
     try:
@@ -269,6 +281,8 @@ def video_maps(
         display_ranges_override=display_ranges,
         land_mask=land_mask,
     )
+    # Restore axis titles after drawing (they were cleared in _draw_frame)
+    _set_titles(axs, plot_spec)
     # Colourbars and title
     _add_colourbars(
         axs,
@@ -280,7 +294,13 @@ def video_maps(
         cbar_axes=cbar_axes,
     )
     _set_axes_limits(axs, width=width, height=height)
-    title_text = _set_suptitle_with_box(fig, _format_date_to_string(dates[0]))
+    try:
+        title_text = _set_suptitle_with_box(
+            fig, _build_title_video(plot_spec, dates, 0)
+        )
+    except Exception:
+        logger.exception("Failed to draw suptitle; continuing without title.")
+        title_text = None
 
     # Animation function
     def animate(tt: int) -> tuple[()]:
@@ -300,8 +320,11 @@ def video_maps(
             display_ranges_override=display_ranges,
             land_mask=land_mask,
         )
+        # Restore axis titles after drawing (they were cleared in _draw_frame)
+        _set_titles(axs, plot_spec)
 
-        title_text.set_text(_format_date_to_string(dates[tt]))
+        if title_text is not None:
+            title_text.set_text(_build_title_video(plot_spec, dates, tt))
         return ()
 
     # Create the animation object
@@ -617,31 +640,6 @@ def _draw_frame(  # noqa: PLR0913
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 
 
-def _format_date_to_string(date: date | datetime) -> str:
-    """Format a date or datetime object to a standardised string representation for plot titles.
-
-    Args:
-        date: Date or datetime object to format.
-
-    Returns:
-        Formatted string in "YYYY-MM-DD HH:MM" format for datetime objects,
-        or "YYYY-MM-DD" format for date objects.
-
-    Example:
-        >>> from datetime import date, datetime
-        >>> _format_date_to_string(date(2023, 12, 25))
-        '2023-12-25'
-        >>> _format_date_to_string(datetime(2023, 12, 25, 14, 30))
-        '2023-12-25 14:30'
-
-    """
-    return (
-        date.strftime(r"%Y-%m-%d %H:%M")
-        if isinstance(date, datetime)
-        else date.strftime(r"%Y-%m-%d")
-    )
-
-
 def _clear_plot(ax: Axes) -> None:
     """Remove titles, labels, and contour collections from an axes to prevent overlaps.
 
@@ -660,30 +658,119 @@ def _set_suptitle_with_box(fig: plt.Figure, text: str) -> Text:
     """Draw a fixed-position title with a white box that doesn't influence layout.
 
     Returns the Text artist so callers can update with set_text during animation.
+    This version avoids kwargs that are unsupported on older Matplotlib.
     """
-    return fig.text(
-        0.5,
-        0.98,
-        text,
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
+    t = fig.text(
+        x=0.5,
+        y=0.98,
+        s=text,
         ha="center",
         va="top",
-        fontsize=plt.rcParams.get("axes.titlesize", 12),
+        fontsize=12,
         fontfamily="monospace",
         transform=fig.transFigure,
-        in_layout=False,
-        bbox={"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0},
+        bbox=bbox,
     )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
 
 
 def _draw_badge_with_box(fig: plt.Figure, x: float, y: float, text: str) -> Text:
     """Draw a warning/info badge with white background box at figure coords."""
-    return fig.text(
-        x,
-        y,
-        text,
-        fontsize=9,
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0}
+    t = fig.text(
+        x=x,
+        y=y,
+        s=text,
+        fontsize=11,
+        fontfamily="monospace",
         color="firebrick",
         ha="center",
         va="top",
-        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0},
+        bbox=bbox,
     )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
+
+
+# --- Title helpers ---
+def _formatted_variable_name(variable: str) -> str:
+    """Return a human-friendly variable name for titles.
+
+    Example: "sea_ice_concentration" -> "Sea ice concentration".
+    """
+    pretty = variable.replace("_", " ").strip()
+    return pretty.title() if pretty else ""
+
+
+def _format_date_for_title(dt: date | datetime) -> str:
+    """Format a date/datetime to ISO date string (YYYY-MM-DD) for plot titles.
+
+    Args:
+        dt: Date or datetime object to format.
+
+    Returns:
+        ISO format date string (YYYY-MM-DD). Time components are stripped
+        from datetime objects.
+
+    Example:
+        >>> from datetime import date, datetime
+        >>> _format_date_for_title(date(2023, 12, 25))
+        '2023-12-25'
+        >>> _format_date_for_title(datetime(2023, 12, 25, 14, 30))
+        '2023-12-25'
+
+    """
+    if isinstance(dt, datetime):
+        return dt.date().isoformat()
+    return dt.isoformat()
+
+
+def _build_title_static(plot_spec: PlotSpec, when: date | datetime) -> str:
+    """Compose a readable suptitle for static plots.
+
+    Lines:
+      1) "<Variable> (<Hemisphere>)  Shown: YYYY-MM-DD"
+      2) "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
+      3) "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
+    """
+    lines: list[str] = []
+    metric = _formatted_variable_name(plot_spec.variable)
+    hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
+    lines.append(f"{metric}{hemi} Prediction   Shown: {_format_date_for_title(when)}")
+    if plot_spec.metadata_subtitle:
+        lines.append(plot_spec.metadata_subtitle)
+    return "\n".join(lines)
+
+
+def _build_title_video(
+    plot_spec: PlotSpec,
+    dates: Sequence[date | datetime],
+    current_index: int,
+) -> str:
+    """Compose a readable multi-line suptitle for video plots.
+
+    Lines:
+      1) "<Variable> (<Hemisphere>)  Frame: YYYY-MM-DD"
+      2) "Animating from <start> to <end>" (shown when a date range is available)
+      3) "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
+      4) "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
+    """
+    lines: list[str] = []
+    metric = _formatted_variable_name(plot_spec.variable)
+    hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
+    if dates:
+        lines.append(
+            f"{metric}{hemi} Prediction   Frame: {_format_date_for_title(dates[current_index])}"
+        )
+        start_s = _format_date_for_title(dates[0])
+        end_s = _format_date_for_title(dates[-1])
+        lines.append(f"Animating from {start_s} to {end_s}")
+    else:
+        lines.append(f"{metric}{hemi}")
+    if plot_spec.metadata_subtitle:
+        lines.append(plot_spec.metadata_subtitle)
+    return "\n".join(lines)

@@ -53,9 +53,7 @@ DEFAULT_GUTTER_VERTICAL = 0.03  # Default for side-by-side with vertical bars
 DEFAULT_CBAR_WIDTH = (
     0.06  # Width allocated for colourbar slots (fraction of panel width)
 )
-DEFAULT_TITLE_SPACE = (
-    0.08  # Vertical space reserved for figure title (prevents overlap)
-)
+DEFAULT_TITLE_SPACE = 0.11  # Allow for the figure title, warning badge, and axes titles
 
 # Horizontal colourbar sizing (fractions of figure height)
 DEFAULT_CBAR_HEIGHT = (
@@ -458,7 +456,16 @@ def _set_titles(axs: list[Axes], plot_spec: PlotSpec) -> None:
     titles = [plot_spec.title_groundtruth, plot_spec.title_prediction, title_difference]
     for ax, title in zip(axs, titles, strict=False):
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(
+                title,
+                fontfamily="monospace",
+                bbox={
+                    "facecolor": "white",
+                    "edgecolor": "none",
+                    "pad": 2.0,
+                    "alpha": 1.0,
+                },
+            )
 
 
 def _style_axes(axs: Sequence[Axes]) -> None:

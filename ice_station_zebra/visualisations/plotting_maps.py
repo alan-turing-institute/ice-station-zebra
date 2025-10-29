@@ -19,6 +19,7 @@ import numpy as np
 from matplotlib import animation
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
+from matplotlib.text import Text
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
@@ -128,7 +129,7 @@ def plot_maps(
     )
 
     _set_axes_limits(axs, width=width, height=height)
-    fig.suptitle(_format_date_to_string(date))
+    title_text = _set_suptitle_with_box(fig, _format_date_to_string(date))
 
     # Include range_check report
     (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
@@ -152,15 +153,12 @@ def plot_maps(
     )
     if badge:
         # Place the warning just below the title
-        title_artist = getattr(fig, "_suptitle", None)
-        if title_artist is not None:
-            _, title_y = title_artist.get_position()
+        if title_text is not None:
+            _, title_y = title_text.get_position()
             warning_y = max(title_y - 0.03, 0.0)
         else:
             warning_y = 0.93
-        fig.text(
-            0.5, warning_y, badge, fontsize=9, color="firebrick", ha="center", va="top"
-        )
+        _draw_badge_with_box(fig, 0.5, warning_y, badge)
 
     try:
         return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
@@ -282,7 +280,7 @@ def video_maps(
         cbar_axes=cbar_axes,
     )
     _set_axes_limits(axs, width=width, height=height)
-    fig.suptitle(_format_date_to_string(dates[0]))
+    title_text = _set_suptitle_with_box(fig, _format_date_to_string(dates[0]))
 
     # Animation function
     def animate(tt: int) -> tuple[()]:
@@ -303,7 +301,7 @@ def video_maps(
             land_mask=land_mask,
         )
 
-        fig.suptitle(_format_date_to_string(dates[tt]))
+        title_text.set_text(_format_date_to_string(dates[tt]))
         return ()
 
     # Create the animation object
@@ -506,7 +504,7 @@ def _draw_frame(  # noqa: PLR0913
 
     """
     for ax in axs:
-        _clear_contours(ax)
+        _clear_plot(ax)
 
     # Apply land mask to data if provided
     ground_truth, prediction, difference = _apply_land_mask(
@@ -644,8 +642,8 @@ def _format_date_to_string(date: date | datetime) -> str:
     )
 
 
-def _clear_contours(ax: Axes) -> None:
-    """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
+def _clear_plot(ax: Axes) -> None:
+    """Remove titles, labels, and contour collections from an axes to prevent overlaps.
 
     Prevents overlapping plots in an animation loop.
 
@@ -655,3 +653,37 @@ def _clear_contours(ax: Axes) -> None:
     """
     for coll in ax.collections[:]:
         coll.remove()
+    ax.set_title("")
+
+
+def _set_suptitle_with_box(fig: plt.Figure, text: str) -> Text:
+    """Draw a fixed-position title with a white box that doesn't influence layout.
+
+    Returns the Text artist so callers can update with set_text during animation.
+    """
+    return fig.text(
+        0.5,
+        0.98,
+        text,
+        ha="center",
+        va="top",
+        fontsize=plt.rcParams.get("axes.titlesize", 12),
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        in_layout=False,
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0},
+    )
+
+
+def _draw_badge_with_box(fig: plt.Figure, x: float, y: float, text: str) -> Text:
+    """Draw a warning/info badge with white background box at figure coords."""
+    return fig.text(
+        x,
+        y,
+        text,
+        fontsize=9,
+        color="firebrick",
+        ha="center",
+        va="top",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0},
+    )

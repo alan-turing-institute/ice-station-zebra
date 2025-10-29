@@ -8,7 +8,7 @@
 | ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        5 |        0 |    100% |           |
 | ice\_station\_zebra/callbacks/ema\_weight\_averaging\_callback.py       |       13 |        8 |     38% |24-28, 34-40 |
 | ice\_station\_zebra/callbacks/metric\_summary\_callback.py              |       28 |       15 |     46% |25-27, 39-45, 54-61 |
-| ice\_station\_zebra/callbacks/plotting\_callback.py                     |      102 |       80 |     22% |53-59, 73-103, 112-132, 141-170, 193-208, 225-233, 244-258 |
+| ice\_station\_zebra/callbacks/plotting\_callback.py                     |      121 |       97 |     20% |57-69, 77-102, 116-149, 158-178, 187-216, 239-254, 271-279, 290-304 |
 | ice\_station\_zebra/callbacks/unconditional\_checkpoint.py              |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
 | ice\_station\_zebra/callbacks/weight\_averaging.py                      |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
@@ -31,7 +31,7 @@
 | ice\_station\_zebra/data\_processors/zebra\_data\_processor\_factory.py |       11 |        4 |     64% |     19-26 |
 | ice\_station\_zebra/evaluation/\_\_init\_\_.py                          |        2 |        0 |    100% |           |
 | ice\_station\_zebra/evaluation/cli.py                                   |       16 |        3 |     81% | 27-28, 32 |
-| ice\_station\_zebra/evaluation/evaluator.py                             |       33 |       21 |     36% | 26-81, 86 |
+| ice\_station\_zebra/evaluation/evaluator.py                             |       38 |       26 |     32% | 26-84, 89 |
 | ice\_station\_zebra/exceptions.py                                       |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/\_\_init\_\_.py                              |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/\_\_init\_\_.py                       |        9 |        0 |    100% |           |
@@ -69,18 +69,18 @@
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |29-101, 104-105 |
 | ice\_station\_zebra/types/\_\_init\_\_.py                               |        5 |        0 |    100% |           |
-| ice\_station\_zebra/types/complex\_datatypes.py                         |       42 |       13 |     69% |37, 52-59, 63-65, 69 |
+| ice\_station\_zebra/types/complex\_datatypes.py                         |       36 |       13 |     64% |37, 52-59, 63-65, 69 |
 | ice\_station\_zebra/types/enums.py                                      |        7 |        0 |    100% |           |
-| ice\_station\_zebra/types/simple\_datatypes.py                          |       52 |        0 |    100% |           |
+| ice\_station\_zebra/types/simple\_datatypes.py                          |       34 |        0 |    100% |           |
 | ice\_station\_zebra/types/typedefs.py                                   |       11 |        0 |    100% |           |
 | ice\_station\_zebra/utils.py                                            |       23 |       14 |     39% |9, 14, 19-22, 29-36 |
-| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        4 |        0 |    100% |           |
+| ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        5 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |       40 |       21 |     48% |28-34, 47-79 |
-| ice\_station\_zebra/visualisations/layout.py                            |      195 |       27 |     86% |176, 404, 410, 424, 504-507, 509, 564-581, 593, 617, 632, 640-642, 694-699 |
-| ice\_station\_zebra/visualisations/plotting\_core.py                    |      103 |       48 |     53% |47-53, 82-83, 106, 117-118, 163, 173-200, 224-225, 227-228, 250-251, 253-254, 292-295, 321-325 |
-| ice\_station\_zebra/visualisations/plotting\_maps.py                    |      112 |       22 |     80% |154, 213-216, 237-240, 273-290, 377-391, 425-426, 443-451, 472-473, 522 |
+| ice\_station\_zebra/visualisations/layout.py                            |      203 |       28 |     86% |176, 404, 410, 424, 511-514, 516, 571-588, 600, 624, 639, 647-649, 702-708 |
+| ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       70 |     50% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 354-398, 423-425, 428-429, 437 |
+| ice\_station\_zebra/visualisations/plotting\_maps.py                    |      145 |       23 |     84% |160, 217-220, 228-229, 250-253, 287-305, 419-434, 538, 544-545, 563-571, 655 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2042** |  **710** | **65%** |           |
+|                                                               **TOTAL** | **2120** |  **756** | **64%** |           |
 
 
 ## Setup coverage badge

@@ -15,5 +15,10 @@ train:
   trainer:
     max_epochs: 10
 
+loggers:
+  wandb:
+    name: naive_unet_naive_demo_south
+    save_dir: ${...base_path}/training/${loggers.wandb.name}/
+
 base_path: ../my_data
 antialias_val: false # Global setting for antialiasing in encoders/decoders - fixing Mac bug

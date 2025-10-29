@@ -684,6 +684,7 @@ def _format_linear_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
 
 
 def _format_symmetric_ticks(
@@ -704,3 +705,14 @@ def _format_symmetric_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
+
+
+def _apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
+    """Set tick labels and axis labels on a colourbar to monospace family."""
+    ax = colourbar.ax
+    for label in list(ax.get_xticklabels()) + list(ax.get_yticklabels()):
+        label.set_family("monospace")
+    # Ensure axis labels also use monospace if present
+    ax.xaxis.label.set_family("monospace")
+    ax.yaxis.label.set_family("monospace")

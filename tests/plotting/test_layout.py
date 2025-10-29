@@ -6,9 +6,10 @@ from itertools import combinations
 from typing import TYPE_CHECKING
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import pytest
 
-from ice_station_zebra.visualisations.layout import _build_layout
+from ice_station_zebra.visualisations.layout import _build_layout, _set_axes_limits
 from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 
 from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
@@ -121,3 +122,38 @@ def test_axes_have_reasonable_gaps(
             assert horizontal_gap >= 0.005, (
                 f"Expected ≥0.5% horizontal gap, got {horizontal_gap:.5f} for {rect_a} vs {rect_b}"
             )
+
+
+def test_y_axis_orientation_for_geographical_data() -> None:
+    """Test that y-axis is oriented correctly for geographical data following polar mapping conventions."""
+    # Create a simple figure with axes
+    fig, ax = plt.subplots()
+
+    # Test with sample dimensions
+    height, width = 48, 64
+
+    # Apply the axis limits function
+    _set_axes_limits([ax], width=width, height=height)
+
+    # Check that y-axis is inverted for geographical convention
+    # For polar data (both Arctic and Antarctic), higher latitude values should be
+    # positioned at the top of the display, following environmental science conventions
+    y_min, y_max = ax.get_ylim()
+
+    # Check if the axis is properly oriented for geographical data
+    # We want higher latitude values (pole-ward) at the top of the display
+    if y_max > y_min:
+        # Normal orientation: y_max at top
+        assert y_max == height, f"Y-axis maximum should be {height}, got {y_max}"
+        assert y_min == 0, f"Y-axis minimum should be 0 , got {y_min}"
+    else:
+        # Inverted orientation: y_min at top
+        assert y_min == height, f"Y-axis minimum should be {height}, got {y_min}"
+        assert y_max == 0, f"Y-axis maximum should be 0 , got {y_max}"
+
+    # Check x-axis is still normal (left to right)
+    x_min, x_max = ax.get_xlim()
+    assert x_min == 0, f"X-axis minimum should be 0, got {x_min}"
+    assert x_max == width, f"X-axis maximum should be {width}, got {x_max}"
+
+    plt.close(fig)

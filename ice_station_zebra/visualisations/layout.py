@@ -179,7 +179,7 @@ def _build_layout(  # noqa: PLR0913
             else DEFAULT_FIGSIZE_TWO_PANELS
         )
 
-    fig = plt.figure(figsize=fig_size, constrained_layout=False)
+    fig = plt.figure(figsize=fig_size, constrained_layout=False, facecolor="none")
 
     if orientation == "vertical":
         # Delegate to the vertical builder which organises columns for panels and colourbars
@@ -482,17 +482,24 @@ def _style_axes(axs: Sequence[Axes]) -> None:
 def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
     """Set consistent axis limits across all plot panels.
 
-    Ensures all axes display the same spatial extent.
+    Ensures all axes display the same spatial extent following polar mapping conventions.
 
     Args:
         axs: List of matplotlib Axes objects to configure
         width: Width of the data array (sets x-axis limits: 0 to width)
-        height: Height of the data array (sets y-axis limits: 0 to height)
+        height: Height of the data array (sets y-axis limits: height to 0 for polar data)
+
+    Note:
+        The y-axis is inverted (height to 0) to follow environmental science conventions
+        for polar data visualisation, where higher latitude values are
+        positioned at the top of the display for both Arctic and Antarctic regions.
 
     """
     for ax in axs:
         ax.set_xlim(0, width)  # X-axis: left edge to right edge
-        ax.set_ylim(0, height)  # Y-axis: bottom edge to top edge
+        ax.set_ylim(
+            height, 0
+        )  # Y-axis: top edge to bottom edge (geographical convention)
 
 
 # --- Colourbar Functions ---
@@ -677,6 +684,7 @@ def _format_linear_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
 
 
 def _format_symmetric_ticks(
@@ -697,3 +705,14 @@ def _format_symmetric_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
+
+
+def _apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
+    """Set tick labels and axis labels on a colourbar to monospace family."""
+    ax = colourbar.ax
+    for label in list(ax.get_xticklabels()) + list(ax.get_yticklabels()):
+        label.set_fontfamily("monospace")
+    # Ensure axis labels also use monospace if present
+    ax.xaxis.label.set_fontfamily("monospace")
+    ax.yaxis.label.set_fontfamily("monospace")

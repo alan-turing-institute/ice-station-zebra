@@ -23,4 +23,4 @@ plotting:
     vmax: 1.0
     colourbar_location: "horizontal"
     colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
-    include_footer_metadata: false
+    include_footer_metadata: true

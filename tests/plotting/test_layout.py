@@ -10,7 +10,12 @@ import matplotlib.pyplot as plt
 import pytest
 
 from ice_station_zebra.visualisations.layout import _build_layout, _set_axes_limits
-from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
+from ice_station_zebra.visualisations.plotting_maps import (
+    DEFAULT_SIC_SPEC,
+    _draw_badge_with_box,
+    _set_footer_with_box,
+    _set_suptitle_with_box,
+)
 
 from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
 
@@ -157,3 +162,58 @@ def test_y_axis_orientation_for_geographical_data() -> None:
     assert x_max == width, f"X-axis maximum should be {width}, got {x_max}"
 
     plt.close(fig)
+
+
+def _text_rectangle(
+    fig: plt.Figure, text_artist: plt.Text
+) -> tuple[float, float, float, float]:
+    """Return text bounding box in figure-normalised coords [0, 1]."""
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    bbox = text_artist.get_window_extent(renderer=renderer)
+    # Transform display to figure coords
+    (x0, y0), (x1, y1) = fig.transFigure.inverted().transform(
+        [(bbox.x0, bbox.y0), (bbox.x1, bbox.y1)]
+    )
+    return (float(x0), float(y0), float(x1), float(y1))
+
+
+@pytest.mark.parametrize("colourbar_location", ["horizontal", "vertical"])
+@pytest.mark.parametrize("include_difference", [False, True])
+def test_figure_text_boxes_do_not_overlap(
+    sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
+    *,
+    colourbar_location: str,
+    include_difference: bool,
+) -> None:
+    """Ensure figure title, warning badge, and footer do not overlap panels or colourbars."""
+    ground_truth, _, _ = sic_pair_2d
+
+    spec = replace(
+        DEFAULT_SIC_SPEC,
+        colourbar_location=colourbar_location,  # type: ignore[arg-type]
+        include_difference=include_difference,
+    )
+
+    fig, axes, caxes = _build_layout(
+        plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
+    )
+
+    # Add figure-level title, warning badge (synthetic), and footer
+    title = _set_suptitle_with_box(fig, "Title")
+    ty = title.get_position()[1]
+    badge = _draw_badge_with_box(fig, 0.5, max(ty - 0.05, 0.0), "Warnings: example")
+    footer = _set_footer_with_box(fig, "Footer metadata")
+
+    # Collect rectangles: panels, colourbar axes, and figure texts
+    rectangles = [axis_rectangle(ax) for ax in axes]
+    rectangles.extend(axis_rectangle(ax) for ax in caxes.values() if ax is not None)
+    rectangles.append(_text_rectangle(fig, title))
+    rectangles.append(_text_rectangle(fig, badge))
+    rectangles.append(_text_rectangle(fig, footer))
+
+    # No overlaps among any of these elements
+    for rect_a, rect_b in combinations(rectangles, 2):
+        assert not rectangles_overlap(rect_a, rect_b), (
+            f"Found overlap between rectangles {rect_a} and {rect_b}"
+        )

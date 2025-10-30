@@ -100,8 +100,37 @@ def plot_maps(
     # Load land mask if specified
     land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
 
-    # Initialise the figure and axes
-    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
+    # Pre-compute range check to decide top spacing (warning badge may need extra room)
+    (gt_min, gt_max), (pred_min, pred_max) = compute_display_ranges(
+        ground_truth, prediction, plot_spec
+    )
+    range_check_report = compute_range_check_report(
+        ground_truth,
+        prediction,
+        vmin=gt_min,
+        vmax=gt_max,
+        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
+        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
+        include_shared_range_mismatch_check=getattr(
+            plot_spec, "include_shared_range_mismatch_check", True
+        ),
+    )
+
+    # Increase title space if warnings are present to avoid overlap with axes titles
+    title_space_override = 0.10 if range_check_report.warnings else None
+
+    # Initialise the figure and axes with dynamic top spacing if needed
+    if title_space_override is not None:
+        fig, axs, cbar_axes = _build_layout(
+            plot_spec=plot_spec,
+            height=height,
+            width=width,
+            title_space=title_space_override,
+        )
+    else:
+        fig, axs, cbar_axes = _build_layout(
+            plot_spec=plot_spec, height=height, width=width
+        )
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -142,21 +171,7 @@ def plot_maps(
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
 
-    # Include range_check report
-    (groundtruth_min, groundtruth_max), (prediction_min, prediction_max) = (
-        compute_display_ranges(ground_truth, prediction, plot_spec)
-    )
-    range_check_report = compute_range_check_report(
-        ground_truth,
-        prediction,
-        vmin=groundtruth_min,
-        vmax=groundtruth_max,
-        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
-        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
-        include_shared_range_mismatch_check=getattr(
-            plot_spec, "include_shared_range_mismatch_check", True
-        ),
-    )
+    # Include range_check report (already computed above)
     badge = (
         ""
         if not range_check_report.warnings
@@ -167,10 +182,20 @@ def plot_maps(
         if title_text is not None:
             _, title_y = title_text.get_position()
             n_lines = title_text.get_text().count("\n") + 1
-            warning_y = max(title_y - (0.08 + 0.03 * (n_lines - 1)), 0.0)
+            # Reduced gap to avoid overlapping axes titles; keep badge close to title
+            warning_y = max(title_y - (0.05 + 0.02 * (n_lines - 1)), 0.0)
         else:
             warning_y = 0.90
         _draw_badge_with_box(fig, 0.5, warning_y, badge)
+
+    # Footer metadata at the bottom
+    if getattr(plot_spec, "include_footer_metadata", True):
+        try:
+            footer_text = _build_footer_static(plot_spec)
+            if footer_text:
+                _set_footer_with_box(fig, footer_text)
+        except Exception:
+            logger.exception("Failed to draw footer; continuing without footer.")
 
     try:
         return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
@@ -240,8 +265,10 @@ def video_maps(
         ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
         prediction_stream = np.where(land_mask, np.nan, prediction_stream)
 
-    # Initialise the figure and axes
-    fig, axs, cbar_axes = _build_layout(plot_spec=plot_spec, height=height, width=width)
+    # Initialise the figure and axes with a larger footer space for videos
+    fig, axs, cbar_axes = _build_layout(
+        plot_spec=plot_spec, height=height, width=width, footer_space=0.11
+    )
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation
@@ -301,6 +328,15 @@ def video_maps(
     except Exception:
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
+
+    # Footer metadata at the bottom (static across frames)
+    if getattr(plot_spec, "include_footer_metadata", True):
+        try:
+            footer_text = _build_footer_video(plot_spec, dates)
+            if footer_text:
+                _set_footer_with_box(fig, footer_text)
+        except Exception:
+            logger.exception("Failed to draw footer; continuing without footer.")
 
     # Animation function
     def animate(tt: int) -> tuple[()]:
@@ -677,6 +713,28 @@ def _set_suptitle_with_box(fig: plt.Figure, text: str) -> Text:
     return t
 
 
+def _set_footer_with_box(fig: plt.Figure, text: str) -> Text:
+    """Draw a fixed-position footer with a white box at bottom center.
+
+    Footer is intended for metadata and secondary information.
+    """
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
+    t = fig.text(
+        x=0.5,
+        y=0.03,
+        s=text,
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
+
+
 def _draw_badge_with_box(fig: plt.Figure, x: float, y: float, text: str) -> Text:
     """Draw a warning/info badge with white background box at figure coords."""
     bbox = {"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0}
@@ -730,20 +788,15 @@ def _format_date_for_title(dt: date | datetime) -> str:
 
 
 def _build_title_static(plot_spec: PlotSpec, when: date | datetime) -> str:
-    """Compose a readable suptitle for static plots.
+    """Compose a simple suptitle for static plots.
 
     Lines:
       1) "<Variable> (<Hemisphere>)  Shown: YYYY-MM-DD"
-      2) "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
-      3) "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
+         (Footer contains any metadata such as model/epoch/training data if present)
     """
-    lines: list[str] = []
     metric = _formatted_variable_name(plot_spec.variable)
     hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
-    lines.append(f"{metric}{hemi} Prediction   Shown: {_format_date_for_title(when)}")
-    if plot_spec.metadata_subtitle:
-        lines.append(plot_spec.metadata_subtitle)
-    return "\n".join(lines)
+    return f"{metric}{hemi} Prediction   Shown: {_format_date_for_title(when)}"
 
 
 def _build_title_video(
@@ -751,26 +804,36 @@ def _build_title_video(
     dates: Sequence[date | datetime],
     current_index: int,
 ) -> str:
-    """Compose a readable multi-line suptitle for video plots.
+    """Compose a simple suptitle for video plots (date changes per frame).
 
     Lines:
       1) "<Variable> (<Hemisphere>)  Frame: YYYY-MM-DD"
-      2) "Animating from <start> to <end>" (shown when a date range is available)
-      3) "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
-      4) "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
+      2) Footer: "Animating from <start> to <end>"
+      3) Footer: "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
+      4) Footer: "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
     """
-    lines: list[str] = []
     metric = _formatted_variable_name(plot_spec.variable)
     hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
     if dates:
-        lines.append(
-            f"{metric}{hemi} Prediction   Frame: {_format_date_for_title(dates[current_index])}"
-        )
+        return f"{metric}{hemi} Prediction   Frame: {_format_date_for_title(dates[current_index])}"
+    return f"{metric}{hemi} Prediction"
+
+
+def _build_footer_static(plot_spec: PlotSpec) -> str:
+    """Build footer text for static plots using metadata that used to be in title."""
+    lines: list[str] = []
+    if plot_spec.metadata_subtitle:
+        lines.append(plot_spec.metadata_subtitle)
+    return "\n".join(lines)
+
+
+def _build_footer_video(plot_spec: PlotSpec, dates: Sequence[date | datetime]) -> str:
+    """Build footer text for video plots: animation range and metadata."""
+    lines: list[str] = []
+    if dates:
         start_s = _format_date_for_title(dates[0])
         end_s = _format_date_for_title(dates[-1])
         lines.append(f"Animating from {start_s} to {end_s}")
-    else:
-        lines.append(f"{metric}{hemi}")
     if plot_spec.metadata_subtitle:
         lines.append(plot_spec.metadata_subtitle)
     return "\n".join(lines)

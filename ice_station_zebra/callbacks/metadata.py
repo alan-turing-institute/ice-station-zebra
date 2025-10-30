@@ -28,6 +28,7 @@ class Metadata:
         cadence: Training data cadence string (if available).
         n_points: Number of training points calculated from date range and cadence.
         vars_by_source: Dictionary mapping dataset source names to lists of variable names.
+        n_history_steps: Number of history steps used as model input window (days).
 
     """
 
@@ -37,6 +38,7 @@ class Metadata:
     end: str | None = None
     cadence: str | None = None
     n_points: int | None = None
+    n_history_steps: int | None = None
     vars_by_source: dict[str, list[str]] | None = None
 
 
@@ -264,6 +266,14 @@ def build_metadata(
     # Get variables grouped by source
     vars_by_source = extract_variables_by_source(config)
 
+    # Extract history window length (days) if available
+    n_history_steps: int | None = None
+    predict_cfg = config.get("predict") if isinstance(config, dict) else None
+    if isinstance(predict_cfg, dict):
+        nh = predict_cfg.get("n_history_steps")
+        if isinstance(nh, int):
+            n_history_steps = nh
+
     return Metadata(
         model=model_name if isinstance(model_name, str) and model_name else None,
         epochs=max_epochs if isinstance(max_epochs, int) else None,
@@ -271,11 +281,12 @@ def build_metadata(
         end=end_str,
         cadence=cadence_str,
         n_points=training_points,
+        n_history_steps=n_history_steps,
         vars_by_source=vars_by_source if vars_by_source else None,
     )
 
 
-def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901
+def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901, PLR0912
     """Format metadata dataclass as a compact multi-line subtitle for plot titles.
 
     Lines:
@@ -312,7 +323,13 @@ def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901
         cadence_display = format_cadence_display(metadata.cadence)
         dates_part = f"Training Dates: {s_clean} — {e_clean}"
         if cadence_display:
-            dates_part += f" ({cadence_display})"
+            # Append cadence, and if available, the history window length
+            if metadata.n_history_steps is not None and metadata.n_history_steps > 0:
+                dates_part += (
+                    f" ({cadence_display}, {metadata.n_history_steps} day history)"
+                )
+            else:
+                dates_part += f" ({cadence_display})"
         if metadata.n_points is not None:
             dates_part += f" {metadata.n_points} pts"
         info_parts.append(dates_part)

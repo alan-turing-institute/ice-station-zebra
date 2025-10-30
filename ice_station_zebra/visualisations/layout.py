@@ -53,7 +53,8 @@ DEFAULT_GUTTER_VERTICAL = 0.03  # Default for side-by-side with vertical bars
 DEFAULT_CBAR_WIDTH = (
     0.06  # Width allocated for colourbar slots (fraction of panel width)
 )
-DEFAULT_TITLE_SPACE = 0.11  # Allow for the figure title, warning badge, and axes titles
+DEFAULT_TITLE_SPACE = 0.07  # Reduced: simple title + warning badge + axes titles
+DEFAULT_FOOTER_SPACE = 0.08  # Increased space reserved at bottom for metadata footer
 
 # Horizontal colourbar sizing (fractions of figure height)
 DEFAULT_CBAR_HEIGHT = (
@@ -82,6 +83,7 @@ def _build_layout(  # noqa: PLR0913
     gutter: float | None = None,
     cbar_width: float = DEFAULT_CBAR_WIDTH,
     title_space: float = DEFAULT_TITLE_SPACE,
+    footer_space: float = DEFAULT_FOOTER_SPACE,
     cbar_height: float = DEFAULT_CBAR_HEIGHT,
     cbar_pad: float = DEFAULT_CBAR_PAD,
 ) -> tuple[Figure, list[Axes], dict[str, Axes | None]]:
@@ -111,6 +113,8 @@ def _build_layout(  # noqa: PLR0913
         cbar_width: Fraction of panel width allocated for each colourbar slot.
         title_space: Fraction of figure height reserved at the top for figure title
                     (prevents title from overlapping with plot content).
+        footer_space: Fraction of figure height reserved at the bottom for the metadata
+            footer so it does not overlap colourbars.
         cbar_height: Height fraction for the horizontal colourbar row (row 2 when
             orientation is 'horizontal'). Controls the bar thickness.
         cbar_pad: Vertical gap fraction between the plot row and the colourbar row in
@@ -143,6 +147,8 @@ def _build_layout(  # noqa: PLR0913
     # Calculate top boundary: ensure title space does not consume too much of the figure.
     # At least 60% of the figure height is reserved for the plotting area.
     top_val = max(0.6, 1.0 - (outer_margin + title_space))
+    # Calculate bottom boundary, reserving footer space for metadata
+    bottom_val = outer_margin + footer_space
 
     # Calculate figure size based on data aspect ratio or use defaults
     if height and width and height > 0:
@@ -189,6 +195,7 @@ def _build_layout(  # noqa: PLR0913
             gutter=gutter,
             cbar_width=cbar_width,
             top_val=top_val,
+            bottom_val=bottom_val,
         )
     else:
         # Delegate to the horizontal builder which organises rows for plots and colourbars
@@ -201,6 +208,7 @@ def _build_layout(  # noqa: PLR0913
             cbar_height=cbar_height,
             cbar_pad=cbar_pad,
             top_val=top_val,
+            bottom_val=bottom_val,
         )
 
     _set_titles(axs, plot_spec)
@@ -212,6 +220,7 @@ def _build_layout(  # noqa: PLR0913
         "gutter": gutter,
         "cbar_width": cbar_width,
         "title_space": title_space,
+        "footer_space": footer_space,
         "cbar_height": cbar_height,
         "cbar_pad": cbar_pad,
     }
@@ -227,6 +236,7 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
     gutter: float,
     cbar_width: float,
     top_val: float,
+    bottom_val: float,
 ) -> tuple[list[Axes], dict[str, Axes | None]]:
     """Construct a one-row GridSpec with vertical colourbars.
 
@@ -242,6 +252,8 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
         gutter: Fractional spacing between panel groups.
         cbar_width: Fractional width allocated to colourbar slots.
         top_val: The top boundary of the usable plotting area (accounts for title space).
+        bottom_val: The bottom boundary of the usable plotting area (accounts for
+            reserved footer space).
 
     Returns:
         A tuple of (axes, colourbar_axes) where axes are the main plot axes in order
@@ -278,7 +290,7 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
         left=outer_margin,
         right=1 - outer_margin,
         top=top_val,
-        bottom=outer_margin,
+        bottom=bottom_val,
         wspace=0.0,
     )
 
@@ -327,6 +339,7 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
     cbar_height: float,
     cbar_pad: float,
     top_val: float,
+    bottom_val: float,
 ) -> tuple[list[Axes], dict[str, Axes | None]]:
     """Construct a three-row GridSpec with horizontal colourbars.
 
@@ -346,6 +359,8 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
         cbar_height: Fractional height allocated to the colourbar row.
         cbar_pad: Fractional padding between the plot row and colourbar row.
         top_val: The top boundary of the usable plotting area (accounts for title space).
+        bottom_val: The bottom boundary of the usable plotting area (accounts for
+            reserved footer space).
 
     Returns:
         A tuple of (axes, colourbar_axes) where axes are the main plot axes in order
@@ -366,7 +381,7 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
         left=outer_margin,
         right=1 - outer_margin,
         top=top_val,
-        bottom=outer_margin,
+        bottom=bottom_val,
         wspace=0.0,
         hspace=0.0,
     )

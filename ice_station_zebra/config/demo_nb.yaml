@@ -1,0 +1,24 @@
+defaults:
+  - datasets:
+    - samp_sicsouth_osisaf_25k_2017_2019_24h_v1
+    - samp_weathersouth_era5_0p5_2017_2019_24h_v1
+  - evaluate: default
+  - loggers:
+    - wandb
+  - model: naive_unet_naive
+  - predict: osisaf-south
+  - split: sample_dataset
+  - train: default
+  - _self_
+
+train:
+  trainer:
+    max_epochs: 10
+
+loggers:
+  wandb:
+    name: naive_unet_naive_demo_south
+    save_dir: ${...base_path}/training/${loggers.wandb.name}/
+
+base_path: ../my_data
+antialias_val: false # Global setting for antialiasing in encoders/decoders - fixing Mac bug

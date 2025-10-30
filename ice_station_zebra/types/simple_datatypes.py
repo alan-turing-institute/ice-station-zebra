@@ -119,3 +119,6 @@ class PlotSpec:
     hemisphere: Literal["north", "south"] | None = None
     # metadata_subtitle: free-form text (e.g., "epochs=50; train=2010-2018")
     metadata_subtitle: str | None = None
+
+    # Footer control
+    include_footer_metadata: bool = True

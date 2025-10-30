@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from itertools import combinations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -169,7 +169,13 @@ def _text_rectangle(
 ) -> tuple[float, float, float, float]:
     """Return text bounding box in figure-normalised coords [0, 1]."""
     fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
+    # Obtain a renderer in a backend-agnostic, mypy-friendly way
+    canvas: Any = fig.canvas
+    get_renderer = getattr(canvas, "get_renderer", None)
+    if callable(get_renderer):
+        renderer = get_renderer()
+    else:
+        renderer = getattr(canvas, "renderer", None)
     bbox = text_artist.get_window_extent(renderer=renderer)
     # Transform display to figure coords
     (x0, y0), (x1, y1) = fig.transFigure.inverted().transform(

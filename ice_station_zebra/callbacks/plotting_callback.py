@@ -2,7 +2,7 @@ import dataclasses
 import logging
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 from lightning import LightningModule, Trainer
@@ -10,6 +10,10 @@ from lightning.pytorch import Callback
 from lightning.pytorch.loggers import Logger as LightningLogger
 from torch import Tensor
 
+from ice_station_zebra.callbacks.metadata import (
+    build_metadata_subtitle,
+    infer_hemisphere,
+)
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
@@ -71,7 +75,6 @@ class PlottingCallback(Callback):
     def _detect_land_mask_path(
         self,
         dataset: CombinedDataset,
-        trainer: Trainer,  # noqa: ARG002
     ) -> None:
         """Detect and set the land mask path based on the dataset configuration."""
         if self._land_mask_path_detected:
@@ -88,12 +91,28 @@ class PlottingCallback(Callback):
         # Detect land mask path
         land_mask_path = detect_land_mask_path(base_path, dataset_name)
 
-        if land_mask_path:
-            # Update the plot_spec with the detected land mask path
-            # Use dataclasses.replace to create a new PlotSpec instance with updated land_mask_path
+        # Always try to infer hemisphere regardless of land mask presence
+        hemisphere: Literal["north", "south"] | None = None
+        if isinstance(dataset_name, str):
+            low = dataset_name.lower()
+            if "south" in low:
+                hemisphere = cast("Literal['north', 'south']", "south")
+            elif "north" in low:
+                hemisphere = cast("Literal['north', 'south']", "north")
+        if hemisphere is None:
+            hemi_candidate = infer_hemisphere(dataset)
+            if hemi_candidate in ("north", "south"):
+                hemisphere = cast("Literal['north', 'south']", hemi_candidate)
 
+        # Update plot_spec pieces independently
+        if hemisphere is not None and self.plot_spec.hemisphere != hemisphere:
+            self.plot_spec = dataclasses.replace(self.plot_spec, hemisphere=hemisphere)
+
+        if land_mask_path:
+            # Set land mask path when found
             self.plot_spec = dataclasses.replace(
-                self.plot_spec, land_mask_path=land_mask_path
+                self.plot_spec,
+                land_mask_path=land_mask_path,
             )
             logger.info("Auto-detected land mask: %s", land_mask_path)
         else:
@@ -142,7 +161,21 @@ class PlottingCallback(Callback):
         ]
 
         # Detect land mask path if not already done
-        self._detect_land_mask_path(dataset, trainer)
+        self._detect_land_mask_path(dataset)
+
+        # Build readable metadata subtitle from config
+        try:
+            model_name = getattr(_module, "name", None)
+            combined_meta = build_metadata_subtitle(self.config, model_name=model_name)
+            if combined_meta:
+                self.plot_spec = dataclasses.replace(
+                    self.plot_spec, metadata_subtitle=combined_meta
+                )
+        except Exception:
+            # Don't fail plotting just because metadata gathering failed.
+            logger.exception(
+                "Failed to build metadata subtitle; continuing without it."
+            )
 
         # Log static and video plots
         self.log_static_plots(outputs, dates, trainer.loggers)

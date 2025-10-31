@@ -113,3 +113,12 @@ class PlotSpec:
 
     # Land mask overlay
     land_mask_path: str | None = None
+
+    # Optional metadata for titling
+    # hemisphere: "north" | "south" when known (used in titles)
+    hemisphere: Literal["north", "south"] | None = None
+    # metadata_subtitle: free-form text (e.g., "epochs=50; train=2010-2018")
+    metadata_subtitle: str | None = None
+
+    # Footer control
+    include_footer_metadata: bool = True

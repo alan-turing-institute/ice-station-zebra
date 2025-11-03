@@ -1,7 +1,8 @@
+import dataclasses
 import logging
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 from lightning import LightningModule, Trainer
@@ -9,12 +10,17 @@ from lightning.pytorch import Callback
 from lightning.pytorch.loggers import Logger as LightningLogger
 from torch import Tensor
 
+from ice_station_zebra.callbacks.metadata import (
+    build_metadata_subtitle,
+    infer_hemisphere,
+)
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ModelTestOutput, TensorDimensions
 from ice_station_zebra.visualisations import (
     DEFAULT_SIC_SPEC,
     PlotSpec,
+    detect_land_mask_path,
     plot_maps,
     video_maps,
 )
@@ -28,7 +34,7 @@ logger = logging.getLogger(__name__)
 class PlottingCallback(Callback):
     """A callback to create plots during evaluation."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         frequency: int = 10,
@@ -37,6 +43,7 @@ class PlottingCallback(Callback):
         video_fps: int = 2,
         video_format: Literal["mp4", "gif"] = "mp4",
         plot_spec: PlotSpec | None = None,
+        config: dict | None = None,
     ) -> None:
         """Create plots during evaluation.
 
@@ -48,6 +55,7 @@ class PlottingCallback(Callback):
             video_format: Format for video plots (mp4 or gif).
             plot_spec: Plotting specification to use (contains difference settings,
                       timestep selection, etc.).
+            config: Configuration dictionary for land mask detection.
 
         """
         super().__init__()
@@ -56,7 +64,61 @@ class PlottingCallback(Callback):
         self.make_video_plots = make_video_plots
         self.video_fps = video_fps
         self.video_format = video_format
-        self.plot_spec = plot_spec or DEFAULT_SIC_SPEC
+        # Ensure plot_spec is a PlotSpec instance, not a dict
+        if plot_spec is None:
+            self.plot_spec = DEFAULT_SIC_SPEC
+        else:
+            self.plot_spec = plot_spec
+        self.config = config or {}
+        self._land_mask_path_detected = False
+
+    def _detect_land_mask_path(
+        self,
+        dataset: CombinedDataset,
+    ) -> None:
+        """Detect and set the land mask path based on the dataset configuration."""
+        if self._land_mask_path_detected:
+            return
+
+        # Get base path from callback config or use default
+        base_path = self.config.get("base_path", "../ice-station-zebra/data")
+
+        # Try to get dataset name from the target dataset
+        dataset_name = None
+        if hasattr(dataset, "target") and hasattr(dataset.target, "name"):
+            dataset_name = dataset.target.name
+
+        # Detect land mask path
+        land_mask_path = detect_land_mask_path(base_path, dataset_name)
+
+        # Always try to infer hemisphere regardless of land mask presence
+        hemisphere: Literal["north", "south"] | None = None
+        if isinstance(dataset_name, str):
+            low = dataset_name.lower()
+            if "south" in low:
+                hemisphere = cast("Literal['north', 'south']", "south")
+            elif "north" in low:
+                hemisphere = cast("Literal['north', 'south']", "north")
+        if hemisphere is None:
+            hemi_candidate = infer_hemisphere(dataset)
+            if hemi_candidate in ("north", "south"):
+                hemisphere = cast("Literal['north', 'south']", hemi_candidate)
+
+        # Update plot_spec pieces independently
+        if hemisphere is not None and self.plot_spec.hemisphere != hemisphere:
+            self.plot_spec = dataclasses.replace(self.plot_spec, hemisphere=hemisphere)
+
+        if land_mask_path:
+            # Set land mask path when found
+            self.plot_spec = dataclasses.replace(
+                self.plot_spec,
+                land_mask_path=land_mask_path,
+            )
+            logger.info("Auto-detected land mask: %s", land_mask_path)
+        else:
+            logger.debug("No land mask found for dataset: %s", dataset_name)
+
+        self._land_mask_path_detected = True
 
     # --- Lightning Hook ---
     def on_test_batch_end(
@@ -97,6 +159,23 @@ class PlottingCallback(Callback):
             dataset.date_from_index(batch_size * batch_idx + tt)
             for tt in range(n_timesteps)
         ]
+
+        # Detect land mask path if not already done
+        self._detect_land_mask_path(dataset)
+
+        # Build readable metadata subtitle from config
+        try:
+            model_name = getattr(_module, "name", None)
+            combined_meta = build_metadata_subtitle(self.config, model_name=model_name)
+            if combined_meta:
+                self.plot_spec = dataclasses.replace(
+                    self.plot_spec, metadata_subtitle=combined_meta
+                )
+        except Exception:
+            # Don't fail plotting just because metadata gathering failed.
+            logger.exception(
+                "Failed to build metadata subtitle; continuing without it."
+            )
 
         # Log static and video plots
         self.log_static_plots(outputs, dates, trainer.loggers)

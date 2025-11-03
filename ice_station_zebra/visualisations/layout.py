@@ -53,9 +53,8 @@ DEFAULT_GUTTER_VERTICAL = 0.03  # Default for side-by-side with vertical bars
 DEFAULT_CBAR_WIDTH = (
     0.06  # Width allocated for colourbar slots (fraction of panel width)
 )
-DEFAULT_TITLE_SPACE = (
-    0.08  # Vertical space reserved for figure title (prevents overlap)
-)
+DEFAULT_TITLE_SPACE = 0.07  # Reduced: simple title + warning badge + axes titles
+DEFAULT_FOOTER_SPACE = 0.08  # Increased space reserved at bottom for metadata footer
 
 # Horizontal colourbar sizing (fractions of figure height)
 DEFAULT_CBAR_HEIGHT = (
@@ -84,6 +83,7 @@ def _build_layout(  # noqa: PLR0913
     gutter: float | None = None,
     cbar_width: float = DEFAULT_CBAR_WIDTH,
     title_space: float = DEFAULT_TITLE_SPACE,
+    footer_space: float = DEFAULT_FOOTER_SPACE,
     cbar_height: float = DEFAULT_CBAR_HEIGHT,
     cbar_pad: float = DEFAULT_CBAR_PAD,
 ) -> tuple[Figure, list[Axes], dict[str, Axes | None]]:
@@ -113,6 +113,8 @@ def _build_layout(  # noqa: PLR0913
         cbar_width: Fraction of panel width allocated for each colourbar slot.
         title_space: Fraction of figure height reserved at the top for figure title
                     (prevents title from overlapping with plot content).
+        footer_space: Fraction of figure height reserved at the bottom for the metadata
+            footer so it does not overlap colourbars.
         cbar_height: Height fraction for the horizontal colourbar row (row 2 when
             orientation is 'horizontal'). Controls the bar thickness.
         cbar_pad: Vertical gap fraction between the plot row and the colourbar row in
@@ -145,6 +147,8 @@ def _build_layout(  # noqa: PLR0913
     # Calculate top boundary: ensure title space does not consume too much of the figure.
     # At least 60% of the figure height is reserved for the plotting area.
     top_val = max(0.6, 1.0 - (outer_margin + title_space))
+    # Calculate bottom boundary, reserving footer space for metadata
+    bottom_val = outer_margin + footer_space
 
     # Calculate figure size based on data aspect ratio or use defaults
     if height and width and height > 0:
@@ -179,7 +183,7 @@ def _build_layout(  # noqa: PLR0913
             else DEFAULT_FIGSIZE_TWO_PANELS
         )
 
-    fig = plt.figure(figsize=fig_size, constrained_layout=False)
+    fig = plt.figure(figsize=fig_size, constrained_layout=False, facecolor="none")
 
     if orientation == "vertical":
         # Delegate to the vertical builder which organises columns for panels and colourbars
@@ -191,6 +195,7 @@ def _build_layout(  # noqa: PLR0913
             gutter=gutter,
             cbar_width=cbar_width,
             top_val=top_val,
+            bottom_val=bottom_val,
         )
     else:
         # Delegate to the horizontal builder which organises rows for plots and colourbars
@@ -203,6 +208,7 @@ def _build_layout(  # noqa: PLR0913
             cbar_height=cbar_height,
             cbar_pad=cbar_pad,
             top_val=top_val,
+            bottom_val=bottom_val,
         )
 
     _set_titles(axs, plot_spec)
@@ -214,6 +220,7 @@ def _build_layout(  # noqa: PLR0913
         "gutter": gutter,
         "cbar_width": cbar_width,
         "title_space": title_space,
+        "footer_space": footer_space,
         "cbar_height": cbar_height,
         "cbar_pad": cbar_pad,
     }
@@ -229,6 +236,7 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
     gutter: float,
     cbar_width: float,
     top_val: float,
+    bottom_val: float,
 ) -> tuple[list[Axes], dict[str, Axes | None]]:
     """Construct a one-row GridSpec with vertical colourbars.
 
@@ -244,6 +252,8 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
         gutter: Fractional spacing between panel groups.
         cbar_width: Fractional width allocated to colourbar slots.
         top_val: The top boundary of the usable plotting area (accounts for title space).
+        bottom_val: The bottom boundary of the usable plotting area (accounts for
+            reserved footer space).
 
     Returns:
         A tuple of (axes, colourbar_axes) where axes are the main plot axes in order
@@ -280,7 +290,7 @@ def _build_grid_vertical(  # noqa: PLR0913, C901, PLR0912
         left=outer_margin,
         right=1 - outer_margin,
         top=top_val,
-        bottom=outer_margin,
+        bottom=bottom_val,
         wspace=0.0,
     )
 
@@ -329,6 +339,7 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
     cbar_height: float,
     cbar_pad: float,
     top_val: float,
+    bottom_val: float,
 ) -> tuple[list[Axes], dict[str, Axes | None]]:
     """Construct a three-row GridSpec with horizontal colourbars.
 
@@ -348,6 +359,8 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
         cbar_height: Fractional height allocated to the colourbar row.
         cbar_pad: Fractional padding between the plot row and colourbar row.
         top_val: The top boundary of the usable plotting area (accounts for title space).
+        bottom_val: The bottom boundary of the usable plotting area (accounts for
+            reserved footer space).
 
     Returns:
         A tuple of (axes, colourbar_axes) where axes are the main plot axes in order
@@ -368,7 +381,7 @@ def _build_grid_horizontal(  # noqa: PLR0913, PLR0912
         left=outer_margin,
         right=1 - outer_margin,
         top=top_val,
-        bottom=outer_margin,
+        bottom=bottom_val,
         wspace=0.0,
         hspace=0.0,
     )
@@ -458,7 +471,16 @@ def _set_titles(axs: list[Axes], plot_spec: PlotSpec) -> None:
     titles = [plot_spec.title_groundtruth, plot_spec.title_prediction, title_difference]
     for ax, title in zip(axs, titles, strict=False):
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(
+                title,
+                fontfamily="monospace",
+                bbox={
+                    "facecolor": "white",
+                    "edgecolor": "none",
+                    "pad": 2.0,
+                    "alpha": 1.0,
+                },
+            )
 
 
 def _style_axes(axs: Sequence[Axes]) -> None:
@@ -482,17 +504,24 @@ def _style_axes(axs: Sequence[Axes]) -> None:
 def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
     """Set consistent axis limits across all plot panels.
 
-    Ensures all axes display the same spatial extent.
+    Ensures all axes display the same spatial extent following polar mapping conventions.
 
     Args:
         axs: List of matplotlib Axes objects to configure
         width: Width of the data array (sets x-axis limits: 0 to width)
-        height: Height of the data array (sets y-axis limits: 0 to height)
+        height: Height of the data array (sets y-axis limits: height to 0 for polar data)
+
+    Note:
+        The y-axis is inverted (height to 0) to follow environmental science conventions
+        for polar data visualisation, where higher latitude values are
+        positioned at the top of the display for both Arctic and Antarctic regions.
 
     """
     for ax in axs:
         ax.set_xlim(0, width)  # X-axis: left edge to right edge
-        ax.set_ylim(0, height)  # Y-axis: bottom edge to top edge
+        ax.set_ylim(
+            height, 0
+        )  # Y-axis: top edge to bottom edge (geographical convention)
 
 
 # --- Colourbar Functions ---
@@ -677,6 +706,7 @@ def _format_linear_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
 
 
 def _format_symmetric_ticks(
@@ -697,3 +727,14 @@ def _format_symmetric_ticks(
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
+    _apply_monospace_to_cbar_text(colourbar)
+
+
+def _apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
+    """Set tick labels and axis labels on a colourbar to monospace family."""
+    ax = colourbar.ax
+    for label in list(ax.get_xticklabels()) + list(ax.get_yticklabels()):
+        label.set_fontfamily("monospace")
+    # Ensure axis labels also use monospace if present
+    ax.xaxis.label.set_fontfamily("monospace")
+    ax.yaxis.label.set_fontfamily("monospace")

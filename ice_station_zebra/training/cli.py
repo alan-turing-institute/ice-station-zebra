@@ -24,7 +24,7 @@ def train(config: DictConfig) -> None:
 @hydra_adaptor
 def tune(
     config: DictConfig,
-    n_trials = 15
+    n_trials = 20
 ) -> None:
     """Tune hyperparameters using Optuna"""
     import optuna
@@ -33,8 +33,8 @@ def tune(
     torch.set_float32_matmul_precision('medium')
     
     def objective(trial):
-        lr = trial.suggest_float("learning_rate", 1e-5, 5e-3)
-        weight_decay = trial.suggest_float("weight_decay", 0.01, 0.15)
+        lr = trial.suggest_float("learning_rate", 1e-4, 1e-3)
+        weight_decay = trial.suggest_float("weight_decay", 0.01, 0.2)
 
         config["train"]["optimizer"]["lr"] = lr
         config["train"]["optimizer"]["weight_decay"] = weight_decay

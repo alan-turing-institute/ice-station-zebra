@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from torch import nn
+from torch.nn.functional import sigmoid
 
 from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
@@ -126,4 +127,4 @@ class CNNDecoder(BaseDecoder):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
-        return self.model(x)
+        return sigmoid(self.model(x))

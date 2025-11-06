@@ -13,4 +13,3 @@ loggers:
     save_dir: ${...base_path}/training/${loggers.wandb.name}/
 
 base_path: ../my_data
-antialias_val: false 

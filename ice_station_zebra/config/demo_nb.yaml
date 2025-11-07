@@ -8,9 +8,7 @@ train:
 
 loggers:
   wandb:
-    name: naive_unet_naive_demo_south
     entity: null
-    save_dir: ${...base_path}/training/${loggers.wandb.name}/
-
+    
 base_path: ../my_data
 antialias_val: false

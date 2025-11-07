@@ -638,7 +638,7 @@ def _draw_frame(  # noqa: PLR0913
 
     # Optional: visually mark NaNs as semi-transparent grey overlays
 
-    def _overlay_nans(ax: Axes, arr: np.ndarray) -> None:
+    def _overlay_nans(ax: Axes, arr: np.ndarray, land_color: str = "white") -> None:
         """Overlay NaNs as semi-transparent grey overlays.
 
         Not used currently, add the following before the return statement to enable:
@@ -654,8 +654,8 @@ def _draw_frame(  # noqa: PLR0913
             nan_mask = np.isnan(arr).astype(float)
             # Create a custom colormap: 0=transparent, 1=land color
 
-            # Land colour options: 'white' for white land, 'grey' for grey land
-            colors = ["white", "white"]  # 0=white (transparent), 1=land color
+            # Land colour options: typically 'white' or 'black' (or any valid Matplotlib color)
+            colors = ["white", land_color]  # 0=white (transparent), 1=land color
             cmap = ListedColormap(colors)
             ax.imshow(
                 nan_mask,
@@ -668,10 +668,11 @@ def _draw_frame(  # noqa: PLR0913
 
     # Optional: visually mark NaNs as semi-transparent grey overlays here
     if land_mask is not None:
-        _overlay_nans(axs[0], ground_truth)
-        _overlay_nans(axs[1], prediction)
+        _overlay_nans(axs[0], ground_truth, land_color="white")
+        _overlay_nans(axs[1], prediction, land_color="white")
         if plot_spec.include_difference and difference is not None:
-            _overlay_nans(axs[2], difference)
+            # Use black for the difference panel so zero (white) remains distinguishable from land
+            _overlay_nans(axs[2], difference, land_color="black")
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 

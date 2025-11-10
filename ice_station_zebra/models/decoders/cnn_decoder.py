@@ -134,4 +134,3 @@ class CNNDecoder(BaseDecoder):
         if self.bounded:
             return sigmoid(self.model(x))
         return self.model(x)
-        

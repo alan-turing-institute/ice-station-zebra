@@ -19,10 +19,7 @@ class NaiveLinearDecoder(BaseDecoder):
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
-    def __init__(self, 
-        bounded: bool = False,
-        **kwargs: Any
-    ) -> None:
+    def __init__(self, *, bounded: bool = False, **kwargs: Any) -> None:
         """Initialise a NaiveLinearDecoder."""
         antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)

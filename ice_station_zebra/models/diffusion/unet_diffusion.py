@@ -45,14 +45,14 @@ class UNetDiffusion(nn.Module):
 
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
-            timesteps (int): Number of diffusion timesteps.
-            kernel_size (int): Convolution kernel size for all conv layers.
-            start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
-            time_embed_dim (int): Size of time embedding dimension.
-            normalization (str): Normalization strategy (e.g., groupnorm, batchnorm, layernorm).
-            activation (str): Activation function to use (e.g., SiLU, ReLU, LeakyReLU).
-            dropout_rate (float): Dropout probability applied in convolutional blocks.
-
+            output_channels (int): Number of output channels for the denoised forecast.
+            timesteps (int, optional): Number of diffusion timesteps. Defaults to 1000.
+            kernel_size (int, optional): Convolution kernel size used across all layers. Defaults to 3.
+            start_out_channels (int, optional): Number of filters in the first convolutional block. Defaults to 64.
+            time_embed_dim (int, optional): Dimensionality of the diffusion timestep embedding. Defaults to 256.
+            normalization (str, optional): Normalization type to apply ("groupnorm", "batchnorm", "layernorm", etc.).
+            activation (str, optional): Activation function to use ("SiLU", "ReLU", "LeakyReLU", etc.).
+            dropout_rate (float, optional): Dropout probability applied to convolutional blocks. Defaults to 0.1.
         """
         super().__init__()
 

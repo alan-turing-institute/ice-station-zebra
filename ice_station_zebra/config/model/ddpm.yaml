@@ -6,8 +6,9 @@ name: ddpm
 timesteps: 1000
 learning_rate: 5e-4
 start_out_channels: 32
-filter_size: 3
+kernel_size: 3
 activation: "SiLU"
 normalization: "groupnorm"
 n_output_classes: 1 
-
+time_embed_dim : 256
+dropout_rate: 0.1

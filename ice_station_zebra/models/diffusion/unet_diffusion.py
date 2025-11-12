@@ -57,6 +57,7 @@ class UNetDiffusion(nn.Module):
         super().__init__()
 
         self.timesteps = timesteps
+        self.time_embed_dim = time_embed_dim
 
         if kernel_size <= 0:
             msg = "Kernel size must be greater than 0."
@@ -67,7 +68,7 @@ class UNetDiffusion(nn.Module):
             raise ValueError(msg)
 
         # Time embedding
-        self.time_embed = TimeEmbed(time_embed_dim)
+        self.time_embed = TimeEmbed(self.time_embed_dim)
 
         # Channel calculations
         channels = [start_out_channels * 2**i for i in range(4)]

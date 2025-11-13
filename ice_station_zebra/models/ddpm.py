@@ -1,17 +1,31 @@
+import os
+
+# Unset SLURM_NTASKS if it's causing issues
+if "SLURM_NTASKS" in os.environ:
+    del os.environ["SLURM_NTASKS"]
+
+# Optionally, set SLURM_NTASKS_PER_NODE if needed
+os.environ["SLURM_NTASKS_PER_NODE"] = "1"  # or whatever value is appropriate
+
+
 from typing import Any
 
 import torch
+# Force all new tensors to be float32 by default
+torch.set_default_dtype(torch.float32)
 import torch.nn.functional as F
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
+from torchmetrics import MetricCollection
 
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
-from ice_station_zebra.types import TensorNCHW
+from ice_station_zebra.types import ModelTestOutput, TensorNTCHW, DataSpace
 
 from .losses import WeightedMSELoss
+from .metrics import IceNetAccuracy, SIEError
 from .zebra_model import ZebraModel
 
 
-class DDPMProcessor(ZebraModel):
+class DDPM(ZebraModel):
     """Denoising Diffusion Probabilistic Model (DDPM).
 
     Input space:
@@ -21,7 +35,19 @@ class DDPMProcessor(ZebraModel):
         TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
-    def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
+    # def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
+    def __init__(self, 
+                 timesteps: int = 1000, 
+                 learning_rate: float = 5e-4, 
+                 start_out_channels: int = 32, 
+                 kernel_size: int = 3, 
+                 activation: str = "SiLU", 
+                 normalization: str = "groupnorm",
+                 n_output_classes: int = 1,
+                 time_embed_dim:int = 256,
+                 dropout_rate:float = 0.1,
+                 **kwargs: Any) -> None:
+
         """Initialize the DDPM processor.
 
         Args:
@@ -30,39 +56,85 @@ class DDPMProcessor(ZebraModel):
 
         """
         super().__init__(**kwargs)
-        self.input_channels = self.n_history_steps * self.n_latent_channels_total
-        self.output_channels = self.n_forecast_steps * self.n_latent_channels_total
-        self.model = UNetDiffusion(self.input_channels, self.output_channels, timesteps)
+
+        era5_space = next(space for space in self.input_spaces if 
+                          (space['name'] if isinstance(space, dict) else space.name) == 'era5')
+        
+        # Get channels from either dict or object
+        if isinstance(era5_space, dict):
+            self.era5_space = era5_space['channels']
+        else:
+            self.era5_space = era5_space.channels
+
+        # osisaf channels after squeezing: T_osisaf = self.n_history_steps (probably 1 here)
+        osisaf_channels = self.n_history_steps  # keep T dimension as channels
+        
+        # era5 channels after merging time*channels
+        era5_channels = self.n_history_steps * self.era5_space  # T * C2
+        
+        # total channels for UNet
+        self.input_channels = osisaf_channels + era5_channels
+        self.n_output_classes = n_output_classes
+        self.output_channels = self.n_forecast_steps * self.n_output_classes
         self.timesteps = timesteps
+        
+        # self.model = UNetDiffusion(self.input_channels, self.output_channels, self.timesteps)
+        self.model = UNetDiffusion(
+            input_channels=self.input_channels,
+            output_channels=self.output_channels,
+            timesteps=self.timesteps,
+            kernel_size=kernel_size,
+            start_out_channels=start_out_channels,
+            time_embed_dim=time_embed_dim,  
+            normalization=normalization,
+            activation=activation,
+            dropout_rate=dropout_rate
+        )
+ 
         self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
+        
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
+
+        # Move all diffusion schedules to the correct device
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+            self.diffusion.betas = self.diffusion.betas.to(device)
+            self.diffusion.alphas = self.diffusion.alphas.to(device)
+            self.diffusion.alphas_cumprod = self.diffusion.alphas_cumprod.to(device)
+            self.diffusion.alphas_cumprod_prev = self.diffusion.alphas_cumprod_prev.to(device)
+            self.diffusion.sqrt_alphas_cumprod = self.diffusion.sqrt_alphas_cumprod.to(device)
+            self.diffusion.sqrt_one_minus_alphas_cumprod = self.diffusion.sqrt_one_minus_alphas_cumprod.to(device)
+            self.diffusion.sqrt_recip_alphas = self.diffusion.sqrt_recip_alphas.to(device)
+            self.diffusion.posterior_variance = self.diffusion.posterior_variance.to(device)
+            self.diffusion.posterior_log_variance_clipped = self.diffusion.posterior_log_variance_clipped.to(device)
+            self.diffusion.posterior_mean_coef1 = self.diffusion.posterior_mean_coef1.to(device)
+            self.diffusion.posterior_mean_coef2 = self.diffusion.posterior_mean_coef2.to(device)
+            self.ema.to(device)
 
         self.learning_rate = learning_rate
 
-        self.n_output_classes = model.n_output_classes
-
         metrics = {
             "val_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
             "val_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
         }
-        for i in range(self.model.n_forecast_days):
+        for i in range(self.n_forecast_steps):
             metrics[f"val_accuracy_{i}"] = IceNetAccuracy(leadtimes_to_evaluate=[i])
             metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.metrics = MetricCollection(metrics)
 
         test_metrics = {
             "test_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
             "test_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.model.n_forecast_days))
+                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
         }
-        for i in range(self.model.n_forecast_days):
+        for i in range(self.n_forecast_steps):
             test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(
                 leadtimes_to_evaluate=[i]
             )
@@ -71,7 +143,7 @@ class DDPMProcessor(ZebraModel):
 
         self.save_hyperparameters()
 
-    def rollout(self, x: TensorNCHW) -> TensorNCHW:
+    def forward(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Generate a single NCHW output with diffusion.
 
         Args:
@@ -95,23 +167,26 @@ class DDPMProcessor(ZebraModel):
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
-            x (torch.Tensor): Conditioning input [B, H, W, C].
+            x (torch.Tensor): Conditioning input [B, C, H, W].
             sample_weight (torch.Tensor or None): Optional weights.
 
         Returns:
-            torch.Tensor: Denoised output of shape [B, H, W, C].
+            torch.Tensor: Denoised output of shape [B, C, H, W].
 
         """
+        shape = (x.shape[0], self.n_forecast_steps * self.n_output_classes, *x.shape[-2:])
+        device = x.device
+
         # Start from pure noise
-        y = torch.rand_like(x)
+        y = torch.randn(shape, device=device)
 
         dim_threshold = 3
 
         # Use EMA weights for sampling
         with self.ema.average_parameters():
             for t in reversed(range(self.timesteps)):
-                t_batch = torch.full_like(x[:, 0, 0, 0], t, dtype=torch.long)
-                pred_v: torch.Tensor = self.model(y, t_batch, x, sample_weight)
+                t_batch = torch.full_like(x[:, 0, 0, 0], t, dtype=torch.long, device=device)
+                pred_v: torch.Tensor = self.model(y, t_batch, x)
                 pred_v = (
                     pred_v.squeeze(3)
                     if pred_v.dim() > dim_threshold
@@ -121,221 +196,4 @@ class DDPMProcessor(ZebraModel):
 
         return y
 
-    def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
-        # Default to all ones if self.weights is not set elsewhere
-        sample_weight = getattr(self, "sample_weight", torch.ones_like(prediction))
-        return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
-
-    def training_step(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """One training step using DDPM loss (predicted noise vs. true noise).
-
-        Args:
-        batch: Dictionary with keys:
-               - "inputs": TensorNTCHW, your input x
-               - "target": TensorNTCHW, your target y
-               - "sample_weight": TensorNTCHW, optional sample weights
-
-        Returns:
-            dict: {"loss": loss}
-
-        """
-        # x, y, sample_weight = batch
-
-        # Extract components
-        x = batch["inputs"]
-        y = batch["target"].squeeze(-1)
-        sample_weight = batch.get(
-            "sample_weight", torch.ones_like(y)
-        )  # default if not provided
-
-        y = y.squeeze(-1)
-
-        # Scale target to [-1, 1]
-        y_scaled = 2.0 * y - 1.0
-
-        # Sample random timesteps
-        t = torch.randint(0, self.timesteps, (x.shape[0],), device=x.device).long()
-
-        # Create noisy version using scaled target
-        noise = torch.randn_like(y_scaled)
-        noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
-
-        # Predict v
-        pred_v = self.model(noisy_y, t, x, sample_weight)
-        pred_v = pred_v.squeeze()
-
-        # Compute target v using scaled data
-        target_v = self.diffusion.calculate_v(y_scaled, noise, t)
-
-        loss = F.mse_loss(pred_v, target_v)
-
-        if self.global_step % 100 == 0:
-            print(f"Step {self.global_step}: Loss {loss.item():.4f}")
-
-        self.log(
-            "train_loss",
-            loss,
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
-            sync_dist=True,
-        )
-        return {"loss": loss}
-
-    def validation_step(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """One validation step using the specified loss function defined in the criterion.
-
-        Args:
-        batch: Dictionary with keys:
-               - "inputs": TensorNTCHW, input x
-               - "target": TensorNTCHW, target y
-               - "sample_weight": TensorNTCHW, optional sample weights
-
-        Returns:
-            dict: {"val_loss": loss}
-
-        """
-        # Extract components
-        x = batch["inputs"]
-        y = batch["target"].squeeze(-1)
-        sample_weight = batch.get(
-            "sample_weight", torch.ones_like(y)
-        )  # default if not provided
-
-        y = y.squeeze(-1)  # Removes the last dimension (size 1)
-
-        # Generate samples (returns [-1, 1] range)
-        outputs = self.sample(x, sample_weight)
-
-        # Convert to [0, 1] for metrics and loss
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
-
-        # Calculate loss in [0, 1] space
-        loss = self.loss(y_hat, y, sample_weight)
-        self.log(
-            "val_loss",
-            loss,
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-            sync_dist=True,
-        )
-
-        # Update metrics in [0, 1] space
-        self.metrics.update(y_hat, y, sample_weight)
-        return {"val_loss": loss}
-
-    def test_step(
-        self, batch: dict[str, TensorNTCHW], _batch_idx: int
-    ) -> ModelTestOutput:
-        """One test step using the specified loss function and full metric evaluation.
-
-        Args:
-            batch (tuple): (x, y, sample_weight)
-            batch_idx (int): Batch index.
-
-        Returns:
-            torch.Tensor: Loss value.
-
-        """
-        x = batch["inputs"]
-        y = batch["target"].squeeze(-1)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
-
-        y = y.squeeze(-1)
-
-        outputs = self.sample(x, sample_weight)
-
-        # Convert to [0, 1] for metrics and loss
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
-
-        loss = self.loss(y_hat, y, sample_weight)
-        self.log(
-            "test_loss",
-            loss,
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-            sync_dist=True,
-        )
-        
-        self.test_metrics.update(y_hat, y, sample_weight)
-
-        return ModelTestOutput(prediction=y_hat, target=y, loss=loss)
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        """Perform prediction on a single batch.
-
-        Args:
-            batch (tuple): (x, y, sample_weight).
-            batch_idx (int): Batch index.
-            dataloader_idx (int): Index of the DataLoader (if using multiple).
-
-        Returns:
-            torch.Tensor: Prediction tensor [B, H, W, C_out].
-
-        """
-        # x, y, sample_weight = batch
-
-        x = batch["inputs"]
-        y = batch["target"].squeeze(-1)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
-
-        y = y.squeeze(-1)  # Removes the last dimension (size 1)
-
-        outputs = self.sample(x, sample_weight)
-
-        # Convert to [0, 1] for final predictions
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
-
-        return y_hat
-
-    def configure_optimizers(self):
-        """Set up the optimizer.
-
-        Returns:
-            torch.optim.Optimizer: Adam optimizer.
-
-        """
-        # Add weight decay to discourage large weights (helps generalization)
-        optimizer = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.learning_rate,
-            weight_decay=1e-4,
-            betas=(0.9, 0.95),
-            eps=1e-8,
-        )
-
-        scheduler = {
-            "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=100, eta_min=self.learning_rate * 0.01
-            ),
-            "interval": "epoch",
-            "frequency": 1,
-            "name": "lr",
-        }
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
-
-    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure, **kwargs):
-        """Custom optimizer step used in PyTorch Lightning.
-
-        This method performs a single optimization step using the provided closure,
-        and updates the Exponential Moving Average (EMA) of the model weights.
-
-        Args:
-            epoch (int): Current epoch number.
-            batch_idx (int): Index of the current batch.
-            optimizer (Optimizer): The optimizer instance (e.g., Adam).
-            optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
-            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
-
-        Notes:
-            - This method is automatically called by PyTorch Lightning during training.
-            - `self.ema.update()` updates the EMA shadow weights after the optimizer step.
-
-        """
-        optimizer.step(closure=optimizer_closure)
-        self.ema.update()
+  

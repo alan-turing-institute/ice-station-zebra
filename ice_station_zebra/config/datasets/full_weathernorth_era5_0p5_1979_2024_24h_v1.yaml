@@ -20,11 +20,11 @@ full-weathernorth-era5-0p5-1979-2024-24h-v1:
         area: "90/-180/0/180"  # northern hemisphere
         levtype: sfc
         param:
-        - 2t
-        - sp
-        - 10u
-        - 10v
-        - msl
+        - 2t # 2-metre air temperature
+        - sp # Surface pressure
+        - 10u # 10m x-direction wind speed
+        - 10v # 10m y-direction wind speed
+        - msl # Sea level pressure
     - mars:
         use_cdsapi_dataset: "reanalysis-era5-complete"
         class: ea
@@ -32,17 +32,17 @@ full-weathernorth-era5-0p5-1979-2024-24h-v1:
         grid: "0.5 / 0.5"
         area: "90/-180/0/180"  # northern hemisphere
         level:
-        - 10
-        - 250
-        - 500
-        - 1000
-        levtype: pl
+        - 10 # hPa
+        - 250 # hPa
+        - 500 # hPa
+        - 1000 # hPa
+        levtype: pl # pressure level
         param:
-        - z
-        - t
-        - q
-        - u
-        - v
+        - z # geopotential height
+        - t # air temperature
+        - q # specific humidity
+        - u # x-direction wind speed
+        - v # y-direction wind speed
     - forcings:
         param:
         - cos_julian_day

@@ -196,4 +196,49 @@ class DDPM(ZebraModel):
 
         return y
 
-  
+    def loss(
+        self,
+        prediction: TensorNTCHW,
+        target: TensorNTCHW,
+        sample_weight: TensorNTCHW | None = None
+    ) -> torch.Tensor:
+        if sample_weight is None:
+            sample_weight = torch.ones_like(prediction)
+        return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
+
+    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
+        """
+        Merge time dimension into channels for ERA5, squeeze singleton channels for osisaf,
+        and combine them for forecasting together.
+    
+        Args:
+            batch: Dictionary containing keys 'osisaf-south' and 'era5'.
+    
+        Returns:
+            TensorNTCHW: Combined input of shape [B, C_combined, H, W].
+        """
+        osisaf = batch["osisaf-south"]  # [B, T, 1, H, W]
+        era5 = batch["era5"]            # [B, T, 27, H2, W2]
+    
+        B, T, C2, H2, W2 = era5.shape
+        H_target, W_target = osisaf.shape[-2:]
+    
+        # Squeeze singleton channel for osisaf: [B, T, H, W]
+        osisaf_squeezed = osisaf.squeeze(2)
+        print("prepare_inputs: osisaf_squeezed shape:", osisaf_squeezed.shape)
+    
+        # Merge ERA5 time and channels: [B, T*C2, H2, W2]
+        era5_merged = era5.view(B, T*C2, H2, W2)
+        print("prepare_inputs: era5_merged shape:", era5_merged.shape)
+    
+        # Resize to osisaf spatial resolution
+        era5_resized = F.interpolate(
+            era5_merged, size=(H_target, W_target), mode="bilinear", align_corners=False
+        )
+        print("prepare_inputs: era5_resized shape:", era5_resized.shape)
+    
+        # Flatten osisaf time dimension into channels: [B, T, H, W] → [B, T, H, W] already
+        # Concatenate along channels: [B, T + T*C2, H, W]
+        combined = torch.cat([osisaf_squeezed, era5_resized], dim=1)
+    
+        return combined

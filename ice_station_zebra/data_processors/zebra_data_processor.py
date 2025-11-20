@@ -30,19 +30,24 @@ class ZebraDataProcessor:
         self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
 
-    def create(self) -> None:
+    def create(self, overwrite) -> None:
         """Ensure that a single Anemoi dataset exists."""
-        try:
-            self.inspect()
-            logger.info(
-                "Dataset %s already exists at %s, no need to download.",
-                self.name,
-                self.path_dataset,
-            )
-        except (AttributeError, FileNotFoundError, PathNotFoundError):
-            logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
+        if (overwrite):
+            logger.info("Overwrite set to true, redownloading %s to %s", self.name, self.path_dataset)
             shutil.rmtree(self.path_dataset, ignore_errors=True)
             self.download()
+        else:
+            try:
+                self.inspect()
+                logger.info(
+                    "Dataset %s already exists at %s, no need to download.",
+                    self.name,
+                    self.path_dataset,
+                )
+            except (AttributeError, FileNotFoundError, PathNotFoundError):
+                logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
+                shutil.rmtree(self.path_dataset, ignore_errors=True)
+                self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset."""

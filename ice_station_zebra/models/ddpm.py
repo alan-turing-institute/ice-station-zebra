@@ -242,3 +242,48 @@ class DDPM(ZebraModel):
         combined = torch.cat([osisaf_squeezed, era5_resized], dim=1)
     
         return combined
+
+    def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
+        """One training step using DDPM loss (predicted noise vs. true noise)."""
+
+        
+        device = batch["target"].device 
+        
+        # Prepare input tensor by combining osisaf-south and era5
+        x = self.prepare_inputs(batch).to(device)  # [B, T, C_combined, H, W]
+    
+        # Extract target and optional weights
+        y = batch["target"].squeeze(2).to(device)
+        sample_weight = batch.get("sample_weight", torch.ones_like(y)).to(device)
+    
+        # Scale target to [-1, 1]
+        y_scaled = 2.0 * y - 1.0
+    
+        # Sample random timesteps
+        t = torch.randint(0, self.timesteps, (x.shape[0],), device=x.device).long()
+    
+        # Create noisy version using scaled target
+        noise = torch.randn_like(y_scaled)
+        noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
+    
+        # Predict v
+        pred_v = self.model(noisy_y, t, x).squeeze()
+    
+        # Compute target v using scaled data
+        target_v = self.diffusion.calculate_v(y_scaled, noise, t)
+    
+        # Compute loss
+        loss = F.mse_loss(pred_v, target_v)
+    
+        if self.global_step % 100 == 0:
+            print(f"Step {self.global_step}: Loss {loss.item():.4f}")
+    
+        self.log(
+            "train_loss",
+            loss,
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )
+        return {"loss": loss}

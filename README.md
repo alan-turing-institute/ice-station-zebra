@@ -48,8 +48,8 @@
 | ice\_station\_zebra/models/common/transformerblock.py                   |       12 |        7 |     42% |16-22, 40-42 |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/base\_decoder.py                    |       14 |        2 |     86% |     40-41 |
-| ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       37 |        0 |    100% |           |
-| ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       15 |        0 |    100% |           |
+| ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       41 |        0 |    100% |           |
+| ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       19 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/\_\_init\_\_.py                    |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/gaussian\_diffusion.py             |       46 |       36 |     22% |41-74, 93-98, 117-137, 153-156, 177-182 |
 | ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       70 |     11% |56-176, 197-241, 257-272, 285-288 |
@@ -81,7 +81,7 @@
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       59 |     58% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 360-361, 364, 381, 396, 423-425, 428-429, 437 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      220 |       40 |     82% |170-172, 188, 196-198, 254-257, 265-266, 289-292, 328-330, 338-339, 343-364, 478-493, 597, 603-604, 622-630, 690, 787, 820, 827, 839 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2464** |  **780** | **68%** |           |
+|                                                               **TOTAL** | **2472** |  **780** | **68%** |           |
 
 
 ## Setup coverage badge

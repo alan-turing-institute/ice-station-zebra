@@ -39,6 +39,16 @@ def inspect(config: DictConfig) -> None:
         logger.info("Working on %s.", dataset.name)
         dataset.inspect()
 
+@datasets_cli.command("init")
+@hydra_adaptor
+def init(config: DictConfig) -> None:
+    """Create all datasets."""
+    register_filters()
+    factory = ZebraDataProcessorFactory(config)
+    for dataset in factory.datasets:
+        logger.info("Working on %s.", dataset.name)
+        dataset.init()
+
 
 if __name__ == "__main__":
     datasets_cli()

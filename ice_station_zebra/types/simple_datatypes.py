@@ -29,7 +29,15 @@ class AnemoiInspectArgs:
     size: bool
     statistics: bool
 
+@dataclass
+class AnemoiInitArgs:
+    """Arguments for anemoi init."""
 
+    config: DictConfig
+    path: str
+    command: str = "unused"
+    overwrite: bool = False
+    
 class DataloaderArgs(TypedDict):
     """Arguments for the data loader."""
 

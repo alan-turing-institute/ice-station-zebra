@@ -3,11 +3,12 @@ import shutil
 from pathlib import Path
 
 from anemoi.datasets.commands.create import Create
+from anemoi.datasets.commands.init import Init
 from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
+from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs, AnemoiInitArgs
 
 from .preprocessors import IPreprocessor
 
@@ -70,5 +71,15 @@ class ZebraDataProcessor:
                 progress=False,  # must be disabled until https://github.com/ecmwf/anemoi-datasets/pull/372 is merged
                 statistics=False,
                 size=True,
+            )
+        )
+        
+    def init(self) -> None:
+        """Initialise a single Anemoi dataset."""
+        logger.info("Initialising dataset %s at %s.", self.name, self.path_dataset)
+        Init().run(
+            AnemoiInitArgs(
+                path=str(self.path_dataset),
+                config=self.config,
             )
         )

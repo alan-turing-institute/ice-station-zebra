@@ -3,6 +3,7 @@ from .enums import BetaSchedule, TensorDimensions
 from .simple_datatypes import (
     AnemoiCreateArgs,
     AnemoiInspectArgs,
+    AnemoiInitArgs,
     DataloaderArgs,
     DiffColourmapSpec,
     PlotSpec,
@@ -19,6 +20,7 @@ from .typedefs import (
 __all__ = [
     "AnemoiCreateArgs",
     "AnemoiInspectArgs",
+    "AnemoiInitArgs",
     "ArrayCHW",
     "ArrayTCHW",
     "BetaSchedule",

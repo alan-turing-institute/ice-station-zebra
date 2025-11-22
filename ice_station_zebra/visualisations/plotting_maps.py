@@ -8,7 +8,6 @@
 
 """
 
-import contextlib
 import io
 import logging
 from collections.abc import Sequence
@@ -20,15 +19,26 @@ import numpy as np
 from matplotlib import animation
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
-from matplotlib.text import Text
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
 from . import convert
-from .layout import _add_colourbars, _build_layout, _set_axes_limits, _set_titles
+from .animation_helper import hold_anim, release_anim
+from .layout import (
+    LayoutConfig,
+    TitleFooterConfig,
+    _add_colourbars,
+    _set_axes_limits,
+    _set_titles,
+    build_layout,
+    draw_badge_with_box,
+    set_footer_with_box,
+    set_suptitle_with_box,
+)
 from .plotting_core import (
+    colourmap_with_bad,
     compute_difference,
     compute_display_ranges,
     compute_display_ranges_stream,
@@ -42,10 +52,6 @@ from .plotting_core import (
 from .range_check import compute_range_check_report
 
 logger = logging.getLogger(__name__)
-
-
-# Keep strong references to animation objects during save to avoid GC-related warnings
-_ANIM_CACHE: list[animation.FuncAnimation] = []
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -63,6 +69,23 @@ DEFAULT_SIC_SPEC = PlotSpec(
     severe_outside=0.20,
     include_shared_range_mismatch_check=True,
 )
+
+
+def _safe_linspace(vmin: float, vmax: float, n: int) -> np.ndarray:
+    """Return an increasing linspace even if vmin==vmax or the inputs are swapped."""
+    # ensure float
+    vmin = float(vmin)
+    vmax = float(vmax)
+    if not np.isfinite(vmin) or not np.isfinite(vmax):
+        # fallback to a stable interval
+        vmin, vmax = 0.0, 1.0
+    if vmax < vmin:
+        vmin, vmax = vmax, vmin
+    if vmax == vmin:
+        # create a tiny range so contourf accepts the levels
+        eps = max(1e-6, abs(vmin) * 1e-6)
+        vmax = vmin + eps
+    return np.linspace(vmin, vmax, n)
 
 
 # --- Static Map Plot ---
@@ -117,20 +140,17 @@ def plot_maps(
     )
 
     # Increase title space if warnings are present to avoid overlap with axes titles
-    title_space_override = 0.10 if range_check_report.warnings else None
+    layout_config = None
+    if range_check_report.warnings:
+        layout_config = LayoutConfig(title_footer=TitleFooterConfig(title_space=0.10))
 
     # Initialise the figure and axes with dynamic top spacing if needed
-    if title_space_override is not None:
-        fig, axs, cbar_axes = _build_layout(
-            plot_spec=plot_spec,
-            height=height,
-            width=width,
-            title_space=title_space_override,
-        )
-    else:
-        fig, axs, cbar_axes = _build_layout(
-            plot_spec=plot_spec, height=height, width=width
-        )
+    fig, axs, cbar_axes = build_layout(
+        plot_spec=plot_spec,
+        height=height,
+        width=width,
+        layout_config=layout_config,
+    )
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -166,7 +186,7 @@ def plot_maps(
 
     _set_axes_limits(axs, width=width, height=height)
     try:
-        title_text = _set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
+        title_text = set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
     except Exception:
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
@@ -186,19 +206,19 @@ def plot_maps(
             warning_y = max(title_y - (0.05 + 0.02 * (n_lines - 1)), 0.0)
         else:
             warning_y = 0.90
-        _draw_badge_with_box(fig, 0.5, warning_y, badge)
+        draw_badge_with_box(fig, 0.5, warning_y, badge)
 
     # Footer metadata at the bottom
     if getattr(plot_spec, "include_footer_metadata", True):
         try:
             footer_text = _build_footer_static(plot_spec)
             if footer_text:
-                _set_footer_with_box(fig, footer_text)
+                set_footer_with_box(fig, footer_text)
         except Exception:
             logger.exception("Failed to draw footer; continuing without footer.")
 
     try:
-        return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
+        return {"sea-ice_concentration-static-maps": [convert.image_from_figure(fig)]}
     finally:
         plt.close(fig)
 
@@ -266,8 +286,12 @@ def video_maps(
         prediction_stream = np.where(land_mask, np.nan, prediction_stream)
 
     # Initialise the figure and axes with a larger footer space for videos
-    fig, axs, cbar_axes = _build_layout(
-        plot_spec=plot_spec, height=height, width=width, footer_space=0.11
+    layout_config = LayoutConfig(title_footer=TitleFooterConfig(footer_space=0.11))
+    fig, axs, cbar_axes = build_layout(
+        plot_spec=plot_spec,
+        height=height,
+        width=width,
+        layout_config=layout_config,
     )
     levels = levels_from_spec(plot_spec)
 
@@ -322,9 +346,7 @@ def video_maps(
     )
     _set_axes_limits(axs, width=width, height=height)
     try:
-        title_text = _set_suptitle_with_box(
-            fig, _build_title_video(plot_spec, dates, 0)
-        )
+        title_text = set_suptitle_with_box(fig, _build_title_video(plot_spec, dates, 0))
     except Exception:
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
@@ -334,7 +356,7 @@ def video_maps(
         try:
             footer_text = _build_footer_video(plot_spec, dates)
             if footer_text:
-                _set_footer_with_box(fig, footer_text)
+                set_footer_with_box(fig, footer_text)
         except Exception:
             logger.exception("Failed to draw footer; continuing without footer.")
 
@@ -372,19 +394,18 @@ def video_maps(
         blit=False,
         repeat=True,
     )
-    # Keep a strong reference without touching figure attributes (ruff-fix)
-    _ANIM_CACHE.append(animation_object)
+    # Keep a strong reference to prevent garbage collection during save
+    hold_anim(animation_object)
 
     # Save -> BytesIO and clean up temp file
     try:
-        video_buffer = convert._save_animation(
-            animation_object, _fps=fps, _video_format=video_format
+        video_buffer = convert.save_animation(
+            animation_object, fps=fps, video_format=video_format
         )
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
         # Drop strong reference now that saving is done
-        with contextlib.suppress(ValueError):
-            _ANIM_CACHE.remove(animation_object)
+        release_anim(animation_object)
         plt.close(fig)
 
 
@@ -473,19 +494,22 @@ def _draw_main_panels(  # noqa: PLR0913
     # Use PlotSpec levels for ground_truth and prediction unless overridden
     levels = levels_from_spec(plot_spec) if levels_override is None else levels_override
 
+    # Create colourmap with bad color handling for NaN values
+    cmap = colourmap_with_bad(plot_spec.colourmap, bad_color="lightgrey")
+
     if plot_spec.colourbar_strategy == "separate":
         # For separate strategy, use explicit levels to prevent breathing
-        groundtruth_levels = np.linspace(
+        groundtruth_levels = _safe_linspace(
             groundtruth_vmin, groundtruth_vmax, plot_spec.n_contour_levels
         )
-        prediction_levels = np.linspace(
+        prediction_levels = _safe_linspace(
             prediction_vmin, prediction_vmax, plot_spec.n_contour_levels
         )
 
         image_groundtruth = axs[0].contourf(
             ground_truth,
             levels=groundtruth_levels,
-            cmap=plot_spec.colourmap,
+            cmap=cmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
             origin="lower",
@@ -493,7 +517,7 @@ def _draw_main_panels(  # noqa: PLR0913
         image_prediction = axs[1].contourf(
             prediction,
             levels=prediction_levels,
-            cmap=plot_spec.colourmap,
+            cmap=cmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
             origin="lower",
@@ -503,7 +527,7 @@ def _draw_main_panels(  # noqa: PLR0913
         image_groundtruth = axs[0].contourf(
             ground_truth,
             levels=levels,
-            cmap=plot_spec.colourmap,
+            cmap=cmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
             origin="lower",
@@ -511,7 +535,7 @@ def _draw_main_panels(  # noqa: PLR0913
         image_prediction = axs[1].contourf(
             prediction,
             levels=levels,
-            cmap=plot_spec.colourmap,
+            cmap=cmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
             origin="lower",
@@ -603,16 +627,21 @@ def _draw_frame(  # noqa: PLR0913
             error_msg = "diff_colour_scale must be provided when including difference"
             raise InvalidArrayError(error_msg)
 
+        # Create colourmap with bad color handling for NaN values
+        diff_cmap = colourmap_with_bad(diff_colour_scale.cmap, bad_color="lightgrey")
+
         if diff_colour_scale.norm is not None:
             # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
             diff_vmin = diff_colour_scale.norm.vmin or 0.0
             diff_vmax = diff_colour_scale.norm.vmax or 1.0
-            diff_levels = np.linspace(diff_vmin, diff_vmax, plot_spec.n_contour_levels)
+            diff_levels = _safe_linspace(
+                diff_vmin, diff_vmax, plot_spec.n_contour_levels
+            )
 
             image_difference = axs[2].contourf(
                 difference,
                 levels=diff_levels,
-                cmap=diff_colour_scale.cmap,
+                cmap=diff_cmap,
                 vmin=diff_vmin,
                 vmax=diff_vmax,
                 origin="lower",
@@ -621,7 +650,7 @@ def _draw_frame(  # noqa: PLR0913
             # Non-negative differences with vmin/vmax
             vmin = diff_colour_scale.vmin or 0.0
             vmax = diff_colour_scale.vmax or 1.0
-            diff_levels = np.linspace(
+            diff_levels = _safe_linspace(
                 vmin,
                 vmax,
                 plot_spec.n_contour_levels,
@@ -630,7 +659,7 @@ def _draw_frame(  # noqa: PLR0913
             image_difference = axs[2].contourf(
                 difference,
                 levels=diff_levels,
-                cmap=diff_colour_scale.cmap,
+                cmap=diff_cmap,
                 vmin=vmin,
                 vmax=vmax,
                 origin="lower",
@@ -652,7 +681,7 @@ def _draw_frame(  # noqa: PLR0913
         if np.isnan(arr).any():
             # Create overlay for NaN areas (land mask)
             nan_mask = np.isnan(arr).astype(float)
-            # Create a custom colormap: 0=transparent, 1=land color
+            # Create a custom colourmap: 0=transparent, 1=land color
 
             # Land colour options: 'white' for white land, 'grey' for grey land
             colors = ["white", "white"]  # 0=white (transparent), 1=land color
@@ -688,70 +717,6 @@ def _clear_plot(ax: Axes) -> None:
     for coll in ax.collections[:]:
         coll.remove()
     ax.set_title("")
-
-
-def _set_suptitle_with_box(fig: plt.Figure, text: str) -> Text:
-    """Draw a fixed-position title with a white box that doesn't influence layout.
-
-    Returns the Text artist so callers can update with set_text during animation.
-    This version avoids kwargs that are unsupported on older Matplotlib.
-    """
-    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
-    t = fig.text(
-        x=0.5,
-        y=0.98,
-        s=text,
-        ha="center",
-        va="top",
-        fontsize=12,
-        fontfamily="monospace",
-        transform=fig.transFigure,
-        bbox=bbox,
-    )
-    with contextlib.suppress(Exception):
-        t.set_zorder(1000)
-    return t
-
-
-def _set_footer_with_box(fig: plt.Figure, text: str) -> Text:
-    """Draw a fixed-position footer with a white box at bottom center.
-
-    Footer is intended for metadata and secondary information.
-    """
-    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
-    t = fig.text(
-        x=0.5,
-        y=0.03,
-        s=text,
-        ha="center",
-        va="bottom",
-        fontsize=11,
-        fontfamily="monospace",
-        transform=fig.transFigure,
-        bbox=bbox,
-    )
-    with contextlib.suppress(Exception):
-        t.set_zorder(1000)
-    return t
-
-
-def _draw_badge_with_box(fig: plt.Figure, x: float, y: float, text: str) -> Text:
-    """Draw a warning/info badge with white background box at figure coords."""
-    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0}
-    t = fig.text(
-        x=x,
-        y=y,
-        s=text,
-        fontsize=11,
-        fontfamily="monospace",
-        color="firebrick",
-        ha="center",
-        va="top",
-        bbox=bbox,
-    )
-    with contextlib.suppress(Exception):
-        t.set_zorder(1000)
-    return t
 
 
 # --- Title helpers ---

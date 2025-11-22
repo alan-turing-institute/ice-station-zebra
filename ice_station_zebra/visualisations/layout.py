@@ -15,7 +15,9 @@ Main Components:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import contextlib
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,59 +35,317 @@ if TYPE_CHECKING:
 
     from .plotting_core import DiffColourmapSpec, PlotSpec
 
-# Layout constants
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Panel index constants (used for layout logic)
 PREDICTION_PANEL_INDEX = 1
 DIFFERENCE_PANEL_INDEX = 2
 MIN_PANEL_COUNT_FOR_PREDICTION = 2
 MIN_PANEL_COUNT_FOR_DIFFERENCE = 3
 
-
-#
-# --- LAYOUT CONFIGURATION CONSTANTS ---
-# These constants define the default proportional spacing for the GridSpec layout.
-# All values are expressed as fractions of the total figure dimensions to ensure
-# consistent scaling across different figure sizes.
-
-# Spacing and margin constants (as fractions of figure dimensions)
-DEFAULT_OUTER_MARGIN = 0.05  # Outer margin around entire figure (prevents clipping)
-DEFAULT_GUTTER_HORIZONTAL = 0.03  # Smaller gaps when colourbar is below
-DEFAULT_GUTTER_VERTICAL = 0.03  # Default for side-by-side with vertical bars
-DEFAULT_CBAR_WIDTH = (
-    0.06  # Width allocated for colourbar slots (fraction of panel width)
-)
-DEFAULT_TITLE_SPACE = 0.07  # Reduced: simple title + warning badge + axes titles
-DEFAULT_FOOTER_SPACE = 0.08  # Increased space reserved at bottom for metadata footer
-
-# Horizontal colourbar sizing (fractions of figure height)
-DEFAULT_CBAR_HEIGHT = (
-    0.07  # Thickness of horizontal colourbar row (relative to plot height)
-)
-DEFAULT_CBAR_PAD = 0.03  # Vertical gap between plots and the colourbar row
-
-# Horizontal colourbar width within its slot (inset fraction within parent slot)
+# Horizontal colourbar inset constants
 HCBAR_WIDTH_FRAC = 0.75  # centred 75% width
 HCBAR_LEFT_FRAC = (1.0 - HCBAR_WIDTH_FRAC) / 2.0
 
-# Default figure sizes for different panel configurations
-DEFAULT_FIGSIZE_TWO_PANELS = (12, 6)  # Ground truth + Prediction
-DEFAULT_FIGSIZE_THREE_PANELS = (18, 6)  # Ground truth + Prediction + Difference
+# Small epsilon for numerical stability
+EPSILON_SMALL = 1e-6
 
+# --- Layout Configuration Dataclasses ---
+
+
+@dataclass(frozen=True)
+class ColourbarConfig:
+    """Colourbar sizing and clamp behaviour (fractions of figure).
+
+    Example:
+        # Wider colourbar with higher max fraction
+        cbar_config = ColourbarConfig(default_width_frac=0.08, max_fraction_of_fig=0.15)
+
+    """
+
+    default_width_frac: float = (
+        0.06  # Width allocated for colourbar slots (fraction of panel width)
+    )
+    min_width_frac: float = 0.01  # Minimum colourbar width clamp
+    max_width_frac: float = 0.5  # Maximum colourbar width clamp
+    desired_physical_width_in: float = (
+        0.45  # Desired physical colourbar width in inches
+    )
+    max_fraction_of_fig: float = 0.12  # Maximum colourbar width as fraction of figure
+    default_height_frac: float = 0.07  # Thickness of horizontal colourbar row
+    default_pad_frac: float = 0.03  # Vertical gap between plots and colourbar row
+
+    def clamp_frac(self, frac: float, fig_width_in: float) -> float:
+        """Return a sane clamped fraction for the cbar slot based on figure width.
+
+        Computes a physical-limit fraction derived from desired physical width,
+        then clamps the input fraction between min/max bounds.
+        """
+        # Compute a physical-limit fraction derived from desired physical width
+        phys_frac = min(
+            self.max_fraction_of_fig,
+            self.desired_physical_width_in / max(fig_width_in, EPSILON_SMALL),
+        )
+        return float(
+            max(self.min_width_frac, min(frac, phys_frac, self.max_width_frac))
+        )
+
+
+@dataclass(frozen=True)
+class TitleFooterConfig:
+    """Title and footer spacing, positioning, and styling."""
+
+    title_space: float = 0.07  # Fraction of figure height reserved for title
+    footer_space: float = 0.08  # Fraction of figure height reserved for footer
+    title_fontsize: int = 12  # Font size for title
+    footer_fontsize: int = 11  # Font size for footer and badge
+    title_y: float = 0.98  # Y position for title (near top, in figure coordinates)
+    footer_y: float = 0.03  # Y position for footer (near bottom, in figure coordinates)
+    bbox_pad_title: float = 2.0  # Padding for title bbox
+    bbox_pad_badge: float = 1.5  # Padding for badge bbox
+    zorder_high: int = 1000  # High z-order for text overlays
+
+
+@dataclass(frozen=True)
+class GapConfig:
+    """Aspect-aware physical gap settings for single-panel layouts."""
+
+    base: float = 0.15  # Preferred gap for aspect≈1 panels
+    min_val: float = 0.10  # Hard minimum
+    max_val: float = 0.22  # Hard maximum
+    wide_limit: float = 4.0  # Aspect ratio at which we reach the "wide" gap
+    tall_limit: float = 0.5  # Aspect ratio at which we reach the "tall" gap
+    wide_gap: float = 0.11  # Gap to use for very wide panels
+    tall_gap: float = 0.19  # Gap to use for very tall panels
+
+
+@dataclass(frozen=True)
+class SinglePanelSpacing:
+    """Encapsulate spacing controls for standalone panels."""
+
+    gap: GapConfig = field(default_factory=GapConfig)
+    outer_buffer_in: float = 0.16  # Padding outside map/cbar (both sides)
+    edge_guard_in: float = 0.25  # Minimum blank space beyond colourbar for ticks
+    right_margin_scale: float = 0.5  # Scale factor for right margin adjustment
+    right_margin_offset: float = 0.02  # Offset for right margin adjustment
+
+
+@dataclass(frozen=True)
+class FormattingConfig:
+    """Tick formatting and fallback value constants."""
+
+    num_ticks_linear: int = 5  # Number of ticks for linear colourbars
+    midpoint_factor: float = (
+        0.5  # Factor for calculating midpoint values in symmetric ticks
+    )
+    default_vmin_fallback: float = 0.0  # Fallback minimum value
+    default_vmax_fallback: float = 1.0  # Fallback maximum value
+    default_vmin_diff_fallback: float = -1.0  # Fallback minimum for difference plots
+    default_vmax_diff_fallback: float = 1.0  # Fallback maximum for difference plots
+
+
+@dataclass(frozen=True)
+class LayoutConfig:
+    """Top-level layout tuning surface - passed into build functions.
+
+    Groups all layout-related configuration into a single, discoverable object.
+    This makes it easy to override defaults for testing or custom layouts.
+
+    Example:
+        # Wider colourbar and less title space
+        my_layout = LayoutConfig(
+            colourbar=ColourbarConfig(default_width_frac=0.08),
+            title_footer=TitleFooterConfig(title_space=0.04)
+        )
+        fig, axs, cax = build_single_panel_figure(
+            height=200, width=300, layout_config=my_layout, colourbar_location="vertical"
+        )
+
+    """
+
+    base_height_in: float = 6.0  # Standard figure height in inches
+    outer_margin: float = 0.05  # Outer margin around entire figure (prevents clipping)
+    gutter_vertical: float = 0.03  # Default for side-by-side with vertical bars
+    gutter_horizontal: float = 0.03  # Smaller gaps when colourbar is below
+    colourbar: ColourbarConfig = field(default_factory=ColourbarConfig)
+    title_footer: TitleFooterConfig = field(default_factory=TitleFooterConfig)
+    single_panel_spacing: SinglePanelSpacing = field(default_factory=SinglePanelSpacing)
+    formatting: FormattingConfig = field(default_factory=FormattingConfig)
+    min_plot_fraction: float = (
+        0.2  # Minimum plot width/height as fraction of available space
+    )
+    min_usable_height_fraction: float = (
+        0.6  # Minimum fraction of figure height for plotting area
+    )
+    default_figsizes: dict[int, tuple[float, float]] = field(
+        default_factory=lambda: {
+            1: (8, 6),  # Single panel
+            2: (12, 6),  # Ground truth + Prediction
+            3: (18, 6),  # Ground truth + Prediction + Difference
+        }
+    )
+
+
+# Default layout configuration instance (used when layout_config is None)
+_DEFAULT_LAYOUT_CONFIG = LayoutConfig()
 
 # --- Main Layout Functions ---
 
 
-def _build_layout(  # noqa: PLR0913
+def build_single_panel_figure(  # noqa: PLR0913, PLR0915
+    *,
+    height: int,
+    width: int,
+    layout_config: LayoutConfig | None = None,
+    colourbar_location: Literal["vertical", "horizontal"] = "vertical",
+    cbar_width: float | None = None,
+    cbar_height: float | None = None,
+    cbar_pad: float | None = None,
+) -> tuple[Figure, Axes, Axes]:
+    """Create a single-panel figure with layout consistent with multi-panel maps.
+
+    Args:
+        height: Data height in pixels.
+        width: Data width in pixels.
+        layout_config: Optional LayoutConfig instance to override defaults.
+                      If None, uses default configuration.
+        colourbar_location: Orientation of colourbar ("vertical" or "horizontal").
+        cbar_width: Optional override for colourbar width fraction.
+        cbar_height: Optional override for colourbar height fraction (horizontal only).
+        cbar_pad: Optional override for colourbar padding.
+
+    """
+    if height <= 0 or width <= 0:
+        msg = "height and width must be positive for single panel layout."
+        raise ValueError(msg)
+
+    layout = layout_config or _DEFAULT_LAYOUT_CONFIG
+    outer_margin = layout.outer_margin
+    title_space = layout.title_footer.title_space
+    footer_space = layout.title_footer.footer_space
+
+    base_h = layout.base_height_in
+    aspect = width / max(1, height)
+    fig_w = base_h * aspect
+    fig = plt.figure(
+        figsize=(fig_w, base_h), constrained_layout=False, facecolor="none"
+    )
+
+    top_val = max(layout.min_usable_height_fraction, 1.0 - (outer_margin + title_space))
+    bottom_val = outer_margin + footer_space
+    usable_height = top_val - bottom_val
+
+    if colourbar_location == "vertical":
+        # --- Interpret cbar_width as "fraction of panel width" ---
+        cw_panel = float(
+            layout.colourbar.default_width_frac if cbar_width is None else cbar_width
+        )
+        fig_w_in = float(fig.get_size_inches()[0])
+        cw_panel = layout.colourbar.clamp_frac(cw_panel, fig_w_in)
+
+        spacing = layout.single_panel_spacing
+
+        extra_left_frac = spacing.outer_buffer_in / max(fig_w_in, EPSILON_SMALL)
+        extra_right_frac = spacing.outer_buffer_in / max(fig_w_in, EPSILON_SMALL)
+
+        if cbar_pad is None:
+            cbar_pad_inches = _default_vertical_gap_inches(aspect, spacing.gap)
+            logger.debug(
+                "single-panel vertical gap auto: w=%d h=%d aspect=%.3f gap=%.4fin",
+                width,
+                height,
+                aspect,
+                cbar_pad_inches,
+            )
+        else:
+            base_pad_inches = float(cbar_pad) * fig_w_in
+            cbar_pad_inches = np.clip(
+                base_pad_inches, spacing.gap.min_val, spacing.gap.max_val
+            )
+            logger.debug(
+                "single-panel vertical gap override: w=%d h=%d aspect=%.3f raw=%.4fin clipped=%.4fin",
+                width,
+                height,
+                aspect,
+                base_pad_inches,
+                cbar_pad_inches,
+            )
+        cbar_pad = cbar_pad_inches / max(fig_w_in, EPSILON_SMALL)
+
+        # --- Right margin (slightly smaller than left) with physical safeguard ---
+        right_margin = max(
+            outer_margin * spacing.right_margin_scale,
+            outer_margin - spacing.right_margin_offset,
+        )
+        right_margin_inches = right_margin * fig_w_in
+        if right_margin_inches < spacing.edge_guard_in:
+            right_margin = spacing.edge_guard_in / max(fig_w_in, EPSILON_SMALL)
+
+        # === 2) Compute plot width from panel-fraction rule ===
+        available = 1.0 - (
+            outer_margin + extra_left_frac + cbar_pad + right_margin + extra_right_frac
+        )
+        plot_width_candidate = max(
+            layout.min_plot_fraction, available / (1.0 + cw_panel)
+        )
+        aspect_width_target = usable_height
+        plot_width = min(plot_width_candidate, aspect_width_target)
+
+        # initial colourbar width (fraction of figure)
+        cax_width = cw_panel * plot_width
+
+        # === 3) CAP COLOURBAR PHYSICAL WIDTH ===
+        # Compute maximum allowed fraction based on desired physical width
+        phys_frac = layout.colourbar.desired_physical_width_in / max(
+            fig_w_in, EPSILON_SMALL
+        )
+        max_cax_frac = min(layout.colourbar.max_fraction_of_fig, phys_frac)
+
+        if cax_width > max_cax_frac:
+            cax_width = max_cax_frac
+            plot_width = min(
+                aspect_width_target,
+                max(
+                    layout.min_plot_fraction,
+                    1.0 - (outer_margin + cbar_pad + cax_width + right_margin),
+                ),
+            )
+
+        # === 4) Place axes ===
+        plot_left = outer_margin + extra_left_frac
+        ax = fig.add_axes((plot_left, bottom_val, plot_width, usable_height))
+
+        cax_left = plot_left + plot_width + cbar_pad
+        cax = fig.add_axes((cax_left, bottom_val, cax_width, usable_height))
+
+    else:
+        cbar_height = (
+            layout.colourbar.default_height_frac if cbar_height is None else cbar_height
+        )
+        cbar_pad = layout.colourbar.default_pad_frac if cbar_pad is None else cbar_pad
+
+        plot_left = outer_margin
+        plot_width = 1.0 - 2 * outer_margin
+        plot_height = usable_height - (cbar_height + cbar_pad)
+        plot_height = max(plot_height, layout.min_plot_fraction)
+
+        ax_bottom = bottom_val + cbar_height + cbar_pad
+        ax = fig.add_axes((plot_left, ax_bottom, plot_width, plot_height))
+        cax = fig.add_axes((plot_left, bottom_val, plot_width, cbar_height))
+
+    _style_axes([ax])
+    _set_axes_limits([ax], width=width, height=height)
+    return fig, ax, cax
+
+
+def build_layout(
     *,
     plot_spec: PlotSpec,
     height: int | None = None,
     width: int | None = None,
-    outer_margin: float = DEFAULT_OUTER_MARGIN,
-    gutter: float | None = None,
-    cbar_width: float = DEFAULT_CBAR_WIDTH,
-    title_space: float = DEFAULT_TITLE_SPACE,
-    footer_space: float = DEFAULT_FOOTER_SPACE,
-    cbar_height: float = DEFAULT_CBAR_HEIGHT,
-    cbar_pad: float = DEFAULT_CBAR_PAD,
+    layout_config: LayoutConfig | None = None,
 ) -> tuple[Figure, list[Axes], dict[str, Axes | None]]:
     """Create a GridSpec layout for multi-panel plots.
 
@@ -106,19 +366,8 @@ def _build_layout(  # noqa: PLR0913
         height: Optional data height for aspect-ratio-aware figure sizing. If provided with width,
            the figure dimensions will be calculated to maintain proper data aspect ratios.
         width: Optional data width for aspect-ratio-aware figure sizing.
-        outer_margin: Fraction of figure dimensions reserved for outer margins (prevents
-                     plot elements from being clipped at figure edges).
-        gutter: Fraction of panel width used as horizontal spacing between panel groups.
-               Only applied between prediction+colourbar and difference panel.
-        cbar_width: Fraction of panel width allocated for each colourbar slot.
-        title_space: Fraction of figure height reserved at the top for figure title
-                    (prevents title from overlapping with plot content).
-        footer_space: Fraction of figure height reserved at the bottom for the metadata
-            footer so it does not overlap colourbars.
-        cbar_height: Height fraction for the horizontal colourbar row (row 2 when
-            orientation is 'horizontal'). Controls the bar thickness.
-        cbar_pad: Vertical gap fraction between the plot row and the colourbar row in
-            horizontal layouts. Set to 0.0 for flush rows.
+        layout_config: Optional LayoutConfig instance to override default layout parameters.
+                      If None, uses default configuration.
 
     Returns:
         tuple containing:
@@ -132,28 +381,35 @@ def _build_layout(  # noqa: PLR0913
         InvalidArrayError: If the arrays are not 2D or have different shapes.
 
     """
+    layout = layout_config or _DEFAULT_LAYOUT_CONFIG
+    outer_margin = layout.outer_margin
+    title_space = layout.title_footer.title_space
+    footer_space = layout.title_footer.footer_space
+    cbar_width = layout.colourbar.default_width_frac
+    cbar_height = layout.colourbar.default_height_frac
+    cbar_pad = layout.colourbar.default_pad_frac
+
     # Decide how many main panels are required and which orientation the colourbars use
     n_panels = 3 if plot_spec.include_difference else 2
     orientation = plot_spec.colourbar_location
 
-    # Choose gutter default per orientation if not provided
-    if gutter is None:
-        gutter = (
-            DEFAULT_GUTTER_HORIZONTAL
-            if orientation == "horizontal"
-            else DEFAULT_GUTTER_VERTICAL
-        )
+    # Choose gutter default per orientation
+    gutter = (
+        layout.gutter_horizontal
+        if orientation == "horizontal"
+        else layout.gutter_vertical
+    )
 
     # Calculate top boundary: ensure title space does not consume too much of the figure.
     # At least 60% of the figure height is reserved for the plotting area.
-    top_val = max(0.6, 1.0 - (outer_margin + title_space))
+    top_val = max(layout.min_usable_height_fraction, 1.0 - (outer_margin + title_space))
     # Calculate bottom boundary, reserving footer space for metadata
     bottom_val = outer_margin + footer_space
 
     # Calculate figure size based on data aspect ratio or use defaults
     if height and width and height > 0:
         # Calculate panel width maintaining data aspect ratio
-        base_h = 6.0  # Standard height in inches
+        base_h = layout.base_height_in  # Standard height in inches
         aspect = width / height
 
         if orientation == "vertical":
@@ -177,11 +433,7 @@ def _build_layout(  # noqa: PLR0913
         fig_size = (fig_w, base_h)
     else:
         # Use predefined sizes when data dimensions are unknown
-        fig_size = (
-            DEFAULT_FIGSIZE_THREE_PANELS
-            if plot_spec.include_difference
-            else DEFAULT_FIGSIZE_TWO_PANELS
-        )
+        fig_size = layout.default_figsizes[n_panels]
 
     fig = plt.figure(figsize=fig_size, constrained_layout=False, facecolor="none")
 
@@ -477,7 +729,7 @@ def _set_titles(axs: list[Axes], plot_spec: PlotSpec) -> None:
                 bbox={
                     "facecolor": "white",
                     "edgecolor": "none",
-                    "pad": 2.0,
+                    "pad": _DEFAULT_LAYOUT_CONFIG.title_footer.bbox_pad_title,
                     "alpha": 1.0,
                 },
             )
@@ -525,7 +777,7 @@ def _set_axes_limits(axs: list[Axes], *, width: int, height: int) -> None:
 
 
 # --- Colourbar Functions ---
-def _get_cbar_limits_from_mappable(cbar: Colorbar) -> tuple[float, float]:
+def get_cbar_limits_from_mappable(cbar: Colorbar) -> tuple[float, float]:
     """Return (vmin, vmax) for a colourbar's mappable with robust fallbacks."""
     vmin = vmax = None
     try:  # Works for many matplotlib mappables
@@ -535,7 +787,10 @@ def _get_cbar_limits_from_mappable(cbar: Colorbar) -> tuple[float, float]:
         vmin = getattr(norm, "vmin", None)
         vmax = getattr(norm, "vmax", None)
     if vmin is None or vmax is None:
-        vmin, vmax = 0.0, 1.0
+        vmin, vmax = (
+            _DEFAULT_LAYOUT_CONFIG.formatting.default_vmin_fallback,
+            _DEFAULT_LAYOUT_CONFIG.formatting.default_vmax_fallback,
+        )
     return float(vmin), float(vmax)
 
 
@@ -555,7 +810,7 @@ def _add_colourbars(  # noqa: PLR0913, PLR0912
     1. Shared colourbar for ground truth and prediction (same data scale)
     2. Separate colourbar for difference data (different scale, often symmetric)
 
-    The function works with the layout from _build_layout, using dedicated
+    The function works with the layout from build_layout, using dedicated
     colourbar axes when available, or falling back to automatic matplotlib placement.
 
     Colourbar Design:
@@ -594,7 +849,7 @@ def _add_colourbars(  # noqa: PLR0913, PLR0912
             colourbar_groundtruth = plt.colorbar(
                 image_groundtruth, cax=cbar_axes["groundtruth"], orientation=orientation
             )
-            _format_linear_ticks(
+            format_linear_ticks(
                 colourbar_groundtruth,
                 vmin=float(plot_spec.vmin) if plot_spec.vmin is not None else None,
                 vmax=float(plot_spec.vmax) if plot_spec.vmax is not None else None,
@@ -607,7 +862,7 @@ def _add_colourbars(  # noqa: PLR0913, PLR0912
             colourbar_prediction = plt.colorbar(
                 image_prediction, cax=cbar_axes["prediction"], orientation=orientation
             )
-            _format_linear_ticks(
+            format_linear_ticks(
                 colourbar_prediction, decimals=1, is_vertical=is_vertical
             )
     else:
@@ -624,7 +879,7 @@ def _add_colourbars(  # noqa: PLR0913, PLR0912
             )
 
         # Tick formatting
-        _format_linear_ticks(
+        format_linear_ticks(
             colourbar_truth,
             vmin=float(plot_spec.vmin) if plot_spec.vmin is not None else None,
             vmax=float(plot_spec.vmax) if plot_spec.vmax is not None else None,
@@ -666,23 +921,30 @@ def _add_colourbars(  # noqa: PLR0913, PLR0912
 
         # Tick formatting: symmetric for TwoSlopeNorm, otherwise linear
         if isinstance(image_difference.norm, TwoSlopeNorm):
-            vmin = float(image_difference.norm.vmin or -1.0)
-            vmax = float(image_difference.norm.vmax or 1.0)
-            _format_symmetric_ticks(
+            vmin = float(
+                image_difference.norm.vmin
+                or _DEFAULT_LAYOUT_CONFIG.formatting.default_vmin_diff_fallback
+            )
+            vmax = float(
+                image_difference.norm.vmax
+                or _DEFAULT_LAYOUT_CONFIG.formatting.default_vmax_diff_fallback
+            )
+            format_symmetric_ticks(
                 colourbar_diff,
                 vmin=vmin,
                 vmax=vmax,
                 decimals=2,
                 is_vertical=is_vertical,
+                centre=image_difference.norm.vcenter,
             )
         else:
-            _format_linear_ticks(colourbar_diff, decimals=2, is_vertical=is_vertical)
+            format_linear_ticks(colourbar_diff, decimals=2, is_vertical=is_vertical)
 
 
 # --- Tick Formatting Functions ---
 
 
-def _format_linear_ticks(
+def format_linear_ticks(
     colourbar: Colorbar,
     *,
     vmin: float | None = None,
@@ -697,40 +959,60 @@ def _format_linear_ticks(
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
 
     if vmin is None or vmax is None:
-        mvmin, mvmax = _get_cbar_limits_from_mappable(colourbar)
+        mvmin, mvmax = get_cbar_limits_from_mappable(colourbar)
         vmin = mvmin if vmin is None else vmin
         vmax = mvmax if vmax is None else vmax
 
-    ticks = np.linspace(float(vmin), float(vmax), 5)
+    ticks = np.linspace(
+        float(vmin), float(vmax), _DEFAULT_LAYOUT_CONFIG.formatting.num_ticks_linear
+    )
     colourbar.set_ticks([float(t) for t in ticks])
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
-    _apply_monospace_to_cbar_text(colourbar)
+    apply_monospace_to_cbar_text(colourbar)
 
 
-def _format_symmetric_ticks(
+def format_symmetric_ticks(
     colourbar: Colorbar,
     *,
     vmin: float,
     vmax: float,
     decimals: int = 2,
     is_vertical: bool,
+    centre: float | None = None,
 ) -> None:
-    """Format symmetric diverging ticks with a 0-centered midpoint.
+    """Format symmetric diverging ticks with a centred midpoint.
 
-    Places five ticks: [vmin, midpoint to 0, 0, 0 to midpoint, vmax].
+    Places five ticks: [vmin, midpoint to centre, centre, centre to midpoint, vmax].
+
+    Args:
+        colourbar: Colorbar to format.
+        vmin: Minimum value.
+        vmax: Maximum value.
+        decimals: Number of decimal places for tick labels.
+        is_vertical: Whether the colorbar is vertical.
+        centre: centre value for diverging colourmap (default: 0.0).
+
     """
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
-    ticks = [vmin, 0.5 * (vmin + 0.0), 0.0, 0.5 * (0.0 + vmax), vmax]
+    centre_val = centre if centre is not None else 0.0
+    midpoint_factor = _DEFAULT_LAYOUT_CONFIG.formatting.midpoint_factor
+    ticks = [
+        vmin,
+        midpoint_factor * (vmin + centre_val),
+        centre_val,
+        midpoint_factor * (centre_val + vmax),
+        vmax,
+    ]
     colourbar.set_ticks([float(t) for t in ticks])
     axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
-    _apply_monospace_to_cbar_text(colourbar)
+    apply_monospace_to_cbar_text(colourbar)
 
 
-def _apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
+def apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
     """Set tick labels and axis labels on a colourbar to monospace family."""
     ax = colourbar.ax
     for label in list(ax.get_xticklabels()) + list(ax.get_yticklabels()):
@@ -738,3 +1020,133 @@ def _apply_monospace_to_cbar_text(colourbar: Colorbar) -> None:
     # Ensure axis labels also use monospace if present
     ax.xaxis.label.set_fontfamily("monospace")
     ax.yaxis.label.set_fontfamily("monospace")
+
+
+def _default_vertical_gap_inches(aspect: float, cfg: GapConfig) -> float:
+    """Return an aspect-aware physical gap between panel and vertical colourbar."""
+    aspect = max(aspect, EPSILON_SMALL)
+    if aspect >= 1.0:
+        wide = min(aspect, cfg.wide_limit)
+        if np.isclose(cfg.wide_limit, 1.0):
+            return cfg.base
+        t = (wide - 1.0) / (cfg.wide_limit - 1.0)
+        gap = cfg.base - t * (cfg.base - cfg.wide_gap)
+    else:
+        tall_limit = max(cfg.tall_limit, EPSILON_SMALL)
+        tall = min(1.0 / aspect, 1.0 / tall_limit)
+        denom = (1.0 / tall_limit) - 1.0
+        t = 0.0 if np.isclose(denom, 0.0) else (tall - 1.0) / denom
+        gap = cfg.base + t * (cfg.tall_gap - cfg.base)
+    return float(np.clip(gap, cfg.min_val, cfg.max_val))
+
+
+# --- Text and Box Annotation Functions ---
+
+
+def set_suptitle_with_box(fig: Figure, text: str) -> plt.Text:
+    """Draw a fixed-position title with a white box that doesn't influence layout.
+
+    Returns the Text artist so callers can update with set_text during animation.
+    This version avoids kwargs that are unsupported on older Matplotlib.
+
+    Args:
+        fig: Matplotlib Figure object.
+        text: Title text to display.
+
+    Returns:
+        Text artist for the title.
+
+    """
+    config = _DEFAULT_LAYOUT_CONFIG.title_footer
+    bbox = {
+        "facecolor": "white",
+        "edgecolor": "none",
+        "pad": config.bbox_pad_title,
+        "alpha": 1.0,
+    }
+    t = fig.text(
+        x=0.5,
+        y=config.title_y,
+        s=text,
+        ha="center",
+        va="top",
+        fontsize=config.title_fontsize,
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(config.zorder_high)
+    return t
+
+
+def set_footer_with_box(fig: Figure, text: str) -> plt.Text:
+    """Draw a fixed-position footer with a white box at bottom centre.
+
+    Footer is intended for metadata and secondary information.
+
+    Args:
+        fig: Matplotlib Figure object.
+        text: Footer text to display.
+
+    Returns:
+        Text artist for the footer.
+
+    """
+    config = _DEFAULT_LAYOUT_CONFIG.title_footer
+    bbox = {
+        "facecolor": "white",
+        "edgecolor": "none",
+        "pad": config.bbox_pad_title,
+        "alpha": 1.0,
+    }
+    t = fig.text(
+        x=0.5,
+        y=config.footer_y,
+        s=text,
+        ha="center",
+        va="bottom",
+        fontsize=config.footer_fontsize,
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(config.zorder_high)
+    return t
+
+
+def draw_badge_with_box(fig: Figure, x: float, y: float, text: str) -> plt.Text:
+    """Draw a warning/info badge with white background box at figure coords.
+
+    Args:
+        fig: Matplotlib Figure object.
+        x: X position in figure coordinates (0-1).
+        y: Y position in figure coordinates (0-1).
+        text: Badge text to display.
+
+    Returns:
+        Text artist for the badge.
+
+    """
+    config = _DEFAULT_LAYOUT_CONFIG.title_footer
+    bbox = {
+        "facecolor": "white",
+        "edgecolor": "none",
+        "pad": config.bbox_pad_badge,
+        "alpha": 1.0,
+    }
+    t = fig.text(
+        x=x,
+        y=y,
+        s=text,
+        fontsize=config.footer_fontsize,
+        fontfamily="monospace",
+        color="firebrick",
+        ha="center",
+        va="top",
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(config.zorder_high)
+    return t

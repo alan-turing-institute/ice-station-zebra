@@ -3,14 +3,14 @@ raw_inputs:
   _target_: ice_station_zebra.callbacks.RawInputsCallback
   frequency: null               # Plot once; set N to repeat every N batches
   timestep_index: 0             # Which history timestep to plot (0 = most recent)
-  save_dir: ./raw_input_plots   # Directory to save plots (null to skip saving to disk)
+  save_dir: ./data/raw_input_plots   # Directory to save plots (null to skip saving to disk)
   log_to_wandb: true            # Whether to log plots to WandB (if false and save_dir null, nothing saved)
 
   # Animation configuration (following PlottingCallback pattern)
   make_video_plots: false       # Set to true to create temporal animations
   video_fps: 2                  # Frames per second for animations
   video_format: gif             # mp4 or gif
-  video_save_dir: ./raw_input_animations  # Directory to save animations (null to skip disk save)
+  video_save_dir: ./data/raw_input_animations  # Directory to save animations (null to skip disk save)
   max_animation_frames: null    # Limit frames (null = unlimited; 30 ≈ 1 month daily data)
 
   # Plot specification (colourmap, hemisphere, etc.)

@@ -1,5 +1,9 @@
+import contextlib
+import gc
 import io
+import logging
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
@@ -15,65 +19,90 @@ from ice_station_zebra.exceptions import VideoRenderError
 DEFAULT_DPI = 200
 
 
-def _image_from_figure(fig: Figure) -> ImageFile:
-    """Convert a matplotlib figure to a PIL image file."""
+@contextlib.contextmanager
+def _suppress_mpl_animation_logs() -> Iterator[None]:
+    """Temporarily suppress matplotlib animation INFO log messages."""
+    mpl_logger = logging.getLogger("matplotlib.animation")
+    original_level = mpl_logger.level
+    try:
+        mpl_logger.setLevel(logging.WARNING)
+        yield
+    finally:
+        mpl_logger.setLevel(original_level)
+
+
+def image_from_figure(fig: Figure) -> ImageFile:
+    """Convert a matplotlib figure to a PIL image file.
+
+    Uses the same save parameters as save_figure for consistency:
+    - dpi=300 for matching resolution
+    - bbox_inches="tight" to crop to content (matching disk saves)
+    """
     buf = io.BytesIO()
-    fig.savefig(buf, format="png")
+    fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
     buf.seek(0)
     return Image.open(buf)
 
 
-def _image_from_array(a: np.ndarray) -> ImageFile:
+def image_from_array(a: np.ndarray) -> ImageFile:
     """Convert a numpy array to a PIL image file."""
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(a)
     ax.axis("off")
     try:
-        return _image_from_figure(fig)
+        return image_from_figure(fig)
     finally:
         plt.close(fig)
 
 
-def _save_animation(
+def save_animation(
     anim: animation.FuncAnimation,
     *,
-    fps: int | None = None,
+    fps: int = 2,
     video_format: Literal["mp4", "gif"] = "gif",
-    _fps: int | None = None,
-    _video_format: Literal["mp4", "gif"] | None = None,
 ) -> io.BytesIO:
     """Save an animation to a temporary file and return BytesIO (with cleanup)."""
-    # Accept both standard and underscored names for test compatibility
-    fps_value: int = int(fps if fps is not None else (_fps if _fps is not None else 2))
-    if _video_format is not None:
-        video_format = _video_format  # prefer underscored override if provided
+    fps_value: int = int(fps)
     suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
-        try:
-            # Save video to tempfile
-            writer: animation.AbstractMovieWriter = (
-                animation.PillowWriter(fps=fps_value)
-                if suffix == ".gif"
-                else animation.FFMpegWriter(
-                    fps=fps_value,
-                    codec="libx264",
-                    bitrate=1800,
-                    # Ensure dimensions are compatible with yuv420p (even width/height)
-                    # by applying a scale filter that truncates to the nearest even integers.
-                    extra_args=[
-                        "-pix_fmt",
-                        "yuv420p",
-                        "-vf",
-                        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-                    ],
+
+    writer: animation.AbstractMovieWriter | None = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
+            try:
+                # Save video to tempfile
+                writer = (
+                    animation.PillowWriter(fps=fps_value)
+                    if suffix == ".gif"
+                    else animation.FFMpegWriter(
+                        fps=fps_value,
+                        codec="libx264",
+                        bitrate=1800,
+                        # Ensure dimensions are compatible with yuv420p (even width/height)
+                        # by applying a scale filter that truncates to the nearest even integers.
+                        extra_args=[
+                            "-pix_fmt",
+                            "yuv420p",
+                            "-vf",
+                            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                        ],
+                    )
                 )
-            )
-            anim.save(tmp.name, writer=writer, dpi=DEFAULT_DPI)
-            # Load tempfile into a BytesIO buffer
-            with Path(tmp.name).open("rb") as fh:
-                buffer = io.BytesIO(fh.read())
-        except (OSError, MemoryError) as err:
-            msg = f"Video encoding failed: {err!s}"
-            raise VideoRenderError(msg) from err
+                # Suppress matplotlib's INFO log message about writer selection
+                with _suppress_mpl_animation_logs():
+                    anim.save(tmp.name, writer=writer, dpi=DEFAULT_DPI)
+                # Load tempfile into a BytesIO buffer
+                with Path(tmp.name).open("rb") as fh:
+                    buffer = io.BytesIO(fh.read())
+            except (OSError, MemoryError) as err:
+                msg = f"Video encoding failed: {err!s}"
+                raise VideoRenderError(msg) from err
+    finally:
+        # Explicitly cleanup writer to prevent semaphore leaks
+        if writer is not None and hasattr(writer, "cleanup"):
+            with contextlib.suppress(OSError, RuntimeError, AttributeError):
+                writer.cleanup()
+        # Force garbage collection to clean up any remaining resources
+        gc.collect()
+
     buffer.seek(0)
     return buffer

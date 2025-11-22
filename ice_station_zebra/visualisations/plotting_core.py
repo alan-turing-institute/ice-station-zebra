@@ -1,13 +1,197 @@
+import logging
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal
 
+import matplotlib as mpl
 import numpy as np
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import Normalize, TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, DiffMode, DiffStrategy, PlotSpec
 
+logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
+
 # Constants for land mask validation
 EXPECTED_LAND_MASK_DIMENSIONS = 2
+
+
+# --- Variable Styling ---
+
+
+@dataclass
+class VariableStyle:
+    """Styling configuration for individual variables.
+
+    Attributes:
+        cmap: Matplotlib colourmap name (e.g., "viridis", "RdBu_r").
+        colourbar_strategy: "shared" or "separate" (kept for compatibility).
+        vmin: Minimum value for colour scale.
+        vmax: Maximum value for colour scale.
+        two_slope_centre: Centre value for diverging colourmap (TwoSlopeNorm).
+        units: Display units for the variable (e.g., "K", "m/s").
+        origin: Imshow origin override ("upper" keeps north-up, "lower" keeps south-up).
+        decimals: Number of decimal places for colourbar tick labels (default: 2).
+
+    """
+
+    cmap: str | None = None
+    colourbar_strategy: str | None = None
+    vmin: float | None = None
+    vmax: float | None = None
+    two_slope_centre: float | None = None
+    units: str | None = None
+    origin: Literal["upper", "lower"] | None = None
+    decimals: int | None = None
+
+
+def colourmap_with_bad(
+    cmap_name: str | None, bad_color: str = "#dcdcdc"
+) -> mpl.colors.Colormap:
+    """Create a colourmap copy with a specified color for bad (NaN) values.
+
+    This function copies the specified colourmap and sets the 'bad' color to handle
+    NaN values consistently, preventing white artifacts in visualisations.
+
+    Args:
+        cmap_name: Name of the matplotlib colourmap (e.g., "viridis", "RdBu_r").
+                   If None, defaults to "viridis".
+        bad_color: Color to use for NaN/bad values. Default is light grey (#dcdcdc).
+
+    Returns:
+        A copy of the colourmap with set_bad() configured.
+
+    """
+    if cmap_name is None:
+        cmap = mpl.colormaps.get_cmap("viridis")
+    else:
+        cmap = mpl.colormaps.get_cmap(cmap_name)
+
+    try:
+        cmap = cmap.copy()
+    except (AttributeError, TypeError):
+        # Some matplotlib versions return non-copyable colourmap; create new
+        cmap = mpl.colormaps.get_cmap(cmap.name)
+
+    cmap.set_bad(bad_color)
+    return cmap
+
+
+def safe_nanmin(arr: np.ndarray, default: float = 0.0) -> float:
+    """Safely compute nanmin with fallback for empty or all-NaN arrays.
+
+    Args:
+        arr: Array to compute minimum from.
+        default: Default value if array is empty or all NaN.
+
+    Returns:
+        Minimum value or default.
+
+    """
+    if np.isfinite(arr).any():
+        result = np.nanmin(arr)
+        return float(result) if np.isfinite(result) else default
+    return default
+
+
+def safe_nanmax(arr: np.ndarray, default: float = 1.0) -> float:
+    """Safely compute nanmax with fallback for empty or all-NaN arrays.
+
+    Args:
+        arr: Array to compute maximum from.
+        default: Default value if array is empty or all NaN.
+
+    Returns:
+        Maximum value or default.
+
+    """
+    if np.isfinite(arr).any():
+        result = np.nanmax(arr)
+        return float(result) if np.isfinite(result) else default
+    return default
+
+
+def style_for_variable(  # noqa: C901, PLR0911
+    var_name: str, styles: dict[str, dict[str, Any]] | None
+) -> VariableStyle:
+    """Return best matching style for a variable from config styles dict.
+
+    Matching priority:
+      1) exact key
+      2) wildcard prefix key ending with '*'
+      3) _default
+      4) empty style
+    Accepts any Mapping (so OmegaConf DictConfig works).
+    """
+
+    def _normalise_name(name: str) -> str:
+        # Convert double-underscore to colon (this maps 'era5__2t' -> 'era5:2t')
+        name = name.replace("__", ":")
+        # Treat hyphens as separators too: 'era5-2t' -> 'era5:2t'
+        name = name.replace("-", ":")
+        # Collapse accidental repeated '::' to single ':'
+        while "::" in name:
+            name = name.replace("::", ":")
+        # Keep single underscores (they are meaningful in some variable names)
+        return name
+
+    if not styles:
+        return VariableStyle()
+
+    # Accept Mapping-like configs (Dict, DictConfig, etc.)
+    if not isinstance(styles, Mapping):
+        logger.info("style_for_variable: styles is not a Mapping; ignoring styles")
+        return VariableStyle()
+
+    # Quick exact match first (try raw var_name)
+    spec = styles.get(var_name)
+    if isinstance(spec, Mapping):
+        return VariableStyle(**{k: spec.get(k) for k in VariableStyle.__annotations__})
+
+    # Try normalised exact match
+    norm_var = _normalise_name(var_name)
+    if norm_var != var_name:
+        spec = styles.get(norm_var)
+        if isinstance(spec, Mapping):
+            return VariableStyle(
+                **{k: spec.get(k) for k in VariableStyle.__annotations__}
+            )
+
+    # Wildcard prefix match: scan keys ending with '*' (normalise the key before comparing)
+    # We iterate keys so keep original order (OmegaConf preserves insertion order).
+    for key in styles:
+        if isinstance(key, str) and key.endswith("*"):
+            prefix = key[:-1]
+            prefix_norm = _normalise_name(prefix)
+            # If prefix_norm is empty (user wrote '*' only) skip it
+            if not prefix_norm:
+                continue
+            # Compare against both raw and normalised var names
+            if var_name.startswith(prefix) or norm_var.startswith(prefix_norm):
+                spec = styles.get(key)
+                if isinstance(spec, Mapping):
+                    return VariableStyle(
+                        **{k: spec.get(k) for k in VariableStyle.__annotations__}
+                    )
+                logger.info(
+                    "style_for_variable: wildcard candidate %r not a dict (type=%s)",
+                    key,
+                    type(spec),
+                )
+
+    # Fallback to _default
+    spec = styles.get("_default")
+    if isinstance(spec, Mapping):
+        return VariableStyle(**{k: spec.get(k) for k in VariableStyle.__annotations__})
+
+    return VariableStyle()
+
+
+# --- Colour Scale Generation ---
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
@@ -28,6 +212,63 @@ def levels_from_spec(spec: PlotSpec) -> np.ndarray:
     vmin = 0.0 if spec.vmin is None else spec.vmin
     vmax = 1.0 if spec.vmax is None else spec.vmax
     return np.linspace(vmin, vmax, spec.n_contour_levels)
+
+
+def create_normalisation(
+    data: np.ndarray,
+    *,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    centre: float | None = None,
+) -> tuple[Normalize | TwoSlopeNorm, float, float]:
+    """Create appropriate normalisation for data with optional centring.
+
+    This function creates either a linear Normalize or a diverging TwoSlopeNorm
+    based on whether a centre value is provided. When a centre is specified,
+    the normalisation will be symmetric around that value.
+
+    Args:
+        data: 2D array of data to normalise.
+        vmin: Minimum value for colour scale. If None, inferred from data.
+        vmax: Maximum value for colour scale. If None, inferred from data.
+        centre: Centre value for diverging colourmap. If provided, creates
+            a symmetric TwoSlopeNorm around this value.
+
+    Returns:
+        Tuple of (normalisation, vmin, vmax) where:
+        - normalisation: Normalize or TwoSlopeNorm object
+        - vmin: Computed minimum value
+        - vmax: Computed maximum value
+
+    """
+    # Compute data range with robust handling of NaN/inf
+    data_min = float(np.nanmin(data)) if np.isfinite(data).any() else 0.0
+    data_max = float(np.nanmax(data)) if np.isfinite(data).any() else 1.0
+
+    if centre is not None:
+        # Diverging colourmap centred at specified value
+        low = vmin if vmin is not None else data_min
+        high = vmax if vmax is not None else data_max
+
+        # Make symmetric around the centre where possible
+        span_low = abs(centre - low)
+        span_high = abs(high - centre)
+        span = max(span_low, span_high, 1e-6)
+
+        final_vmin = float(centre - span)
+        final_vmax = float(centre + span)
+
+        norm: Normalize | TwoSlopeNorm = TwoSlopeNorm(
+            vmin=final_vmin, vcenter=float(centre), vmax=final_vmax
+        )
+        return norm, final_vmin, final_vmax
+
+    # Linear colourmap
+    final_vmin = float(vmin if vmin is not None else data_min)
+    final_vmax = float(vmax if vmax is not None else data_max)
+
+    norm_linear: Normalize | TwoSlopeNorm = Normalize(vmin=final_vmin, vmax=final_vmax)
+    return norm_linear, final_vmin, final_vmax
 
 
 def compute_difference(
@@ -87,13 +328,9 @@ def make_diff_colourmap(
             max_abs = max(1.0, float(abs(sample)))
             vmin, vmax = -max_abs, max_abs
         else:
-            # Find the min and max values of the sample array
-            vmin_data = float(
-                np.nanmin(sample) if np.nanmin(sample) is not None else -1.0
-            )
-            vmax_data = float(
-                np.nanmax(sample) if np.nanmax(sample) is not None else 1.0
-            )
+            # Find the min and max values of the sample array using safe helpers
+            vmin_data = safe_nanmin(sample, default=-1.0)
+            vmax_data = safe_nanmax(sample, default=1.0)
             # Find the maximum absolute value of the sample array
             max_abs = max(1.0, abs(vmin_data), abs(vmax_data))
             vmin, vmax = -max_abs, max_abs
@@ -110,7 +347,7 @@ def make_diff_colourmap(
         if isinstance(sample, (float, int)):
             vmax = max(1e-6, float(sample))
         else:
-            vmax = max(1e-6, float(np.nanmax(sample) or 0.0))
+            vmax = max(1e-6, safe_nanmax(sample, default=0.0))
 
         return DiffColourmapSpec(
             norm=None,
@@ -330,7 +567,7 @@ def compute_display_ranges_stream(
     return (groundtruth_min, groundtruth_max), (prediction_min, prediction_max)
 
 
-def detect_land_mask_path(
+def detect_land_mask_path(  # noqa: C901
     base_path: str | Path,
     dataset_name: str | None = None,
     hemisphere: str | None = None,
@@ -338,12 +575,14 @@ def detect_land_mask_path(
     """Automatically detect the land mask path based on dataset configuration.
 
     This function looks for land mask files in the expected locations based on
-    the dataset name and hemisphere. It follows the pattern:
+    the dataset name and hemisphere. It accepts either the repository root
+    (containing a ``data`` directory) or the ``data`` directory itself as
+    ``base_path``. It follows the pattern:
     - {base_path}/data/preprocessing/{dataset_name}/IceNetSIC/data/masks/{hemisphere}/masks/land_mask.npy
     - {base_path}/data/preprocessing/IceNetSIC/data/masks/{hemisphere}/masks/land_mask.npy
 
     Args:
-        base_path: Base path to the data directory.
+        base_path: Base path to the project root **or** the ``data`` directory.
         dataset_name: Name of the dataset (e.g., 'samp-sicsouth-osisaf-25k-2017-2019-24h-v1').
         hemisphere: Hemisphere ('north' or 'south').
 
@@ -363,37 +602,54 @@ def detect_land_mask_path(
     if hemisphere is None:
         return None
 
-    # Try dataset-specific path first
-    if dataset_name is not None:
-        dataset_specific_path = (
-            base_path
-            / "data"
-            / "preprocessing"
-            / dataset_name
-            / "IceNetSIC"
-            / "data"
-            / "masks"
-            / hemisphere
-            / "masks"
-            / "land_mask.npy"
-        )
-        if dataset_specific_path.exists():
-            return str(dataset_specific_path)
+    # Support repo-root, data-directory, and nested data/data layouts
+    candidate_data_roots: list[Path] = []
+    if base_path.name != "data":
+        candidate_data_roots.append(base_path / "data")
+    candidate_data_roots.append(base_path)
 
-    # Try general IceNetSIC path
-    general_path = (
-        base_path
-        / "data"
-        / "preprocessing"
-        / "IceNetSIC"
-        / "data"
-        / "masks"
-        / hemisphere
-        / "masks"
-        / "land_mask.npy"
-    )
-    if general_path.exists():
-        return str(general_path)
+    seen_roots: set[Path] = set()
+    for data_root in candidate_data_roots:
+        resolved_root = data_root.resolve()
+        if resolved_root in seen_roots:
+            continue
+        seen_roots.add(resolved_root)
+
+        # Some deployments keep datasets in data/data/,
+        # so we probe both the root and an extra nested data/ layer.
+        preprocessing_roots = {
+            resolved_root / "preprocessing",
+            resolved_root / "data" / "preprocessing",
+        }
+
+        for preproc_root in preprocessing_roots:
+            # Try dataset-specific path first
+            if dataset_name is not None:
+                dataset_specific_path = (
+                    preproc_root
+                    / dataset_name
+                    / "IceNetSIC"
+                    / "data"
+                    / "masks"
+                    / hemisphere
+                    / "masks"
+                    / "land_mask.npy"
+                )
+                if dataset_specific_path.exists():
+                    return str(dataset_specific_path)
+
+            # Try general IceNetSIC path
+            general_path = (
+                preproc_root
+                / "IceNetSIC"
+                / "data"
+                / "masks"
+                / hemisphere
+                / "masks"
+                / "land_mask.npy"
+            )
+            if general_path.exists():
+                return str(general_path)
 
     return None
 
@@ -437,3 +693,55 @@ def load_land_mask(
         land_mask = land_mask.astype(bool)
 
     return land_mask
+
+
+# --- File Utilities ---
+
+
+def safe_filename(name: str) -> str:
+    """Sanitise a string for use as a filename.
+
+    Replaces non-alphanumeric characters (except hyphens and underscores)
+    with hyphens and strips leading/trailing hyphens.
+
+    Args:
+        name: Input string to sanitise.
+
+    Returns:
+        Sanitised filename string.
+
+    Examples:
+        >>> safe_filename("era5:2t")
+        'era5-2t'
+        >>> safe_filename("My Variable Name!")
+        'My-Variable-Name'
+
+    """
+    keep = [c if c.isalnum() or c in ("-", "_") else "-" for c in name.strip()]
+    return "".join(keep).strip("-") or "var"
+
+
+def save_figure(
+    fig: "plt.Figure", save_dir: Path | None, base_name: str
+) -> Path | None:
+    """Save a matplotlib figure to disk as PNG.
+
+    Creates the save directory if it doesn't exist. Sanitises the filename
+    to avoid filesystem issues.
+
+    Args:
+        fig: Matplotlib Figure object to save.
+        save_dir: Directory to save the figure in. If None, does not save.
+        base_name: Base name for the file (will be sanitised).
+
+    Returns:
+        Path to the saved file, or None if save_dir was None.
+
+    """
+    if save_dir is None:
+        return None
+
+    save_dir.mkdir(parents=True, exist_ok=True)
+    path = save_dir / f"{safe_filename(base_name)}.png"
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    return path

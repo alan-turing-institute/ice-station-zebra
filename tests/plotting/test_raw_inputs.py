@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import io
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pytest
@@ -136,7 +136,7 @@ def test_plot_to_disk(
 @pytest.mark.parametrize("colourbar_location", ["vertical", "horizontal"])
 def test_plot_colourbar_locations(
     era5_temperature_2d: np.ndarray,
-    colourbar_location: str,
+    colourbar_location: Literal["vertical", "horizontal"],
 ) -> None:
     """Test plotting with different colorbar orientations."""
     plot_spec = PlotSpec(
@@ -324,7 +324,7 @@ def test_video_formats(
     era5_temperature_3d: np.ndarray,
     test_dates_short: list[date],
     base_plot_spec: PlotSpec,
-    video_format: str,
+    video_format: Literal["gif", "mp4"],
 ) -> None:
     """Test creating videos in different formats."""
     video_buffer = video_raw_input_for_variable(

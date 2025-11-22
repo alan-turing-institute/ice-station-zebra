@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import hydra
 import numpy as np
@@ -68,8 +68,8 @@ def _collect_temporal_data(
     n_vars = len(channel_names)
 
     # Initialize data collection
-    temporal_data_per_var = [[] for _ in range(n_vars)]
-    dates = []
+    temporal_data_per_var: list[list[np.ndarray]] = [[] for _ in range(n_vars)]
+    dates: list[Any] = []
 
     for idx in range(start_idx, start_idx + n_frames):
         batch = test_dataset[idx]
@@ -154,10 +154,11 @@ def plot_raw_inputs(
 
     # Get the test dataset
     test_dataloader = data_module.test_dataloader()
-    test_dataset = test_dataloader.dataset
-    if test_dataset is None:
+    test_dataset_raw = test_dataloader.dataset
+    if test_dataset_raw is None:
         msg = "No test dataset available!"
         raise ValueError(msg)
+    test_dataset = cast("CombinedDataset", test_dataset_raw)
 
     log.info("Test dataset has %d samples", len(test_dataset))
 
@@ -293,10 +294,11 @@ def animate_raw_inputs(
 
     # Get the test dataset
     test_dataloader = data_module.test_dataloader()
-    test_dataset = test_dataloader.dataset
-    if test_dataset is None:
+    test_dataset_raw = test_dataloader.dataset
+    if test_dataset_raw is None:
         msg = "No test dataset available!"
         raise ValueError(msg)
+    test_dataset = cast("CombinedDataset", test_dataset_raw)
 
     log.info("Test dataset has %d samples", len(test_dataset))
 

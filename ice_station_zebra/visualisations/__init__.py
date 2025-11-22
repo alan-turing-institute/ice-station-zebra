@@ -6,6 +6,7 @@ mpl.use("Agg")
 
 from ice_station_zebra.types import PlotSpec
 
+from .cli import visualisations_cli
 from .plotting_core import detect_land_mask_path
 from .plotting_maps import (
     DEFAULT_SIC_SPEC,
@@ -21,4 +22,5 @@ __all__ = [
     "detect_land_mask_path",
     "plot_maps",
     "video_maps",
+    "visualisations_cli",
 ]

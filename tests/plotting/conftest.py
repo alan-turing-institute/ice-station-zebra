@@ -1,10 +1,12 @@
 import warnings
+from collections.abc import Iterator
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Protocol, cast
 
 import hydra
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
@@ -12,6 +14,7 @@ from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
+from ice_station_zebra.types import PlotSpec
 from tests.conftest import make_varying_sic_stream
 
 mpl.use("Agg")
@@ -25,6 +28,15 @@ warnings.filterwarnings(
 )
 
 TEST_DATE = date(2020, 1, 15)
+TEST_HEIGHT = 48
+TEST_WIDTH = 48
+
+
+@pytest.fixture(autouse=True)
+def close_all_figures() -> Iterator[None]:
+    """Automatically close all matplotlib figures after each test to prevent warnings."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
@@ -259,3 +271,114 @@ def example_checkpoint_path(pytestconfig: pytest.Config) -> Path | None:
             return ckpt.resolve()
 
     return None
+
+
+# --- Raw Inputs Fixtures ---
+
+
+@pytest.fixture
+def base_plot_spec() -> PlotSpec:
+    """Base plotting specification for raw inputs."""
+    return PlotSpec(
+        variable="raw_inputs",
+        colourmap="viridis",
+        colourbar_location="vertical",
+        hemisphere="south",
+    )
+
+
+@pytest.fixture
+def test_dates_short() -> list[date]:
+    """Generate a short sequence of test dates for animations (4 days)."""
+    return [TEST_DATE + timedelta(days=i) for i in range(4)]
+
+
+@pytest.fixture
+def land_mask_2d() -> np.ndarray:
+    """Create a simple circular land mask for testing [H, W]."""
+    dist = make_central_distance_grid(TEST_HEIGHT, TEST_WIDTH)
+    radius = min(TEST_HEIGHT, TEST_WIDTH) * 0.25
+    return (dist < radius).astype(bool)
+
+
+@pytest.fixture
+def era5_temperature_2d() -> np.ndarray:
+    """Generate synthetic ERA5 2m temperature data (K) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Temperature centreed around 273.15K (0°C) with realistic variation
+    base_temp = 273.15 + rng.normal(0, 10, size=(TEST_HEIGHT, TEST_WIDTH))
+    return base_temp.astype(np.float32)
+
+
+@pytest.fixture
+def era5_humidity_2d() -> np.ndarray:
+    """Generate synthetic ERA5 specific humidity data (kg/kg) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Humidity values are very small (0.001 to 0.01)
+    humidity = rng.uniform(0.0005, 0.015, size=(TEST_HEIGHT, TEST_WIDTH))
+    return humidity.astype(np.float32)
+
+
+@pytest.fixture
+def era5_wind_u_2d() -> np.ndarray:
+    """Generate synthetic ERA5 u-wind component (m/s) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Wind centreed around 0 with realistic variation
+    wind = rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH))
+    return wind.astype(np.float32)
+
+
+@pytest.fixture
+def osisaf_ice_conc_2d() -> np.ndarray:
+    """Generate synthetic OSISAF sea ice concentration data (fraction 0-1) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Ice concentration between 0 and 1
+    ice_conc = rng.uniform(0.0, 1.0, size=(TEST_HEIGHT, TEST_WIDTH))
+    return ice_conc.astype(np.float32)
+
+
+@pytest.fixture
+def era5_temperature_3d(test_dates_short: list[date]) -> np.ndarray:
+    """Generate synthetic 3D temperature stream [T, H, W]."""
+    rng = np.random.default_rng(100)
+    n_timesteps = len(test_dates_short)
+    # Temperature evolving over time
+    data = np.zeros((n_timesteps, TEST_HEIGHT, TEST_WIDTH), dtype=np.float32)
+    for t in range(n_timesteps):
+        data[t] = 273.15 + rng.normal(0, 10, size=(TEST_HEIGHT, TEST_WIDTH))
+    return data
+
+
+@pytest.fixture
+def multi_channel_data() -> tuple[list[np.ndarray], list[str]]:
+    """Generate multiple channels of raw input data."""
+    rng = np.random.default_rng(100)
+    channels = [
+        rng.uniform(270, 280, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
+            np.float32
+        ),  # temperature
+        rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),  # u-wind
+        rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),  # v-wind
+        rng.uniform(0, 1, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
+            np.float32
+        ),  # ice conc
+    ]
+    names = ["era5:2t", "era5:10u", "era5:10v", "osisaf-south:ice_conc"]
+    return channels, names
+
+
+@pytest.fixture
+def variable_styles() -> dict[str, dict[str, Any]]:
+    """Sample variable styling configuration for raw inputs."""
+    return {
+        "era5:2t": {
+            "cmap": "RdBu_r",
+            "two_slope_centre": 273.15,
+            "units": "K",
+            "decimals": 1,
+        },
+        "era5:10u": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+        "era5:10v": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+        "era5:q_10": {"cmap": "viridis", "decimals": 4, "units": "kg/kg"},
+        "osisaf-south:ice_conc": {"cmap": "Blues_r"},
+    }

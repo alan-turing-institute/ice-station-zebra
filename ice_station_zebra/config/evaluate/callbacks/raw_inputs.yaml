@@ -1,0 +1,52 @@
+raw_inputs:
+  # Callback to plot raw input variables (ERA5 data, etc.)
+  _target_: ice_station_zebra.callbacks.RawInputsCallback
+  frequency: null               # Plot once; set N to repeat every N batches
+  timestep_index: 0             # Which history timestep to plot (0 = most recent)
+  save_dir: ./raw_input_plots   # Directory to save plots (null to skip saving to disk)
+  log_to_wandb: true            # Whether to log plots to WandB (if false and save_dir null, nothing saved)
+
+  # Animation configuration (following PlottingCallback pattern)
+  make_video_plots: false       # Set to true to create temporal animations
+  video_fps: 2                  # Frames per second for animations
+  video_format: gif             # mp4 or gif
+  video_save_dir: ./raw_input_animations  # Directory to save animations (null to skip disk save)
+  max_animation_frames: null    # Limit frames (null = unlimited; 30 ≈ 1 month daily data)
+
+  # Plot specification (colourmap, hemisphere, etc.)
+  plot_spec:
+    _target_: ice_station_zebra.types.PlotSpec
+    variable: "raw_inputs"
+    colourmap: "viridis"
+    colourbar_location: "vertical"
+    # hemisphere will be auto-detected from dataset name
+
+  # Per-variable styling overrides (optional)
+  # Uncomment and customize as needed:
+  variable_styles:
+    # Diverging (signed)
+    "era5:10u": { cmap: "RdBu_r", two_slope_centre: 0.0, units: "m/s" } # 10m u-wind component
+    "era5:10v": { cmap: "RdBu_r", two_slope_centre: 0.0, units: "m/s" } # 10m v-wind component
+    "era5:sin_julian_day": { cmap: "PuOr", two_slope_centre: 0.0 } # sin of Julian day
+    "era5:cos_julian_day": { cmap: "PuOr", two_slope_centre: 0.0 } # cos of Julian day
+
+    # Sequential (physical)
+    "era5:2t": { cmap: "RdBu_r", two_slope_centre: 273.15, units: "K" } # 2m temperature
+    "era5:t_*": { cmap: "RdBu_r", two_slope_centre: 273.15, units: "K" } # temperature at various levels
+    "era5:msl": { cmap: "RdYlBu_r", units: "Pa" } # mean sea level pressure
+    "era5:sp": { cmap: "RdYlBu_r" } # surface pressure
+
+    "era5:q_*": { cmap: "viridis", decimals: 4 } # specific humidity at various levels (small values need more decimals)
+    "era5:z_*": { cmap: "plasma", units: "m" } # geopotential at various levels
+    "era5:u_*": { cmap: "RdBu_r", two_slope_centre: 0.0 } # u-wind component at various levels
+    "era5:v_*": { cmap: "RdBu_r", two_slope_centre: 0.0 } # v-wind component at various levels
+
+    # Sea ice concentration
+    "osisaf-south:ice_conc": { cmap: "Blues_r" }
+
+    # Default fallback
+    "_default": { cmap: "viridis" }
+
+    # Wildcard fallback for ERA5 channels
+    "era5:*":
+      origin: "upper"

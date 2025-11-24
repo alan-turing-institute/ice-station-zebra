@@ -2,8 +2,8 @@ from .complex_datatypes import DataSpace, ModelTestOutput
 from .enums import BetaSchedule, TensorDimensions
 from .simple_datatypes import (
     AnemoiCreateArgs,
-    AnemoiInspectArgs,
     AnemoiInitArgs,
+    AnemoiInspectArgs,
     DataloaderArgs,
     DiffColourmapSpec,
     PlotSpec,
@@ -19,8 +19,8 @@ from .typedefs import (
 
 __all__ = [
     "AnemoiCreateArgs",
-    "AnemoiInspectArgs",
     "AnemoiInitArgs",
+    "AnemoiInspectArgs",
     "ArrayCHW",
     "ArrayTCHW",
     "BetaSchedule",

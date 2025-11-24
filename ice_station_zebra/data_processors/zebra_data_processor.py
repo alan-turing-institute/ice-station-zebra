@@ -8,7 +8,7 @@ from anemoi.datasets.commands.inspect import InspectZarr
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs, AnemoiInitArgs
+from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInitArgs, AnemoiInspectArgs
 
 from .preprocessors import IPreprocessor
 
@@ -31,10 +31,14 @@ class ZebraDataProcessor:
         self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
 
-    def create(self, overwrite) -> None:
+    def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
-        if (overwrite):
-            logger.info("Overwrite set to true, redownloading %s to %s", self.name, self.path_dataset)
+        if overwrite:
+            logger.info(
+                "Overwrite set to true, redownloading %s to %s",
+                self.name,
+                self.path_dataset,
+            )
             shutil.rmtree(self.path_dataset, ignore_errors=True)
             self.download()
         else:
@@ -73,7 +77,7 @@ class ZebraDataProcessor:
                 size=True,
             )
         )
-        
+
     def init(self) -> None:
         """Initialise a single Anemoi dataset."""
         logger.info("Initialising dataset %s at %s.", self.name, self.path_dataset)

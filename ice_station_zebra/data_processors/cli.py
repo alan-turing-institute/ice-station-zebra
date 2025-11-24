@@ -1,7 +1,7 @@
 import logging
+from typing import Annotated
 
 import typer
-from typing import Annotated
 from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
@@ -17,11 +17,13 @@ logger = logging.getLogger(__name__)
 
 @datasets_cli.command("create")
 @hydra_adaptor
-def create(config: DictConfig,
-            overwrite: Annotated[
-                bool, typer.Option(help="Specify whether to overwrite existing datasets")
-           ] = False,
-           ) -> None:
+def create(
+    config: DictConfig,
+    *,
+    overwrite: Annotated[
+        bool, typer.Option(help="Specify whether to overwrite existing datasets")
+    ] = False,
+) -> None:
     """Create all datasets."""
     register_filters()
     factory = ZebraDataProcessorFactory(config)
@@ -38,6 +40,7 @@ def inspect(config: DictConfig) -> None:
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
         dataset.inspect()
+
 
 @datasets_cli.command("init")
 @hydra_adaptor

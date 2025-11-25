@@ -78,12 +78,41 @@ class ZebraDataProcessor:
             )
         )
 
-    def init(self) -> None:
+    def init(self, *, overwrite: bool) -> None:
         """Initialise a single Anemoi dataset."""
         logger.info("Initialising dataset %s at %s.", self.name, self.path_dataset)
-        Init().run(
-            AnemoiInitArgs(
-                path=str(self.path_dataset),
-                config=self.config,
+
+        if overwrite:
+            logger.info(
+                "Overwrite set to true, reinitialising %s to %s",
+                self.name,
+                self.path_dataset,
             )
-        )
+            shutil.rmtree(self.path_dataset, ignore_errors=True)
+            Init().run(
+                AnemoiInitArgs(
+                    path=str(self.path_dataset),
+                    config=self.config,
+                )
+            )
+        else:
+            try:
+                self.inspect()
+                logger.info(
+                    "Dataset %s already exists at %s, no need to download.",
+                    self.name,
+                    self.path_dataset,
+                )
+            except (AttributeError, FileNotFoundError, PathNotFoundError):
+                logger.info(
+                    "Dataset %s not found at %s, initialising.",
+                    self.name,
+                    self.path_dataset,
+                )
+                shutil.rmtree(self.path_dataset, ignore_errors=True)
+                Init().run(
+                    AnemoiInitArgs(
+                        path=str(self.path_dataset),
+                        config=self.config,
+                    )
+                )

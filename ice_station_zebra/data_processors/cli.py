@@ -44,13 +44,19 @@ def inspect(config: DictConfig) -> None:
 
 @datasets_cli.command("init")
 @hydra_adaptor
-def init(config: DictConfig) -> None:
+def init(
+    config: DictConfig,
+    *,
+    overwrite: Annotated[
+        bool, typer.Option(help="Specify whether to overwrite existing datasets")
+    ] = False,
+) -> None:
     """Create all datasets."""
     register_filters()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
-        dataset.init()
+        dataset.init(overwrite=overwrite)
 
 
 if __name__ == "__main__":

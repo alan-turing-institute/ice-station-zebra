@@ -3,12 +3,20 @@ import shutil
 from pathlib import Path
 
 from anemoi.datasets.commands.create import Create
+from anemoi.datasets.commands.finalise import Finalise
 from anemoi.datasets.commands.init import Init
 from anemoi.datasets.commands.inspect import InspectZarr
+from anemoi.datasets.commands.load import Load
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInitArgs, AnemoiInspectArgs
+from ice_station_zebra.types import (
+    AnemoiCreateArgs,
+    AnemoiFinaliseArgs,
+    AnemoiInitArgs,
+    AnemoiInspectArgs,
+    AnemoiLoadArgs,
+)
 
 from .preprocessors import IPreprocessor
 
@@ -116,3 +124,22 @@ class ZebraDataProcessor:
                         config=self.config,
                     )
                 )
+
+    def load(self, part) -> None:
+        """Download a segment of an Anemoi dataset."""
+        Load().run(
+            AnemoiLoadArgs(
+                path=str(self.path_dataset),
+                config=self.config,
+                part=part,
+            )
+        )
+
+    def finalise(self) -> None:
+        """Finalise the segmented Anemoi dataset."""
+        Finalise().run(
+            AnemoiFinaliseArgs(
+                path=str(self.path_dataset),
+                config=self.config,
+            )
+        )

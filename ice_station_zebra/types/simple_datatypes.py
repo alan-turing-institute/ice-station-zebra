@@ -40,6 +40,25 @@ class AnemoiInitArgs:
     overwrite: bool = False
 
 
+@dataclass
+class AnemoiLoadArgs:
+    """Arguments for anemoi load."""
+
+    config: DictConfig
+    path: str
+    part: str
+    command: str = "unused"
+
+
+@dataclass
+class AnemoiFinaliseArgs:
+    """Arguments for anemoi finalise."""
+
+    config: DictConfig
+    path: str
+    command: str = "unused"
+
+
 class DataloaderArgs(TypedDict):
     """Arguments for the data loader."""
 

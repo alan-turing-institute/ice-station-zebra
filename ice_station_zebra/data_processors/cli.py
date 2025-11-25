@@ -59,5 +59,34 @@ def init(
         dataset.init(overwrite=overwrite)
 
 
+@datasets_cli.command("load")
+@hydra_adaptor
+def load(
+    config: DictConfig,
+    part: Annotated[
+        str, typer.Option(help="The part to process, specified as 'i/n'")
+    ] = False,
+) -> None:
+    """Load dataset in part."""
+    register_filters()
+    factory = ZebraDataProcessorFactory(config)
+    for dataset in factory.datasets:
+        logger.info("Working on %s.", dataset.name)
+        dataset.load(part=part)
+
+
+@datasets_cli.command("finalise")
+@hydra_adaptor
+def finalise(
+    config: DictConfig,
+) -> None:
+    """Finalise loaded dataset."""
+    register_filters()
+    factory = ZebraDataProcessorFactory(config)
+    for dataset in factory.datasets:
+        logger.info("Working on %s.", dataset.name)
+        dataset.finalise()
+
+
 if __name__ == "__main__":
     datasets_cli()

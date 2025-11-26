@@ -63,9 +63,7 @@ def init(
 @hydra_adaptor
 def load(
     config: DictConfig,
-    part: Annotated[
-        str, typer.Option(help="The part to process, specified as 'i/n'")
-    ] = False,
+    part: Annotated[str, typer.Option(help="The part to process, specified as 'i/n'")],
 ) -> None:
     """Load dataset in part."""
     register_filters()

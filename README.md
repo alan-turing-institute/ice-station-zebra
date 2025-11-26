@@ -68,7 +68,9 @@ This means that later commands like `uv run X ...` should simply be `X ...` inst
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi`.
 
-Run `uv run zebra datasets create` to download all datasets locally.
+Run `uv run zebra datasets create` to download all datasets locally. 
+
+N.b. There is a slightly different process for downloading very large datasets - see below.
 
 ### Inspect
 
@@ -141,3 +143,24 @@ Cons:
 
 There are various demonstrator Jupyter notebooks in the `notebooks` folder.
 You can run these with `uv run --group notebooks jupyter notebook`.
+
+A good one to start with is `notebooks/demo_pipeline.ipynb` which gives a more detailed overview of the pipeline.
+
+## Downloading large datasets
+For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary to download the data in parts. To do this, you need to use the following sequence of commands:
+
+```bash
+uv run zebra datasets init --config-name <your config>.yaml
+```
+
+Then load each part in turn using:
+
+```bash 
+uv run zebra datasets load --config-name <your config>.yaml --parts 1/n
+```
+
+When all the parts are loading, finalise the dataset with:
+
+```bash
+uv run zebra datasets finalise --config-name <your config>.yaml
+``` 

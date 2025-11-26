@@ -127,6 +127,12 @@ class ZebraDataProcessor:
 
     def load(self, part: str) -> None:
         """Download a segment of an Anemoi dataset."""
+        logger.info(
+                    "Downloading %s part of %s to %s.",
+                    part,
+                    self.name,
+                    self.path_dataset,
+                )
         Load().run(
             AnemoiLoadArgs(
                 path=str(self.path_dataset),

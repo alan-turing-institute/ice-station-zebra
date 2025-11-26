@@ -63,14 +63,14 @@ def init(
 @hydra_adaptor
 def load(
     config: DictConfig,
-    part: Annotated[str, typer.Option(help="The part to process, specified as 'i/n'")],
+    parts: Annotated[str, typer.Option(help="The part to process, specified as 'i/n'")],
 ) -> None:
-    """Load dataset in part."""
+    """Load dataset in parts."""
     register_filters()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
-        dataset.load(part=part)
+        dataset.load(parts=parts)
 
 
 @datasets_cli.command("finalise")

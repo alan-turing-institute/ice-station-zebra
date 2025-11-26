@@ -46,7 +46,7 @@ class AnemoiLoadArgs:
 
     config: DictConfig
     path: str
-    part: str
+    parts: str
     command: str = "unused"
 
 

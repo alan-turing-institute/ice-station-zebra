@@ -4,7 +4,7 @@ from hydra.core.utils import simple_stdout_log_config
 from ice_station_zebra.data_processors import datasets_cli
 from ice_station_zebra.evaluation import evaluation_cli
 from ice_station_zebra.training import training_cli
-from ice_station_zebra.visualisations import visualisations_cli
+from ice_station_zebra.visualisations.cli import visualisations_cli
 
 # Configure hydra logging
 simple_stdout_log_config()

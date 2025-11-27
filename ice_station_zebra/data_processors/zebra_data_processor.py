@@ -1,15 +1,19 @@
 import json
 import logging
+import os
 import shutil
-from datetime import datetime
+import socket
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from time import sleep
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.finalise import Finalise
 from anemoi.datasets.commands.init import Init
 from anemoi.datasets.commands.inspect import InspectZarr
 from anemoi.datasets.commands.load import Load
+from filelock import FileLock, Timeout
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
@@ -24,6 +28,8 @@ from ice_station_zebra.types import (
 from .preprocessors import IPreprocessor
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_STALE_SECONDS = 3600  # 1 hour default staleness threshold
 
 
 class ZebraDataProcessor:
@@ -41,6 +47,9 @@ class ZebraDataProcessor:
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
         self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
+        self.stale_seconds = config.get("part_tracker", {}).get(
+            "stale_seconds", DEFAULT_STALE_SECONDS
+        )
 
     def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
@@ -197,10 +206,14 @@ class ZebraDataProcessor:
     def _part_tracker_path(self) -> Path:
         """Path for part_trackerdata file that tracks completed parts."""
         return (
-            Path(self.path_dataset).with_suffix(".load_chunks.json")
+            Path(self.path_dataset).with_suffix(".load_parts.json")
             if not Path(self.path_dataset).is_dir()
-            else Path(self.path_dataset) / ".load_chunks.json"
+            else Path(self.path_dataset) / ".load_parts.json"
         )
+
+    def _part_tracker_lock_path(self) -> Path:
+        """Path for the lockfile used when updating the part tracker."""
+        return self._part_tracker_path().with_suffix(".lock")
 
     def _read_part_tracker(self) -> dict:
         """Read part_tracker data JSON (returns {'completed': {part_spec: timestamp}})."""
@@ -266,6 +279,205 @@ class ZebraDataProcessor:
                 parts=parts,
             )
         )
+
+    def load_in_parts(  # noqa: C901, PLR0915
+        self,
+        *,
+        resume: bool = True,
+        continue_on_error: bool = True,
+        force_reset: bool = False,
+        use_lock: bool = True,
+        lock_timeout: int = 30,
+    ) -> None:
+        """Load all parts automatically and record progress so runs can be resumed.
+
+        Args:
+            resume: if True, consult part_tracker tracking file and skip parts already completed.
+            continue_on_error: if True, log errors and continue with later parts.
+            force_reset: if True, clear part_tracker file and re-run all parts from scratch.
+            use_lock: if True, use file locking to prevent concurrent updates to part_tracker file.
+            lock_timeout: timeout in seconds for acquiring the lock.
+
+        """
+
+        # Nested helper functions that access outer scope variables
+        def check_and_mark_in_progress(part_spec: str) -> bool:  # noqa: C901
+            """Check if part should be skipped and mark it as in progress.
+
+            Returns True if part should be skipped (already completed), False otherwise.
+            """
+            lock_path = self._part_tracker_lock_path()
+            max_retries = 3
+            backoff = 1.0  # seconds between lock retries
+
+            def _claim(part_tracker: dict) -> bool:
+                completed = set(part_tracker.get("completed", {}).keys())
+                # Skip if already done
+                if resume and part_spec in completed:
+                    logger.info(
+                        "Skipping already completed part %s for %s",
+                        part_spec,
+                        self.name,
+                    )
+                    return True
+
+                # If already in progress, check for staleness
+                ip = part_tracker.get("in_progress", {}).get(part_spec)
+                if ip:
+                    try:
+                        started_str = ip["started_at"].replace("Z", "+00:00")
+                        started = datetime.fromisoformat(started_str)
+                    except (ValueError, TypeError, KeyError):
+                        started = None
+                    if started:
+                        age = (datetime.now(UTC) - started).total_seconds()
+                        if age < self.stale_seconds:
+                            logger.info(
+                                "Part %s is already in_progress (started %s by %s@%s); skipping for now",
+                                part_spec,
+                                ip.get("started_at"),
+                                ip.get("pid"),
+                                ip.get("host"),
+                            )
+                            return True
+                        # treat as stale and reclaim
+                        logger.warning(
+                            "Reclaiming part %s which was started %s seconds ago by %s@%s",
+                            part_spec,
+                            int(age),
+                            ip.get("pid"),
+                            ip.get("host"),
+                        )
+
+                # mark in-progress with PID/host
+                part_tracker.setdefault("in_progress", {})[part_spec] = {
+                    "started_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "pid": os.getpid(),
+                    "host": socket.gethostname(),
+                }
+                self._write_part_tracker(part_tracker)
+                return False
+
+            if use_lock:
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        with FileLock(str(lock_path), timeout=lock_timeout):
+                            part_tracker = self._read_part_tracker()
+                            return _claim(part_tracker)
+                    except Timeout:
+                        logger.warning(
+                            "Timeout acquiring part-tracker lock for %s (attempt %d/%d)",
+                            self.name,
+                            attempt,
+                            max_retries,
+                        )
+                        if attempt < max_retries:
+                            sleep(backoff)
+                            backoff *= 2
+                            continue
+                        # final attempt failed — skip (will retry next run)
+                        logger.exception(
+                            "Failed to acquire lock after %d attempts, skipping part %s",
+                            max_retries,
+                            part_spec,
+                        )
+                        return True
+            else:
+                part_tracker = self._read_part_tracker()
+                return _claim(part_tracker)
+            return False  # Explicit return for type checker
+
+        def clear_part_in_progress(part_spec: str) -> None:
+            """Clear the in_progress status for a part."""
+            lock_path = self._part_tracker_lock_path()
+            if use_lock:
+                try:
+                    with FileLock(str(lock_path), timeout=lock_timeout):
+                        part_tracker = self._read_part_tracker()
+                        part_tracker.get("in_progress", {}).pop(part_spec, None)
+                        self._write_part_tracker(part_tracker)
+                except Timeout:
+                    logger.warning(
+                        "Timeout acquiring lock to clear in_progress for %s", part_spec
+                    )
+            else:
+                part_tracker = self._read_part_tracker()
+                part_tracker.get("in_progress", {}).pop(part_spec, None)
+                self._write_part_tracker(part_tracker)
+
+        def mark_part_completed(part_spec: str) -> None:
+            """Mark a part as completed in the tracker."""
+            ts = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            lock_path = self._part_tracker_lock_path()
+            if use_lock:
+                try:
+                    with FileLock(str(lock_path), timeout=lock_timeout):
+                        part_tracker = self._read_part_tracker()
+                        part_tracker.get("in_progress", {}).pop(part_spec, None)
+                        part_tracker.setdefault("completed", {})[part_spec] = {
+                            "completed_at": ts,
+                            "pid": os.getpid(),
+                            "host": socket.gethostname(),
+                        }
+                        self._write_part_tracker(part_tracker)
+                except Timeout:
+                    logger.warning(
+                        "Timeout acquiring lock to mark part %s completed; data likely written",
+                        part_spec,
+                    )
+            else:
+                part_tracker = self._read_part_tracker()
+                part_tracker.get("in_progress", {}).pop(part_spec, None)
+                part_tracker.setdefault("completed", {})[part_spec] = {
+                    "completed_at": ts,
+                    "pid": os.getpid(),
+                    "host": socket.gethostname(),
+                }
+                self._write_part_tracker(part_tracker)
+
+        total_parts = self._compute_total_parts()
+        logger.info(
+            "Starting chunked load for dataset %s (parts=%d)", self.name, total_parts
+        )
+
+        part_tracker = self._read_part_tracker()
+        if force_reset and part_tracker.get("completed"):
+            logger.info(
+                "force_reset requested — clearing previous load part_tracker data at %s",
+                self._part_tracker_path(),
+            )
+            part_tracker = {"completed": {}}
+            self._write_part_tracker(part_tracker)
+
+        for i in range(1, total_parts + 1):
+            part_spec = f"{i}/{total_parts}"
+            # Check if part should be skipped and mark as in progress
+            if check_and_mark_in_progress(part_spec):
+                continue
+
+            # Do the heavy work outside the lock
+            logger.info("Loading part %s for dataset %s", part_spec, self.name)
+            try:
+                self.load(parts=part_spec)
+            except Exception:
+                logger.exception(
+                    "Error while loading part %s for dataset %s", part_spec, self.name
+                )
+                # clear in_progress under lock and optionally re-raise
+                clear_part_in_progress(part_spec)
+
+                if not continue_on_error:
+                    raise
+                logger.info("Continuing to next part after error in %s", part_spec)
+                continue
+
+            # Mark completed under lock
+            mark_part_completed(part_spec)
+            logger.info(
+                "Marked part %s as completed for dataset %s", part_spec, self.name
+            )
+
+        logger.info("Chunked load finished for dataset %s", self.name)
 
     def finalise(self) -> None:
         """Finalise the segmented Anemoi dataset."""

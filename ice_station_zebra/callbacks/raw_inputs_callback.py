@@ -43,6 +43,9 @@ EXPECTED_INPUT_NDIM = 5  # Expected input data shape: [B, T, C, H, W]
 class RawInputsCallback(Callback):
     """A callback to plot raw input variables during evaluation."""
 
+    save_dir: Path | None
+    video_save_dir: Path | None
+
     def __init__(  # noqa: PLR0913, PLR0912, PLR0915
         self,
         *,
@@ -92,11 +95,11 @@ class RawInputsCallback(Callback):
         if save_dir:
             save_dir_path = Path(save_dir)
             if save_dir_path.is_absolute():
-                self.save_dir: Path | None = save_dir_path
+                self.save_dir = save_dir_path
             else:
                 self.save_dir = (base_path / save_dir_path).resolve()
         else:
-            self.save_dir: Path | None = None
+            self.save_dir = None
         """Create raw input plots and/or animations during evaluation.
 
         Args:
@@ -149,11 +152,11 @@ class RawInputsCallback(Callback):
         if video_save_dir:
             video_save_dir_path = Path(video_save_dir)
             if video_save_dir_path.is_absolute():
-                self.video_save_dir: Path | None = video_save_dir_path
+                self.video_save_dir = video_save_dir_path
             else:
                 self.video_save_dir = (base_path / video_save_dir_path).resolve()
         else:
-            self.video_save_dir: Path | None = self.save_dir
+            self.video_save_dir = self.save_dir
 
         self.max_animation_frames = max_animation_frames
 

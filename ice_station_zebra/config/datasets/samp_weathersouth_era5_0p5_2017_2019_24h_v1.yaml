@@ -10,6 +10,9 @@ samp-weathersouth-era5-0p5-2017-2019-24h-v1:
     end: '2019-01-31T23:00:00'
     frequency: 1d
 
+  # Override computed total_parts for downloading, default is monthly
+  # total_parts: 25
+
   input:
     join:
     - mars:

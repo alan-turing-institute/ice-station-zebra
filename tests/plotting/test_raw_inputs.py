@@ -219,6 +219,57 @@ def test_style_for_variable_wildcard_match(
     assert style.decimals == 4
 
 
+def test_style_for_variable_scientific_notation(
+    variable_styles: dict[str, dict[str, Any]],
+) -> None:
+    """Test scientific notation option in styling."""
+    # Add style with scientific notation
+    styles_with_scientific = {
+        **variable_styles,
+        "era5:q_10": {
+            "cmap": "viridis",
+            "decimals": 2,
+            "units": "kg/kg",
+            "use_scientific_notation": True,
+        },
+    }
+
+    style = style_for_variable("era5:q_10", styles_with_scientific)
+
+    assert style.cmap == "viridis"
+    assert style.decimals == 2
+    assert style.units == "kg/kg"
+    assert style.use_scientific_notation is True
+
+
+def test_plot_with_scientific_notation(
+    era5_humidity_2d: np.ndarray,
+    base_plot_spec: PlotSpec,
+) -> None:
+    """Test plotting with scientific notation enabled."""
+    styles_with_scientific = {
+        "era5:q_10": {
+            "cmap": "viridis",
+            "decimals": 2,
+            "units": "kg/kg",
+            "use_scientific_notation": True,
+        },
+    }
+
+    results = plot_raw_inputs_for_timestep(
+        channel_arrays=[era5_humidity_2d],
+        channel_names=["era5:q_10"],
+        when=TEST_DATE,
+        plot_spec_base=base_plot_spec,
+        styles=styles_with_scientific,
+    )
+
+    assert len(results) == 1
+    name, pil_image, _ = results[0]
+    assert name == "era5:q_10"
+    assert isinstance(pil_image, Image.Image)
+
+
 def test_style_for_variable_no_match() -> None:
     """Test default styling when no match found."""
     style = style_for_variable("unknown:variable", {})

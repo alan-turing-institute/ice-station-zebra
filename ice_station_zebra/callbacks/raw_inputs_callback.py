@@ -43,7 +43,7 @@ EXPECTED_INPUT_NDIM = 5  # Expected input data shape: [B, T, C, H, W]
 class RawInputsCallback(Callback):
     """A callback to plot raw input variables during evaluation."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0912, PLR0915
         self,
         *,
         frequency: int | None = None,
@@ -59,6 +59,44 @@ class RawInputsCallback(Callback):
         max_animation_frames: int | None = None,
         log_to_wandb: bool = True,
     ) -> None:
+        """Create raw input plots and/or animations during evaluation.
+
+        Args:
+            frequency: Create plots every `frequency` batches; `None` plots once per run.
+            save_dir: Directory to save static plots to. If None and log_to_wandb=False, no plots saved.
+            plot_spec: Plotting specification (colourmap, hemisphere, etc.).
+            config: Configuration dictionary for land mask detection.
+            timestep_index: Which history timestep to plot (0 = most recent).
+            variable_styles: Per-variable styling overrides (cmap, vmin/vmax, units, etc.).
+            make_video_plots: Whether to create temporal animations of raw inputs.
+            video_fps: Frames per second for animations.
+            video_format: Video format ("mp4" or "gif").
+            video_save_dir: Directory to save animations. If None and log_to_wandb=False, no videos saved.
+            max_animation_frames: Maximum number of frames to include in animations (None = unlimited).
+                                  Limits temporal accumulation to control memory and file size.
+            log_to_wandb: Whether to log plots and animations to WandB (default: True).
+
+        """
+        super().__init__()
+        if frequency is None:
+            self.frequency = None
+        else:
+            self.frequency = int(max(1, frequency))
+
+        self.config = config or {}
+
+        # Get base_path from config to use as root folder
+        base_path = Path(self.config.get("base_path", "../ice-station-zebra/data"))
+
+        # Resolve save_dir relative to base_path if it's a relative path
+        if save_dir:
+            save_dir_path = Path(save_dir)
+            if save_dir_path.is_absolute():
+                self.save_dir: Path | None = save_dir_path
+            else:
+                self.save_dir = (base_path / save_dir_path).resolve()
+        else:
+            self.save_dir: Path | None = None
         """Create raw input plots and/or animations during evaluation.
 
         Args:
@@ -111,11 +149,11 @@ class RawInputsCallback(Callback):
         if video_save_dir:
             video_save_dir_path = Path(video_save_dir)
             if video_save_dir_path.is_absolute():
-                self.video_save_dir = video_save_dir_path
+                self.video_save_dir: Path | None = video_save_dir_path
             else:
                 self.video_save_dir = (base_path / video_save_dir_path).resolve()
         else:
-            self.video_save_dir = self.save_dir
+            self.video_save_dir: Path | None = self.save_dir
 
         self.max_animation_frames = max_animation_frames
 

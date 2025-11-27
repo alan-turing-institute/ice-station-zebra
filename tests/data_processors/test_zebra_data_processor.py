@@ -127,17 +127,17 @@ def test_part_tracker_path_for_file(
     """When dataset path is a file, tracker should use a sibling JSON with custom suffix."""
     processor = processor_with_file_dataset
     tracker_path = processor._part_tracker_path()
-    assert tracker_path == processor.path_dataset.with_suffix(".load_chunks.json")
+    assert tracker_path == processor.path_dataset.with_suffix(".load_parts.json")
     assert processor.path_dataset.is_file()
 
 
 def test_part_tracker_path_for_directory(
     processor_with_directory_dataset: ZebraDataProcessor,
 ) -> None:
-    """When dataset path is a directory, tracker should live inside it as .load_chunks.json."""
+    """When dataset path is a directory, tracker should live inside it as .load_parts.json."""
     processor = processor_with_directory_dataset
     tracker_path = processor._part_tracker_path()
-    assert tracker_path == processor.path_dataset / ".load_chunks.json"
+    assert tracker_path == processor.path_dataset / ".load_parts.json"
     assert processor.path_dataset.is_dir()
 
 
@@ -156,7 +156,7 @@ def test_write_and_read_part_tracker_roundtrip(
 ) -> None:
     """_write_part_tracker should persist JSON that _read_part_tracker can load."""
     processor = processor_with_file_dataset
-    data = {"completed": {"1/3": "2020-01-05T00:00:00"}}
+    data = {"completed": {"1/3": {"completed_at": "2020-01-05T00:00:00Z"}}}
     processor._write_part_tracker(data)
 
     tracker_path = processor._part_tracker_path()
@@ -174,7 +174,7 @@ def test_write_part_tracker_fallback_on_atomic_write_failure(
 ) -> None:
     """_write_part_tracker should fallback to naive write when atomic write fails."""
     processor = processor_with_file_dataset
-    data = {"completed": {"2/3": "2020-01-10T00:00:00"}}
+    data = {"completed": {"2/3": {"completed_at": "2020-01-10T00:00:00Z"}}}
     tracker_path = processor._part_tracker_path()
 
     # Mock Path.replace() to raise OSError, simulating atomic write failure

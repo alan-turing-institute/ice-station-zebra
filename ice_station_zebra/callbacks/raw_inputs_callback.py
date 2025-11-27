@@ -21,8 +21,11 @@ from ice_station_zebra.callbacks.metadata import infer_hemisphere
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import PlotSpec
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC, detect_land_mask_path
-from ice_station_zebra.visualisations.plotting_core import safe_filename
+from ice_station_zebra.visualisations.plotting_core import (
+    detect_land_mask_path,
+    safe_filename,
+)
+from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.plotting_raw_inputs import (
     plot_raw_inputs_for_timestep,
     video_raw_inputs_for_timesteps,

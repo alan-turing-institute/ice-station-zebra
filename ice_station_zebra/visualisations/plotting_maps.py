@@ -131,7 +131,7 @@ def _prepare_difference(
     plot_spec: PlotSpec,
     ground_truth: np.ndarray,
     prediction: np.ndarray,
-) -> tuple[np.ndarray | None, DiffColourmapSpec | ListedColormap | None]:
+) -> tuple[np.ndarray | None, DiffColourmapSpec | None]:
     """Compute difference arrays and colour scales if requested."""
     if not plot_spec.include_difference:
         return None, None

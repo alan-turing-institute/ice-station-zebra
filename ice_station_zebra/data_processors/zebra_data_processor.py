@@ -1,7 +1,9 @@
+import json
 import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from anemoi.datasets.commands.create import Create
 from anemoi.datasets.commands.finalise import Finalise
@@ -130,7 +132,7 @@ class ZebraDataProcessor:
         """Infer total number of parts from config using start/end and group_by.
 
         Heuristic: if group_by contains 'month' or 'monthly' use month-count inclusive.
-        Fallback to DEFAULT_TOTAL_PARTS parts.
+        Fallback to DEFAULT_TOTAL_PARTS.
         """
         default_total_parts = 1
         start = (
@@ -191,6 +193,63 @@ class ZebraDataProcessor:
             return max(default_total_parts, total)
 
         return default_total_parts
+
+    def _part_tracker_path(self) -> Path:
+        """Path for part_trackerdata file that tracks completed parts."""
+        return (
+            Path(self.path_dataset).with_suffix(".load_chunks.json")
+            if not Path(self.path_dataset).is_dir()
+            else Path(self.path_dataset) / ".load_chunks.json"
+        )
+
+    def _read_part_tracker(self) -> dict:
+        """Read part_tracker data JSON (returns {'completed': {part_spec: timestamp}})."""
+        part_tracker_file = self._part_tracker_path()
+        if not part_tracker_file.exists():
+            return {"completed": {}}
+        try:
+            with part_tracker_file.open("r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            logger.warning(
+                "Failed to read load chunks part_tracker data %s; starting fresh",
+                part_tracker_file,
+            )
+            return {"completed": {}}
+
+    def _write_part_tracker(self, data: dict) -> None:
+        """Write part_tracker data JSON to disk.
+
+        Ensure parent dir exists. We write to a temporary file in the same directory
+        then use replace() to get an atomic move. This is a POSIX-only feature.
+        This means that if the process is killed, the part_tracker data will not be lost.
+        """
+        part_tracker_file = self._part_tracker_path()
+        # Ensure parent directory exists (NamedTemporaryFile requires it)
+        try:
+            part_tracker_file.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            logger.debug(
+                "Could not ensure parent dir for part_tracker data: %s",
+                part_tracker_file.parent,
+            )
+
+        try:
+            with NamedTemporaryFile(
+                "w", delete=False, dir=str(part_tracker_file.parent), encoding="utf-8"
+            ) as fh:
+                json.dump(data, fh, indent=2, sort_keys=True)
+                tmp_name = Path(fh.name)
+            tmp_name.replace(part_tracker_file)  # atomic replace if on same filesystem
+        except OSError:
+            # fallback to naive write
+            try:
+                with part_tracker_file.open("w", encoding="utf-8") as fh:
+                    json.dump(data, fh, indent=2, sort_keys=True)
+            except OSError:
+                logger.exception(
+                    "Failed to write part_tracker data file %s", part_tracker_file
+                )
 
     def load(self, parts: str) -> None:
         """Download a segment of an Anemoi dataset."""

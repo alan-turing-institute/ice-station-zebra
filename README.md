@@ -70,7 +70,7 @@ You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to d
 
 Run `uv run zebra datasets create` to download all datasets locally.
 
-N.b. There is a slightly different process for downloading very large datasets - see below.
+N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 
 ### Inspect
 
@@ -147,19 +147,69 @@ You can run these with `uv run --group notebooks jupyter notebook`.
 A good one to start with is `notebooks/demo_pipeline.ipynb` which gives a more detailed overview of the pipeline.
 
 ## Downloading large datasets
-For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary to download the data in parts. To do this, you need to use the following sequence of commands. First initialise the dataset:
+For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary to download the data in parts.
 
+### Automated approach (recommended)
+
+The `load_in_parts` command automates the process of downloading datasets in parts, tracking progress, and allowing you to resume interrupted downloads:
+
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml
+```
+
+This command will:
+- Automatically initialise the dataset if it doesn't exist
+- Load all parts sequentially, tracking progress in a part tracker file
+- Skip already completed parts if the process is interrupted and restarted
+- Handle errors gracefully (by default, continues to the next part on error)
+
+#### Options
+
+- `--resume` / `--no-resume` (default: `--resume`): Resume by skipping parts recorded as completed
+- `--continue-on-error` / `--no-continue-on-error` (default: `--continue-on-error`): Continue to next part on error
+- `--force-reset`: Clear existing progress tracker and start from part 1. Anemoi will check whether you have the data already and continue.
+- `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config)
+- `--total-parts <n>`: Override the computed total number of parts (useful if you want to split differently than the default) Otherwise determine in your data yaml or local yaml.
+- `--force-overwrite`: Delete the dataset directory before loading (use with caution!)
+
+#### Examples
+
+Load all parts for all datasets, resuming from where you left off:
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml
+```
+
+Load a specific dataset with a custom number of parts:
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
+```
+
+Start fresh, clearing any previous progress (doesn't delete any data):
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-reset
+```
+Start and destroy any previously saved data (careful):
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-overwrite
+```
+
+
+
+### Manual approach (advanced)
+
+If you need more control, you can manually manage the download process:
+
+1. First initialise the dataset:
 ```bash
 uv run zebra datasets init --config-name <your config>.yaml
 ```
 
-Then load each part `i` of the total `n` in turn using:
-
+2. Then load each part `i` of the total `n` in turn:
 ```bash
 uv run zebra datasets load --config-name <your config>.yaml --parts i/n
 ```
 
-When all the parts are loading, finalise the dataset with:
-
+3. When all the parts are loaded, finalise the dataset:
 ```bash
 uv run zebra datasets finalise --config-name <your config>.yaml
+```

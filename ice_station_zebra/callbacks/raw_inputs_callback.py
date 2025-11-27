@@ -82,7 +82,22 @@ class RawInputsCallback(Callback):
             self.frequency = None
         else:
             self.frequency = int(max(1, frequency))
-        self.save_dir = Path(save_dir) if save_dir else None
+
+        self.config = config or {}
+
+        # Get base_path from config to use as root folder
+        base_path = Path(self.config.get("base_path", "../ice-station-zebra/data"))
+
+        # Resolve save_dir relative to base_path if it's a relative path
+        if save_dir:
+            save_dir_path = Path(save_dir)
+            if save_dir_path.is_absolute():
+                self.save_dir = save_dir_path
+            else:
+                self.save_dir = (base_path / save_dir_path).resolve()
+        else:
+            self.save_dir = None
+
         self.timestep_index = timestep_index
         self.variable_styles = variable_styles or {}
         self._has_plotted = False
@@ -91,7 +106,17 @@ class RawInputsCallback(Callback):
         self.make_video_plots = make_video_plots
         self.video_fps = video_fps
         self.video_format = video_format
-        self.video_save_dir = Path(video_save_dir) if video_save_dir else self.save_dir
+
+        # Resolve video_save_dir relative to base_path if it's a relative path
+        if video_save_dir:
+            video_save_dir_path = Path(video_save_dir)
+            if video_save_dir_path.is_absolute():
+                self.video_save_dir = video_save_dir_path
+            else:
+                self.video_save_dir = (base_path / video_save_dir_path).resolve()
+        else:
+            self.video_save_dir = self.save_dir
+
         self.max_animation_frames = max_animation_frames
 
         # WandB logging control
@@ -102,8 +127,6 @@ class RawInputsCallback(Callback):
             self.plot_spec = DEFAULT_SIC_SPEC
         else:
             self.plot_spec = plot_spec
-
-        self.config = config or {}
         self._land_mask_path_detected = False
         self._land_mask_array: np.ndarray | None = None
 

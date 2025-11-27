@@ -75,7 +75,7 @@ def load(
 
 @datasets_cli.command("load_in_parts")
 @hydra_adaptor
-def load_in_parts(
+def load_in_parts(  # noqa: PLR0913
     config: DictConfig,
     *,
     resume: Annotated[
@@ -90,14 +90,30 @@ def load_in_parts(
             help="Clear existing progress part_tracker file and start from part 1"
         ),
     ] = False,
+    dataset: Annotated[
+        str | None, typer.Option(help="Run only a single dataset by name")
+    ] = None,
+    total_parts: Annotated[
+        int | None, typer.Option(help="Override computed total parts")
+    ] = None,
+    force_overwrite: Annotated[
+        bool,
+        typer.Option(help="Delete the dataset directory before loading"),
+    ] = False,
 ) -> None:
     """Load all parts for all datasets in parts, recording progress so runs can be resumed."""
     register_filters()
     factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.load_in_parts(
-            resume=resume, continue_on_error=continue_on_error, force_reset=force_reset
+    for ds in factory.datasets:
+        if dataset and ds.name != dataset:
+            continue
+        logger.info("Working on %s.", ds.name)
+        ds.load_in_parts(
+            resume=resume,
+            continue_on_error=continue_on_error,
+            force_reset=force_reset,
+            total_parts_override=total_parts,
+            force_overwrite=force_overwrite,
         )
 
 

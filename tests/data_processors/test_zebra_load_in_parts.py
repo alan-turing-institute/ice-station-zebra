@@ -10,6 +10,7 @@ This file contains all tests related to the load_in_parts method, including:
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -59,9 +60,9 @@ def processor_three_months(tmp_path: Path) -> ZebraDataProcessor:
         tmp_path,
         {"start": "2020-01-01", "end": "2020-03-31", "group_by": "monthly"},
     )
-    # make the dataset path exist as a file (file-case) to exercise .with_suffix() logic
+    # make the dataset path exist as a directory (zarr datasets are directories)
     proc.path_dataset = tmp_path / "test.zarr"
-    proc.path_dataset.touch()
+    proc.path_dataset.mkdir(parents=True, exist_ok=True)
     return proc
 
 
@@ -77,7 +78,7 @@ def processor_with_three_parts(tmp_path: Path) -> ZebraDataProcessor:
         },
     )
     processor.path_dataset = tmp_path / "test.zarr"
-    processor.path_dataset.touch()
+    processor.path_dataset.mkdir(parents=True, exist_ok=True)
     return processor
 
 
@@ -93,7 +94,10 @@ def test_load_in_parts_loads_all_parts_successfully(
 ) -> None:
     """load_in_parts should load all parts and track completion."""
     processor = processor_with_three_parts
-    with patch.object(processor, "load") as mock_load:
+    with (
+        patch.object(processor, "load") as mock_load,
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
 
         # Should have called load 3 times (for parts 1/3, 2/3, 3/3)
@@ -126,7 +130,10 @@ def test_load_in_parts_resumes_skipping_completed_parts(
     }
     processor._write_part_tracker(initial_tracker)
 
-    with patch.object(processor, "load") as mock_load:
+    with (
+        patch.object(processor, "load") as mock_load,
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         processor.load_in_parts(resume=True, continue_on_error=False, use_lock=False)
 
         # Should only call load for parts 1/3 and 3/3 (skipping 2/3)
@@ -163,7 +170,10 @@ def test_load_in_parts_force_reset_clears_tracker(
     }
     processor._write_part_tracker(initial_tracker)
 
-    with patch.object(processor, "load") as mock_load:
+    with (
+        patch.object(processor, "load") as mock_load,
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         processor.load_in_parts(
             resume=True, continue_on_error=False, force_reset=True, use_lock=False
         )
@@ -198,7 +208,10 @@ def test_load_in_parts_continues_on_error_when_enabled(
         if parts == "2/3":
             raise RuntimeError(error_msg)
 
-    with patch.object(processor, "load", side_effect=mock_load_side_effect):
+    with (
+        patch.object(processor, "load", side_effect=mock_load_side_effect),
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         processor.load_in_parts(resume=False, continue_on_error=True, use_lock=False)
 
         # Should have attempted all 3 parts
@@ -228,6 +241,7 @@ def test_load_in_parts_raises_on_error_when_continue_disabled(
 
     with (
         patch.object(processor, "load", side_effect=mock_load_side_effect),
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
         pytest.raises(RuntimeError, match=error_msg),
     ):
         processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
@@ -277,7 +291,10 @@ def test_lock_timeout_skips_part(
         calls.append(parts)
 
     # run: since lock acquisition fails, load() should not be called for that part
-    with patch.object(proc, "load", side_effect=fake_load):
+    with (
+        patch.object(proc, "load", side_effect=fake_load),
+        patch.object(proc, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         proc.load_in_parts(
             resume=False,
             continue_on_error=True,
@@ -316,10 +333,199 @@ def test_reclaim_stale_in_progress(
     def fake_load(parts: str) -> None:
         calls.append(parts)
 
-    with patch.object(proc, "load", side_effect=fake_load):
+    with (
+        patch.object(proc, "load", side_effect=fake_load),
+        patch.object(proc, "inspect"),  # Mock inspect to assume dataset exists
+    ):
         # should reclaim the stale 1/3 and run it
         proc.load_in_parts(
             resume=True, continue_on_error=False, force_reset=False, use_lock=False
         )
 
     assert "1/3" in calls or "1/3" in _read_tracker(proc)["completed"]
+
+
+def test_total_parts_override(
+    processor_with_three_parts: ZebraDataProcessor,
+) -> None:
+    """Test that total_parts_override overrides the computed total parts."""
+    processor = processor_with_three_parts
+    # Override to 5 parts instead of computed 3
+    with (
+        patch.object(processor, "load") as mock_load,
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
+        processor.load_in_parts(
+            resume=False,
+            continue_on_error=False,
+            use_lock=False,
+            total_parts_override=5,
+        )
+
+        # Should have called load 5 times (for parts 1/5, 2/5, 3/5, 4/5, 5/5)
+        assert mock_load.call_count == 5
+        mock_load.assert_any_call(parts="1/5")
+        mock_load.assert_any_call(parts="2/5")
+        mock_load.assert_any_call(parts="3/5")
+        mock_load.assert_any_call(parts="4/5")
+        mock_load.assert_any_call(parts="5/5")
+
+    # Verify all 5 parts are tracked as completed
+    tracker = processor._read_part_tracker()
+    assert len(tracker["completed"]) == 5
+    for part_spec in ["1/5", "2/5", "3/5", "4/5", "5/5"]:
+        assert part_spec in tracker["completed"]
+
+
+def test_force_overwrite_deletes_dataset_and_tracker(
+    processor_with_three_parts: ZebraDataProcessor,
+) -> None:
+    """Test that force_overwrite deletes dataset and tracker, then initializes."""
+    processor = processor_with_three_parts
+    # Create some initial state
+    initial_tracker = {
+        "completed": {
+            "1/3": {"completed_at": "2020-01-05T00:00:00Z"},
+        },
+        "in_progress": {
+            "2/3": {"started_at": "2020-01-10T00:00:00Z"},
+        },
+    }
+    processor._write_part_tracker(initial_tracker)
+    # Create some dataset content
+    if processor.path_dataset.exists():
+        if processor.path_dataset.is_dir():
+            shutil.rmtree(processor.path_dataset)
+        else:
+            processor.path_dataset.unlink()
+    processor.path_dataset.mkdir(parents=True, exist_ok=True)
+    (processor.path_dataset / "some_file").touch()
+
+    with (
+        patch.object(processor, "init") as mock_init,
+        patch.object(processor, "load") as mock_load,
+    ):
+        processor.load_in_parts(
+            resume=False, continue_on_error=False, use_lock=False, force_overwrite=True
+        )
+
+        # Should have called init to reinitialize the dataset
+        mock_init.assert_called_once_with(overwrite=False)
+        # Dataset should have been deleted (we can't easily verify this, but init was called)
+        # Tracker should be cleared (all parts should be loaded)
+        assert mock_load.call_count == 3
+
+    # Verify tracker was cleared and repopulated
+    tracker = processor._read_part_tracker()
+    assert len(tracker["completed"]) == 3
+    # All parts should have new timestamps
+    for part_spec in ["1/3", "2/3", "3/3"]:
+        assert part_spec in tracker["completed"]
+        assert tracker["completed"][part_spec]["completed_at"] != initial_tracker.get(
+            "completed", {}
+        ).get(part_spec, {}).get("completed_at", "")
+
+
+def test_force_overwrite_skips_force_reset(
+    processor_with_three_parts: ZebraDataProcessor,
+) -> None:
+    """Test that force_reset is skipped when force_overwrite is used."""
+    processor = processor_with_three_parts
+    # Create initial tracker state
+    initial_tracker = {
+        "completed": {
+            "1/3": {"completed_at": "2020-01-05T00:00:00Z"},
+        },
+        "in_progress": {
+            "2/3": {"started_at": "2020-01-10T00:00:00Z"},
+        },
+    }
+    processor._write_part_tracker(initial_tracker)
+    # Ensure dataset directory exists
+    if processor.path_dataset.exists():
+        if processor.path_dataset.is_dir():
+            shutil.rmtree(processor.path_dataset)
+        else:
+            processor.path_dataset.unlink()
+    processor.path_dataset.mkdir(parents=True, exist_ok=True)
+
+    with (
+        patch.object(processor, "init") as mock_init,
+        patch.object(processor, "load") as mock_load,
+    ):
+        # Both force_overwrite and force_reset are True
+        processor.load_in_parts(
+            resume=False,
+            continue_on_error=False,
+            use_lock=False,
+            force_overwrite=True,
+            force_reset=True,
+        )
+
+        # init should be called (by force_overwrite)
+        mock_init.assert_called_once()
+        # All parts should be loaded (force_overwrite clears everything)
+        assert mock_load.call_count == 3
+
+
+def test_automatic_initialization_when_dataset_missing(
+    processor_with_three_parts: ZebraDataProcessor,
+) -> None:
+    """Test that dataset is automatically initialized if it doesn't exist."""
+    processor = processor_with_three_parts
+    # Remove the dataset file/directory
+    if processor.path_dataset.exists():
+        if processor.path_dataset.is_dir():
+            shutil.rmtree(processor.path_dataset)
+        else:
+            processor.path_dataset.unlink()
+
+    with (
+        patch.object(processor, "init") as mock_init,
+        patch.object(processor, "inspect", side_effect=FileNotFoundError("not found")),
+        patch.object(processor, "load") as mock_load,
+    ):
+        processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
+
+        # Should have called init to initialize the missing dataset
+        mock_init.assert_called_once_with(overwrite=False)
+        # Should then proceed to load parts
+        assert mock_load.call_count == 3
+
+
+def test_force_reset_clears_in_progress(
+    processor_with_three_parts: ZebraDataProcessor,
+) -> None:
+    """Test that force_reset clears both completed and in_progress entries."""
+    processor = processor_with_three_parts
+    # Pre-mark some parts as completed and in_progress
+    initial_tracker = {
+        "completed": {
+            "1/3": {"completed_at": "2020-01-05T00:00:00Z"},
+        },
+        "in_progress": {
+            "2/3": {"started_at": "2020-01-10T00:00:00Z", "pid": 12345, "host": "test"},
+        },
+    }
+    processor._write_part_tracker(initial_tracker)
+
+    with (
+        patch.object(processor, "load") as mock_load,
+        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+    ):
+        processor.load_in_parts(
+            resume=True, continue_on_error=False, force_reset=True, use_lock=False
+        )
+
+        # Should call load for all 3 parts (not skipping any due to force_reset)
+        assert mock_load.call_count == 3
+
+    # Verify tracker was cleared and repopulated (no in_progress entries)
+    tracker = processor._read_part_tracker()
+    assert len(tracker["completed"]) == 3
+    assert "in_progress" not in tracker or len(tracker.get("in_progress", {})) == 0
+    # Timestamps should be new
+    assert (
+        tracker["completed"]["1/3"]["completed_at"]
+        != initial_tracker["completed"]["1/3"]["completed_at"]
+    )

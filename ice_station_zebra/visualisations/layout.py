@@ -951,10 +951,20 @@ def format_linear_ticks(
     vmax: float | None = None,
     decimals: int = 1,
     is_vertical: bool,
+    use_scientific_notation: bool = False,
 ) -> None:
     """Format a linear colourbar with 5 ticks.
 
     If vmin/vmax are not provided, derive them from the colourbar's mappable.
+
+    Args:
+        colourbar: Colorbar to format.
+        vmin: Minimum value.
+        vmax: Maximum value.
+        decimals: Number of decimal places for tick labels.
+        is_vertical: Whether the colorbar is vertical.
+        use_scientific_notation: Whether to format tick labels in scientific notation.
+
     """
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
 
@@ -967,13 +977,17 @@ def format_linear_ticks(
         float(vmin), float(vmax), _DEFAULT_LAYOUT_CONFIG.formatting.num_ticks_linear
     )
     colourbar.set_ticks([float(t) for t in ticks])
-    axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
+
+    if use_scientific_notation:
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}e}"))
+    else:
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
     apply_monospace_to_cbar_text(colourbar)
 
 
-def format_symmetric_ticks(
+def format_symmetric_ticks(  # noqa: PLR0913
     colourbar: Colorbar,
     *,
     vmin: float,
@@ -981,6 +995,7 @@ def format_symmetric_ticks(
     decimals: int = 2,
     is_vertical: bool,
     centre: float | None = None,
+    use_scientific_notation: bool = False,
 ) -> None:
     """Format symmetric diverging ticks with a centred midpoint.
 
@@ -993,6 +1008,7 @@ def format_symmetric_ticks(
         decimals: Number of decimal places for tick labels.
         is_vertical: Whether the colorbar is vertical.
         centre: centre value for diverging colourmap (default: 0.0).
+        use_scientific_notation: Whether to format tick labels in scientific notation.
 
     """
     axis = colourbar.ax.yaxis if is_vertical else colourbar.ax.xaxis
@@ -1006,7 +1022,11 @@ def format_symmetric_ticks(
         vmax,
     ]
     colourbar.set_ticks([float(t) for t in ticks])
-    axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
+
+    if use_scientific_notation:
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}e}"))
+    else:
+        axis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.{decimals}f}"))
     if not is_vertical:
         colourbar.ax.xaxis.set_tick_params(pad=1)
     apply_monospace_to_cbar_text(colourbar)

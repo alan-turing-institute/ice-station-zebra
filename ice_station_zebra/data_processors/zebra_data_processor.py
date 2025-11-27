@@ -137,12 +137,22 @@ class ZebraDataProcessor:
                     )
                 )
 
-    def _compute_total_parts(self) -> int:
+    def _compute_total_parts(self) -> int:  # noqa: C901
         """Infer total number of parts from config using start/end and group_by.
 
         Heuristic: if group_by contains 'month' or 'monthly' use month-count inclusive.
         Fallback to DEFAULT_TOTAL_PARTS.
         """
+        # 1) explicit override in config (highest priority)
+        tp = self.config.get("total_parts")
+        if tp is not None:
+            try:
+                return int(tp)
+            except (ValueError, TypeError):
+                logger.warning(
+                    "Invalid total_parts in config (%r); falling back to heuristic", tp
+                )
+
         default_total_parts = 1
         start = (
             self.config.get("start")

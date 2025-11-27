@@ -19,6 +19,8 @@ import numpy as np
 from matplotlib import animation
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
+from matplotlib.figure import Figure
+from matplotlib.text import Text
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
@@ -88,6 +90,86 @@ def _safe_linspace(vmin: float, vmax: float, n: int) -> np.ndarray:
     return np.linspace(vmin, vmax, n)
 
 
+def _prepare_static_plot(
+    plot_spec: PlotSpec,
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+) -> tuple[int, int, np.ndarray | None, LayoutConfig | None, list[str], np.ndarray]:
+    """Validate arrays and compute helpers needed for plotting.
+
+    Returns:
+        Tuple of (height, width, land_mask, layout_config, warnings, contour levels).
+
+    """
+    height, width = validate_2d_pair(ground_truth, prediction)
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
+    (gt_min, gt_max), (_pred_min, _pred_max) = compute_display_ranges(
+        ground_truth, prediction, plot_spec
+    )
+    range_check_report = compute_range_check_report(
+        ground_truth,
+        prediction,
+        vmin=gt_min,
+        vmax=gt_max,
+        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
+        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
+        include_shared_range_mismatch_check=getattr(
+            plot_spec, "include_shared_range_mismatch_check", True
+        ),
+    )
+    warnings = range_check_report.warnings
+    layout_config = None
+    if warnings:
+        layout_config = LayoutConfig(title_footer=TitleFooterConfig(title_space=0.10))
+
+    levels = levels_from_spec(plot_spec)
+    return height, width, land_mask, layout_config, warnings, levels
+
+
+def _prepare_difference(
+    plot_spec: PlotSpec,
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+) -> tuple[np.ndarray | None, DiffColourmapSpec | ListedColormap | None]:
+    """Compute difference arrays and colour scales if requested."""
+    if not plot_spec.include_difference:
+        return None, None
+    difference = compute_difference(ground_truth, prediction, plot_spec.diff_mode)
+    diff_colour_scale = make_diff_colourmap(difference, mode=plot_spec.diff_mode)
+    return difference, diff_colour_scale
+
+
+def _draw_warning_badge(
+    fig: Figure,
+    title_text: Text | None,
+    warnings: Sequence[str],
+) -> None:
+    """Render a warning badge close to the title."""
+    if not warnings:
+        return
+    badge = "Warnings: " + ", ".join(warnings)
+    if title_text is not None:
+        _, title_y = title_text.get_position()
+        n_lines = title_text.get_text().count("\n") + 1
+        warning_y = max(title_y - (0.05 + 0.02 * (n_lines - 1)), 0.0)
+    else:
+        warning_y = 0.90
+    draw_badge_with_box(fig, 0.5, warning_y, badge)
+
+
+def _maybe_add_footer(fig: Figure, plot_spec: PlotSpec) -> None:
+    """Attach footer metadata when enabled."""
+    if not getattr(plot_spec, "include_footer_metadata", True):
+        return
+    try:
+        footer_text = _build_footer_static(plot_spec)
+        if footer_text:
+            set_footer_with_box(fig, footer_text)
+    except Exception:
+        logger.exception("Failed to draw footer; continuing without footer.")
+
+
 # --- Static Map Plot ---
 def plot_maps(
     plot_spec: PlotSpec,
@@ -117,32 +199,14 @@ def plot_maps(
         InvalidArrayError: If ground_truth and prediction arrays have incompatible shapes.
 
     """
-    # Check the shapes of the arrays
-    height, width = validate_2d_pair(ground_truth, prediction)
-
-    # Load land mask if specified
-    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
-
-    # Pre-compute range check to decide top spacing (warning badge may need extra room)
-    (gt_min, gt_max), (pred_min, pred_max) = compute_display_ranges(
-        ground_truth, prediction, plot_spec
-    )
-    range_check_report = compute_range_check_report(
-        ground_truth,
-        prediction,
-        vmin=gt_min,
-        vmax=gt_max,
-        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
-        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
-        include_shared_range_mismatch_check=getattr(
-            plot_spec, "include_shared_range_mismatch_check", True
-        ),
-    )
-
-    # Increase title space if warnings are present to avoid overlap with axes titles
-    layout_config = None
-    if range_check_report.warnings:
-        layout_config = LayoutConfig(title_footer=TitleFooterConfig(title_space=0.10))
+    (
+        height,
+        width,
+        land_mask,
+        layout_config,
+        warnings,
+        levels,
+    ) = _prepare_static_plot(plot_spec, ground_truth, prediction)
 
     # Initialise the figure and axes with dynamic top spacing if needed
     fig, axs, cbar_axes = build_layout(
@@ -151,13 +215,11 @@ def plot_maps(
         width=width,
         layout_config=layout_config,
     )
-    levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
-    diff_colour_scale = None
-    if plot_spec.include_difference:
-        difference = compute_difference(ground_truth, prediction, plot_spec.diff_mode)
-        diff_colour_scale = make_diff_colourmap(difference, mode=plot_spec.diff_mode)
+    difference, diff_colour_scale = _prepare_difference(
+        plot_spec, ground_truth, prediction
+    )
 
     # Draw the ground truth and prediction map images
     image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
@@ -166,7 +228,7 @@ def plot_maps(
         prediction,
         plot_spec,
         diff_colour_scale,
-        precomputed_difference=difference if plot_spec.include_difference else None,
+        precomputed_difference=difference,
         levels_override=levels,
         land_mask=land_mask,
     )
@@ -191,40 +253,8 @@ def plot_maps(
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
 
-    # Include range_check report (already computed above)
-    badge = (
-        ""
-        if not range_check_report.warnings
-        else "Warnings: " + ", ".join(range_check_report.warnings)
-    )
-    if badge:
-        # Place the warning just below the title
-        if title_text is not None:
-            _, title_y = title_text.get_position()
-            n_lines = title_text.get_text().count("\n") + 1
-            # Reduced gap to avoid overlapping axes titles; keep badge close to title
-            warning_y = max(title_y - (0.05 + 0.02 * (n_lines - 1)), 0.0)
-        else:
-            warning_y = 0.90
-        draw_badge_with_box(fig, 0.5, warning_y, badge)
-
-    # Footer metadata at the bottom
-    if getattr(plot_spec, "include_footer_metadata", True):
-        try:
-            footer_text = _build_footer_static(plot_spec)
-            if footer_text:
-                set_footer_with_box(fig, footer_text)
-        except Exception:
-            logger.exception("Failed to draw footer; continuing without footer.")
-
-    # Footer metadata at the bottom
-    if getattr(plot_spec, "include_footer_metadata", True):
-        try:
-            footer_text = _build_footer_static(plot_spec)
-            if footer_text:
-                _set_footer_with_box(fig, footer_text)
-        except Exception:
-            logger.exception("Failed to draw footer; continuing without footer.")
+    _draw_warning_badge(fig, title_text, warnings)
+    _maybe_add_footer(fig, plot_spec)
 
     try:
         return {"sea-ice_concentration-static-maps": [convert.image_from_figure(fig)]}

@@ -163,6 +163,12 @@ This command will:
 - Skip already completed parts if the process is interrupted and restarted
 - Handle errors gracefully (by default, continues to the next part on error)
 
+You will then need to finalise the dataset when done.
+
+```bash
+uv run zebra datasets finalise --config-name <your config>.yaml
+```
+
 #### Options
 
 - `--resume` / `--no-resume` (default: `--resume`): Resume by skipping parts recorded as completed

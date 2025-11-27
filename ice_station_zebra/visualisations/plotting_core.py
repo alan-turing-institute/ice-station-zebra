@@ -36,6 +36,7 @@ class VariableStyle:
         units: Display units for the variable (e.g., "K", "m/s").
         origin: Imshow origin override ("upper" keeps north-up, "lower" keeps south-up).
         decimals: Number of decimal places for colourbar tick labels (default: 2).
+        use_scientific_notation: Whether to format colourbar tick labels in scientific notation (default: False).
 
     """
 
@@ -47,6 +48,7 @@ class VariableStyle:
     units: str | None = None
     origin: Literal["upper", "lower"] | None = None
     decimals: int | None = None
+    use_scientific_notation: bool | None = None
 
 
 def colourmap_with_bad(

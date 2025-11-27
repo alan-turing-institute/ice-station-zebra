@@ -184,7 +184,7 @@ def plot_raw_inputs(
     save_dir = (
         Path(output_dir)
         if output_dir
-        else callback.save_dir or Path("./data/raw_input_plots")
+        else callback.save_dir or Path("./raw_input_plots")
     )
 
     # Plot the raw inputs
@@ -279,7 +279,7 @@ def animate_raw_inputs(
     save_dir = (
         Path(output_dir)
         if output_dir
-        else callback.video_save_dir or Path("./data/raw_input_animations")
+        else callback.video_save_dir or Path("./raw_input_animations")
     )
 
     # Validate video format

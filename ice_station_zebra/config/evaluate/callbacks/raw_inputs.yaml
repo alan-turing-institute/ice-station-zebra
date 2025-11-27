@@ -34,12 +34,22 @@ raw_inputs:
     "era5:2t": { cmap: "RdBu_r", two_slope_centre: 273.15, units: "K" } # 2m temperature
     "era5:t_*": { cmap: "RdBu_r", two_slope_centre: 273.15, units: "K" } # temperature at various levels
     "era5:msl": { cmap: "RdYlBu_r", units: "Pa" } # mean sea level pressure
-    "era5:sp": { cmap: "RdYlBu_r" } # surface pressure
+    "era5:sp": { cmap: "RdYlBu_r", units: "Pa" } # surface pressure
 
-    "era5:q_*": { cmap: "viridis", decimals: 4 } # specific humidity at various levels (small values need more decimals)
+    "era5:q_10": { cmap: "viridis", decimals: 2, units: "kg/kg", use_scientific_notation: true } # specific humidity at various levels (scientific notation handles small values better)
+    "era5:q_250": { cmap: "viridis", decimals: 2, units: "kg/kg", use_scientific_notation: true }
+    "era5:q_500": { cmap: "viridis", decimals: 2, units: "kg/kg", use_scientific_notation: true }
+    "era5:q_1000": { cmap: "viridis", decimals: 2, units: "kg/kg", use_scientific_notation: true }
+
+    # Without scientific notation
+    # "era5:q_10": { cmap: "viridis", decimals: 7, units: "kg/kg" } # specific humidity at various levels (small values need more decimals)
+    # "era5:q_250": { cmap: "viridis", decimals: 5, units: "kg/kg" }
+    # "era5:q_500": { cmap: "viridis", decimals: 4, units: "kg/kg" }
+    # "era5:q_1000": { cmap: "viridis", decimals: 4, units: "kg/kg" }
+
     "era5:z_*": { cmap: "plasma", units: "m" } # geopotential at various levels
-    "era5:u_*": { cmap: "RdBu_r", two_slope_centre: 0.0 } # u-wind component at various levels
-    "era5:v_*": { cmap: "RdBu_r", two_slope_centre: 0.0 } # v-wind component at various levels
+    "era5:u_*": { cmap: "RdBu_r", two_slope_centre: 0.0, units: "m/s" } # u-wind component at various levels
+    "era5:v_*": { cmap: "RdBu_r", two_slope_centre: 0.0, units: "m/s" } # v-wind component at various levels
 
     # Sea ice concentration
     "osisaf-south:ice_conc": { cmap: "Blues_r" }

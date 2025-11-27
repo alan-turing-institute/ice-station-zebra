@@ -73,6 +73,34 @@ def load(
         dataset.load(parts=parts)
 
 
+@datasets_cli.command("load_in_parts")
+@hydra_adaptor
+def load_in_parts(
+    config: DictConfig,
+    *,
+    resume: Annotated[
+        bool, typer.Option(help="Resume by skipping parts recorded as completed")
+    ] = True,
+    continue_on_error: Annotated[
+        bool, typer.Option(help="Continue to next part on error")
+    ] = True,
+    force_reset: Annotated[
+        bool,
+        typer.Option(
+            help="Clear existing progress part_tracker file and start from part 1"
+        ),
+    ] = False,
+) -> None:
+    """Load all parts for all datasets in parts, recording progress so runs can be resumed."""
+    register_filters()
+    factory = ZebraDataProcessorFactory(config)
+    for dataset in factory.datasets:
+        logger.info("Working on %s.", dataset.name)
+        dataset.load_in_parts(
+            resume=resume, continue_on_error=continue_on_error, force_reset=force_reset
+        )
+
+
 @datasets_cli.command("finalise")
 @hydra_adaptor
 def finalise(

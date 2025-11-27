@@ -186,6 +186,11 @@ def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
         cbar = fig.colorbar(image, ax=ax, cax=cax, orientation=orientation)
         is_vertical = orientation == "vertical"
         decimals = style.decimals if style.decimals is not None else 2
+        use_scientific = (
+            style.use_scientific_notation
+            if style.use_scientific_notation is not None
+            else False
+        )
         if isinstance(norm, TwoSlopeNorm):
             format_symmetric_ticks(
                 cbar,
@@ -194,10 +199,16 @@ def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
                 decimals=decimals,
                 is_vertical=is_vertical,
                 centre=norm.vcenter,
+                use_scientific_notation=use_scientific,
             )
         else:
             format_linear_ticks(
-                cbar, vmin=vmin, vmax=vmax, decimals=decimals, is_vertical=is_vertical
+                cbar,
+                vmin=vmin,
+                vmax=vmax,
+                decimals=decimals,
+                is_vertical=is_vertical,
+                use_scientific_notation=use_scientific,
             )
 
         # Title
@@ -332,6 +343,11 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
 
     # Format colourbar ticks based on normalisation type
     decimals = style.decimals if style.decimals is not None else 2
+    use_scientific = (
+        style.use_scientific_notation
+        if style.use_scientific_notation is not None
+        else False
+    )
     if isinstance(norm, TwoSlopeNorm):
         format_symmetric_ticks(
             cbar,
@@ -340,10 +356,16 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
             decimals=decimals,
             is_vertical=is_vertical,
             centre=norm.vcenter,
+            use_scientific_notation=use_scientific,
         )
     else:
         format_linear_ticks(
-            cbar, vmin=vmin, vmax=vmax, decimals=decimals, is_vertical=is_vertical
+            cbar,
+            vmin=vmin,
+            vmax=vmax,
+            decimals=decimals,
+            is_vertical=is_vertical,
+            use_scientific_notation=use_scientific,
         )
 
     # Create title (will be updated each frame)

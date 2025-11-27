@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import shutil
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 from unittest.mock import patch
 
 import pytest
@@ -278,7 +278,7 @@ def test_lock_timeout_skips_part(
             exc_type: type[BaseException] | None,
             exc: BaseException | None,
             tb: object,
-        ) -> bool:
+        ) -> Literal[False]:
             return False
 
     monkeypatch.setattr(
@@ -499,7 +499,7 @@ def test_force_reset_clears_in_progress(
     """Test that force_reset clears both completed and in_progress entries."""
     processor = processor_with_three_parts
     # Pre-mark some parts as completed and in_progress
-    initial_tracker = {
+    initial_tracker: dict[str, Any] = {
         "completed": {
             "1/3": {"completed_at": "2020-01-05T00:00:00Z"},
         },

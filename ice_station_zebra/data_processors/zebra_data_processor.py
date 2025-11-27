@@ -280,7 +280,7 @@ class ZebraDataProcessor:
             )
         )
 
-    def load_in_parts(  # noqa: C901, PLR0915
+    def load_in_parts(  # noqa: C901, PLR0915, PLR0913
         self,
         *,
         resume: bool = True,
@@ -288,6 +288,8 @@ class ZebraDataProcessor:
         force_reset: bool = False,
         use_lock: bool = True,
         lock_timeout: int = 30,
+        total_parts_override: int | None = None,
+        force_overwrite: bool = False,
     ) -> None:
         """Load all parts automatically and record progress so runs can be resumed.
 
@@ -297,6 +299,8 @@ class ZebraDataProcessor:
             force_reset: if True, clear part_tracker file and re-run all parts from scratch.
             use_lock: if True, use file locking to prevent concurrent updates to part_tracker file.
             lock_timeout: timeout in seconds for acquiring the lock.
+            total_parts_override: if provided, override the computed total parts count.
+            force_overwrite: if True, delete the dataset directory before loading.
 
         """
 
@@ -435,18 +439,55 @@ class ZebraDataProcessor:
                 }
                 self._write_part_tracker(part_tracker)
 
-        total_parts = self._compute_total_parts()
+        total_parts = (
+            total_parts_override
+            if total_parts_override is not None
+            else self._compute_total_parts()
+        )
+
+        if force_overwrite:
+            logger.info(
+                "force_overwrite set to true, deleting dataset %s at %s",
+                self.name,
+                self.path_dataset,
+            )
+            shutil.rmtree(self.path_dataset, ignore_errors=True)
+            # Also delete the tracker file if it exists (may be outside dataset directory)
+            tracker_path = self._part_tracker_path()
+            if tracker_path.exists():
+                tracker_path.unlink()
+                logger.info("Deleted part tracker file at %s", tracker_path)
+            # Initialize the dataset after deletion so we can load parts into it
+            self.init(overwrite=False)
+        else:
+            # Ensure dataset is initialized before loading parts
+            try:
+                self.inspect()
+            except (AttributeError, FileNotFoundError, PathNotFoundError):
+                logger.info(
+                    "Dataset %s not found at %s, initialising before loading parts.",
+                    self.name,
+                    self.path_dataset,
+                )
+                self.init(overwrite=False)
+
         logger.info(
             "Starting chunked load for dataset %s (parts=%d)", self.name, total_parts
         )
 
         part_tracker = self._read_part_tracker()
-        if force_reset and part_tracker.get("completed"):
+        # Skip force_reset if force_overwrite was used (already cleared everything)
+        if (
+            force_reset
+            and not force_overwrite
+            and (part_tracker.get("completed") or part_tracker.get("in_progress"))
+        ):
             logger.info(
-                "force_reset requested — clearing previous load part_tracker data at %s",
+                "force_reset requested — clearing previous load part_tracker data (completed + in_progress) at %s",
                 self._part_tracker_path(),
             )
             part_tracker = {"completed": {}}
+            # ensure no in_progress remains
             self._write_part_tracker(part_tracker)
 
         for i in range(1, total_parts + 1):

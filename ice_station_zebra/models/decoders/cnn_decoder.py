@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from torch import nn
+from torch.nn.functional import sigmoid
 
 from ice_station_zebra.models.common import ConvBlockUpsample, ResizingInterpolation
 from ice_station_zebra.types import TensorNCHW
@@ -32,11 +33,15 @@ class CNNDecoder(BaseDecoder):
         activation: str = "ReLU",
         kernel_size: int = 3,
         n_layers: int = 2,
+        bounded: bool = False,
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNDecoder."""
         antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
+
+        # specify whether the output is bounded between 0 and 1
+        self.bounded = bounded
 
         # Calculate the factor by which the scale changes after n_layers
         layer_factor = 2**n_layers
@@ -126,4 +131,6 @@ class CNNDecoder(BaseDecoder):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
+        if self.bounded:
+            return sigmoid(self.model(x))
         return self.model(x)

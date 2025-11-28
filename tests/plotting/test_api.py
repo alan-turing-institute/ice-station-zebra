@@ -88,14 +88,18 @@ def test_plot_maps_emits_warning_badge(
 
 @pytest.fixture
 def fake_save_animation(monkeypatch: pytest.MonkeyPatch) -> Callable[..., io.BytesIO]:
-    """Monkeypatch _save_animation so video_maps runs fast in tests."""
+    """Monkeypatch save_animation so video_maps runs fast in tests."""
 
     def _fake_save(
-        _anim: object, *, _fps: int, _video_format: str = "gif"
+        _anim: object,
+        *,
+        fps: int = 2,  # noqa: ARG001
+        video_format: str = "gif",  # noqa: ARG001
     ) -> io.BytesIO:
+        # Parameters match real save_animation signature but are unused in fake
         return io.BytesIO(b"fake-video-data")
 
-    monkeypatch.setattr(convert, "_save_animation", _fake_save)
+    monkeypatch.setattr(convert, "save_animation", _fake_save)
     return _fake_save
 
 
@@ -134,10 +138,10 @@ def test_plot_maps_with_land_mask(
     ground_truth, prediction, date = sic_pair_2d
     height, width = ground_truth.shape
 
-    # Create a simple land mask with land in the center
+    # Create a simple land mask with land in the centre
     land_mask = np.zeros((height, width), dtype=bool)
-    center_h, center_w = height // 2, width // 2
-    land_mask[center_h - 5 : center_h + 5, center_w - 5 : center_w + 5] = True
+    centre_h, centre_w = height // 2, width // 2
+    land_mask[centre_h - 5 : centre_h + 5, centre_w - 5 : centre_w + 5] = True
 
     # Save land mask to temporary file
     with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_file:

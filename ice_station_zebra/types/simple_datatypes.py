@@ -49,7 +49,7 @@ class DiffColourmapSpec(NamedTuple):
         norm: Normalisation for mapping values to colours (e.g. TwoSlopeNorm for signed diffs).
         vmin: Lower bound if no norm is provided.
         vmax: Upper bound if no norm is provided.
-        cmap: Matplotlib colormap name.
+        cmap: Matplotlib colourmap name.
 
     """
 
@@ -69,7 +69,7 @@ class PlotSpec:
         title_prediction: Title above the prediction panel.
         title_difference: Title above the difference panel.
         n_contour_levels: Number of contour levels per panel.
-        colourmap: Colormap used for GT/prediction panels.
+        colourmap: colourmap used for GT/prediction panels.
         include_difference: Whether to draw a difference panel.
         diff_mode: Difference definition (e.g. "signed", "absolute", "smape").
         diff_strategy: Strategy for animations (precompute, two-pass, per-frame).

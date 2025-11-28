@@ -9,13 +9,15 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pytest
 
-from ice_station_zebra.visualisations.layout import _build_layout, _set_axes_limits
-from ice_station_zebra.visualisations.plotting_maps import (
-    DEFAULT_SIC_SPEC,
-    _draw_badge_with_box,
-    _set_footer_with_box,
-    _set_suptitle_with_box,
+from ice_station_zebra.visualisations.layout import (
+    _set_axes_limits,
+    build_layout,
+    build_single_panel_figure,
+    draw_badge_with_box,
+    set_footer_with_box,
+    set_suptitle_with_box,
 )
+from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 
 from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
 
@@ -59,7 +61,7 @@ def test_no_axes_overlap(
         colourbar_strategy=colourbar_strategy,  # type: ignore[arg-type]
     )
 
-    _, axes, colourbar_axes = _build_layout(
+    _, axes, colourbar_axes = build_layout(
         plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
     )
 
@@ -96,7 +98,7 @@ def test_axes_have_reasonable_gaps(
         colourbar_strategy=colourbar_strategy,  # type: ignore[arg-type]
     )
 
-    _, axes, colourbar_axes = _build_layout(
+    _, axes, colourbar_axes = build_layout(
         plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
     )
 
@@ -201,15 +203,15 @@ def test_figure_text_boxes_do_not_overlap(
         include_difference=include_difference,
     )
 
-    fig, axes, caxes = _build_layout(
+    fig, axes, caxes = build_layout(
         plot_spec=spec, height=ground_truth.shape[0], width=ground_truth.shape[1]
     )
 
     # Add figure-level title, warning badge (synthetic), and footer
-    title = _set_suptitle_with_box(fig, "Title")
+    title = set_suptitle_with_box(fig, "Title")
     ty = title.get_position()[1]
-    badge = _draw_badge_with_box(fig, 0.5, max(ty - 0.05, 0.0), "Warnings: example")
-    footer = _set_footer_with_box(fig, "Footer metadata")
+    badge = draw_badge_with_box(fig, 0.5, max(ty - 0.05, 0.0), "Warnings: example")
+    footer = set_footer_with_box(fig, "Footer metadata")
 
     # Collect rectangles: panels, colourbar axes, and figure texts
     rectangles = [axis_rectangle(ax) for ax in axes]
@@ -223,3 +225,135 @@ def test_figure_text_boxes_do_not_overlap(
         assert not rectangles_overlap(rect_a, rect_b), (
             f"Found overlap between rectangles {rect_a} and {rect_b}"
         )
+
+
+# --- Single Panel Layout Tests ---
+
+
+@pytest.mark.parametrize("colourbar_location", ["horizontal", "vertical"])
+def test_single_panel_no_overlap(
+    era5_temperature_2d: np.ndarray,
+    *,
+    colourbar_location: str,
+) -> None:
+    """Single panel layout: main panel and colourbar must not overlap."""
+    height, width = era5_temperature_2d.shape
+
+    fig, ax, cax = build_single_panel_figure(
+        height=height,
+        width=width,
+        colourbar_location=colourbar_location,  # type: ignore[arg-type]
+    )
+
+    # Get rectangles for panel and colourbar
+    panel_rect = axis_rectangle(ax)
+    cbar_rect = axis_rectangle(cax)
+
+    # They should not overlap
+    assert not rectangles_overlap(panel_rect, cbar_rect), (
+        f"Panel and colourbar overlap: panel={panel_rect}, cbar={cbar_rect}"
+    )
+
+    plt.close(fig)
+
+
+@pytest.mark.parametrize("colourbar_location", ["horizontal", "vertical"])
+def test_single_panel_has_reasonable_gap(
+    era5_temperature_2d: np.ndarray,
+    *,
+    colourbar_location: str,
+) -> None:
+    """Single panel layout: require a minimum gap between panel and colourbar."""
+    height, width = era5_temperature_2d.shape
+
+    fig, ax, cax = build_single_panel_figure(
+        height=height,
+        width=width,
+        colourbar_location=colourbar_location,  # type: ignore[arg-type]
+    )
+
+    panel_rect = axis_rectangle(ax)
+    cbar_rect = axis_rectangle(cax)
+
+    pl, pb, pr, pt = panel_rect
+    cl, cb, cr, ct = cbar_rect
+
+    if colourbar_location == "vertical":
+        # Vertical colorbar should be to the right of panel
+        gap = cl - pr
+        assert gap >= 0.005, (
+            f"Expected ≥0.5% gap between panel and vertical colorbar, got {gap:.5f}"
+        )
+    else:  # horizontal
+        # Horizontal colorbar should be below panel
+        gap = pb - ct
+        assert gap >= 0.005, (
+            f"Expected ≥0.5% gap between panel and horizontal colorbar, got {gap:.5f}"
+        )
+
+    plt.close(fig)
+
+
+def test_single_panel_with_text_annotations(
+    era5_temperature_2d: np.ndarray,
+) -> None:
+    """Single panel: title and annotations should not overlap panel or colourbar."""
+    height, width = era5_temperature_2d.shape
+
+    fig, ax, cax = build_single_panel_figure(
+        height=height,
+        width=width,
+        colourbar_location="vertical",
+    )
+
+    # Add text annotations
+    title = set_suptitle_with_box(fig, "Test Title")
+    footer = set_footer_with_box(fig, "Test Footer")
+
+    # Collect all rectangles
+    panel_rect = axis_rectangle(ax)
+    cbar_rect = axis_rectangle(cax)
+    title_rect = _text_rectangle(fig, title)
+    footer_rect = _text_rectangle(fig, footer)
+
+    rectangles = [panel_rect, cbar_rect, title_rect, footer_rect]
+
+    # No overlaps
+    for rect_a, rect_b in combinations(rectangles, 2):
+        assert not rectangles_overlap(rect_a, rect_b), (
+            f"Found overlap between {rect_a} and {rect_b}"
+        )
+
+    plt.close(fig)
+
+
+@pytest.mark.parametrize(
+    ("height", "width"),
+    [
+        (48, 48),  # Square
+        (181, 720),  # Wide (ERA5-like)
+        (432, 432),  # Square (OSISAF-like)
+        (100, 200),  # Wide
+        (200, 100),  # Tall
+    ],
+)
+def test_single_panel_various_aspect_ratios(
+    height: int,
+    width: int,
+) -> None:
+    """Single panel layout should handle various aspect ratios without overlap."""
+    fig, ax, cax = build_single_panel_figure(
+        height=height,
+        width=width,
+        colourbar_location="vertical",
+    )
+
+    panel_rect = axis_rectangle(ax)
+    cbar_rect = axis_rectangle(cax)
+
+    # No overlap
+    assert not rectangles_overlap(panel_rect, cbar_rect), (
+        f"Overlap for {height}x{width}: panel={panel_rect}, cbar={cbar_rect}"
+    )
+
+    plt.close(fig)

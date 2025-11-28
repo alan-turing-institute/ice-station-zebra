@@ -3,11 +3,20 @@ import shutil
 from pathlib import Path
 
 from anemoi.datasets.commands.create import Create
+from anemoi.datasets.commands.finalise import Finalise
+from anemoi.datasets.commands.init import Init
 from anemoi.datasets.commands.inspect import InspectZarr
+from anemoi.datasets.commands.load import Load
 from omegaconf import DictConfig, OmegaConf
 from zarr.errors import PathNotFoundError
 
-from ice_station_zebra.types import AnemoiCreateArgs, AnemoiInspectArgs
+from ice_station_zebra.types import (
+    AnemoiCreateArgs,
+    AnemoiFinaliseArgs,
+    AnemoiInitArgs,
+    AnemoiInspectArgs,
+    AnemoiLoadArgs,
+)
 
 from .preprocessors import IPreprocessor
 
@@ -30,19 +39,28 @@ class ZebraDataProcessor:
         self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
 
-    def create(self) -> None:
+    def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
-        try:
-            self.inspect()
+        if overwrite:
             logger.info(
-                "Dataset %s already exists at %s, no need to download.",
+                "Overwrite set to true, redownloading %s to %s",
                 self.name,
                 self.path_dataset,
             )
-        except (AttributeError, FileNotFoundError, PathNotFoundError):
-            logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
             shutil.rmtree(self.path_dataset, ignore_errors=True)
             self.download()
+        else:
+            try:
+                self.inspect()
+                logger.info(
+                    "Dataset %s already exists at %s, no need to download.",
+                    self.name,
+                    self.path_dataset,
+                )
+            except (AttributeError, FileNotFoundError, PathNotFoundError):
+                logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
+                shutil.rmtree(self.path_dataset, ignore_errors=True)
+                self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset."""
@@ -65,5 +83,69 @@ class ZebraDataProcessor:
                 progress=False,  # must be disabled until https://github.com/ecmwf/anemoi-datasets/pull/372 is merged
                 statistics=False,
                 size=True,
+            )
+        )
+
+    def init(self, *, overwrite: bool) -> None:
+        """Initialise a single Anemoi dataset."""
+        logger.info("Initialising dataset %s at %s.", self.name, self.path_dataset)
+
+        if overwrite:
+            logger.info(
+                "Overwrite set to true, reinitialising %s to %s",
+                self.name,
+                self.path_dataset,
+            )
+            shutil.rmtree(self.path_dataset, ignore_errors=True)
+            Init().run(
+                AnemoiInitArgs(
+                    path=str(self.path_dataset),
+                    config=self.config,
+                )
+            )
+        else:
+            try:
+                self.inspect()
+                logger.info(
+                    "Dataset %s already exists at %s, no need to download.",
+                    self.name,
+                    self.path_dataset,
+                )
+            except (AttributeError, FileNotFoundError, PathNotFoundError):
+                logger.info(
+                    "Dataset %s not found at %s, initialising.",
+                    self.name,
+                    self.path_dataset,
+                )
+                shutil.rmtree(self.path_dataset, ignore_errors=True)
+                Init().run(
+                    AnemoiInitArgs(
+                        path=str(self.path_dataset),
+                        config=self.config,
+                    )
+                )
+
+    def load(self, parts: str) -> None:
+        """Download a segment of an Anemoi dataset."""
+        logger.info(
+            "Downloading %s part of %s to %s.",
+            parts,
+            self.name,
+            self.path_dataset,
+        )
+        Load().run(
+            AnemoiLoadArgs(
+                path=str(self.path_dataset),
+                config=self.config,
+                parts=parts,
+            )
+        )
+
+    def finalise(self) -> None:
+        """Finalise the segmented Anemoi dataset."""
+        Finalise().run(
+            AnemoiFinaliseArgs(
+                path=str(self.path_dataset),
+                config=self.config,
             )
         )

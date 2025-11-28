@@ -70,6 +70,8 @@ You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to d
 
 Run `uv run zebra datasets create` to download all datasets locally.
 
+N.b. There is a slightly different process for downloading very large datasets - see below.
+
 ### Inspect
 
 Run `uv run zebra datasets inspect` to inspect all datasets available locally.
@@ -141,3 +143,23 @@ Cons:
 
 There are various demonstrator Jupyter notebooks in the `notebooks` folder.
 You can run these with `uv run --group notebooks jupyter notebook`.
+
+A good one to start with is `notebooks/demo_pipeline.ipynb` which gives a more detailed overview of the pipeline.
+
+## Downloading large datasets
+For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary to download the data in parts. To do this, you need to use the following sequence of commands. First initialise the dataset:
+
+```bash
+uv run zebra datasets init --config-name <your config>.yaml
+```
+
+Then load each part `i` of the total `n` in turn using:
+
+```bash
+uv run zebra datasets load --config-name <your config>.yaml --parts i/n
+```
+
+When all the parts are loading, finalise the dataset with:
+
+```bash
+uv run zebra datasets finalise --config-name <your config>.yaml

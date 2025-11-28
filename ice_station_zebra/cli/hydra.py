@@ -40,13 +40,19 @@ def hydra_adaptor(function: Callable) -> Callable[Param, RetType]:
             config = compose(config_name=config_name, overrides=overrides)
         return function(*args, config=config, **kwargs)
 
+    # Separate parameters by kind
+    positional_params = []
+    keyword_only_params = []
+
     # Remove the DictConfig parameter from the function signature
     fn_signature = inspect.signature(function, eval_str=True)
-    function_params = (
-        param
-        for param in fn_signature.parameters.values()
-        if param.annotation != DictConfig
-    )
+    for param in fn_signature.parameters.values():
+        if param.annotation == DictConfig:
+            continue  # skip config param
+        if param.kind == inspect.Parameter.KEYWORD_ONLY:
+            keyword_only_params.append(param)
+        else:
+            positional_params.append(param)
 
     # Take only the overrides and config_name names from the function signature
     additional_params = (
@@ -55,8 +61,10 @@ def hydra_adaptor(function: Callable) -> Callable[Param, RetType]:
         if param.name in ("overrides", "config_name")
     )
 
-    # Since the additional parameters are keyword arguments we can simply append them
-    combined_parameters = list(itertools.chain(function_params, additional_params))
+    # Combine in correct order: positional, then additional, then keyword-only
+    combined_parameters = list(
+        itertools.chain(positional_params, additional_params, keyword_only_params)
+    )
     wrapper.__signature__ = fn_signature.replace(parameters=combined_parameters)  # type: ignore[attr-defined]
     wrapper.__name__ = function.__name__
     wrapper.__doc__ = function.__doc__

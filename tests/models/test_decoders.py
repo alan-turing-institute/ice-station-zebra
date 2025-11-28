@@ -117,7 +117,7 @@ class TestDecoderBounded:
                 latent_space.channels,
                 *latent_space.shape,
             ),
-            1e6,
+            1e10,
             dtype=torch.float32,
         )
 

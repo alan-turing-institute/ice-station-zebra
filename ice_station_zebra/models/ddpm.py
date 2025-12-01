@@ -355,3 +355,29 @@ class DDPM(ZebraModel):
         self.test_metrics.update(y_hat, y, sample_weight)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)
+
+    def configure_optimizers(self):
+        """Set up the optimizer.
+
+        Returns:
+            torch.optim.Optimizer: Adam optimizer.
+
+        """
+        # Add weight decay to discourage large weights (helps generalization)
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.learning_rate,
+            weight_decay=1e-4,
+            betas=(0.9, 0.95),
+            eps=1e-8,
+        )
+
+        scheduler = {
+            "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=100, eta_min=self.learning_rate * 0.01
+            ),
+            "interval": "epoch",
+            "frequency": 1,
+            "name": "lr",
+        }
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}

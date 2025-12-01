@@ -287,3 +287,34 @@ class DDPM(ZebraModel):
             sync_dist=True,
         )
         return {"loss": loss}
+
+    def validation_step(self, batch: dict[str, TensorNTCHW]) -> dict:
+        """One validation step using the specified loss function defined in the criterion."""
+        # Prepare input tensor
+        x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
+
+        # Extract target and optional weights
+        y = batch["target"].squeeze(2)  # [B, T, H, W]
+        sample_weight = batch.get("sample_weight", torch.ones_like(y))
+        
+        # Generate samples (returns [-1, 1] range)
+        outputs = self.sample(x, sample_weight)
+    
+        # Convert to [0, 1] for metrics and loss
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+
+        # Calculate loss in [0, 1] space
+        loss = self.loss(y_hat, y, sample_weight)
+        self.log(
+            "val_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )
+    
+        # Update metrics in [0, 1] space
+        self.metrics.update(y_hat, y, sample_weight)
+        return {"val_loss": loss}

@@ -318,3 +318,40 @@ class DDPM(ZebraModel):
         # Update metrics in [0, 1] space
         self.metrics.update(y_hat, y, sample_weight)
         return {"val_loss": loss}
+
+    def test_step(
+        self, batch: dict[str, TensorNTCHW], _batch_idx: int
+    ) -> ModelTestOutput:
+        """One test step using the specified loss function and full metric evaluation.
+
+        Args:
+            batch (tuple): (x, y, sample_weight)
+            batch_idx (int): Batch index.
+
+        Returns:
+            torch.Tensor: Loss value.
+
+        """
+        x = batch["inputs"]
+        y = batch["target"].squeeze(2)
+        sample_weight = batch.get("sample_weight", torch.ones_like(y))
+
+        outputs = self.sample(x, sample_weight)
+
+        # Convert to [0, 1] for metrics and loss
+        y_hat = (outputs + 1.0) / 2.0
+        y_hat = torch.clamp(y_hat, 0, 1)
+
+        loss = self.loss(y_hat, y, sample_weight)
+        self.log(
+            "test_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )
+        
+        self.test_metrics.update(y_hat, y, sample_weight)
+
+        return ModelTestOutput(prediction=y_hat, target=y, loss=loss)

@@ -1,20 +1,8 @@
 import os
-
-# Unset SLURM_NTASKS if it's causing issues
-if "SLURM_NTASKS" in os.environ:
-    del os.environ["SLURM_NTASKS"]
-
-# Optionally, set SLURM_NTASKS_PER_NODE if needed
-os.environ["SLURM_NTASKS_PER_NODE"] = "1"  # or whatever value is appropriate
-
-
 from typing import Any
 
 import torch
-
-# Force all new tensors to be float32 by default
-torch.set_default_dtype(torch.float32)
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 from torchmetrics import MetricCollection
 
@@ -24,6 +12,16 @@ from ice_station_zebra.types import ModelTestOutput, TensorNTCHW
 from .losses import WeightedMSELoss
 from .metrics import IceNetAccuracy, SIEError
 from .zebra_model import ZebraModel
+
+# Unset SLURM_NTASKS if it's causing issues
+if "SLURM_NTASKS" in os.environ:
+    del os.environ["SLURM_NTASKS"]
+
+# Optionally, set SLURM_NTASKS_PER_NODE if needed
+os.environ["SLURM_NTASKS_PER_NODE"] = "1"
+
+# Force all new tensors to be float32 by default
+torch.set_default_dtype(torch.float32)
 
 
 class DDPM(ZebraModel):

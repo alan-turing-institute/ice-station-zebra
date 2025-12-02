@@ -381,3 +381,24 @@ class DDPM(ZebraModel):
             "name": "lr",
         }
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure, **kwargs):
+        """Custom optimizer step used in PyTorch Lightning.
+
+        This method performs a single optimization step using the provided closure,
+        and updates the Exponential Moving Average (EMA) of the model weights.
+
+        Args:
+            epoch (int): Current epoch number.
+            batch_idx (int): Index of the current batch.
+            optimizer (Optimizer): The optimizer instance (e.g., Adam).
+            optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
+            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
+
+        Notes:
+            - This method is automatically called by PyTorch Lightning during training.
+            - `self.ema.update()` updates the EMA shadow weights after the optimizer step.
+
+        """
+        optimizer.step(closure=optimizer_closure)
+        self.ema.update()

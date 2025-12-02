@@ -1,5 +1,6 @@
 import itertools
 from abc import ABC, abstractmethod
+from typing import Any
 
 import hydra
 import torch
@@ -22,6 +23,7 @@ class ZebraModel(LightningModule, ABC):
         n_history_steps: int,
         output_space: DictConfig,
         optimizer: DictConfig,
+        **_kwargs: Any,
     ) -> None:
         """Initialise a ZebraModel.
 

@@ -20,26 +20,29 @@ from ice_station_zebra.types import TensorNCHW
 from .base_processor import BaseProcessor
 
 
-# class VitProcessor(nn.Module):
 class VitProcessor(BaseProcessor):
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        start_out_channels: int,
-        img_size: int,
-        patch_size: int,
-        emb_dim: int,
+        *,
         depth: int,
+        dropout: float,
+        emb_dim: int,
         heads: int,
         mlp_dim: int,
-        dropout: float,
+        patch_size: int,
         **kwargs: Any,
     ) -> None:
         """Initialize Vision Transformer model for sea ice forecasting."""
         super().__init__(**kwargs)
 
-        self.img_size = img_size
+        # Ensure input is square
+        if self.data_space.shape[0] != self.data_space.shape[1]:
+            msg = "The height and width of the input are not equal."
+            raise ValueError(msg)
+
+        self.img_size = self.data_space.shape[0]
         self.patch_size = patch_size
-        self.out_channels = start_out_channels
+        self.out_channels = self.data_space.channels
 
         self.patch_embed = PatchEmbedding(
             self.data_space.channels, patch_size, emb_dim, self.img_size
@@ -61,6 +64,10 @@ class VitProcessor(BaseProcessor):
         # (B, N, patch_size * patch_size * out_channels *)
         self.decoder = nn.Sequential(
             nn.Linear(emb_dim, patch_size * patch_size * self.out_channels),
+        )
+
+        self.smooth = nn.Conv2d(
+            self.out_channels, self.out_channels, kernel_size=3, padding=1
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
@@ -96,4 +103,6 @@ class VitProcessor(BaseProcessor):
         x = x.permute(0, 3, 1, 4, 2, 5)
 
         # Shape is batch, out_channels, height, width
-        return x.reshape(batch, self.out_channels, self.img_size, self.img_size)
+        x = x.reshape(batch, self.out_channels, self.img_size, self.img_size)
+
+        return self.smooth(x)

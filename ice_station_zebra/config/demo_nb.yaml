@@ -1,0 +1,14 @@
+defaults:
+  - base
+  - _self_
+
+train:
+  trainer:
+    max_epochs: 10
+
+loggers:
+  wandb:
+    entity: null
+
+base_path: ../my_data
+antialias_val: false

@@ -1,4 +1,5 @@
 _target_: ice_station_zebra.models.EncodeProcessDecode
+mod_antialias: ${..antialias_val}
 
 name: cnn-ddpm-cnn
 
@@ -7,6 +8,7 @@ encoder:
   kernel_size: 3 # Size of the kernel for convolutional layers
   latent_space: [128, 128] # Shape of the latent space
   n_layers: 3 # Number of convolutional layers
+  antialias: ${..mod_antialias}
 
 processor:
   _target_: ice_station_zebra.models.processors.DDPMProcessor
@@ -16,3 +18,5 @@ decoder:
   _target_: ice_station_zebra.models.decoders.CNNDecoder
   kernel_size: 3 # Size of the kernel for convolutional layers
   n_layers: 3 # Number of convolutional layers
+  bounded: false # Whether to bound the output between 0 and 1
+  antialias: ${..mod_antialias}

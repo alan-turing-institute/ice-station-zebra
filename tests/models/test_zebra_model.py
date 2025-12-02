@@ -8,9 +8,9 @@ from ice_station_zebra.models import ZebraModel
 from ice_station_zebra.types import ModelTestOutput, TensorNTCHW
 
 
-class DummyModel(ZebraModel):
+class FakeDataModel(ZebraModel):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialise a dummy model for testing purposes."""
+        """Initialise a fake data model for testing purposes."""
         super().__init__(*args, **kwargs)
         self.t = kwargs["n_forecast_steps"]
         self.c = kwargs["output_space"]["channels"]
@@ -19,7 +19,7 @@ class DummyModel(ZebraModel):
         self.model = torch.nn.Linear(1, 1)
 
     def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Dummy forward method."""
+        """FakeData forward method."""
         b = next(iter(inputs.values())).shape[0]
         return torch.randn(b, self.t, self.c, self.h, self.w)
 
@@ -56,8 +56,8 @@ class TestZebraModel:
             with pytest.raises(
                 ValueError, match="Number of forecast steps must be greater than 0."
             ):
-                DummyModel(
-                    name="dummy",
+                FakeDataModel(
+                    name="fake data",
                     input_spaces=[input_space],
                     n_forecast_steps=test_n_forecast_steps,
                     n_history_steps=test_n_history_steps,
@@ -71,8 +71,8 @@ class TestZebraModel:
             with pytest.raises(
                 ValueError, match="Number of history steps must be greater than 0."
             ):
-                DummyModel(
-                    name="dummy",
+                FakeDataModel(
+                    name="fake data",
                     input_spaces=[input_space],
                     n_forecast_steps=test_n_forecast_steps,
                     n_history_steps=test_n_history_steps,
@@ -81,8 +81,8 @@ class TestZebraModel:
                 )
             return
 
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[input_space],
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
@@ -90,7 +90,7 @@ class TestZebraModel:
             optimizer=DictConfig({}),
         )
 
-        assert model.name == "dummy"
+        assert model.name == "fake data"
         assert model.input_spaces[0].channels == test_input_chw[0]
         assert model.input_spaces[0].name == "input"
         assert model.input_spaces[0].shape == test_input_chw[1:]
@@ -103,8 +103,8 @@ class TestZebraModel:
     def test_loss(
         self, cfg_input_space: DictConfig, cfg_output_space: DictConfig
     ) -> None:
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[cfg_input_space],
             n_forecast_steps=1,
             n_history_steps=1,
@@ -122,8 +122,8 @@ class TestZebraModel:
         cfg_optimizer: DictConfig,
         cfg_output_space: DictConfig,
     ) -> None:
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[cfg_input_space],
             n_forecast_steps=1,
             n_history_steps=1,
@@ -158,8 +158,8 @@ class TestZebraModel:
                 cfg_output_space["shape"][1],
             ),
         }
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[cfg_input_space],
             n_forecast_steps=n_forecast_steps,
             n_history_steps=n_history_steps,
@@ -196,8 +196,8 @@ class TestZebraModel:
                 cfg_output_space["shape"][1],
             ),
         }
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[cfg_input_space],
             n_forecast_steps=n_forecast_steps,
             n_history_steps=n_history_steps,
@@ -231,8 +231,8 @@ class TestZebraModel:
                 cfg_output_space["shape"][1],
             ),
         }
-        model = DummyModel(
-            name="dummy",
+        model = FakeDataModel(
+            name="fake data",
             input_spaces=[cfg_input_space],
             n_forecast_steps=n_forecast_steps,
             n_history_steps=n_history_steps,

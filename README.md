@@ -176,7 +176,7 @@ uv run zebra datasets finalise --config-name <your config>.yaml
 - `--force-reset`: Clear existing progress tracker and start from part 1. Anemoi will check whether you have the data already and continue.
 - `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config)
 - `--total-parts <n>`: Override the computed total number of parts (useful if you want to split differently than the default) Otherwise determine in your data yaml or local yaml.
-- `--force-overwrite`: Delete the dataset directory before loading (use with caution!)
+- `--overwrite`: Delete the dataset directory before loading (use with caution!)
 
 #### Examples
 
@@ -196,7 +196,7 @@ uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-res
 ```
 Start and destroy any previously saved data (careful):
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-overwrite
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --overwrite
 ```
 
 

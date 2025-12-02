@@ -299,7 +299,7 @@ class ZebraDataProcessor:
         use_lock: bool = True,
         lock_timeout: int = 30,
         total_parts_override: int | None = None,
-        force_overwrite: bool = False,
+        overwrite: bool = False,
     ) -> None:
         """Load all parts automatically and record progress so runs can be resumed.
 
@@ -310,7 +310,7 @@ class ZebraDataProcessor:
             use_lock: if True, use file locking to prevent concurrent updates to part_tracker file.
             lock_timeout: timeout in seconds for acquiring the lock.
             total_parts_override: if provided, override the computed total parts count.
-            force_overwrite: if True, delete the dataset directory before loading.
+            overwrite: if True, delete the dataset directory before loading.
 
         """
 
@@ -455,9 +455,9 @@ class ZebraDataProcessor:
             else self._compute_total_parts()
         )
 
-        if force_overwrite:
+        if overwrite:
             logger.info(
-                "force_overwrite set to true, deleting dataset %s at %s",
+                "overwrite set to true, deleting dataset %s at %s",
                 self.name,
                 self.path_dataset,
             )
@@ -486,10 +486,10 @@ class ZebraDataProcessor:
         )
 
         part_tracker = self._read_part_tracker()
-        # Skip force_reset if force_overwrite was used (already cleared everything)
+        # Skip force_reset if overwrite was used (already cleared everything)
         if (
             force_reset
-            and not force_overwrite
+            and not overwrite
             and (part_tracker.get("completed") or part_tracker.get("in_progress"))
         ):
             logger.info(

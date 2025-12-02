@@ -377,10 +377,10 @@ def test_total_parts_override(
         assert part_spec in tracker["completed"]
 
 
-def test_force_overwrite_deletes_dataset_and_tracker(
+def test_overwrite_deletes_dataset_and_tracker(
     processor_with_three_parts: ZebraDataProcessor,
 ) -> None:
-    """Test that force_overwrite deletes dataset and tracker, then initializes."""
+    """Test that overwrite deletes dataset and tracker, then initializes."""
     processor = processor_with_three_parts
     # Create some initial state
     initial_tracker = {
@@ -406,7 +406,7 @@ def test_force_overwrite_deletes_dataset_and_tracker(
         patch.object(processor, "load") as mock_load,
     ):
         processor.load_in_parts(
-            resume=False, continue_on_error=False, use_lock=False, force_overwrite=True
+            resume=False, continue_on_error=False, use_lock=False, overwrite=True
         )
 
         # Should have called init to reinitialize the dataset
@@ -426,10 +426,10 @@ def test_force_overwrite_deletes_dataset_and_tracker(
         ).get(part_spec, {}).get("completed_at", "")
 
 
-def test_force_overwrite_skips_force_reset(
+def test_overwrite_skips_force_reset(
     processor_with_three_parts: ZebraDataProcessor,
 ) -> None:
-    """Test that force_reset is skipped when force_overwrite is used."""
+    """Test that force_reset is skipped when overwrite is used."""
     processor = processor_with_three_parts
     # Create initial tracker state
     initial_tracker = {
@@ -453,18 +453,18 @@ def test_force_overwrite_skips_force_reset(
         patch.object(processor, "init") as mock_init,
         patch.object(processor, "load") as mock_load,
     ):
-        # Both force_overwrite and force_reset are True
+        # Both overwrite and force_reset are True
         processor.load_in_parts(
             resume=False,
             continue_on_error=False,
             use_lock=False,
-            force_overwrite=True,
+            overwrite=True,
             force_reset=True,
         )
 
-        # init should be called (by force_overwrite)
+        # init should be called (by overwrite)
         mock_init.assert_called_once()
-        # All parts should be loaded (force_overwrite clears everything)
+        # All parts should be loaded (overwrite clears everything)
         assert mock_load.call_count == 3
 
 

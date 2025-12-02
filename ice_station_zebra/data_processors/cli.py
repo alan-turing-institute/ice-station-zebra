@@ -96,7 +96,7 @@ def load_in_parts(  # noqa: PLR0913
     total_parts: Annotated[
         int | None, typer.Option(help="Override computed total parts")
     ] = None,
-    force_overwrite: Annotated[
+    overwrite: Annotated[
         bool,
         typer.Option(help="Delete the dataset directory before loading"),
     ] = False,
@@ -113,7 +113,7 @@ def load_in_parts(  # noqa: PLR0913
             continue_on_error=continue_on_error,
             force_reset=force_reset,
             total_parts_override=total_parts,
-            force_overwrite=force_overwrite,
+            overwrite=overwrite,
         )
 
 

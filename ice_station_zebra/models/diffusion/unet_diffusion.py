@@ -53,6 +53,7 @@ class UNetDiffusion(nn.Module):
             normalization (str, optional): Normalization type to apply ("groupnorm", "batchnorm", "layernorm", etc.).
             activation (str, optional): Activation function to use ("SiLU", "ReLU", "LeakyReLU", etc.).
             dropout_rate (float, optional): Dropout probability applied to convolutional blocks. Defaults to 0.1.
+
         """
         super().__init__()
 

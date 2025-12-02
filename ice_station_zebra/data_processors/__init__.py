@@ -1,5 +1,3 @@
-from .cli import datasets_cli
+"""Data processor package."""
 
-__all__ = [
-    "datasets_cli",
-]
+__all__: list[str] = []

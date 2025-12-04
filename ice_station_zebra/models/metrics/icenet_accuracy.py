@@ -1,11 +1,14 @@
-"""IceNetAccuracy metric adapted from the IceNet repository:
-https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
+"""IceNetAccuracy metric adapted from the IceNet repository.
 
-Original implementation by the IceNet authors (icenet-ai).
+The repository is available at: https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
+
+Original implementation by the IceNet authors (icenet-ai). Edited by Maria Carolina Novitasari.
 """
 
 import torch
 from torchmetrics import Metric
+
+THRESHOLD = 0.15  # Threshold for binarizing predictions and targets
 
 
 class IceNetAccuracy(Metric):
@@ -15,7 +18,9 @@ class IceNetAccuracy(Metric):
     higher_is_better: bool = True
     full_state_update: bool = True
 
-    def __init__(self, leadtimes_to_evaluate: list):
+    def __init__(self, leadtimes_to_evaluate: list) -> None:
+
+        """Initialize the IceNetAccuracy metric."""
         super().__init__()
         self.leadtimes_to_evaluate = leadtimes_to_evaluate
         self.add_state(
@@ -27,9 +32,11 @@ class IceNetAccuracy(Metric):
 
     def update(
         self, preds: torch.Tensor, target: torch.Tensor, sample_weight: torch.Tensor
-    ):
-        preds = (preds > 0.15).long()
-        target = (target > 0.15).long()
+    ) -> None:
+
+        """Update metric state with a new batch of predictions and targets."""
+        preds = (preds > THRESHOLD).long()
+        target = (target > THRESHOLD).long()
         sample_weight = sample_weight.squeeze(-1)
         base_score = (
             preds[:, :, :, self.leadtimes_to_evaluate]
@@ -42,5 +49,7 @@ class IceNetAccuracy(Metric):
             sample_weight[:, :, :, self.leadtimes_to_evaluate]
         )
 
-    def compute(self):
+    def compute(self) -> torch.Tensor:
+
+        """Compute the final accuracy metric as a percentage."""
         return self.weighted_score.float() / self.possible_score * 100.0

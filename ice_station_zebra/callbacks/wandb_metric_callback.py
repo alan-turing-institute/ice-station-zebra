@@ -1,11 +1,12 @@
-from lightning.pytorch.callbacks import Callback
 import wandb
+from lightning.pytorch import LightningModule, Trainer
+from lightning.pytorch.callbacks import Callback
 
 
 class WandbMetricConfig(Callback):
     """Configure Wandb to plot train and val losses together."""
-    
-    def on_train_start(self, trainer, pl_module):
+
+    def on_train_start(self, _trainer: Trainer, _pl_module: LightningModule) -> None:
         """Configure metric grouping when training starts."""
         if wandb.run is not None:
             wandb.define_metric("loss/*", step_metric="epoch")

@@ -9,5 +9,5 @@ __all__ = [
     "MetricSummaryCallback",
     "PlottingCallback",
     "UnconditionalCheckpoint",
-    'WandbMetricConfig',
+    "WandbMetricConfig",
 ]

@@ -5,12 +5,13 @@
 | Name                                                                    |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | ice\_station\_zebra/\_\_init\_\_.py                                     |        0 |        0 |    100% |           |
-| ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        5 |        0 |    100% |           |
+| ice\_station\_zebra/callbacks/\_\_init\_\_.py                           |        6 |        0 |    100% |           |
 | ice\_station\_zebra/callbacks/ema\_weight\_averaging\_callback.py       |       13 |        8 |     38% |24-28, 34-40 |
 | ice\_station\_zebra/callbacks/metadata.py                               |      243 |       25 |     90% |62, 66, 71, 89, 94, 112-113, 145-151, 192, 196-200, 228-229, 275, 328, 349, 436-437, 504, 506 |
 | ice\_station\_zebra/callbacks/metric\_summary\_callback.py              |       28 |       15 |     46% |25-27, 39-45, 54-61 |
 | ice\_station\_zebra/callbacks/plotting\_callback.py                     |      142 |       90 |     37% |71, 81, 100-101, 103-105, 113-117, 135-182, 191-211, 220-249, 272-287, 304-312, 323-337 |
 | ice\_station\_zebra/callbacks/unconditional\_checkpoint.py              |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
+| ice\_station\_zebra/callbacks/wandb\_metric\_callback.py                |        8 |        3 |     62% |     11-13 |
 | ice\_station\_zebra/callbacks/weight\_averaging.py                      |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
 | ice\_station\_zebra/cli/hydra.py                                        |       22 |        3 |     86% |     39-41 |
@@ -65,7 +66,7 @@
 | ice\_station\_zebra/models/processors/null.py                           |       10 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/vit.py                            |       36 |       27 |     25% |36-69, 83-108 |
-| ice\_station\_zebra/models/zebra\_model.py                              |       46 |        0 |    100% |           |
+| ice\_station\_zebra/models/zebra\_model.py                              |       48 |        0 |    100% |           |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |29-101, 104-105 |
@@ -81,7 +82,7 @@
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       59 |     58% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 360-361, 364, 381, 396, 423-425, 428-429, 437 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      220 |       40 |     82% |170-172, 188, 196-198, 254-257, 265-266, 289-292, 328-330, 338-339, 343-364, 478-493, 597, 603-604, 622-630, 690, 787, 820, 827, 839 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2472** |  **780** | **68%** |           |
+|                                                               **TOTAL** | **2483** |  **783** | **68%** |           |
 
 
 ## Setup coverage badge

@@ -2,6 +2,7 @@ defaults:
   - callbacks:
     - device_stats
     - ema_weight_averaging
+    - wandb_metric
   - optimizer: default
   - trainer: default
   - _self_

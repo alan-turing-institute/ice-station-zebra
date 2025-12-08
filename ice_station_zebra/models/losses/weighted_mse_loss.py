@@ -28,7 +28,7 @@ class WeightedMSELoss(nn.MSELoss):
         inputs: Tensor,
         targets: Tensor,
         sample_weights: Tensor,
-    ) -> Tensor:  # type: ignore
+    ) -> Tensor:  # type: ignore[override]
         """Compute weighted mean squared error loss.
 
         Args:

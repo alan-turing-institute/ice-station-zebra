@@ -19,7 +19,6 @@ class IceNetAccuracy(Metric):
     full_state_update: bool = True
 
     def __init__(self, leadtimes_to_evaluate: list) -> None:
-
         """Initialize the IceNetAccuracy metric."""
         super().__init__()
         self.leadtimes_to_evaluate = leadtimes_to_evaluate
@@ -33,7 +32,6 @@ class IceNetAccuracy(Metric):
     def update(
         self, preds: torch.Tensor, target: torch.Tensor, sample_weight: torch.Tensor
     ) -> None:
-
         """Update metric state with a new batch of predictions and targets."""
         preds = (preds > THRESHOLD).long()
         target = (target > THRESHOLD).long()
@@ -50,6 +48,5 @@ class IceNetAccuracy(Metric):
         )
 
     def compute(self) -> torch.Tensor:
-
         """Compute the final accuracy metric as a percentage."""
         return self.weighted_score.float() / self.possible_score * 100.0

@@ -5,6 +5,8 @@ https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecas
 Original implementation by the IceNet authors (icenet-ai). Edited by: Maria Carolina Novitasari.
 """
 
+from torch import Tensor, nn
+
 
 class WeightedBCEWithLogitsLoss(nn.BCEWithLogitsLoss):
     """BCEWithLogits loss with elementwise weighting."""

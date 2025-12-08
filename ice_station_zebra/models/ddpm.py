@@ -34,7 +34,6 @@ class DDPM(ZebraModel):
         TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
-    # def __init__(self, timesteps: int = 1000, **kwargs: Any) -> None:
     def __init__(
         self,
         timesteps: int = 1000,
@@ -77,7 +76,7 @@ class DDPM(ZebraModel):
         else:
             self.era5_space = era5_space.channels
 
-        # osisaf channels after squeezing: T_osisaf = self.n_history_steps (probably 1 here)
+        # osisaf channels after squeezing: T_osisaf = self.n_history_steps
         osisaf_channels = self.n_history_steps  # keep T dimension as channels
 
         # era5 channels after merging time*channels
@@ -89,7 +88,6 @@ class DDPM(ZebraModel):
         self.output_channels = self.n_forecast_steps * self.n_output_classes
         self.timesteps = timesteps
 
-        # self.model = UNetDiffusion(self.input_channels, self.output_channels, self.timesteps)
         self.model = UNetDiffusion(
             input_channels=self.input_channels,
             output_channels=self.output_channels,
@@ -258,23 +256,18 @@ class DDPM(ZebraModel):
 
         # Squeeze singleton channel for osisaf: [B, T, H, W]
         osisaf_squeezed = osisaf.squeeze(2)
-        print("prepare_inputs: osisaf_squeezed shape:", osisaf_squeezed.shape)
 
         # Merge ERA5 time and channels: [B, T*C2, H2, W2]
         era5_merged = era5.view(B, T * C2, H2, W2)
-        print("prepare_inputs: era5_merged shape:", era5_merged.shape)
 
         # Resize to osisaf spatial resolution
         era5_resized = F.interpolate(
             era5_merged, size=(H_target, W_target), mode="bilinear", align_corners=False
         )
-        print("prepare_inputs: era5_resized shape:", era5_resized.shape)
 
         # Flatten osisaf time dimension into channels: [B, T, H, W] → [B, T, H, W] already
         # Concatenate along channels: [B, T + T*C2, H, W]
-        combined = torch.cat([osisaf_squeezed, era5_resized], dim=1)
-
-        return combined
+        return torch.cat([osisaf_squeezed, era5_resized], dim=1)
 
     def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
         """One training step using DDPM loss (predicted noise vs. true noise)."""
@@ -285,7 +278,7 @@ class DDPM(ZebraModel):
 
         # Extract target and optional weights
         y = batch["target"].squeeze(2).to(device)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y)).to(device)
+        # sample_weight = batch.get("sample_weight", torch.ones_like(y)).to(device)
 
         # Scale target to [-1, 1]
         y_scaled = 2.0 * y - 1.0

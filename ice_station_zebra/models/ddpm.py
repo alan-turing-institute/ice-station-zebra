@@ -51,8 +51,16 @@ class DDPM(ZebraModel):
         """Initialize the DDPM processor.
 
         Args:
-            timesteps: Num diffusion timesteps (default=1000).
-            kwargs: Arguments to BaseProcessor.
+            timesteps (int): Number of diffusion timesteps. Default is 1000.
+            learning_rate (float): Optimizer learning rate for training. Default is 5e-4.
+            start_out_channels (int): Base number of channels in the first UNet block.
+            kernel_size (int): Convolution kernel size used in the UNet.
+            activation (str): Activation function used throughout the network (e.g., "SiLU").
+            normalization (str): Normalization layer type (e.g., "groupnorm").
+            n_output_classes (int): Number of output classes/channels to predict per forecast step.
+            time_embed_dim (int): Dimensionality of the timestep embedding.
+            dropout_rate (float): Dropout probability applied inside the UNet blocks.
+            **kwargs: Additional arguments passed to ``ZebraModel``.
 
         """
         super().__init__(**kwargs)

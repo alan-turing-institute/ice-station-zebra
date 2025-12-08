@@ -25,8 +25,8 @@ class WeightedBCEWithLogitsLoss(nn.BCEWithLogitsLoss):
 
     def forward(
         self,
-        inputs: Tensor,
-        targets: Tensor,
+        input: Tensor,
+        target: Tensor,
         sample_weights: Tensor,
     ) -> Tensor:  # type: ignore[override]
         """Weighted BCEWithLogitsLoss.

@@ -73,7 +73,6 @@ class UNetDiffusion(nn.Module):
 
         # Channel calculations
         channels = [start_out_channels * 2**i for i in range(4)]
-        # output_channels = input_channels # remove this, as the latent encoder-decoder will not be used for this model
 
         # Encoder
         self.conv1 = CommonConvBlock(

@@ -37,7 +37,7 @@ class SIEError(Metric):
         self,
         preds: torch.Tensor,
         target: torch.Tensor,
-        sample_weight: torch.Tensor | None = None,
+        _sample_weight: torch.Tensor | None = None,
     ) -> None:
         """Update the SIE accumulators.
 

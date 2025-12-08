@@ -1,8 +1,10 @@
 import os
+from collections.abc import Callable
 from typing import Any
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+from torch.optim import Optimizer
 from torch_ema import ExponentialMovingAverage  # type: ignore[import]
 from torchmetrics import MetricCollection
 
@@ -187,11 +189,13 @@ class DDPM(ZebraModel):
     def sample(
         self,
         x: torch.Tensor,
+        sample_weight: torch.Tensor | None,
     ) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
             x (torch.Tensor): Conditioning input [B, C, H, W].
+            sample_weight (torch.Tensor or None): Optional weights.
 
         Returns:
             torch.Tensor: Denoised output of shape [B, C, H, W].
@@ -295,9 +299,6 @@ class DDPM(ZebraModel):
 
         # Compute loss
         loss = F.mse_loss(pred_v, target_v)
-
-        if self.global_step % 100 == 0:
-            print(f"Step {self.global_step}: Loss {loss.item():.4f}")
 
         self.log(
             "train_loss",
@@ -409,6 +410,7 @@ class DDPM(ZebraModel):
         batch_idx: int,
         optimizer: Optimizer,
         optimizer_closure: Callable[[], None],
+        **kwargs,
     ) -> None:
         """Custom optimizer step used in PyTorch Lightning.
 
@@ -420,6 +422,7 @@ class DDPM(ZebraModel):
             batch_idx (int): Index of the current batch.
             optimizer (Optimizer): The optimizer instance (e.g., Adam).
             optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
+            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
 
         Notes:
             - This method is automatically called by PyTorch Lightning during training.

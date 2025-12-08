@@ -11,7 +11,14 @@ from torch import Tensor, nn
 class WeightedBCEWithLogitsLoss(nn.BCEWithLogitsLoss):
     """BCEWithLogits loss with elementwise weighting."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the WeightedBCEWithLogitsLoss.
+
+        Args:
+            *args: Positional arguments passed to torch.nn.BCEWithLogitsLoss.
+            **kwargs: Keyword arguments passed to torch.nn.BCEWithLogitsLoss.
+
+        """
         super().__init__(*args, **kwargs)
 
     def forward(

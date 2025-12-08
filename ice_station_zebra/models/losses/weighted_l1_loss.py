@@ -12,7 +12,14 @@ from torch import Tensor, nn
 class WeightedL1Loss(nn.L1Loss):
     """L1 loss with elementwise weighting."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the WeightedL1Loss.
+
+        Args:
+            *args: Positional arguments passed to torch.nn.L1Loss.
+            **kwargs: Keyword arguments passed to torch.nn.L1Loss.
+
+        """
         super().__init__(*args, **kwargs)
 
     def forward(

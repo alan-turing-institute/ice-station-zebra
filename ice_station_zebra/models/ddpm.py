@@ -249,8 +249,8 @@ class DDPM(ZebraModel):
         era5 = batch["era5"]  # [B, T, 27, H2, W2]
 
         # pylint: disable=invalid-name
-        B, T, C2, H2, W2 = era5.shape
-        H_target, W_target = osisaf.shape[-2:]
+        B, T, C2, H2, W2 = era5.shape  # noqa: N806
+        H_target, W_target = osisaf.shape[-2:]  # noqa: N806
 
         # Squeeze singleton channel for osisaf: [B, T, H, W]
         osisaf_squeezed = osisaf.squeeze(2)
@@ -274,9 +274,8 @@ class DDPM(ZebraModel):
         # Prepare input tensor by combining osisaf-south and era5
         x = self.prepare_inputs(batch).to(device)  # [B, T, C_combined, H, W]
 
-        # Extract target and optional weights
+        # Extract target
         y = batch["target"].squeeze(2).to(device)
-        # sample_weight = batch.get("sample_weight", torch.ones_like(y)).to(device)
 
         # Scale target to [-1, 1]
         y_scaled = 2.0 * y - 1.0
@@ -404,7 +403,13 @@ class DDPM(ZebraModel):
         }
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
-    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure, **kwargs):
+    def optimizer_step(
+        self,
+        epoch: int,
+        batch_idx: int,
+        optimizer: Optimizer,
+        optimizer_closure: Callable[[], None],
+    ) -> None:
         """Custom optimizer step used in PyTorch Lightning.
 
         This method performs a single optimization step using the provided closure,
@@ -415,7 +420,6 @@ class DDPM(ZebraModel):
             batch_idx (int): Index of the current batch.
             optimizer (Optimizer): The optimizer instance (e.g., Adam).
             optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
-            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
 
         Notes:
             - This method is automatically called by PyTorch Lightning during training.

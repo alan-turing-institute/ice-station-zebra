@@ -342,7 +342,9 @@ class DDPM(ZebraModel):
         return {"val_loss": loss}
 
     def test_step(
-        self, batch: dict[str, TensorNTCHW], _batch_idx: int
+        self,
+        batch: dict[str, TensorNTCHW],
+        _batch_idx: int,  # noqa: PT019
     ) -> ModelTestOutput:
         """One test step using the specified loss function and full metric evaluation.
 
@@ -410,7 +412,7 @@ class DDPM(ZebraModel):
         batch_idx: int,  # noqa: ARG002
         optimizer: Optimizer,
         optimizer_closure: Callable[[], None],
-        **kwargs,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         """Custom optimizer step used in PyTorch Lightning.
 

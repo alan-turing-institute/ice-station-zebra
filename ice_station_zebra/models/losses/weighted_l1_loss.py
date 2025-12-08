@@ -29,7 +29,7 @@ class WeightedL1Loss(nn.L1Loss):
         inputs: Tensor,
         targets: Tensor,
         sample_weights: Tensor,
-    ) -> Tensor:
+    ) -> Tensor:  # type: ignore[override]
         """Compute weighted L1 loss.
 
         The loss is computed as elementwise L1 error multiplied by

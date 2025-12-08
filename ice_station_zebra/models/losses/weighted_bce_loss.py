@@ -28,7 +28,7 @@ class WeightedBCEWithLogitsLoss(nn.BCEWithLogitsLoss):
         inputs: Tensor,
         targets: Tensor,
         sample_weights: Tensor,
-    ) -> Tensor:
+    ) -> Tensor:  # type: ignore[override]
         """Weighted BCEWithLogitsLoss.
 
         Compute BCEWithLogitsLoss weighted by masking.

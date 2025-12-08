@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Weighted MSELoss adapted from the IceNet repository.
 
 https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
@@ -29,7 +30,7 @@ class WeightedMSELoss(nn.MSELoss):
         inputs: Tensor,
         targets: Tensor,
         sample_weights: Tensor,
-    ) -> Tensor:  
+    ) -> Tensor:
         """Compute weighted mean squared error loss.
 
         Args:

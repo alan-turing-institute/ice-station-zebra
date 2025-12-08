@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Weighted BCEWithLogitsLoss adapted from the IceNet repository.
 
 https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb

@@ -189,7 +189,7 @@ class DDPM(ZebraModel):
     def sample(
         self,
         x: torch.Tensor,
-        sample_weight: torch.Tensor | None,
+        sample_weight: torch.Tensor | None,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
@@ -378,7 +378,7 @@ class DDPM(ZebraModel):
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, Any]:
         """Set up the optimizer.
 
         Returns:
@@ -406,11 +406,11 @@ class DDPM(ZebraModel):
 
     def optimizer_step(
         self,
-        epoch: int,
-        batch_idx: int,
+        epoch: int,  # noqa: ARG002
+        batch_idx: int,  # noqa: ARG002
         optimizer: Optimizer,
         optimizer_closure: Callable[[], None],
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         """Custom optimizer step used in PyTorch Lightning.
 

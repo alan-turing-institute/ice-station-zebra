@@ -34,7 +34,7 @@ class DDPM(ZebraModel):
         TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         timesteps: int = 1000,
         learning_rate: float = 5e-4,
@@ -168,32 +168,30 @@ class DDPM(ZebraModel):
 
         self.save_hyperparameters()
 
-    def forward(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
+    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
         """Generate a single NCHW output with diffusion.
 
         Args:
-            x: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
+            inputs: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         Returns:
             TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
 
         """
-        sample_weight = torch.ones_like(x[..., :1])
+        sample_weight = torch.ones_like(inputs[..., :1])
 
-        y_bchw = self.sample(x, sample_weight)
+        y_bchw = self.sample(inputs, sample_weight)
 
         return (y_bchw + 1.0) / 2.0
 
     def sample(
         self,
         x: torch.Tensor,
-        sample_weight: torch.Tensor | None,
     ) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
             x (torch.Tensor): Conditioning input [B, C, H, W].
-            sample_weight (torch.Tensor or None): Optional weights.
 
         Returns:
             torch.Tensor: Denoised output of shape [B, C, H, W].
@@ -238,8 +236,7 @@ class DDPM(ZebraModel):
         return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
 
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Merge time dimension into channels for ERA5, squeeze singleton channels for osisaf,
-        and combine them for forecasting together.
+        """Merge time dimension into channels for ERA5, squeeze singleton channels for osisaf,and combine them for forecasting together.
 
         Args:
             batch: Dictionary containing keys 'osisaf-south' and 'era5'.
@@ -251,6 +248,7 @@ class DDPM(ZebraModel):
         osisaf = batch["osisaf-south"]  # [B, T, 1, H, W]
         era5 = batch["era5"]  # [B, T, 27, H2, W2]
 
+        # pylint: disable=invalid-name
         B, T, C2, H2, W2 = era5.shape
         H_target, W_target = osisaf.shape[-2:]
 

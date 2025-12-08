@@ -35,59 +35,6 @@ def _build_processor(tmp_path: Path, dataset_cfg: dict) -> ZebraDataProcessor:
     return ZebraDataProcessor("test", full_cfg, DummyPreprocessor)
 
 
-def test_compute_total_parts_defaults_when_missing_dates(tmp_path: Path) -> None:
-    """Test that the default total parts is 1 when start/end are missing."""
-    processor = _build_processor(
-        tmp_path,
-        {
-            "group_by": "monthly",
-        },
-    )
-    assert processor._compute_total_parts() == 1
-
-
-@pytest.mark.parametrize(
-    ("group_by", "start", "end", "expected"),
-    [
-        ("monthly", "2020-01-01", "2020-03-01", 3),
-        ("month", "2020-01-01", "2020-03-01", 3),
-        ("daily", "2020-01-01", "2020-03-01", 3),
-        ("1d", "2020-01-01", "2020-03-01", 3),
-        ("weekly", "2020-01-01", "2020-02-15", 1),
-    ],
-)
-def test_compute_total_parts_grouping(
-    tmp_path: Path,
-    group_by: str,
-    start: str,
-    end: str,
-    expected: int,
-) -> None:
-    """Test that the total parts is computed correctly when start/end are specified."""
-    processor = _build_processor(
-        tmp_path,
-        {
-            "start": start,
-            "end": end,
-            "group_by": group_by,
-        },
-    )
-    assert processor._compute_total_parts() == expected
-
-
-def test_compute_total_parts_timezone_strings(tmp_path: Path) -> None:
-    """Test that the total parts is computed correctly when start/end are timezone strings."""
-    processor = _build_processor(
-        tmp_path,
-        {
-            "start": "2020-01-01T00:00:00Z",
-            "end": "2020-03-01T00:00:00Z",
-            "group_by": "monthly",
-        },
-    )
-    assert processor._compute_total_parts() == 3
-
-
 @pytest.fixture
 def processor_with_file_dataset(tmp_path: Path) -> ZebraDataProcessor:
     """Fixture that creates a processor with a file-based dataset path."""

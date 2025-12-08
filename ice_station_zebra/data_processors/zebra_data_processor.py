@@ -137,82 +137,6 @@ class ZebraDataProcessor:
                     )
                 )
 
-    def _compute_total_parts(self) -> int:  # noqa: C901
-        """Infer total number of parts from config using start/end and group_by.
-
-        Heuristic: if group_by contains 'month' or 'monthly' use month-count inclusive.
-        Fallback to DEFAULT_TOTAL_PARTS.
-        """
-        # 1) explicit override in config (highest priority)
-        tp = self.config.get("total_parts")
-        if tp is not None:
-            try:
-                return int(tp)
-            except (ValueError, TypeError):
-                logger.warning(
-                    "Invalid total_parts in config (%r); falling back to heuristic", tp
-                )
-
-        default_total_parts = 1
-        start = (
-            self.config.get("start")
-            or self.config.get("start_date")
-            or self.config.get("begin")
-        )
-        end = (
-            self.config.get("end")
-            or self.config.get("end_date")
-            or self.config.get("stop")
-        )
-        group_by = (self.config.get("group_by") or "").lower()
-
-        if not start or not end:
-            logger.debug(
-                "Could not detect start/end in config; defaulting total_parts=%d",
-                default_total_parts,
-            )
-            return default_total_parts
-
-        try:
-            start_ts = datetime.fromisoformat(start)
-            end_ts = datetime.fromisoformat(end)
-        except (ValueError, TypeError) as err:
-            # Try to be permissive: strip timezone 'Z' etc.
-            try:
-                if start.endswith("Z"):
-                    start_ts = datetime.fromisoformat(start[:-1])
-                if end.endswith("Z"):
-                    end_ts = datetime.fromisoformat(end[:-1])
-            except (ValueError, TypeError) as tz_err:
-                logger.debug(
-                    "Failed to parse start/end dates (%s, %s): %s; defaulting total_parts=%d",
-                    start,
-                    end,
-                    tz_err,
-                    default_total_parts,
-                )
-                return default_total_parts
-            else:
-                logger.debug(
-                    "Parsed start/end after stripping timezone info despite initial error: %s",
-                    err,
-                )
-
-        if "month" in group_by or group_by in ("monthly", "month"):
-            total = (
-                (end_ts.year - start_ts.year) * 12 + (end_ts.month - start_ts.month) + 1
-            )
-            return max(default_total_parts, total)
-
-        # treat daily/24h as monthly parts by default (keeps reasonable part counts)
-        if "day" in group_by or group_by in ("daily", "1d", "24h"):
-            total = (
-                (end_ts.year - start_ts.year) * 12 + (end_ts.month - start_ts.month) + 1
-            )
-            return max(default_total_parts, total)
-
-        return default_total_parts
-
     def _part_tracker_path(self) -> Path:
         """Path for part_trackerdata file that tracks completed parts."""
         return (
@@ -298,7 +222,7 @@ class ZebraDataProcessor:
         force_reset: bool = False,
         use_lock: bool = True,
         lock_timeout: int = 30,
-        total_parts_override: int | None = None,
+        total_parts: int = 10,
         overwrite: bool = False,
     ) -> None:
         """Load all parts automatically and record progress so runs can be resumed.
@@ -309,7 +233,7 @@ class ZebraDataProcessor:
             force_reset: if True, clear part_tracker file and re-run all parts from scratch.
             use_lock: if True, use file locking to prevent concurrent updates to part_tracker file.
             lock_timeout: timeout in seconds for acquiring the lock.
-            total_parts_override: if provided, override the computed total parts count.
+            total_parts: number of parts to load, default = 10.
             overwrite: if True, delete the dataset directory before loading.
 
         """
@@ -448,12 +372,6 @@ class ZebraDataProcessor:
                     "host": socket.gethostname(),
                 }
                 self._write_part_tracker(part_tracker)
-
-        total_parts = (
-            total_parts_override
-            if total_parts_override is not None
-            else self._compute_total_parts()
-        )
 
         if overwrite:
             logger.info(

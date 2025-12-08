@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """SIEError metric adapted from the IceNet repository.
 
 The repository is available at:

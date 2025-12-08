@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """IceNetAccuracy metric adapted from the IceNet repository.
 
 The repository is available at: https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
@@ -42,10 +43,10 @@ class IceNetAccuracy(Metric):
         )
         self.weighted_score += torch.sum(
             base_score * sample_weight[:, :, :, self.leadtimes_to_evaluate]
-        )  # type: ignore
+        )
         self.possible_score += torch.sum(
             sample_weight[:, :, :, self.leadtimes_to_evaluate]
-        )  # type: ignore
+        )
 
     def compute(self) -> torch.Tensor:
         """Compute the final accuracy metric as a percentage."""

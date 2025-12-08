@@ -54,8 +54,12 @@ class SIEError(Metric):
         preds = (preds > SEA_ICE_THRESHOLD).long()
         target = (target > SEA_ICE_THRESHOLD).long()
 
-        self.pred_sie += preds[:, :, :, self.leadtimes_to_evaluate].sum()
-        self.true_sie += target[:, :, :, self.leadtimes_to_evaluate].sum()
+        self.pred_sie += (
+            preds[:, :, :, self.leadtimes_to_evaluate].sum().to(self.pred_sie.dtype)
+        )
+        self.true_sie += (
+            target[:, :, :, self.leadtimes_to_evaluate].sum().to(self.true_sie.dtype)
+        )
 
     def compute(self) -> torch.Tensor:
         """Compute the final Sea Ice Extent error in km²."""

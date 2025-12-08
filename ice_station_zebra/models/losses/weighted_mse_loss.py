@@ -23,12 +23,13 @@ class WeightedMSELoss(nn.MSELoss):
         """
         super().__init__(*args, **kwargs)
 
+    # type: ignore[override]
     def forward(
         self,
         inputs: Tensor,
         targets: Tensor,
         sample_weights: Tensor,
-    ) -> Tensor:  # type: ignore[override]
+    ) -> Tensor:  
         """Compute weighted mean squared error loss.
 
         Args:

@@ -182,7 +182,10 @@ class GaussianDiffusion:
         return sqrt_alpha_t * noise - sqrt_one_minus_alpha_t * x_start
 
     def q_sample(
-        self, x_start: torch.Tensor, t: torch.Tensor, noise: torch.Tensor = None
+        self,
+        x_start: torch.Tensor,
+        t: torch.Tensor,
+        noise: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Add noise to x_start at timestep t, using the forward diffusion process.
 

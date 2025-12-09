@@ -66,10 +66,10 @@
 | ice\_station\_zebra/models/processors/null.py                           |       10 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/vit.py                            |       36 |       27 |     25% |36-69, 83-108 |
-| ice\_station\_zebra/models/zebra\_model.py                              |       48 |        0 |    100% |           |
+| ice\_station\_zebra/models/zebra\_model.py                              |       54 |        0 |    100% |           |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        2 |        0 |    100% |           |
 | ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
-| ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |29-101, 104-105 |
+| ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |29-102, 105-106 |
 | ice\_station\_zebra/types/\_\_init\_\_.py                               |        5 |        0 |    100% |           |
 | ice\_station\_zebra/types/complex\_datatypes.py                         |       36 |       13 |     64% |37, 52-59, 63-65, 69 |
 | ice\_station\_zebra/types/enums.py                                      |        7 |        0 |    100% |           |
@@ -82,7 +82,7 @@
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       59 |     58% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 360-361, 364, 381, 396, 423-425, 428-429, 437 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      220 |       40 |     82% |170-172, 188, 196-198, 254-257, 265-266, 289-292, 328-330, 338-339, 343-364, 478-493, 597, 603-604, 622-630, 690, 787, 820, 827, 839 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2483** |  **783** | **68%** |           |
+|                                                               **TOTAL** | **2489** |  **783** | **69%** |           |
 
 
 ## Setup coverage badge

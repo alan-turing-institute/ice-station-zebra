@@ -29,7 +29,7 @@ from .preprocessors import IPreprocessor
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_STALE_SECONDS = 3600  # 1 hour default staleness threshold
+# DEFAULT_STALE_SECONDS = 3600  # 1 hour default staleness threshold
 
 
 class ZebraDataProcessor:
@@ -47,9 +47,9 @@ class ZebraDataProcessor:
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
         self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
-        self.stale_seconds = config.get("part_tracker", {}).get(
-            "stale_seconds", DEFAULT_STALE_SECONDS
-        )
+        # self.stale_seconds = config.get("part_tracker", {}).get(
+        #     "stale_seconds", DEFAULT_STALE_SECONDS
+        # )
 
     def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
@@ -239,7 +239,7 @@ class ZebraDataProcessor:
         """
 
         # Nested helper functions that access outer scope variables
-        def check_and_mark_in_progress(part_spec: str) -> bool:  # noqa: C901
+        def check_and_mark_in_progress(part_spec: str) -> bool:
             """Check if part should be skipped and mark it as in progress.
 
             Returns True if part should be skipped (already completed), False otherwise.
@@ -259,33 +259,33 @@ class ZebraDataProcessor:
                     )
                     return True
 
-                # If already in progress, check for staleness
-                ip = part_tracker.get("in_progress", {}).get(part_spec)
-                if ip:
-                    try:
-                        started_str = ip["started_at"].replace("Z", "+00:00")
-                        started = datetime.fromisoformat(started_str)
-                    except (ValueError, TypeError, KeyError):
-                        started = None
-                    if started:
-                        age = (datetime.now(UTC) - started).total_seconds()
-                        if age < self.stale_seconds:
-                            logger.info(
-                                "Part %s is already in_progress (started %s by %s@%s); skipping for now",
-                                part_spec,
-                                ip.get("started_at"),
-                                ip.get("pid"),
-                                ip.get("host"),
-                            )
-                            return True
-                        # treat as stale and reclaim
-                        logger.warning(
-                            "Reclaiming part %s which was started %s seconds ago by %s@%s",
-                            part_spec,
-                            int(age),
-                            ip.get("pid"),
-                            ip.get("host"),
-                        )
+                # # If already in progress, check for staleness
+                # ip = part_tracker.get("in_progress", {}).get(part_spec)
+                # if ip:
+                #     try:
+                #         started_str = ip["started_at"].replace("Z", "+00:00")
+                #         started = datetime.fromisoformat(started_str)
+                #     except (ValueError, TypeError, KeyError):
+                #         started = None
+                #     if started:
+                #         age = (datetime.now(UTC) - started).total_seconds()
+                #         if age < self.stale_seconds:
+                #             logger.info(
+                #                 "Part %s is already in_progress (started %s by %s@%s); skipping for now",
+                #                 part_spec,
+                #                 ip.get("started_at"),
+                #                 ip.get("pid"),
+                #                 ip.get("host"),
+                #             )
+                #             return True
+                #         # treat as stale and reclaim
+                #         logger.warning(
+                #             "Reclaiming part %s which was started %s seconds ago by %s@%s",
+                #             part_spec,
+                #             int(age),
+                #             ip.get("pid"),
+                #             ip.get("host"),
+                #         )
 
                 # mark in-progress with PID/host
                 part_tracker.setdefault("in_progress", {})[part_spec] = {

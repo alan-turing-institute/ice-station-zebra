@@ -149,7 +149,7 @@ class TestZebraModel:
         cfg_output_space: DictConfig,
         cfg_scheduler: DictConfig,
     ) -> None:
-        model = DummyModel(
+        model = FakeDataModel(
             name="dummy",
             input_spaces=[cfg_input_space],
             n_forecast_steps=1,

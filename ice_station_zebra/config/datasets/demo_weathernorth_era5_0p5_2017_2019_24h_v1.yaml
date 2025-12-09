@@ -1,13 +1,13 @@
-full-weathersouth-era5-0p5-1979-2024-24h-v1:
-  name: full-weathersouth-era5-0p5-1979-2024-24h-v1
+demo-weathernorth-era5-0p5-2017-2019-24h-v1:
+  name: demo-weathernorth-era5-0p5-2017-2019-24h-v1
   group_as: era5
-  description: Full ERA5 dataset (0.5 deg)
+  description: Small ERA5 dataset for testing (0.5 deg, north)
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 
   dates:
-    start: '1979-01-01T00:00:00'
-    end: '2025-12-31T23:00:00'
+    start: '2017-01-01T00:00:00'
+    end: '2019-12-31T23:00:00'
     frequency: 1d
 
   input:
@@ -17,7 +17,7 @@ full-weathersouth-era5-0p5-1979-2024-24h-v1:
         class: ea
         expver: "0001"
         grid: "0.5 / 0.5"
-        area: "0/-180/-90/180"  # southern hemisphere
+        area: "90/-180/0/180"  # northern hemisphere
         levtype: sfc
         param:
         - 2t # 2-metre air temperature
@@ -30,7 +30,7 @@ full-weathersouth-era5-0p5-1979-2024-24h-v1:
         class: ea
         expver: "0001"
         grid: "0.5 / 0.5"
-        area: "0/-180/-90/180"  # southern hemisphere
+        area: "90/-180/0/180"  # northern hemisphere
         level:
         - 10 # hPa
         - 250 # hPa

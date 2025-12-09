@@ -7,6 +7,7 @@ plotting:
   video_fps: 2
   video_format: gif             # mp4 or gif
   plot_spec:
+    _target_: ice_station_zebra.types.PlotSpec
     # Plot specification
     variable: "sea_ice_concentration"
     selected_timestep: 0          # which T to render for the static map
@@ -20,5 +21,6 @@ plotting:
     diff_strategy: "precompute"     # "precompute" | "two-pass" | "per-frame"
     vmin: 0.0
     vmax: 1.0
-    colourbar_location: "vertical"
+    colourbar_location: "horizontal"
     colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
+    include_footer_metadata: true

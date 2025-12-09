@@ -8,31 +8,44 @@
 
 """
 
+import contextlib
 import io
+import logging
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
+from matplotlib.axes import Axes
+from matplotlib.colors import ListedColormap
+from matplotlib.text import Text
 from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
-from .convert import _image_from_figure, _save_animation
-from .layout import _add_colourbars, _init_axes, _set_axes_limits
+from . import convert
+from .layout import _add_colourbars, _build_layout, _set_axes_limits, _set_titles
 from .plotting_core import (
     compute_difference,
     compute_display_ranges,
     compute_display_ranges_stream,
     levels_from_spec,
+    load_land_mask,
     make_diff_colourmap,
     prepare_difference_stream,
     validate_2d_pair,
     validate_3d_streams,
 )
+from .range_check import compute_range_check_report
+
+logger = logging.getLogger(__name__)
+
+
+# Keep strong references to animation objects during save to avoid GC-related warnings
+_ANIM_CACHE: list[animation.FuncAnimation] = []
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -46,6 +59,9 @@ DEFAULT_SIC_SPEC = PlotSpec(
     vmax=1.0,
     colourbar_location="horizontal",
     colourbar_strategy="shared",
+    outside_warn=0.05,
+    severe_outside=0.20,
+    include_shared_range_mismatch_check=True,
 )
 
 
@@ -81,8 +97,40 @@ def plot_maps(
     # Check the shapes of the arrays
     height, width = validate_2d_pair(ground_truth, prediction)
 
-    # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    # Load land mask if specified
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
+    # Pre-compute range check to decide top spacing (warning badge may need extra room)
+    (gt_min, gt_max), (pred_min, pred_max) = compute_display_ranges(
+        ground_truth, prediction, plot_spec
+    )
+    range_check_report = compute_range_check_report(
+        ground_truth,
+        prediction,
+        vmin=gt_min,
+        vmax=gt_max,
+        outside_warn=getattr(plot_spec, "outside_warn", 0.05),
+        severe_outside=getattr(plot_spec, "severe_outside", 0.20),
+        include_shared_range_mismatch_check=getattr(
+            plot_spec, "include_shared_range_mismatch_check", True
+        ),
+    )
+
+    # Increase title space if warnings are present to avoid overlap with axes titles
+    title_space_override = 0.10 if range_check_report.warnings else None
+
+    # Initialise the figure and axes with dynamic top spacing if needed
+    if title_space_override is not None:
+        fig, axs, cbar_axes = _build_layout(
+            plot_spec=plot_spec,
+            height=height,
+            width=width,
+            title_space=title_space_override,
+        )
+    else:
+        fig, axs, cbar_axes = _build_layout(
+            plot_spec=plot_spec, height=height, width=width
+        )
     levels = levels_from_spec(plot_spec)
 
     # Prepare difference rendering parameters if needed
@@ -100,7 +148,11 @@ def plot_maps(
         diff_colour_scale,
         precomputed_difference=difference if plot_spec.include_difference else None,
         levels_override=levels,
+        land_mask=land_mask,
     )
+
+    # Restore axis titles after drawing (they were cleared in _draw_frame)
+    _set_titles(axs, plot_spec)
 
     # Colourbars and title
     _add_colourbars(
@@ -113,10 +165,40 @@ def plot_maps(
     )
 
     _set_axes_limits(axs, width=width, height=height)
-    fig.suptitle(_format_date_to_string(date))
+    try:
+        title_text = _set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
+    except Exception:
+        logger.exception("Failed to draw suptitle; continuing without title.")
+        title_text = None
+
+    # Include range_check report (already computed above)
+    badge = (
+        ""
+        if not range_check_report.warnings
+        else "Warnings: " + ", ".join(range_check_report.warnings)
+    )
+    if badge:
+        # Place the warning just below the title
+        if title_text is not None:
+            _, title_y = title_text.get_position()
+            n_lines = title_text.get_text().count("\n") + 1
+            # Reduced gap to avoid overlapping axes titles; keep badge close to title
+            warning_y = max(title_y - (0.05 + 0.02 * (n_lines - 1)), 0.0)
+        else:
+            warning_y = 0.90
+        _draw_badge_with_box(fig, 0.5, warning_y, badge)
+
+    # Footer metadata at the bottom
+    if getattr(plot_spec, "include_footer_metadata", True):
+        try:
+            footer_text = _build_footer_static(plot_spec)
+            if footer_text:
+                _set_footer_with_box(fig, footer_text)
+        except Exception:
+            logger.exception("Failed to draw footer; continuing without footer.")
 
     try:
-        return {"sea-ice_concentration-static-maps": [_image_from_figure(fig)]}
+        return {"sea-ice_concentration-static-maps": [convert._image_from_figure(fig)]}
     finally:
         plt.close(fig)
 
@@ -174,8 +256,19 @@ def video_maps(
         )
         raise InvalidArrayError(error_msg)
 
-    # Initialise the figure and axes
-    fig, axs, cbar_axes = _init_axes(plot_spec=plot_spec, height=height, width=width)
+    # Load land mask if specified
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
+    # Apply land mask to data streams if provided
+    if land_mask is not None:
+        # Mask out land areas by setting them to NaN
+        ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
+        prediction_stream = np.where(land_mask, np.nan, prediction_stream)
+
+    # Initialise the figure and axes with a larger footer space for videos
+    fig, axs, cbar_axes = _build_layout(
+        plot_spec=plot_spec, height=height, width=width, footer_space=0.11
+    )
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation
@@ -183,7 +276,7 @@ def video_maps(
         ground_truth_stream, prediction_stream, plot_spec
     )
 
-    # Prepare the difference array according to the strategy
+    # Prepare the difference array according to the strategy; also ensure a colour scale exists
     difference_stream, diff_colour_scale = prepare_difference_stream(
         include_difference=plot_spec.include_difference,
         diff_mode=plot_spec.diff_mode,
@@ -191,6 +284,12 @@ def video_maps(
         ground_truth_stream=ground_truth_stream,
         prediction_stream=prediction_stream,
     )
+    if plot_spec.include_difference and diff_colour_scale is None:
+        # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
+        first_diff = compute_difference(
+            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
+        )
+        diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
     precomputed_diff_0 = (
         difference_stream[0]
         if (plot_spec.include_difference and difference_stream is not None)
@@ -207,7 +306,10 @@ def video_maps(
         precomputed_diff_0,
         levels,
         display_ranges_override=display_ranges,
+        land_mask=land_mask,
     )
+    # Restore axis titles after drawing (they were cleared in _draw_frame)
+    _set_titles(axs, plot_spec)
     # Colourbars and title
     _add_colourbars(
         axs,
@@ -219,7 +321,22 @@ def video_maps(
         cbar_axes=cbar_axes,
     )
     _set_axes_limits(axs, width=width, height=height)
-    fig.suptitle(_format_date_to_string(dates[0]))
+    try:
+        title_text = _set_suptitle_with_box(
+            fig, _build_title_video(plot_spec, dates, 0)
+        )
+    except Exception:
+        logger.exception("Failed to draw suptitle; continuing without title.")
+        title_text = None
+
+    # Footer metadata at the bottom (static across frames)
+    if getattr(plot_spec, "include_footer_metadata", True):
+        try:
+            footer_text = _build_footer_video(plot_spec, dates)
+            if footer_text:
+                _set_footer_with_box(fig, footer_text)
+        except Exception:
+            logger.exception("Failed to draw footer; continuing without footer.")
 
     # Animation function
     def animate(tt: int) -> tuple[()]:
@@ -237,9 +354,13 @@ def video_maps(
             precomputed_diff_tt,
             levels,
             display_ranges_override=display_ranges,
+            land_mask=land_mask,
         )
+        # Restore axis titles after drawing (they were cleared in _draw_frame)
+        _set_titles(axs, plot_spec)
 
-        fig.suptitle(_format_date_to_string(dates[tt]))
+        if title_text is not None:
+            title_text.set_text(_build_title_video(plot_spec, dates, tt))
         return ()
 
     # Create the animation object
@@ -251,72 +372,104 @@ def video_maps(
         blit=False,
         repeat=True,
     )
+    # Keep a strong reference without touching figure attributes (ruff-fix)
+    _ANIM_CACHE.append(animation_object)
 
     # Save -> BytesIO and clean up temp file
     try:
-        video_buffer = _save_animation(
-            animation_object, fps=fps, video_format=video_format
+        video_buffer = convert._save_animation(
+            animation_object, _fps=fps, _video_format=video_format
         )
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
+        # Drop strong reference now that saving is done
+        with contextlib.suppress(ValueError):
+            _ANIM_CACHE.remove(animation_object)
         plt.close(fig)
 
 
 # ---- Helper functions ----
-def _draw_frame(  # noqa: PLR0913
+
+
+def _apply_land_mask(
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    difference: np.ndarray | None,
+    land_mask: np.ndarray | None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+    """Apply land mask to data arrays by setting land areas to NaN.
+
+    Args:
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        difference: Optional difference data array.
+        land_mask: Optional land mask where True indicates land areas.
+
+    Returns:
+        Tuple of (masked_ground_truth, masked_prediction, masked_difference).
+
+    """
+    if land_mask is not None:
+        ground_truth = np.where(land_mask, np.nan, ground_truth)
+        prediction = np.where(land_mask, np.nan, prediction)
+        if difference is not None:
+            difference = np.where(land_mask, np.nan, difference)
+
+    return ground_truth, prediction, difference
+
+
+def _compute_display_ranges(
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    plot_spec: PlotSpec,
+    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
+    | None = None,
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Compute display ranges for ground truth and prediction plots.
+
+    Args:
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        plot_spec: Plotting specification.
+        display_ranges_override: Optional override ranges for stable animation.
+
+    Returns:
+        Tuple of ((gt_vmin, gt_vmax), (pred_vmin, pred_vmax)).
+
+    """
+    if display_ranges_override is not None:
+        return display_ranges_override
+    return compute_display_ranges(ground_truth, prediction, plot_spec)
+
+
+def _draw_main_panels(  # noqa: PLR0913
     axs: list,
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     plot_spec: PlotSpec,
-    diff_colour_scale: DiffColourmapSpec | None = None,
-    precomputed_difference: np.ndarray | None = None,
+    groundtruth_vmin: float,
+    groundtruth_vmax: float,
+    prediction_vmin: float,
+    prediction_vmax: float,
     levels_override: np.ndarray | None = None,
-    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
-    | None = None,
 ) -> tuple:
-    """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
-
-    Creates contour plots for ground truth and prediction data, and optionally computes
-    and displays their difference. It handles colour normalisation, contour levels, and
-    proper cleanup of previous plot elements.
+    """Draw ground truth and prediction panels.
 
     Args:
-        axs: List of matplotlib axes objects where plots will be drawn. Expected to have
-            at least 2 axes (ground truth, prediction) and optionally 3 (with difference).
-        ground_truth: 2D array of ground truth values to plot.
-        prediction: 2D array of predicted values to plot.
-        plot_spec: Plotting specification containing colourmap, value ranges, and other
-            display parameters.
-        include_difference: Whether to compute and plot the difference between ground
-            truth and prediction.
-        diff_colour_scale: Optional DiffColourmapSpec containing normalisation and colour
-            mapping parameters for difference plots.
-        precomputed_difference: Optional pre-computed difference array. If None and
-            difference is included, the difference will be computed on-demand.
-        levels_override: Optional custom contour levels. If None, levels are derived
-            from plot_spec.
-        display_ranges_override: Optional custom display ranges for stable animation.
-            If None, ranges are computed from the data.
+        axs: List of matplotlib axes objects.
+        ground_truth: Ground truth data array.
+        prediction: Prediction data array.
+        plot_spec: Plotting specification.
+        groundtruth_vmin: Minimum value for ground truth display.
+        groundtruth_vmax: Maximum value for ground truth display.
+        prediction_vmin: Minimum value for prediction display.
+        prediction_vmax: Maximum value for prediction display.
+        levels_override: Optional custom contour levels.
 
     Returns:
-        Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
-        The image objects are matplotlib contour collections, and image_difference may be None
-        if include_difference is False. diff_colour_scale is returned for reuse in animations.
+        Tuple of (image_groundtruth, image_prediction).
 
     """
-    for ax in axs:
-        _clear_contours(ax)
-
-    # Compute display ranges - use override if provided for stable animation
-    if display_ranges_override is not None:
-        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
-            display_ranges_override
-        )
-    else:
-        (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
-            compute_display_ranges(ground_truth, prediction, plot_spec)
-        )
-
     # Use PlotSpec levels for ground_truth and prediction unless overridden
     levels = levels_from_spec(plot_spec) if levels_override is None else levels_override
 
@@ -335,6 +488,7 @@ def _draw_frame(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
+            origin="lower",
         )
         image_prediction = axs[1].contourf(
             prediction,
@@ -342,6 +496,7 @@ def _draw_frame(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
+            origin="lower",
         )
     else:
         # For shared strategy, use same levels for both panels
@@ -351,6 +506,7 @@ def _draw_frame(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=groundtruth_vmin,
             vmax=groundtruth_vmax,
+            origin="lower",
         )
         image_prediction = axs[1].contourf(
             prediction,
@@ -358,22 +514,94 @@ def _draw_frame(  # noqa: PLR0913
             cmap=plot_spec.colourmap,
             vmin=prediction_vmin,
             vmax=prediction_vmax,
+            origin="lower",
         )
+
+    return image_groundtruth, image_prediction
+
+
+def _draw_frame(  # noqa: PLR0913
+    axs: list,
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    plot_spec: PlotSpec,
+    diff_colour_scale: DiffColourmapSpec | None = None,
+    precomputed_difference: np.ndarray | None = None,
+    levels_override: np.ndarray | None = None,
+    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
+    | None = None,
+    land_mask: np.ndarray | None = None,
+) -> tuple:
+    """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
+
+    Creates contour plots for ground truth and prediction data, and optionally computes
+    and displays their difference. It handles colour normalisation, contour levels, and
+    proper cleanup of previous plot elements. Can overlay grey land areas using a land mask.
+
+    Args:
+        axs: List of matplotlib axes objects where plots will be drawn. Expected to have
+            at least 2 axes (ground truth, prediction) and optionally 3 (with difference).
+        ground_truth: 2D array of ground truth values to plot.
+        prediction: 2D array of predicted values to plot.
+        plot_spec: Plotting specification containing colourmap, value ranges, and other
+            display parameters.
+        diff_colour_scale: Optional DiffColourmapSpec containing normalisation and colour
+            mapping parameters for difference plots.
+        precomputed_difference: Optional pre-computed difference array. If None and
+            difference is included, the difference will be computed on-demand.
+        levels_override: Optional custom contour levels. If None, levels are derived
+            from plot_spec.
+        display_ranges_override: Optional custom display ranges for stable animation.
+            If None, ranges are computed from the data.
+        land_mask: Optional 2D boolean array where True indicates land areas to overlay
+            in grey. If None, no land overlay is applied.
+
+    Returns:
+        Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
+        The image objects are matplotlib contour collections, and image_difference may be None
+        if include_difference is False. diff_colour_scale is returned for reuse in animations.
+
+    """
+    for ax in axs:
+        _clear_plot(ax)
+
+    # Apply land mask to data if provided
+    ground_truth, prediction, difference = _apply_land_mask(
+        ground_truth, prediction, precomputed_difference, land_mask
+    )
+
+    # Compute display ranges - use override if provided for stable animation
+    (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
+        _compute_display_ranges(
+            ground_truth, prediction, plot_spec, display_ranges_override
+        )
+    )
+
+    # Draw ground truth and prediction panels
+    image_groundtruth, image_prediction = _draw_main_panels(
+        axs,
+        ground_truth,
+        prediction,
+        plot_spec,
+        groundtruth_vmin,
+        groundtruth_vmax,
+        prediction_vmin,
+        prediction_vmax,
+        levels_override,
+    )
 
     image_difference = None
     if plot_spec.include_difference:
-        difference = (
-            precomputed_difference
-            if precomputed_difference is not None
-            else compute_difference(ground_truth, prediction, plot_spec.diff_mode)
-        )
-
-        # DiffRender system tells us how to colour the difference panel
-        if diff_colour_scale is None:
-            # Fallback: compute render params on-demand (per-frame strategy)
-            diff_colour_scale = make_diff_colourmap(
-                difference, mode=plot_spec.diff_mode
+        # Use the difference from land mask application, or compute if not available
+        if difference is None:
+            difference = compute_difference(
+                ground_truth, prediction, plot_spec.diff_mode
             )
+
+        # Expect colour scale to be provided by caller; no fallback here
+        if diff_colour_scale is None:
+            error_msg = "diff_colour_scale must be provided when including difference"
+            raise InvalidArrayError(error_msg)
 
         if diff_colour_scale.norm is not None:
             # Signed differences with TwoSlopeNorm - use explicit levels to ensure consistency
@@ -387,6 +615,7 @@ def _draw_frame(  # noqa: PLR0913
                 cmap=diff_colour_scale.cmap,
                 vmin=diff_vmin,
                 vmax=diff_vmax,
+                origin="lower",
             )
         else:
             # Non-negative differences with vmin/vmax
@@ -404,38 +633,52 @@ def _draw_frame(  # noqa: PLR0913
                 cmap=diff_colour_scale.cmap,
                 vmin=vmin,
                 vmax=vmax,
+                origin="lower",
             )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays
+
+    def _overlay_nans(ax: Axes, arr: np.ndarray, land_color: str = "white") -> None:
+        """Overlay NaNs as semi-transparent grey overlays.
+
+        Not used currently, add the following before the return statement to enable:
+        >>> _overlay_nans(axs[0], ground_truth)
+        >>> _overlay_nans(axs[1], prediction)
+        >>> if plot_spec.include_difference:
+        >>>     _overlay_nans(axs[2], difference)
+        Mask should then be visible in the plot.
+
+        """
+        if np.isnan(arr).any():
+            # Create overlay for NaN areas (land mask)
+            nan_mask = np.isnan(arr).astype(float)
+            # Create a custom colormap: 0=transparent, 1=land color
+
+            # Land colour options: typically 'white' or 'black' (or any valid Matplotlib color)
+            colors = ["white", land_color]  # 0=white (transparent), 1=land color
+            cmap = ListedColormap(colors)
+            ax.imshow(
+                nan_mask,
+                cmap=cmap,
+                vmin=0,
+                vmax=1,
+                alpha=1.0,  # Fully opaque white land areas
+                interpolation="nearest",
+            )
+
+    # Optional: visually mark NaNs as semi-transparent grey overlays here
+    if land_mask is not None:
+        _overlay_nans(axs[0], ground_truth, land_color="white")
+        _overlay_nans(axs[1], prediction, land_color="white")
+        if plot_spec.include_difference and difference is not None:
+            # Use black for the difference panel so zero (white) remains distinguishable from land
+            _overlay_nans(axs[2], difference, land_color="black")
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 
 
-def _format_date_to_string(date: date | datetime) -> str:
-    """Format a date or datetime object to a standardised string representation for plot titles.
-
-    Args:
-        date: Date or datetime object to format.
-
-    Returns:
-        Formatted string in "YYYY-MM-DD HH:MM" format for datetime objects,
-        or "YYYY-MM-DD" format for date objects.
-
-    Example:
-        >>> from datetime import date, datetime
-        >>> _format_date_to_string(date(2023, 12, 25))
-        '2023-12-25'
-        >>> _format_date_to_string(datetime(2023, 12, 25, 14, 30))
-        '2023-12-25 14:30'
-
-    """
-    return (
-        date.strftime(r"%Y-%m-%d %H:%M")
-        if isinstance(date, datetime)
-        else date.strftime(r"%Y-%m-%d")
-    )
-
-
-def _clear_contours(ax: Any) -> None:  # noqa: ANN401
-    """Remove all contour collections from a matplotlib axes object to prevent overlapping plots.
+def _clear_plot(ax: Axes) -> None:
+    """Remove titles, labels, and contour collections from an axes to prevent overlaps.
 
     Prevents overlapping plots in an animation loop.
 
@@ -445,3 +688,153 @@ def _clear_contours(ax: Any) -> None:  # noqa: ANN401
     """
     for coll in ax.collections[:]:
         coll.remove()
+    ax.set_title("")
+
+
+def _set_suptitle_with_box(fig: plt.Figure, text: str) -> Text:
+    """Draw a fixed-position title with a white box that doesn't influence layout.
+
+    Returns the Text artist so callers can update with set_text during animation.
+    This version avoids kwargs that are unsupported on older Matplotlib.
+    """
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
+    t = fig.text(
+        x=0.5,
+        y=0.98,
+        s=text,
+        ha="center",
+        va="top",
+        fontsize=12,
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
+
+
+def _set_footer_with_box(fig: plt.Figure, text: str) -> Text:
+    """Draw a fixed-position footer with a white box at bottom center.
+
+    Footer is intended for metadata and secondary information.
+    """
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 2.0, "alpha": 1.0}
+    t = fig.text(
+        x=0.5,
+        y=0.03,
+        s=text,
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontfamily="monospace",
+        transform=fig.transFigure,
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
+
+
+def _draw_badge_with_box(fig: plt.Figure, x: float, y: float, text: str) -> Text:
+    """Draw a warning/info badge with white background box at figure coords."""
+    bbox = {"facecolor": "white", "edgecolor": "none", "pad": 1.5, "alpha": 1.0}
+    t = fig.text(
+        x=x,
+        y=y,
+        s=text,
+        fontsize=11,
+        fontfamily="monospace",
+        color="firebrick",
+        ha="center",
+        va="top",
+        bbox=bbox,
+    )
+    with contextlib.suppress(Exception):
+        t.set_zorder(1000)
+    return t
+
+
+# --- Title helpers ---
+def _formatted_variable_name(variable: str) -> str:
+    """Return a human-friendly variable name for titles.
+
+    Example: "sea_ice_concentration" -> "Sea ice concentration".
+    """
+    pretty = variable.replace("_", " ").strip()
+    return pretty.title() if pretty else ""
+
+
+def _format_date_for_title(dt: date | datetime) -> str:
+    """Format a date/datetime to ISO date string (YYYY-MM-DD) for plot titles.
+
+    Args:
+        dt: Date or datetime object to format.
+
+    Returns:
+        ISO format date string (YYYY-MM-DD). Time components are stripped
+        from datetime objects.
+
+    Example:
+        >>> from datetime import date, datetime
+        >>> _format_date_for_title(date(2023, 12, 25))
+        '2023-12-25'
+        >>> _format_date_for_title(datetime(2023, 12, 25, 14, 30))
+        '2023-12-25'
+
+    """
+    if isinstance(dt, datetime):
+        return dt.date().isoformat()
+    return dt.isoformat()
+
+
+def _build_title_static(plot_spec: PlotSpec, when: date | datetime) -> str:
+    """Compose a simple suptitle for static plots.
+
+    Lines:
+      1) "<Variable> (<Hemisphere>)  Shown: YYYY-MM-DD"
+         (Footer contains any metadata such as model/epoch/training data if present)
+    """
+    metric = _formatted_variable_name(plot_spec.variable)
+    hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
+    return f"{metric}{hemi} Prediction   Shown: {_format_date_for_title(when)}"
+
+
+def _build_title_video(
+    plot_spec: PlotSpec,
+    dates: Sequence[date | datetime],
+    current_index: int,
+) -> str:
+    """Compose a simple suptitle for video plots (date changes per frame).
+
+    Lines:
+      1) "<Variable> (<Hemisphere>)  Frame: YYYY-MM-DD"
+      2) Footer: "Animating from <start> to <end>"
+      3) Footer: "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
+      4) Footer: "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
+    """
+    metric = _formatted_variable_name(plot_spec.variable)
+    hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
+    if dates:
+        return f"{metric}{hemi} Prediction   Frame: {_format_date_for_title(dates[current_index])}"
+    return f"{metric}{hemi} Prediction"
+
+
+def _build_footer_static(plot_spec: PlotSpec) -> str:
+    """Build footer text for static plots using metadata that used to be in title."""
+    lines: list[str] = []
+    if plot_spec.metadata_subtitle:
+        lines.append(plot_spec.metadata_subtitle)
+    return "\n".join(lines)
+
+
+def _build_footer_video(plot_spec: PlotSpec, dates: Sequence[date | datetime]) -> str:
+    """Build footer text for video plots: animation range and metadata."""
+    lines: list[str] = []
+    if dates:
+        start_s = _format_date_for_title(dates[0])
+        end_s = _format_date_for_title(dates[-1])
+        lines.append(f"Animating from {start_s} to {end_s}")
+    if plot_spec.metadata_subtitle:
+        lines.append(plot_spec.metadata_subtitle)
+    return "\n".join(lines)

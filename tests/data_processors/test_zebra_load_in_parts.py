@@ -3,7 +3,6 @@
 This file contains all tests related to the load_in_parts method, including:
 - Basic functionality (loading all parts, resume, force_reset, error handling)
 - File locking behavior (timeouts, retries)
-- Stale in_progress entry reclamation
 - PID/host tracking
 """
 
@@ -25,7 +24,6 @@ from ice_station_zebra.data_processors.preprocessors.ipreprocessor import IPrepr
 
 # adjust import path to where your module is
 from ice_station_zebra.data_processors.zebra_data_processor import (
-    # DEFAULT_STALE_SECONDS,
     ZebraDataProcessor,
 )
 
@@ -293,44 +291,6 @@ def test_lock_timeout_skips_part(
 
     # Because lock acquisition failed for each part claim attempt, no loads should have been attempted
     assert calls == []
-
-
-# def test_reclaim_stale_in_progress(
-#     processor_with_directory_dataset: ZebraDataProcessor,
-# ) -> None:
-#     """Test that stale in_progress entries are reclaimed and processed."""
-#     proc = processor_with_directory_dataset
-
-#     # write a stale in_progress entry older than DEFAULT_STALE_SECONDS
-#     now = datetime.now(UTC)
-#     started = (
-#         (now - timedelta(seconds=DEFAULT_STALE_SECONDS + 10))
-#         .isoformat()
-#         .replace("+00:00", "Z")
-#     )
-#     stale = {
-#         "in_progress": {
-#             "1/10": {"started_at": started, "pid": 12345, "host": "oldhost"}
-#         },
-#         "completed": {},
-#     }
-#     proc._write_part_tracker(stale)
-
-#     calls = []
-
-#     def fake_load(parts: str) -> None:
-#         calls.append(parts)
-
-#     with (
-#         patch.object(proc, "load", side_effect=fake_load),
-#         patch.object(proc, "inspect"),  # Mock inspect to assume dataset exists
-#     ):
-#         # should reclaim the stale 1/10 and run it
-#         proc.load_in_parts(
-#             resume=True, continue_on_error=False, force_reset=False, use_lock=False
-#         )
-
-#     assert "1/10" in calls or "1/10" in _read_tracker(proc)["completed"]
 
 
 def test_total_parts_override(

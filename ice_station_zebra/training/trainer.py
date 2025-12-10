@@ -39,6 +39,7 @@ class ZebraTrainer:
                     "n_history_steps": self.data_module.n_history_steps,
                     "output_space": self.data_module.output_space.to_dict(),
                     "optimizer": config["train"]["optimizer"],
+                    "scheduler": config["train"]["scheduler"],
                 },
                 **config["model"],
             ),

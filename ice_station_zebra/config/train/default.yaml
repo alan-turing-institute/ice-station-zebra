@@ -4,5 +4,6 @@ defaults:
     - ema_weight_averaging
     - wandb_metric
   - optimizer: default
+  - scheduler: default
   - trainer: default
   - _self_

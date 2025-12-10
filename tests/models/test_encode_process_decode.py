@@ -28,6 +28,7 @@ class TestEncodeProcessDecode:
             n_history_steps=test_n_history_steps,
             output_space=cfg_output_space,
             optimizer=DictConfig({}),
+            scheduler=DictConfig({}),
         )
 
         assert model.name == "encode-null-decode"
@@ -62,6 +63,7 @@ class TestEncodeProcessDecode:
             n_history_steps=test_n_history_steps,
             output_space=cfg_output_space,
             optimizer=DictConfig({}),
+            scheduler=DictConfig({}),
         )
         result: torch.Tensor = model(
             {

@@ -11,3 +11,6 @@ outputs
 wandb
 notebooks/data
 notebooks/*.nc
+
+# MyST build outputs
+_build

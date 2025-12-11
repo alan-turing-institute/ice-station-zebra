@@ -20,19 +20,22 @@ class SIEError(Metric):
     higher_is_better: bool = False
     full_state_update: bool = True
 
-    def __init__(self, leadtimes_to_evaluate: list[int]) -> None:
+    def __init__(self, leadtimes_to_evaluate: list[int], pixel_size: int = 25) -> None:
         """Initialize the SIEError metric.
 
         Parameters
         ----------
-        leadtimes_to_evaluate : List[int]
+        leadtimes_to_evaluate: List[int]
             Indices of lead times at which SIE should be evaluated.
+        pixel_size: int, optional
+            Physical size of one pixel in kilometers (default is 25 km -> OSISAF).
 
         """
         super().__init__()
         self.leadtimes_to_evaluate = leadtimes_to_evaluate
         self.add_state("pred_sie", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("true_sie", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.pixel_size = pixel_size
 
     def update(
         self,
@@ -64,4 +67,6 @@ class SIEError(Metric):
 
     def compute(self) -> torch.Tensor:
         """Compute the final Sea Ice Extent error in km²."""
-        return (self.pred_sie - self.true_sie) * 25**2  # each pixel is 25x25 km
+        return (
+            self.pred_sie - self.true_sie
+        ) * self.pixel_size**2  # each pixel is 25x25 km

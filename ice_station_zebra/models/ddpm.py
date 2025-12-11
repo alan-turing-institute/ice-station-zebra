@@ -31,10 +31,13 @@ class DDPM(ZebraModel):
     """Denoising Diffusion Probabilistic Model (DDPM).
 
     Input space:
-        TensorNTCHW with (batch_size, n_history_steps, n_latent_channels_total, latent_height, latent_width)
+        TensorNTCHW with shape (batch_size, n_history_steps + n_history_steps * n_era5_channels, height, width)
+        - OSISAF input: T historical steps, singleton channel squeezed
+        - ERA5 input: T historical steps × number of channels, resized to OSISAF resolution
 
     Output space:
-        TensorNTCHW with (batch_size, n_forecast_steps, n_latent_channels_total, latent_height, latent_width)
+        TensorNTCHW with shape (batch_size, n_forecast_steps * n_output_channels, height, width)
+        - Forecasted outputs per timestep and channel, flattened along the channel dimension
     """
 
     def __init__(  # noqa: PLR0913
@@ -67,6 +70,8 @@ class DDPM(ZebraModel):
         """
         super().__init__(**kwargs)
 
+        self.osisaf_key = self.output_space.name
+
         era5_space = next(
             space
             for space in self.input_spaces
@@ -79,6 +84,12 @@ class DDPM(ZebraModel):
         else:
             self.era5_space = era5_space.channels
 
+        # Get the base output channels from output_space
+        if isinstance(self.output_space, dict):
+            base_output_channels = self.output_space["channels"]
+        else:
+            base_output_channels = self.output_space.channels
+
         # osisaf channels after squeezing: T_osisaf = self.n_history_steps
         osisaf_channels = self.n_history_steps  # keep T dimension as channels
 
@@ -87,7 +98,7 @@ class DDPM(ZebraModel):
 
         # total channels for UNet
         self.input_channels = osisaf_channels + era5_channels
-        self.n_output_classes = n_output_classes
+        self.n_output_classes = base_output_channels
         self.output_channels = self.n_forecast_steps * self.n_output_classes
         self.timesteps = timesteps
 
@@ -171,21 +182,10 @@ class DDPM(ZebraModel):
 
         self.save_hyperparameters()
 
-    def forward(self, inputs: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Generate a single NCHW output with diffusion.
-
-        Args:
-            inputs: TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
-
-        Returns:
-            TensorNCHW with (batch_size, n_latent_channels_total, latent_height, latent_width)
-
-        """
-        sample_weight = torch.ones_like(inputs[..., :1])
-
-        y_bchw = self.sample(inputs, sample_weight)
-
-        return (y_bchw + 1.0) / 2.0
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError(
+            "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
+        )
 
     def sample(
         self,
@@ -250,7 +250,8 @@ class DDPM(ZebraModel):
             TensorNTCHW: Combined input of shape [B, C_combined, H, W].
 
         """
-        osisaf = batch["osisaf-south"]  # [B, T, 1, H, W]
+        # osisaf = batch["osisaf-south"]  # [B, T, 1, H, W]
+        osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
         era5 = batch["era5"]  # [B, T, 27, H2, W2]
 
         # pylint: disable=invalid-name
@@ -293,7 +294,7 @@ class DDPM(ZebraModel):
         noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
 
         # Predict v
-        pred_v = self.model(noisy_y, t, x).squeeze()
+        pred_v = self.model(noisy_y, t, x)  # .squeeze()
 
         # Compute target v using scaled data
         target_v = self.diffusion.calculate_v(y_scaled, noise, t)

@@ -75,12 +75,9 @@ def load(
 
 @datasets_cli.command("load_in_parts")
 @hydra_adaptor
-def load_in_parts(  # noqa: PLR0913
+def load_in_parts(
     config: DictConfig,
     *,
-    resume: Annotated[
-        bool, typer.Option(help="Resume by skipping parts recorded as completed")
-    ] = True,
     continue_on_error: Annotated[
         bool, typer.Option(help="Continue to next part on error")
     ] = True,
@@ -109,7 +106,6 @@ def load_in_parts(  # noqa: PLR0913
             continue
         logger.info("Working on %s.", ds.name)
         ds.load_in_parts(
-            resume=resume,
             continue_on_error=continue_on_error,
             force_reset=force_reset,
             total_parts=total_parts,

@@ -1,7 +1,7 @@
 """Tests for load_in_parts functionality.
 
 This file contains all tests related to the load_in_parts method, including:
-- Basic functionality (loading all parts, resume, force_reset, error handling)
+- Basic functionality (loading all parts, force_reset, error handling)
 - File locking behavior (timeouts, retries)
 - PID/host tracking
 """
@@ -86,7 +86,7 @@ def test_load_in_parts_loads_all_parts_successfully(
         patch.object(processor, "load") as mock_load,
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
+        processor.load_in_parts(continue_on_error=False, use_lock=False)
         # Should have called load 10 times (for parts 1/10 - 10/10)
         assert mock_load.call_count == 10
         mock_load.assert_any_call(parts="1/10")
@@ -107,7 +107,7 @@ def test_load_in_parts_loads_all_parts_successfully(
 def test_load_in_parts_resumes_skipping_completed_parts(
     processor_with_directory_dataset: ZebraDataProcessor,
 ) -> None:
-    """load_in_parts should skip parts that are already completed when resume=True."""
+    """load_in_parts should skip parts that are already completed."""
     processor = processor_with_directory_dataset
     # Pre-mark part 5/10 as completed
     initial_tracker = {
@@ -121,7 +121,7 @@ def test_load_in_parts_resumes_skipping_completed_parts(
         patch.object(processor, "load") as mock_load,
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(resume=True, continue_on_error=False, use_lock=False)
+        processor.load_in_parts(continue_on_error=False, use_lock=False)
 
         # Should call load for all 10 parts except 5/10
         assert mock_load.call_count == 9
@@ -162,7 +162,7 @@ def test_load_in_parts_force_reset_clears_tracker(
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
         processor.load_in_parts(
-            resume=True, continue_on_error=False, force_reset=True, use_lock=False
+            continue_on_error=False, force_reset=True, use_lock=False
         )
 
         # Should call load for all 10 parts (not skipping any)
@@ -202,7 +202,7 @@ def test_load_in_parts_continues_on_error_when_enabled(
         patch.object(processor, "load", side_effect=mock_load_side_effect),
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(resume=False, continue_on_error=True, use_lock=False)
+        processor.load_in_parts(continue_on_error=True, use_lock=False)
 
         # Should have attempted all 10 parts
         assert call_count == 10
@@ -237,7 +237,7 @@ def test_load_in_parts_raises_on_error_when_continue_disabled(
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
         pytest.raises(RuntimeError, match=error_msg),
     ):
-        processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
+        processor.load_in_parts(continue_on_error=False, use_lock=False)
 
     # Only first 4 parts should be marked as completed (5/10 failed and raised)
     tracker = processor._read_part_tracker()
@@ -291,7 +291,6 @@ def test_lock_timeout_skips_part(
         patch.object(proc, "inspect"),  # Mock inspect to assume dataset exists
     ):
         proc.load_in_parts(
-            resume=False,
             continue_on_error=True,
             force_reset=False,
             use_lock=True,
@@ -317,7 +316,6 @@ def test_total_parts_override(
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
         processor.load_in_parts(
-            resume=False,
             continue_on_error=False,
             use_lock=False,
             total_parts=5,
@@ -366,9 +364,7 @@ def test_overwrite_deletes_dataset_and_tracker(
         patch.object(processor, "init") as mock_init,
         patch.object(processor, "load") as mock_load,
     ):
-        processor.load_in_parts(
-            resume=False, continue_on_error=False, use_lock=False, overwrite=True
-        )
+        processor.load_in_parts(continue_on_error=False, use_lock=False, overwrite=True)
 
         # Should have called init to reinitialize the dataset
         mock_init.assert_called_once_with(overwrite=False)
@@ -416,7 +412,6 @@ def test_overwrite_skips_force_reset(
     ):
         # Both overwrite and force_reset are True
         processor.load_in_parts(
-            resume=False,
             continue_on_error=False,
             use_lock=False,
             overwrite=True,
@@ -446,7 +441,7 @@ def test_automatic_initialization_when_dataset_missing(
         patch.object(processor, "inspect", side_effect=FileNotFoundError("not found")),
         patch.object(processor, "load") as mock_load,
     ):
-        processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
+        processor.load_in_parts(continue_on_error=False, use_lock=False)
 
         # Should have called init to initialize the missing dataset
         mock_init.assert_called_once_with(overwrite=False)
@@ -479,7 +474,7 @@ def test_force_reset_clears_in_progress(
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
         processor.load_in_parts(
-            resume=True, continue_on_error=False, force_reset=True, use_lock=False
+            continue_on_error=False, force_reset=True, use_lock=False
         )
 
         # Should call load for all 10 parts (not skipping any due to force_reset)

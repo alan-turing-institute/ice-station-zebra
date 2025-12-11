@@ -209,10 +209,9 @@ class ZebraDataProcessor:
             )
         )
 
-    def load_in_parts(  # noqa: C901, PLR0915, PLR0913
+    def load_in_parts(  # noqa: C901, PLR0915
         self,
         *,
-        resume: bool = True,
         continue_on_error: bool = True,
         force_reset: bool = False,
         use_lock: bool = True,
@@ -223,7 +222,6 @@ class ZebraDataProcessor:
         """Load all parts automatically and record progress so runs can be resumed.
 
         Args:
-            resume: if True, consult part_tracker tracking file and skip parts already completed.
             continue_on_error: if True, log errors and continue with later parts.
             force_reset: if True, clear part_tracker file and re-run all parts from scratch.
             use_lock: if True, use file locking to prevent concurrent updates to part_tracker file.
@@ -246,7 +244,8 @@ class ZebraDataProcessor:
             def _claim(part_tracker: dict) -> bool:
                 completed = set(part_tracker.get("completed", {}).keys())
                 # Skip if already done
-                if resume and part_spec in completed:
+                # if part_spec in completed:
+                if part_spec in completed:
                     logger.info(
                         "Skipping already completed part %s for %s",
                         part_spec,
@@ -339,6 +338,13 @@ class ZebraDataProcessor:
                     "host": socket.gethostname(),
                 }
                 self._write_part_tracker(part_tracker)
+
+        if "sic" in self.name:
+            logger.warning(
+                "Loading dataset %s in parts is not supported for non-anemoi datasets, use create.",
+                self.name,
+            )
+            return
 
         if overwrite:
             logger.info(

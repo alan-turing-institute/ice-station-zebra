@@ -171,7 +171,6 @@ uv run zebra datasets finalise --config-name <your config>.yaml
 
 #### Options
 
-- `--resume` / `--no-resume` (default: `--resume`): Resume by skipping parts recorded as completed
 - `--continue-on-error` / `--no-continue-on-error` (default: `--continue-on-error`): Continue to next part on error
 - `--force-reset`: Clear existing progress tracker and start from part 1. Anemoi will check whether you have the data already and continue.
 - `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config)

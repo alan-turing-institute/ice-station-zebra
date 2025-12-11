@@ -357,7 +357,7 @@ class DDPM(ZebraModel):
             torch.Tensor: Loss value.
 
         """
-        x = batch["inputs"]
+        x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"].squeeze(2)
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 

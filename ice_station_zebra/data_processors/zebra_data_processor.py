@@ -358,11 +358,11 @@ class ZebraDataProcessor:
             # Ensure dataset is initialized before loading parts
             try:
                 self.inspect()
-                
+
                 if not self._part_tracker_path().exists():
-                    logger.info("Dataset %s already exists at %s.",
-                    self.name,
-                    self.path_dataset)
+                    logger.info(
+                        "Dataset %s already exists at %s.", self.name, self.path_dataset
+                    )
                     return
             except (AttributeError, FileNotFoundError, PathNotFoundError):
                 logger.info(
@@ -371,7 +371,7 @@ class ZebraDataProcessor:
                     self.path_dataset,
                 )
                 self.init(overwrite=False)
-        
+
         logger.info(
             "Starting chunked load for dataset %s (parts=%d)", self.name, total_parts
         )

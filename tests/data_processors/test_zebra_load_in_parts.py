@@ -78,12 +78,15 @@ def test_load_in_parts_loads_all_parts_successfully(
 ) -> None:
     """load_in_parts should load all parts and track completion."""
     processor = processor_with_directory_dataset
+
+    initial_tracker = _read_tracker(processor)
+    processor._write_part_tracker(initial_tracker)
+
     with (
         patch.object(processor, "load") as mock_load,
         patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
     ):
         processor.load_in_parts(resume=False, continue_on_error=False, use_lock=False)
-
         # Should have called load 10 times (for parts 1/10 - 10/10)
         assert mock_load.call_count == 10
         mock_load.assert_any_call(parts="1/10")
@@ -182,6 +185,9 @@ def test_load_in_parts_continues_on_error_when_enabled(
     """load_in_parts should continue to next part when error occurs and continue_on_error=True."""
     processor = processor_with_directory_dataset
 
+    initial_tracker = _read_tracker(processor)
+    processor._write_part_tracker(initial_tracker)
+
     # Make load fail for part 5/10
     call_count = 0
     error_msg = "Simulated load failure"
@@ -214,6 +220,9 @@ def test_load_in_parts_raises_on_error_when_continue_disabled(
 ) -> None:
     """load_in_parts should raise exception when error occurs and continue_on_error=False."""
     processor = processor_with_directory_dataset
+
+    initial_tracker = _read_tracker(processor)
+    processor._write_part_tracker(initial_tracker)
 
     # Make load fail for part 5/10
     error_msg = "Simulated load failure"
@@ -298,6 +307,10 @@ def test_total_parts_override(
 ) -> None:
     """Test that total_parts overrides the computed total parts."""
     processor = processor_with_directory_dataset
+
+    initial_tracker = _read_tracker(processor)
+    processor._write_part_tracker(initial_tracker)
+
     # Override to 5 parts instead of computed 10
     with (
         patch.object(processor, "load") as mock_load,

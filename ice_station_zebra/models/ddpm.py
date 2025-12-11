@@ -33,7 +33,7 @@ class DDPM(ZebraModel):
     Input space:
         TensorNTCHW with shape (batch_size, n_history_steps + n_history_steps * n_era5_channels, height, width)
         - OSISAF input: T historical steps, singleton channel squeezed
-        - ERA5 input: T historical steps × number of channels, resized to OSISAF resolution
+        - ERA5 input: T historical steps times number of channels, resized to OSISAF resolution
 
     Output space:
         TensorNTCHW with shape (batch_size, n_forecast_steps * n_output_channels, height, width)

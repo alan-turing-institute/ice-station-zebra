@@ -1,7 +1,7 @@
 # mypy: ignore-errors
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, NoReturn
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -48,7 +48,6 @@ class DDPM(ZebraModel):
         kernel_size: int = 3,
         activation: str = "SiLU",
         normalization: str = "groupnorm",
-        n_output_classes: int = 1,
         time_embed_dim: int = 256,
         dropout_rate: float = 0.1,
         **kwargs: Any,
@@ -62,7 +61,6 @@ class DDPM(ZebraModel):
             kernel_size (int): Convolution kernel size used in the UNet.
             activation (str): Activation function used throughout the network (e.g., "SiLU").
             normalization (str): Normalization layer type (e.g., "groupnorm").
-            n_output_classes (int): Number of output classes/channels to predict per forecast step.
             time_embed_dim (int): Dimensionality of the timestep embedding.
             dropout_rate (float): Dropout probability applied inside the UNet blocks.
             **kwargs: Additional arguments passed to ``ZebraModel``.
@@ -86,9 +84,9 @@ class DDPM(ZebraModel):
 
         # Get the base output channels from output_space
         if isinstance(self.output_space, dict):
-            base_output_channels = self.output_space["channels"]
+            self.base_output_channels = self.output_space["channels"]
         else:
-            base_output_channels = self.output_space.channels
+            self.base_output_channels = self.output_space.channels
 
         # osisaf channels after squeezing: T_osisaf = self.n_history_steps
         osisaf_channels = self.n_history_steps  # keep T dimension as channels
@@ -98,8 +96,7 @@ class DDPM(ZebraModel):
 
         # total channels for UNet
         self.input_channels = osisaf_channels + era5_channels
-        self.n_output_classes = base_output_channels
-        self.output_channels = self.n_forecast_steps * self.n_output_classes
+        self.output_channels = self.n_forecast_steps * self.base_output_channels
         self.timesteps = timesteps
 
         self.model = UNetDiffusion(
@@ -182,10 +179,9 @@ class DDPM(ZebraModel):
 
         self.save_hyperparameters()
 
-    def forward(self, *args, **kwargs):
-        raise NotImplementedError(
-            "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
-        )
+    def forward(self, *args: Any, **kwargs: Any) -> NoReturn:
+        msg = "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
+        raise NotImplementedError(msg)
 
     def sample(
         self,
@@ -204,7 +200,7 @@ class DDPM(ZebraModel):
         """
         shape = (
             x.shape[0],
-            self.n_forecast_steps * self.n_output_classes,
+            self.n_forecast_steps * self.base_output_channels,
             *x.shape[-2:],
         )
         device = x.device
@@ -250,7 +246,6 @@ class DDPM(ZebraModel):
             TensorNTCHW: Combined input of shape [B, C_combined, H, W].
 
         """
-        # osisaf = batch["osisaf-south"]  # [B, T, 1, H, W]
         osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
         era5 = batch["era5"]  # [B, T, 27, H2, W2]
 

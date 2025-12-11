@@ -103,6 +103,7 @@ def load_in_parts(
     factory = ZebraDataProcessorFactory(config)
     for ds in factory.datasets:
         if dataset and ds.name != dataset:
+            logger.info("Not loading %s.", ds.name)
             continue
         logger.info("Working on %s.", ds.name)
         ds.load_in_parts(

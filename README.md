@@ -173,7 +173,7 @@ uv run zebra datasets finalise --config-name <your config>.yaml
 
 - `--continue-on-error` / `--no-continue-on-error` (default: `--continue-on-error`): Continue to next part on error
 - `--force-reset`: Clear existing progress tracker and start from part 1. Anemoi will check whether you have the data already and continue.
-- `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config)
+- `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config). Make sure you use the dataset name and not the name of the config.
 - `--total-parts <n>`: Override the computed total number of parts (useful if you want to split differently than the default) Otherwise determine in your data yaml or local yaml.
 - `--overwrite`: Delete the dataset directory before loading (use with caution!)
 

@@ -361,7 +361,9 @@ class DDPM(ZebraModel):
 
         # Convert to [0, 1] for metrics and loss
         y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
+        y_hat = torch.clamp(y_hat, 0, 1).unsqueeze(2)
+        y = y.unsqueeze(2)
+        sample_weight = sample_weight.unsqueeze(2)
 
         loss = self.loss(y_hat, y, sample_weight)
         self.log(

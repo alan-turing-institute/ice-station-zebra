@@ -35,7 +35,7 @@
 | ice\_station\_zebra/evaluation/cli.py                                   |       16 |        3 |     81% | 27-28, 32 |
 | ice\_station\_zebra/evaluation/evaluator.py                             |       38 |       26 |     32% | 26-84, 89 |
 | ice\_station\_zebra/exceptions.py                                       |        3 |        0 |    100% |           |
-| ice\_station\_zebra/models/\_\_init\_\_.py                              |        4 |        0 |    100% |           |
+| ice\_station\_zebra/models/\_\_init\_\_.py                              |        5 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/\_\_init\_\_.py                       |        9 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/activations.py                        |        2 |        0 |    100% |           |
 | ice\_station\_zebra/models/common/conv\_block\_common.py                |        8 |        0 |    100% |           |
@@ -47,22 +47,29 @@
 | ice\_station\_zebra/models/common/resizing\_interpolation.py            |       16 |        1 |     94% |        40 |
 | ice\_station\_zebra/models/common/time\_embed.py                        |        9 |        4 |     56% | 26-30, 37 |
 | ice\_station\_zebra/models/common/transformerblock.py                   |       12 |        7 |     42% |16-22, 40-42 |
+| ice\_station\_zebra/models/ddpm.py                                      |      134 |      107 |     20% |21, 69-180, 183-184, 201-227, 235-237, 249-269, 273-308, 313-339, 356-380, 390-406, 433-434 |
 | ice\_station\_zebra/models/decoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/base\_decoder.py                    |       14 |        2 |     86% |     40-41 |
 | ice\_station\_zebra/models/decoders/cnn\_decoder.py                     |       41 |        0 |    100% |           |
 | ice\_station\_zebra/models/decoders/naive\_linear\_decoder.py           |       19 |        0 |    100% |           |
 | ice\_station\_zebra/models/diffusion/\_\_init\_\_.py                    |        3 |        0 |    100% |           |
-| ice\_station\_zebra/models/diffusion/gaussian\_diffusion.py             |       46 |       36 |     22% |41-74, 93-98, 117-137, 153-156, 177-182 |
-| ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       70 |     11% |56-176, 197-241, 257-272, 285-288 |
+| ice\_station\_zebra/models/diffusion/gaussian\_diffusion.py             |       54 |       43 |     20% |41-74, 93-98, 117-137, 153-156, 177-182, 201-222 |
+| ice\_station\_zebra/models/diffusion/unet\_diffusion.py                 |       79 |       70 |     11% |58-179, 200-244, 260-275, 288-291 |
 | ice\_station\_zebra/models/encode\_process\_decode.py                   |       21 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/\_\_init\_\_.py                     |        4 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/base\_encoder.py                    |       14 |        2 |     86% |     44-45 |
 | ice\_station\_zebra/models/encoders/cnn\_encoder.py                     |       26 |        0 |    100% |           |
 | ice\_station\_zebra/models/encoders/naive\_linear\_encoder.py           |       15 |        0 |    100% |           |
+| ice\_station\_zebra/models/losses/\_\_init\_\_.py                       |        4 |        0 |    100% |           |
+| ice\_station\_zebra/models/losses/weighted\_bce\_loss.py                |        8 |        3 |     62% | 25, 39-44 |
+| ice\_station\_zebra/models/losses/weighted\_l1\_loss.py                 |       10 |        4 |     60% | 26, 39-41 |
+| ice\_station\_zebra/models/losses/weighted\_mse\_loss.py                |       11 |        6 |     45% | 25, 45-50 |
+| ice\_station\_zebra/models/metrics/\_\_init\_\_.py                      |        3 |        0 |    100% |           |
+| ice\_station\_zebra/models/metrics/icenet\_accuracy.py                  |       21 |       11 |     48% |24-29, 37-47, 53 |
+| ice\_station\_zebra/models/metrics/sie\_error.py                        |       20 |       10 |     50% |34-38, 58-64, 70 |
 | ice\_station\_zebra/models/persistence.py                               |       16 |        0 |    100% |           |
-| ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        6 |        0 |    100% |           |
+| ice\_station\_zebra/models/processors/\_\_init\_\_.py                   |        5 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/base\_processor.py                |       18 |        0 |    100% |           |
-| ice\_station\_zebra/models/processors/ddpm.py                           |       27 |       17 |     37% |30-34, 46-50, 68-84 |
 | ice\_station\_zebra/models/processors/null.py                           |       10 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/vit.py                            |       36 |       27 |     25% |36-69, 83-108 |
@@ -82,7 +89,7 @@
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       59 |     58% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 360-361, 364, 381, 396, 423-425, 428-429, 437 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      220 |       40 |     82% |170-172, 188, 196-198, 254-257, 265-266, 289-292, 328-330, 338-339, 343-364, 478-493, 597, 603-604, 622-630, 690, 787, 820, 827, 839 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-|                                                               **TOTAL** | **2489** |  **783** | **69%** |           |
+|                                                               **TOTAL** | **2681** |  **914** | **66%** |           |
 
 
 ## Setup coverage badge

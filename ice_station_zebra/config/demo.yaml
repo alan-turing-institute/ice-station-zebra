@@ -1,6 +1,0 @@
-defaults:
-  - base
-  - override /datasets: osisaf-sic-south-2019-12-24h-v1
-  - override /model: naive_null_naive
-
-base_path: mydata/

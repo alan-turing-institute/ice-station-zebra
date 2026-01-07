@@ -2,6 +2,11 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+# Set matplotlib backend BEFORE any imports that might use it
+import matplotlib as mpl
+
+mpl.use("Agg")
+
 import hydra
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf

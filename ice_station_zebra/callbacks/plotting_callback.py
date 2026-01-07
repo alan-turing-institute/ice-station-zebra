@@ -1,3 +1,8 @@
+# Set matplotlib backend before any plotting imports
+import matplotlib as mpl
+
+mpl.use("Agg")
+
 import dataclasses
 import logging
 from collections.abc import Mapping, Sequence
@@ -207,7 +212,7 @@ class PlottingCallback(Callback):
                     )
         except InvalidArrayError as err:
             logger.warning("Static plotting skipped due to invalid arrays: %s", err)
-        except (ValueError, MemoryError, OSError):
+        except Exception:
             logger.exception("Static plotting failed")
 
     def log_video_plots(

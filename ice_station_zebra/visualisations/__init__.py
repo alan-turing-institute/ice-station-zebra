@@ -1,3 +1,9 @@
+# Set non-interactive matplotlib backend early to prevent hangs on macOS
+# make sure the import is not reordered by the formatter
+import matplotlib as mpl
+
+mpl.use("Agg")
+
 from ice_station_zebra.types import PlotSpec
 
 from .plotting_core import detect_land_mask_path

@@ -9,6 +9,7 @@ import dataclasses
 import gc
 import logging
 from collections.abc import Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -275,8 +276,29 @@ class RawInputsCallback(Callback):
         if self._dataset_ref is None:
             self._dataset_ref = dataset
 
-        # Get the date for this batch's first sample
-        date = dataset.date_from_index(batch_idx)
+        # Get batch size from the batch data (using first dataset found)
+        batch_size = 1
+        for ds in dataset.inputs:
+            if ds.name in batch:
+                input_data = batch[ds.name]
+                if input_data.ndim == EXPECTED_INPUT_NDIM:
+                    batch_size = int(input_data.shape[0])
+                    break
+
+        # Calculate the sample index for the first sample in this batch
+        # The callback extracts data from batch[0], so we use sample_idx = batch_size * batch_idx + 0
+        sample_idx = batch_size * batch_idx
+
+        # Get the forecast start date (as np.datetime64) for this sample
+        forecast_start_date = dataset.available_dates[sample_idx]
+        
+        # Get the history steps for this forecast scenario
+        history_dates = dataset.get_history_steps(forecast_start_date)
+        
+        # Get the actual date of the timestep being plotted
+        timestep_date_np = history_dates[self.timestep_index]
+        # Convert np.datetime64 to datetime
+        date = datetime.strptime(str(timestep_date_np), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
         # Determine if we should plot static plots this batch
         should_plot_static = False

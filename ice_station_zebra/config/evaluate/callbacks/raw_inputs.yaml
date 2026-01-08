@@ -23,6 +23,9 @@ raw_inputs:
     variable: "raw_inputs"      # Label for plot type (not a specific variable name like "era5:2t")
                                  # This distinguishes raw input plots from ground vs prediction plots ("sea_ice_concentration")
                                  # Actual variable names come from the dataset (e.g., "era5:2t", "era5:10u", etc.)
+    # FALLBACK colourmap: Only used if variable_styles doesn't match and _default doesn't specify a cmap.
+    # Since _default has cmap: "viridis" below, changing this value won't affect any plots.
+    # To use this fallback colourmap instead, either remove the cmap from _default or set it to null.
     colourmap: "viridis"
     colourbar_location: "vertical"
     # hemisphere will be auto-detected from dataset name
@@ -61,6 +64,10 @@ raw_inputs:
     "osisaf-south:ice_conc": { cmap: "Blues_r" }
 
     # Default fallback
+    # NOTE: This _default entry means plot_spec.colourmap above is never used.
+    # Variables that don't match any specific pattern will use this colourmap.
+    # To use plot_spec.colourmap instead, either remove this _default entry or
+    # set cmap to null: "_default": { cmap: null }
     "_default": { cmap: "viridis" }
 
     # Wildcard fallback for ERA5 channels

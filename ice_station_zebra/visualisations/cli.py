@@ -105,7 +105,7 @@ def _collect_temporal_data(
 @hydra_adaptor
 def plot_raw_inputs(
     config: DictConfig,
-    sample_idx: Annotated[
+    forecast_date_idx: Annotated[
         int,
         typer.Option(help="Index of the forecast scenario to plot (default: 0)"),
     ] = 0,
@@ -129,8 +129,8 @@ def plot_raw_inputs(
 
     Args:
         config: Hydra config (provided via --config-name option).
-        sample_idx: Index of the forecast scenario to plot. This selects which
-            forecast date/scenario (maps to available_dates[sample_idx]).
+        forecast_date_idx: Index of the forecast scenario to plot. This selects which
+            forecast date/scenario (maps to available_dates[forecast_date_idx]).
             Default: 0.
         timestep_idx: Index of the timestep within the selected scenario's history
             window to plot. Each scenario contains n_history_steps timesteps.
@@ -183,13 +183,13 @@ def plot_raw_inputs(
     log.info("Test dataset has %d samples", len(test_dataset))
 
     # Validate sample index
-    if sample_idx < 0 or sample_idx >= len(test_dataset):
-        msg = f"Sample index {sample_idx} out of range [0, {len(test_dataset)})"
+    if forecast_date_idx < 0 or forecast_date_idx >= len(test_dataset):
+        msg = f"Sample index {forecast_date_idx} out of range [0, {len(test_dataset)})"
         raise ValueError(msg)
 
     # Get a sample from the dataset
-    batch = test_dataset[sample_idx]
-    date = test_dataset.date_from_index(sample_idx)
+    batch = test_dataset[forecast_date_idx]
+    date = test_dataset.date_from_index(forecast_date_idx)
 
     # Validate timestep index
     # Each sample contains n_history_steps timesteps
@@ -197,7 +197,7 @@ def plot_raw_inputs(
     if timestep_idx < 0 or timestep_idx >= n_history_steps:
         msg = (
             f"Timestep index {timestep_idx} out of range [0, {n_history_steps}) "
-            f"for sample {sample_idx}"
+            f"for sample {forecast_date_idx}"
         )
         raise ValueError(msg)
 

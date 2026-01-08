@@ -9,7 +9,10 @@ import numpy as np
 import typer
 from omegaconf import DictConfig, OmegaConf
 
-from ice_station_zebra.callbacks.raw_inputs_callback import RawInputsCallback
+from ice_station_zebra.callbacks.raw_inputs_callback import (
+    DEFAULT_MAX_ANIMATION_FRAMES,
+    RawInputsCallback,
+)
 from ice_station_zebra.cli import hydra_adaptor
 from ice_station_zebra.data_loaders import CombinedDataset, ZebraDataModule
 from ice_station_zebra.visualisations.plotting_raw_inputs import (
@@ -308,7 +311,8 @@ def animate_raw_inputs(
     callback.config = OmegaConf.to_container(config, resolve=True)
 
     # Get settings from callback (with command-line overrides)
-    n_frames = n_frames or callback.max_animation_frames or 30
+    # Use callback's value, or fall back to default constant if None
+    n_frames = n_frames or callback.max_animation_frames or DEFAULT_MAX_ANIMATION_FRAMES
     fps = fps or callback.video_fps
     video_format = video_format or callback.video_format
     save_dir = (

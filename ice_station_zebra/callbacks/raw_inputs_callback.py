@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 EXPECTED_INPUT_NDIM = 5  # Expected input data shape: [B, T, C, H, W]
+DEFAULT_MAX_ANIMATION_FRAMES = 30  # Default frame limit for animations (≈ 1 month of daily data)
 
 
 class RawInputsCallback(Callback):

@@ -107,22 +107,34 @@ def plot_raw_inputs(
     config: DictConfig,
     sample_idx: Annotated[
         int,
-        typer.Option(help="Index of the sample to plot (default: 0)"),
+        typer.Option(help="Index of the forecast scenario to plot (default: 0)"),
+    ] = 0,
+    timestep_idx: Annotated[
+        int,
+        typer.Option(
+            help="Index of the timestep within the history window to plot (default: 0, i.e., first timestep)"
+        ),
     ] = 0,
     output_dir: Annotated[
         str | None,
         typer.Option(help="Directory to save plots (overrides config if provided)"),
     ] = None,
 ) -> None:
-    r"""Plot raw inputs for a single timestep from the test dataset.
+    r"""Plot raw inputs for a specific timestep from a forecast scenario.
 
-    This command creates static plots of all input variables for a single sample
-    from the test dataset. Settings are read from config.evaluate.callbacks.raw_inputs
-    in your YAML config files.
+    This command creates static plots of all input variables for a single timestep
+    from a selected forecast scenario. Each sample in the dataset represents a
+    forecast scenario (identified by a date) and contains multiple timesteps of
+    historical data leading up to that forecast date.
 
     Args:
         config: Hydra config (provided via --config-name option).
-        sample_idx: Index of the sample to plot (default: 0).
+        sample_idx: Index of the forecast scenario to plot. This selects which
+            forecast date/scenario (maps to available_dates[sample_idx]).
+            Default: 0.
+        timestep_idx: Index of the timestep within the selected scenario's history
+            window to plot. Each scenario contains n_history_steps timesteps.
+            Default: 0 (first timestep in the history window).
         output_dir: Directory to save plots (overrides config if provided).
 
     Note:
@@ -130,9 +142,17 @@ def plot_raw_inputs(
         Settings are read from config.evaluate.callbacks.raw_inputs in that config.
 
     Example:
+        # Plot the first timestep of the first forecast scenario
         uv run zebra visualisations plot-raw-inputs \\
             --config-name lfrance.local.yaml \\
-            --sample-idx 0
+            --sample-idx 0 \\
+            --timestep-idx 0
+
+        # Plot the last timestep of the 10th forecast scenario
+        uv run zebra visualisations plot-raw-inputs \\
+            --config-name lfrance.local.yaml \\
+            --sample-idx 9 \\
+            --timestep-idx 6
 
     """
     # Instantiate callback from config to get all settings
@@ -171,10 +191,25 @@ def plot_raw_inputs(
     batch = test_dataset[sample_idx]
     date = test_dataset.date_from_index(sample_idx)
 
-    log.info("Plotting raw inputs for date: %s", date)
+    # Validate timestep index
+    # Each sample contains n_history_steps timesteps
+    n_history_steps = test_dataset.n_history_steps
+    if timestep_idx < 0 or timestep_idx >= n_history_steps:
+        msg = (
+            f"Timestep index {timestep_idx} out of range [0, {n_history_steps}) "
+            f"for sample {sample_idx}"
+        )
+        raise ValueError(msg)
+
+    log.info(
+        "Plotting raw inputs for forecast scenario date: %s, timestep %d/%d",
+        date,
+        timestep_idx,
+        n_history_steps - 1,
+    )
 
     # Extract channel arrays
-    channel_arrays = _extract_channel_arrays(batch, test_dataset)
+    channel_arrays = _extract_channel_arrays(batch, test_dataset, timestep_idx)
     channel_names = test_dataset.input_variable_names
     log.info("Total channels: %d", len(channel_names))
 

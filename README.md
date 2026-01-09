@@ -12,7 +12,7 @@ You will need to install the following tools if you want to develop this project
 
 ### Creating your own configuration file
 
-Create a file in `config` that is called `<your chosen name here>.local.yaml`.
+Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
 You will want this to inherit from `base.yaml` and then apply your own changes on top.
 For example, the following config will override the `base_path` option in `base.yaml`:
 
@@ -64,11 +64,13 @@ This means that later commands like `uv run X ...` should simply be `X ...` inst
 
 ## Running Zebra commands
 
+Note that if you are running the below commands locally, specify the base path which can be done in your local config, then add the argument `--config-name <your local config>.yaml`.
+
 ### Create
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi`.
 
-Run `uv run zebra datasets create` to download all datasets locally.
+Run `uv run zebra datasets create` to download all datasets. 
 
 N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 
@@ -80,7 +82,7 @@ Run `uv run zebra datasets inspect` to inspect all datasets available locally.
 
 Run `uv run zebra train` to train using the datasets specified in the config.
 
-:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`.
+:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where thr `BASE_DIR` is the path to the data defined in your config file.
 
 ### Evaluate
 

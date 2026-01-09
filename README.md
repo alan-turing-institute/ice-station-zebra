@@ -70,7 +70,7 @@ Note that if you are running the below commands locally, specify the base path w
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi`.
 
-Run `uv run zebra datasets create` to download all datasets. 
+Run `uv run zebra datasets create` to download all datasets.
 
 N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 

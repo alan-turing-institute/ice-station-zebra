@@ -84,7 +84,7 @@ Run `uv run zebra train` to train using the datasets specified in the config.
 
 If you run into a `NotImplementedError` and asked you to set your environment varaible `PYTORCH_ENABLE_MPS_FALLBACK=1`, add `antialias_val: false` in your local configuration file will allow you to train to completion (see [issue 127](https://github.com/alan-turing-institute/ice-station-zebra/issues/127))
 
-:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where thr `BASE_DIR` is the path to the data defined in your config file.
+:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the path to the data defined in your config file.
 
 ### Evaluate
 

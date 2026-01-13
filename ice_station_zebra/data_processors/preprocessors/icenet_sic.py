@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pandas as pd
 from icenet.data.sic.mask import Masks
-from icenet.data.sic.osisaf import SICDownloader
+#from icenet.data.sic.osisaf import SICDownloader
+from download_toolbox.data.osisaf import SICDownloader, SICDatasetConfig
+from download_toolbox.location import Location
+from download_toolbox.time import Frequency
+
 from omegaconf import DictConfig
 
 from .ipreprocessor import IPreprocessor
@@ -49,16 +53,27 @@ class IceNetSICPreprocessor(IPreprocessor):
             masks.generate(year=mask_year)
 
             logger.info("Downloading sea ice concentration data for %04d.", year)
+            
+            location = Location(
+                name="hemisphere",
+                north=self.is_north,
+                south=self.is_south,
+            )
+            
+            SIC_data_config = SICDatasetConfig(location = location)
             sic = SICDownloader(
-                dates=[
-                    pd.to_datetime(date).date()
-                    for date in self.date_range
-                    if date.year == year
-                ],  # Dates to download SIC data for
-                delete_tempfiles=True,  # Delete temporary downloaded files after use
-                north=self.is_north,  # Use mask for the Northern Hemisphere (set to True if needed)
-                south=self.is_south,  # Use mask for the Southern Hemisphere
-                parallel_opens=False,  # Concatenation is not working correctly with dask
+                SIC_data_config,
+                start_date = min(self.date_range).date(),
+                end_date = max(self.date_range).date(),
+                # dates=[
+                #     pd.to_datetime(date).date()
+                #     for date in self.date_range
+                #     if date.year == year
+                # ],  # Dates to download SIC data for
+                # delete_tempfiles=True,  # Delete temporary downloaded files after use
+                # north=self.is_north,  # Use mask for the Northern Hemisphere (set to True if needed)
+                # south=self.is_south,  # Use mask for the Southern Hemisphere
+                # parallel_opens=False,  # Concatenation is not working correctly with dask
             )
             sic.download()
 

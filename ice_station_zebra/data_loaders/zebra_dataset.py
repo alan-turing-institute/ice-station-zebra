@@ -94,6 +94,20 @@ class ZebraDataset(Dataset):
         """Return the start date of the dataset."""
         return self.dates[0]
 
+    @cached_property
+    def variable_names(self) -> list[str]:
+        """Return the variable names for this dataset.
+
+        The variable names are extracted from the underlying Anemoi dataset.
+        All datasets must have the same variables.
+        """
+        # Check all datasets have the same variables
+        per_ds_variables = [tuple(ds.variables) for ds in self.datasets]
+        if len(set(per_ds_variables)) != 1:
+            msg = f"All datasets must have the same variables, found {len(set(per_ds_variables))} different sets"
+            raise ValueError(msg)
+        return list(self.datasets[0].variables)
+
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         if self._len is None:

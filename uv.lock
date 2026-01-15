@@ -1528,6 +1528,7 @@ dependencies = [
     { name = "icenet" },
     { name = "jaxtyping" },
     { name = "lightning" },
+    { name = "lightning-xpu" },
     { name = "matplotlib" },
     { name = "netcdf4" },
     { name = "pillow" },
@@ -1565,6 +1566,7 @@ requires-dist = [
     { name = "icenet", specifier = "==0.2.7" },
     { name = "jaxtyping", specifier = ">=0.3.2" },
     { name = "lightning", specifier = ">=2.5.1" },
+    { name = "lightning-xpu", git = "https://github.com/kh296/lightning-xpu" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "netcdf4", specifier = ">=1.7.0" },
     { name = "pillow", specifier = ">=11.3.0" },
@@ -2189,6 +2191,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b8/39/6fc58ca81492db047149b4b8fd385aa1bfb8c28cd7cacb0c7eb0c44d842f/lightning_utilities-0.15.2.tar.gz", hash = "sha256:cdf12f530214a63dacefd713f180d1ecf5d165338101617b4742e8f22c032e24", size = 31090, upload-time = "2025-08-06T13:57:39.242Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/de/73/3d757cb3fc16f0f9794dd289bcd0c4a031d9cf54d8137d6b984b2d02edf3/lightning_utilities-0.15.2-py3-none-any.whl", hash = "sha256:ad3ab1703775044bbf880dbf7ddaaac899396c96315f3aa1779cec9d618a9841", size = 29431, upload-time = "2025-08-06T13:57:38.046Z" },
+]
+
+[[package]]
+name = "lightning-xpu"
+version = "0.0.1"
+source = { git = "https://github.com/kh296/lightning-xpu#4b3e8a60f2181f858355378337d6cf509fb80738" }
+dependencies = [
+    { name = "lightning" },
 ]
 
 [[package]]

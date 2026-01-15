@@ -25,7 +25,9 @@ dependencies = [
     "netcdf4>=1.7.0",
     "pillow>=11.3.0",
     "pydantic>=2.11.7",
+    "pytorch-triton-xpu>=0.0; sys_platform == 'win32' or sys_platform == 'linux'",
     "torch-ema>=0.3",
+    "torch>=2.8.0",
     "typer>=0.16.0",
     "types-cachetools>=6.1.0",
     "wandb>=0.21.0",
@@ -113,3 +115,12 @@ max-args = 6
 
 [tool.uv.build-backend]
 module-root = ""
+
+[[tool.uv.index]]
+name = "pytorch-xpu"
+url = "https://download.pytorch.org/whl/xpu"
+explicit = true
+
+[tool.uv.sources]
+pytorch-triton-xpu = { index = "pytorch-xpu", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }
+torch = { index = "pytorch-xpu", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }

@@ -4,6 +4,7 @@ import typer
 from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
+from ice_station_zebra.xpu import xpu_available
 
 from .trainer import ZebraTrainer
 
@@ -17,6 +18,8 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model."""
+    if xpu_available():
+        config["train"]["trainer"]["accelerator"] = "xpu"
     trainer = ZebraTrainer(config)
     trainer.train()
 

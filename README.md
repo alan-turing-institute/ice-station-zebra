@@ -10,6 +10,8 @@ You will need to install the following tools if you want to develop this project
 
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
+On an HPC system, this will install to `~/.local/bin`, so make sure that your home directory has enough free space.
+
 ### Creating your own configuration file
 
 Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
@@ -51,17 +53,6 @@ uv run zebra <command> ++base_path=/local/path/to/my/data
 ```
 
 Note that `persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
-
-### Running on Baskerville
-
-As `uv` cannot easily be installed on Baskerville, you should install the `zebra` package directly into a virtual environment that you have set up.
-
-```bash
-source /path/to/venv/activate.sh
-pip install -e .
-```
-
-This means that later commands like `uv run X ...` should simply be `X ...` instead.
 
 ## Running Zebra commands
 

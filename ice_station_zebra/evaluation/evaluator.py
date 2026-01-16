@@ -86,6 +86,11 @@ class ZebraEvaluator:
         )
 
     def evaluate(self) -> None:
+        logger.info(
+            "Starting evaluation using %d %s device(s).",
+            self.trainer.num_devices,
+            self.trainer.accelerator.name(),
+        )
         self.trainer.test(
             model=self.model,
             datamodule=self.data_module,

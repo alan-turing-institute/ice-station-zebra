@@ -1,8 +1,9 @@
 import logging
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING
 
 import hydra
+import torch
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
 
@@ -40,7 +41,8 @@ class ZebraEvaluator:
 
         # Load the model from checkpoint
         model_cls: type[ZebraModel] = hydra.utils.get_class(config["model"]["_target_"])
-        self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
+        with torch.serialization.safe_globals([PosixPath]):
+            self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
         # Load inputs into a data module
         self.data_module = ZebraDataModule(config)

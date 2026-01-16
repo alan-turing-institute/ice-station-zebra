@@ -21,13 +21,15 @@ class XPUAccelerator(Accelerator):
 
         Raises:
             MisconfigurationException: If the selected device is not an xpu.
+
         """
         if device.type != "xpu":
             msg = f"Device should be xpu, got {device} instead."
             raise MisconfigurationException(msg)
         index = getattr(device, "index", None)
         if not isinstance(index, int):
-            raise MisconfigurationException("Device index could not be determined.")
+            msg = "Device index could not be determined."
+            raise MisconfigurationException(msg)
         torch.xpu.set_device(index - 1)
 
     @override
@@ -51,7 +53,8 @@ class XPUAccelerator(Accelerator):
             devices: Device(s) by number
 
         Returns:
-            List of device numbers to use
+            List of device numbers to use.
+
         """
         if isinstance(devices, int):
             devices = [devices]
@@ -66,7 +69,8 @@ class XPUAccelerator(Accelerator):
             devices: List of device numbers
 
         Returns:
-            List of devices
+            List of devices.
+
         """
         return [torch.device("xpu", i - 1) for i in devices]
 
@@ -82,7 +86,8 @@ class XPUAccelerator(Accelerator):
         """Determines if an XPU is actually available.
 
         Returns:
-            True if devices are detected, otherwise False
+            True if devices are detected, otherwise False.
+
         """
         try:
             return torch.xpu.device_count() > 0

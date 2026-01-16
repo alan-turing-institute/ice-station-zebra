@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 from lightning.pytorch.loggers import Logger, WandbLogger
-
 from wandb.sdk.lib.runid import generate_id
 
 

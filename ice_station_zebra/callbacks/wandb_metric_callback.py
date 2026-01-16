@@ -1,7 +1,6 @@
+import wandb
 from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import Callback
-
-import wandb
 
 
 class WandbMetric(Callback):

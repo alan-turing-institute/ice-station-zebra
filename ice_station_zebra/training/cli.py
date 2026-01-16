@@ -20,6 +20,10 @@ def train(config: DictConfig) -> None:
     """Train a model."""
     if xpu_available():
         config["train"]["trainer"]["accelerator"] = "xpu"
+        config["train"]["trainer"]["strategy"] = {
+            "_target_": "lightning.pytorch.strategies.SingleDeviceStrategy",
+            "device": "xpu:0",
+        }
     trainer = ZebraTrainer(config)
     trainer.train()
 

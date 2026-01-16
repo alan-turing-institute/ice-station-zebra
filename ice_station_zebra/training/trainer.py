@@ -102,7 +102,12 @@ class ZebraTrainer:
         OmegaConf.save(config, run_directory / "model_config.yaml")
 
     def train(self) -> None:
-        logger.info("Starting training for %d epochs.", self.trainer.max_epochs)
+        logger.info(
+            "Starting training for %d epochs using %d %s device(s).",
+            self.trainer.max_epochs,
+            self.trainer.num_devices,
+            self.trainer.accelerator.name(),
+        )
         self.trainer.fit(
             model=self.model,
             datamodule=self.data_module,

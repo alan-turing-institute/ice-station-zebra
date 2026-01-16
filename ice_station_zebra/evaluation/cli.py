@@ -27,6 +27,10 @@ def evaluate(
     """Evaluate a model."""
     if xpu_available():
         config["train"]["trainer"]["accelerator"] = "xpu"
+        config["train"]["trainer"]["strategy"] = {
+            "_target_": "lightning.pytorch.strategies.SingleDeviceStrategy",
+            "device": "xpu:0",
+        }
     evaluator = ZebraEvaluator(config, Path(checkpoint).resolve())
     evaluator.evaluate()
 

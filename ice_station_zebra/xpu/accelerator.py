@@ -3,6 +3,11 @@ from typing import Any
 
 import torch
 from lightning.fabric.accelerators.registry import _AcceleratorRegistry
+from lightning.fabric.utilities.device_parser import (
+    _check_data_type,
+    _check_unique,
+    _normalize_parse_gpu_string_input,
+)
 from lightning.fabric.utilities.exceptions import MisconfigurationException
 from lightning.fabric.utilities.types import _DEVICE
 from lightning.pytorch.accelerators import Accelerator, AcceleratorRegistry
@@ -19,6 +24,9 @@ class XPUAccelerator(Accelerator):
     def setup_device(self, device: torch.device) -> None:
         """Configure the current process to use a specified device.
 
+        Args:
+            device: torch device to use
+
         Raises:
             MisconfigurationException: If the selected device is not an xpu.
 
@@ -34,7 +42,15 @@ class XPUAccelerator(Accelerator):
 
     @override
     def get_device_stats(self, device: _DEVICE) -> dict[str, Any]:
-        """Get stats from torch xpu module."""
+        """Get stats from torch xpu module.
+
+        Args:
+            device: torch device to use
+
+        Returns:
+            Dictionary of XPU memory allocator statistics for the device.
+
+        """
         return torch.xpu.memory_stats(device)
 
     @override
@@ -46,23 +62,56 @@ class XPUAccelerator(Accelerator):
 
     @staticmethod
     @override
-    def parse_devices(devices: int | list[int]) -> list[int]:
+    def parse_devices(devices: None | int | str | list[int]) -> None | list[int]:
         """Accelerator device parsing logic.
 
         Args:
             devices: Device(s) by number
 
         Returns:
-            List of device numbers to use.
+            List of device numbers to use or None if no devices are requested.
 
         """
-        if isinstance(devices, int):
-            devices = [devices]
-        return devices
+        # Check that devices parameter has the correct data type
+        _check_data_type(devices)
+
+        # Handle the case when no GPUs are requested
+        if (
+            devices is None
+            or (isinstance(devices, int) and devices == 0)
+            or str(devices).strip() in ("0", "[]")
+        ):
+            return None
+
+        # Get all available XPUs
+        available_xpus = list(range(torch.xpu.device_count()))
+        if not available_xpus:
+            msg = "XPUs requested but none are available."
+            raise MisconfigurationException(msg)
+
+        # Normalise the input into a list of device indices.
+        xpus = _normalize_parse_gpu_string_input(devices)
+
+        # Return all available XPUs if requested
+        if xpus == -1:
+            return available_xpus
+
+        # Check that XPUs are unique.
+        if isinstance(xpus, int):
+            xpus = list(range(xpus))
+        _check_unique(xpus)
+
+        # Check that requested XPUs are available
+        for xpu in xpus:
+            if xpu not in available_xpus:
+                msg = f"You requested xpu: {xpu} but only {len(available_xpus)} are available"
+                raise MisconfigurationException(msg)
+
+        return xpus
 
     @staticmethod
     @override
-    def get_parallel_devices(devices: list[int]) -> list[torch.device]:
+    def get_parallel_devices(devices: int | list[int]) -> list[torch.device]:
         """Get parallel devices for the Accelerator.
 
         Args:
@@ -72,7 +121,9 @@ class XPUAccelerator(Accelerator):
             List of devices.
 
         """
-        return [torch.device("xpu", i - 1) for i in devices]
+        if isinstance(devices, int):
+            devices = list(range(devices))
+        return [torch.device("xpu", idx) for idx in devices]
 
     @staticmethod
     @override

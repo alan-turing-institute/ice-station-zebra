@@ -30,6 +30,35 @@ class AnemoiInspectArgs:
     statistics: bool
 
 
+@dataclass
+class AnemoiInitArgs:
+    """Arguments for anemoi init."""
+
+    config: DictConfig
+    path: str
+    command: str = "unused"
+    overwrite: bool = False
+
+
+@dataclass
+class AnemoiLoadArgs:
+    """Arguments for anemoi load."""
+
+    config: DictConfig
+    path: str
+    parts: str
+    command: str = "unused"
+
+
+@dataclass
+class AnemoiFinaliseArgs:
+    """Arguments for anemoi finalise."""
+
+    config: DictConfig
+    path: str
+    command: str = "unused"
+
+
 class DataloaderArgs(TypedDict):
     """Arguments for the data loader."""
 

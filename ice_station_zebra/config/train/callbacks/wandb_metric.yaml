@@ -1,0 +1,2 @@
+wandb_metric:
+  _target_: ice_station_zebra.callbacks.WandbMetric

@@ -1,0 +1,13 @@
+_target_: ice_station_zebra.models.ddpm.DDPM
+
+name: ddpm
+
+# DDPM parameters
+timesteps: 1000
+learning_rate: 5e-4
+start_out_channels: 32
+kernel_size: 3
+activation: "SiLU"
+normalization: "groupnorm"
+time_embed_dim : 256
+dropout_rate: 0.1

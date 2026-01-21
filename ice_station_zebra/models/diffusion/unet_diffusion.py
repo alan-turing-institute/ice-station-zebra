@@ -32,6 +32,7 @@ class UNetDiffusion(nn.Module):
     def __init__(  # noqa: PLR0913
         self,
         input_channels: int,
+        output_channels: int,
         timesteps: int = 1000,
         kernel_size: int = 3,
         start_out_channels: int = 64,
@@ -44,18 +45,20 @@ class UNetDiffusion(nn.Module):
 
         Args:
             input_channels (int): Number of input conditioning channels (e.g., meteorological variables).
-            timesteps (int): Number of diffusion timesteps.
-            kernel_size (int): Convolution kernel size for all conv layers.
-            start_out_channels (int): Number of output channels in the first convolution block. Defaults to 64.
-            time_embed_dim (int): Size of time embedding dimension.
-            normalization (str): Normalization strategy (e.g., groupnorm, batchnorm, layernorm).
-            activation (str): Activation function to use (e.g., SiLU, ReLU, LeakyReLU).
-            dropout_rate (float): Dropout probability applied in convolutional blocks.
+            output_channels (int): Number of output channels for the denoised forecast.
+            timesteps (int, optional): Number of diffusion timesteps. Defaults to 1000.
+            kernel_size (int, optional): Convolution kernel size used across all layers. Defaults to 3.
+            start_out_channels (int, optional): Number of filters in the first convolutional block. Defaults to 64.
+            time_embed_dim (int, optional): Dimensionality of the diffusion timestep embedding. Defaults to 256.
+            normalization (str, optional): Normalization type to apply ("groupnorm", "batchnorm", "layernorm", etc.).
+            activation (str, optional): Activation function to use ("SiLU", "ReLU", "LeakyReLU", etc.).
+            dropout_rate (float, optional): Dropout probability applied to convolutional blocks. Defaults to 0.1.
 
         """
         super().__init__()
 
         self.timesteps = timesteps
+        self.time_embed_dim = time_embed_dim
 
         if kernel_size <= 0:
             msg = "Kernel size must be greater than 0."
@@ -66,15 +69,15 @@ class UNetDiffusion(nn.Module):
             raise ValueError(msg)
 
         # Time embedding
-        self.time_embed = TimeEmbed(time_embed_dim)
+        self.time_embed = TimeEmbed(self.time_embed_dim)
 
         # Channel calculations
         channels = [start_out_channels * 2**i for i in range(4)]
-        output_channels = input_channels
 
         # Encoder
         self.conv1 = CommonConvBlock(
-            in_channels=input_channels + output_channels,
+            in_channels=input_channels
+            + output_channels,  # input_channels (n_input_days * n_input_channels), output_channels (n_output_classes * n_forecast_days)
             out_channels=channels[0],
             kernel_size=kernel_size,
             norm_type=normalization,

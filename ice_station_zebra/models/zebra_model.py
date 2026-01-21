@@ -5,7 +5,12 @@ from typing import Any
 import hydra
 import torch
 from lightning import LightningModule
-from lightning.pytorch.utilities.types import OptimizerLRScheduler
+from lightning.pytorch.utilities.types import (
+    LRSchedulerConfigType,
+    OptimizerConfig,
+    OptimizerLRScheduler,
+    OptimizerLRSchedulerConfig,
+)
 from omegaconf import DictConfig
 
 from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
@@ -14,7 +19,7 @@ from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 class ZebraModel(LightningModule, ABC):
     """A base class for all models used in the Ice Station Zebra project."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         name: str,
@@ -23,6 +28,7 @@ class ZebraModel(LightningModule, ABC):
         n_history_steps: int,
         output_space: DictConfig,
         optimizer: DictConfig,
+        scheduler: DictConfig,
         **_kwargs: Any,
     ) -> None:
         """Initialise a ZebraModel.
@@ -51,8 +57,9 @@ class ZebraModel(LightningModule, ABC):
         self.input_spaces = [DataSpace.from_dict(space) for space in input_spaces]
         self.output_space = DataSpace.from_dict(output_space)
 
-        # Store the optimizer config
+        # Store the optimizer and scheduler configs
         self.optimizer_cfg = optimizer
+        self.scheduler_cfg = scheduler
 
         # Save all of the arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
@@ -60,14 +67,34 @@ class ZebraModel(LightningModule, ABC):
         self.save_hyperparameters()
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        """Construct the optimizer from the config."""
-        return hydra.utils.instantiate(
+        """Construct the optimizer and optional scheduler from the config."""
+        # Optimizer
+        optimizer = hydra.utils.instantiate(
             dict(**self.optimizer_cfg)
             | {
                 "params": itertools.chain(
                     *[module.parameters() for module in self.children()]
                 )
             }
+        )
+        # If no scheduler config is provided, return just the optimizer
+        if not self.scheduler_cfg:
+            return OptimizerConfig(optimizer=optimizer)
+
+        # Scheduler
+        scheduler_args = self.scheduler_cfg
+        scheduler = hydra.utils.instantiate(
+            {
+                "_target_": scheduler_args.pop("_target_"),
+                "optimizer": optimizer,
+                **scheduler_args.pop("scheduler_parameters", {}),
+            }
+        )
+
+        # Return the optimizer and scheduler
+        return OptimizerLRSchedulerConfig(
+            optimizer=optimizer,
+            lr_scheduler=LRSchedulerConfigType(scheduler=scheduler, **scheduler_args),
         )
 
     @abstractmethod
@@ -136,7 +163,10 @@ class ZebraModel(LightningModule, ABC):
         """
         target = batch["target"].clone().detach()
         prediction = self(batch)
-        return self.loss(prediction, target)
+        loss = self.loss(prediction, target)
+
+        self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        return loss
 
     def validation_step(
         self,
@@ -164,5 +194,5 @@ class ZebraModel(LightningModule, ABC):
         target = batch["target"].clone().detach()
         prediction = self(batch)
         loss = self.loss(prediction, target)
-        self.log("validation_loss", loss)
+        self.log("validation_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss

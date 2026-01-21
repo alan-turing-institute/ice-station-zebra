@@ -12,13 +12,14 @@ You will need to install the following tools if you want to develop this project
 
 ### Creating your own configuration file
 
-Create a file in `config` that is called `<your chosen name here>.local.yaml`.
-You will want this to inherit from `base.yaml` and then apply your own changes on top.
+Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
+You will typically want this to inherit from `base.yaml`, and then you can apply your own changes on top.
 For example, the following config will override the `base_path` option in `base.yaml`:
 
 ```yaml
 defaults:
   - base
+  - _self_
 
 base_path: /local/path/to/my/data
 ```
@@ -64,21 +65,28 @@ This means that later commands like `uv run X ...` should simply be `X ...` inst
 
 ## Running Zebra commands
 
+:information_source: Note that if you are running the below commands locally, specify the base path in your local config, then add the argument `--config-name <your local config>.yaml`.
+
 ### Create
 
-You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi`.
+You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi` (e.g. the ERA5 data).
 
-Run `uv run zebra datasets create` to download all datasets locally.
+Run `uv run zebra datasets create` to download datasets.
+
+N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 
 ### Inspect
 
-Run `uv run zebra datasets inspect` to inspect all datasets available locally.
+Run `uv run zebra datasets inspect` to inspect datasets (i.e. to get dataset properties and statistical summaries of the variables).
 
 ### Train
 
 Run `uv run zebra train` to train using the datasets specified in the config.
 
-:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`.
+:information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the base path to the data defined in your config file.
+
+If you run into a `NotImplementedError` that asks you to set your environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1`, adding `antialias_val: false` in your local configuration file will allow you to train to completion (see [issue 127](https://github.com/alan-turing-institute/ice-station-zebra/issues/127))
+
 
 ### Evaluate
 
@@ -157,3 +165,78 @@ Cons:
 
 There are various demonstrator Jupyter notebooks in the `notebooks` folder.
 You can run these with `uv run --group notebooks jupyter notebook`.
+
+A good one to start with is `notebooks/demo_pipeline.ipynb` which gives a more detailed overview of the pipeline.
+
+## Downloading large datasets
+For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary to download the data in parts.
+
+### Automated approach (recommended)
+
+The `load_in_parts` command automates the process of downloading datasets in parts, tracking progress, and allowing you to resume interrupted downloads:
+
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml
+```
+
+This command will:
+- Automatically initialise the dataset if it doesn't exist
+- Load all parts sequentially, tracking progress in a part tracker file
+- Skip already completed parts if the process is interrupted and restarted
+- Handle errors gracefully (by default, continues to the next part on error)
+
+You will then need to finalise the dataset when done.
+
+```bash
+uv run zebra datasets finalise --config-name <your config>.yaml
+```
+
+#### Options
+
+- `--continue-on-error` / `--no-continue-on-error` (default: `--continue-on-error`): Continue to next part on error
+- `--force-reset`: Clear existing progress tracker and start from part 1. Anemoi will check whether you have the data already and continue.
+- `--dataset <name>`: Run only a single dataset by name (useful when you have multiple datasets in your config). Make sure you use the dataset name and not the name of the config.
+- `--total-parts <n>`: Override the computed total number of parts (useful if you want more / fewer parts than the default 10)
+- `--overwrite`: Delete the dataset directory before loading (use with caution!)
+
+#### Examples
+
+Load all parts for all datasets, resuming from where you left off:
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml
+```
+
+Load a specific dataset with a custom number of parts:
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
+```
+
+Start fresh, clearing any previous progress (doesn't delete any data):
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-reset
+```
+Start and destroy any previously saved data (careful):
+```bash
+uv run zebra datasets load_in_parts --config-name <your config>.yaml --overwrite
+```
+
+
+
+### Manual approach (advanced)
+
+If you need more control, you can manually manage the download process:
+
+1. First initialise the dataset:
+```bash
+uv run zebra datasets init --config-name <your config>.yaml
+```
+
+2. Then load each part `i` of the total `n` in turn:
+```bash
+uv run zebra datasets load --config-name <your config>.yaml --parts i/n
+```
+
+3. When all the parts are loaded, finalise the dataset:
+```bash
+uv run zebra datasets finalise --config-name <your config>.yaml
+```

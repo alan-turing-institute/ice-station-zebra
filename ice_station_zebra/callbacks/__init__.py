@@ -3,6 +3,7 @@ from .metric_summary_callback import MetricSummaryCallback
 from .plotting_callback import PlottingCallback
 from .raw_inputs_callback import RawInputsCallback
 from .unconditional_checkpoint import UnconditionalCheckpoint
+from .wandb_metric_callback import WandbMetric
 
 __all__ = [
     "EMAWeightAveragingCallback",
@@ -10,4 +11,5 @@ __all__ = [
     "PlottingCallback",
     "RawInputsCallback",
     "UnconditionalCheckpoint",
+    "WandbMetric",
 ]

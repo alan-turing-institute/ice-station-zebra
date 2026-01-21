@@ -1,7 +1,6 @@
 """CLI commands for visualisation tasks."""
 
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, cast
 
@@ -16,6 +15,7 @@ from ice_station_zebra.callbacks.raw_inputs_callback import (
 )
 from ice_station_zebra.cli import hydra_adaptor
 from ice_station_zebra.data_loaders import CombinedDataset, ZebraDataModule
+from ice_station_zebra.utils import parse_np_datetime
 from ice_station_zebra.visualisations.plotting_raw_inputs import (
     plot_raw_inputs_for_timestep,
     video_raw_inputs_for_timesteps,
@@ -193,13 +193,13 @@ def plot_raw_inputs(
 
     # Get a sample from the dataset
     batch = test_dataset[forecast_date_idx]
-    
+
     # Get the forecast start date (as np.datetime64)
     forecast_start_date = test_dataset.available_dates[forecast_date_idx]
-    
+
     # Get the history steps for this forecast scenario
     history_dates = test_dataset.get_history_steps(forecast_start_date)
-    
+
     # Validate timestep index
     # Each sample contains n_history_steps timesteps
     n_history_steps = test_dataset.n_history_steps
@@ -209,15 +209,15 @@ def plot_raw_inputs(
             f"for sample {forecast_date_idx}"
         )
         raise ValueError(msg)
-    
+
     # Get the actual date of the timestep being plotted
     timestep_date_np = history_dates[timestep_idx]
-    # Convert np.datetime64 to datetime
-    date = datetime.strptime(str(timestep_date_np), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
+
+    date = parse_np_datetime(timestep_date_np)
 
     log.info(
         "Plotting raw inputs for forecast scenario date: %s, timestep %d/%d (date: %s)",
-        datetime.strptime(str(forecast_start_date), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC),
+        parse_np_datetime(forecast_start_date),
         timestep_idx,
         n_history_steps - 1,
         date,

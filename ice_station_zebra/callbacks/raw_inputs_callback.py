@@ -9,7 +9,6 @@ import dataclasses
 import gc
 import logging
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -22,6 +21,7 @@ from ice_station_zebra.callbacks.metadata import infer_hemisphere
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import PlotSpec
+from ice_station_zebra.utils import parse_np_datetime
 from ice_station_zebra.visualisations.plotting_core import (
     detect_land_mask_path,
     safe_filename,
@@ -39,7 +39,9 @@ logger = logging.getLogger(__name__)
 
 # Constants
 EXPECTED_INPUT_NDIM = 5  # Expected input data shape: [B, T, C, H, W]
-DEFAULT_MAX_ANIMATION_FRAMES = 30  # Default frame limit for animations (≈ 1 month of daily data)
+DEFAULT_MAX_ANIMATION_FRAMES = (
+    30  # Default frame limit for animations (≈ 1 month of daily data)
+)
 
 
 class RawInputsCallback(Callback):
@@ -291,14 +293,13 @@ class RawInputsCallback(Callback):
 
         # Get the forecast start date (as np.datetime64) for this sample
         forecast_start_date = dataset.available_dates[sample_idx]
-        
+
         # Get the history steps for this forecast scenario
         history_dates = dataset.get_history_steps(forecast_start_date)
-        
+
         # Get the actual date of the timestep being plotted
         timestep_date_np = history_dates[self.timestep_index]
-        # Convert np.datetime64 to datetime
-        date = datetime.strptime(str(timestep_date_np), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
+        date = parse_np_datetime(timestep_date_np)
 
         # Determine if we should plot static plots this batch
         should_plot_static = False

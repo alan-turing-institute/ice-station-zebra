@@ -102,7 +102,7 @@ def test_calculate_training_points_invalid_returns_none() -> None:
     # completely should return None
     assert calculate_training_points("2020-01-01", "2020-01-10", "0d") is None
     assert calculate_training_points("2020-01-01", "2020-01-10", "-1h") is None
-    # These should return None due to unrecognized format
+    # These should return None due to unrecognised format
     assert calculate_training_points("2020-01-01", "2020-01-10", "xyz") is None
     assert calculate_training_points("2020-01-01", "2020-01-10", "123") is None
 
@@ -194,7 +194,7 @@ class MockDataset:
         name: str | None = None,
         config: Mapping[str, Any] | None = None,
     ) -> None:
-        """Initialize mock dataset with optional attributes for tests."""
+        """Initialise mock dataset with optional attributes for tests."""
         if target_name:
             self.target = MockTarget(target_name)
         else:
@@ -209,7 +209,7 @@ class MockTarget:
     """Mock target dataset component."""
 
     def __init__(self, name: str) -> None:
-        """Initialize mock target with a name."""
+        """Initialise mock target with a name."""
         self.name = name
 
 

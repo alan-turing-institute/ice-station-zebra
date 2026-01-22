@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+import numpy as np
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
 
@@ -33,4 +34,24 @@ def to_bool(v: object) -> bool:
         if s in {"false"}:
             return False
     msg = f"Cannot convert {v!r} to bool"
+    raise ValueError(msg)
+
+
+def parse_np_datetime(dt: np.datetime64) -> datetime:
+    """Convert numpy-like datetime to aware datetime in UTC.
+
+    Accepts objects such as ``np.datetime64``, plain ``datetime`` or their string
+    representations. Supports values with and without microseconds.
+    """
+    if isinstance(dt, datetime):
+        return dt.astimezone(UTC)
+
+    date_str = str(dt)
+    for fmt in ("%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(date_str, fmt).astimezone(UTC)
+        except ValueError:
+            continue
+
+    msg = f"Cannot parse datetime value {dt!r}"
     raise ValueError(msg)

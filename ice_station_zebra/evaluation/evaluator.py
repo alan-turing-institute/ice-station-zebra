@@ -2,6 +2,11 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+# Set matplotlib backend BEFORE any imports that might use it
+import matplotlib as mpl
+
+mpl.use("Agg")
+
 import hydra
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
@@ -47,8 +52,22 @@ class ZebraEvaluator:
 
         # Add callbacks
         callbacks: list[Callback] = []
-        for cfg in config["evaluate"].get("callbacks", {}).values():
-            callback = hydra.utils.instantiate(cfg)
+        callbacks_dict = config["evaluate"].get("callbacks") or {}
+        for cfg in callbacks_dict.values():
+            # Skip configs without _target_ (they can't be instantiated)
+            # Convert DictConfig to a plain dict for easier checking
+            cfg_dict = (
+                OmegaConf.to_container(cfg, resolve=True)
+                if isinstance(cfg, DictConfig)
+                else cfg
+            )
+            if not isinstance(cfg_dict, dict) or "_target_" not in cfg_dict:
+                logger.warning(
+                    "Skipping callback config without _target_: %s",
+                    cfg_dict,
+                )
+                continue
+            callback = hydra.utils.instantiate(cfg_dict)
             # Pass config to PlottingCallback for land mask detection
             if callback.__class__.__name__ == "PlottingCallback":
                 callback.config = OmegaConf.to_container(config, resolve=True)

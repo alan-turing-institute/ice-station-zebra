@@ -1,10 +1,11 @@
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 
 import numpy as np
 from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayTCHW
+from ice_station_zebra.utils import parse_np_datetime
 
 from .zebra_dataset import ZebraDataset
 
@@ -84,8 +85,7 @@ class CombinedDataset(Dataset):
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep."""
-        np_datetime = self.available_dates[idx]
-        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
+        return parse_np_datetime(self.available_dates[idx])
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""
@@ -117,3 +117,20 @@ class CombinedDataset(Dataset):
             msg = f"Datasets have {len(start_date)} different start dates"
             raise ValueError(msg)
         return start_date.pop()
+
+    @property
+    def input_variable_names(self) -> list[str]:
+        """Return all input variable names across all input datasets.
+
+        Variable names are prefixed with the dataset name for disambiguation.
+        Format: "{dataset_name}:{variable_name}"
+
+        Returns:
+            List of variable names in the order they appear in the combined input channels.
+
+        """
+        return [
+            f"{ds.name}:{var_name}"
+            for ds in self.inputs
+            for var_name in ds.variable_names
+        ]

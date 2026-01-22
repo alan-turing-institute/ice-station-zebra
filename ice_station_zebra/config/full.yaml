@@ -9,7 +9,7 @@ defaults:
     - wandb
   - model: naive_unet_naive
   - predict: osisaf-south
-  - split: sample_dataset
+  - split: full_dataset
   - train: default
   - _self_
 

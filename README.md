@@ -36,7 +36,7 @@ You can also use this config to override other options in the `base.yaml` file, 
 ```yaml
 defaults:
   - base
-  - override /model: encode_unet_decode # Use this format if you want to use a different config
+  - override /model: cnn_unet_cnn # Use this format if you want to use a different config
 
 # Override specific model parameters
 model:

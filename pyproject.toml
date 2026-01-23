@@ -25,7 +25,8 @@ dependencies = [
     "netcdf4>=1.7.0",
     "pillow>=11.3.0",
     "pydantic>=2.11.7",
-    "pytorch-triton-xpu>=0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'", # only needed for XPU-enabled machines, but we don't have a simple way to determine that
+    "pytorch-triton-xpu>=0.0; platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'", # only needed for XPU-enabled machines, but we don't have a simple way to determine that
+    "pytorch-triton>=0.0; platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'",
     "torch-ema>=0.3",
     "torch>=2.8.0",
     "typer>=0.16.0",
@@ -129,6 +130,7 @@ url = "https://download.pytorch.org/whl/xpu"
 explicit = true
 
 [tool.uv.sources]
+pytorch-triton = { index = "pytorch-cu128" }
 pytorch-triton-xpu = { index = "pytorch-xpu" }
 torch = [
     # IsambardAI
@@ -137,4 +139,8 @@ torch = [
     { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
     # DAWN
     { index = "pytorch-xpu", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+]
+triton = [
+    { index = "pytorch-cu128", marker = "platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+    { index = "pytorch-xpu", marker = "platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
 ]

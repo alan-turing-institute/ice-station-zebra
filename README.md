@@ -54,6 +54,22 @@ uv run zebra <command> ++base_path=/local/path/to/my/data
 
 Note that `persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
 
+## Running on HPC
+
+For running on a shared HPC systems (Baskerville, DAWN or Isambard-AI), you will want to use the pre-downloaded data and the right GPU accelerator.
+This is handled for you by including the appropriate config file:
+
+```yaml
+defaults:
+  - base
+  - baskerville OR dawn OR isambard-ai
+  - data-full OR data-sample
+  - _self_
+```
+
+See `config/demo-north.yaml` for an example of this.
+
+
 ## Running Zebra commands
 
 :information_source: Note that if you are running the below commands locally, specify the base path in your local config, then add the argument `--config-name <your local config>.yaml`.

@@ -1,0 +1,6 @@
+defaults:
+  - base
+  - baskerville
+  - data-demo
+  - override /predict: osisaf-north
+  - _self_

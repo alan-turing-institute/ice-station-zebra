@@ -1,0 +1,9 @@
+# PyTorch Lightning trainer settings
+defaults:
+  - default
+  - _self_
+
+accelerator: xpu
+strategy:
+  - _target_: lightning.pytorch.strategies.SingleDeviceStrategy
+  - device: xpu:0

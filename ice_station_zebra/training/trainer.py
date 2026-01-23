@@ -9,7 +9,12 @@ from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.callbacks import UnconditionalCheckpoint
 from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.utils import generate_run_name, get_wandb_logger
+from ice_station_zebra.utils import (
+    generate_run_name,
+    get_device_name,
+    get_device_threads,
+    get_wandb_logger,
+)
 
 if TYPE_CHECKING:
     from lightning import Callback, Trainer
@@ -103,10 +108,11 @@ class ZebraTrainer:
 
     def train(self) -> None:
         logger.info(
-            "Starting training for %d epochs using %d %s device(s).",
+            "Starting training for %d epochs using %d threads across %d %s device(s).",
             self.trainer.max_epochs,
+            get_device_threads(),
             self.trainer.num_devices,
-            self.trainer.accelerator.name(),
+            get_device_name(self.trainer.accelerator.name()),
         )
         self.trainer.fit(
             model=self.model,

@@ -1,5 +1,4 @@
 defaults:
-  - data-full
   - override /train/trainer: xpu
   - _self_
 

@@ -1,6 +1,5 @@
 defaults:
   - base
-  - override /data: full
   - override /train/trainer: xpu
   - _self_
 

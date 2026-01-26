@@ -52,6 +52,8 @@ class ZebraDataset(Dataset):
     @cached_property
     def dates(self) -> list[np.datetime64]:
         """Return all dates in the dataset."""
+        for ds in self.datasets:
+            print(ds.name, ds.dates)
         return sorted({date for ds in self.datasets for date in ds.dates})
 
     @cached_property

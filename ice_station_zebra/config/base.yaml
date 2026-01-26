@@ -1,5 +1,6 @@
 # Base config inherited by all other configs
 defaults:
+  - data: sample
   - evaluate: default
   - loggers:
     - wandb
@@ -9,3 +10,4 @@ defaults:
   - _self_
 
 antialias_val: true # Global setting for antialiasing in encoders/decoders - fixing Mac bug
+base_path: ../zebra

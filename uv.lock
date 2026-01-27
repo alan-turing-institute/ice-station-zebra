@@ -1653,6 +1653,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anemoi-datasets" },
     { name = "anemoi-transform" },
+    { name = "anemoi-utils" },
     { name = "cachetools" },
     { name = "cdsapi" },
     { name = "eccodeslib" },
@@ -1696,6 +1697,7 @@ notebooks = [
 requires-dist = [
     { name = "anemoi-datasets", specifier = ">=0.5.25" },
     { name = "anemoi-transform", specifier = ">=0.1.16" },
+    { name = "anemoi-utils", specifier = ">=0.4.42" },
     { name = "cachetools", specifier = ">=6.1.0" },
     { name = "cdsapi", specifier = ">=0.7.6" },
     { name = "eccodeslib", specifier = ">=2.40.0" },
@@ -4018,7 +4020,7 @@ name = "pytorch-triton-xpu"
 version = "3.5.0"
 source = { registry = "https://download.pytorch.org/whl/xpu" }
 dependencies = [
-    { name = "setuptools", marker = "platform_machine != 'x86_64' or platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025' or sys_platform != 'linux'" },
+    { name = "setuptools", marker = "(platform_machine != 'x86_64' and sys_platform == 'linux') or (platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025' and sys_platform == 'linux')" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/pytorch_triton_xpu-3.5.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:013d9dd5d6479bd22983161f462e61c8dbe1d82e6730624a7a8d5945507eaa61" },

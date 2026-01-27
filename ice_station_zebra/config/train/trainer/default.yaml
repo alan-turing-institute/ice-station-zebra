@@ -4,3 +4,4 @@ accelerator: auto
 devices: auto
 log_every_n_steps: 10
 max_epochs: 50
+strategy: auto

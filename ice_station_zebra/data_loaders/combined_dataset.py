@@ -47,7 +47,7 @@ class CombinedDataset(Dataset):
     @property
     def dates(self) -> list[np.datetime64]:
         """Get list of dates that are available in all datasets."""
-        if not self._available_dates:
+        if self._available_dates is None:
             self._available_dates = sorted(
                 [
                     available_date

@@ -41,41 +41,48 @@ class CombinedDataset(Dataset):
             raise ValueError(msg)
         self.frequency = frequencies[0]
 
-        # Get list of dates that are available in all datasets
-        self.available_dates = sorted(
-            [
-                available_date
-                # Iterate over all dates in any dataset
-                for available_date in sorted(
-                    {date for ds in datasets for date in ds.dates}
-                )  # type: ignore[type-var]
-                # Check that all inputs have n_history_steps starting on start_date
-                if all(
-                    date in ds.dates
-                    for date in self.get_history_steps(available_date)
-                    for ds in self.inputs
-                )
-                # Check that the target has n_forecast_steps starting after the history dates
-                and all(
-                    date in self.target.dates
-                    for date in self.get_forecast_steps(available_date)
-                )
-            ]
-        )
+        # Lazy-load dates on first request
+        self._available_dates: list[np.datetime64] | None = None
+
+    @property
+    def dates(self) -> list[np.datetime64]:
+        """Get list of dates that are available in all datasets."""
+        if not self._available_dates:
+            self._available_dates = sorted(
+                [
+                    available_date
+                    # Iterate over all dates in any dataset
+                    for available_date in sorted(
+                        {date for ds in self.inputs for date in ds.dates}
+                    )  # type: ignore[type-var]
+                    # Check that all inputs have n_history_steps starting on start_date
+                    if all(
+                        date in ds.dates
+                        for date in self.get_history_steps(available_date)
+                        for ds in self.inputs
+                    )
+                    # Check that the target has n_forecast_steps starting after the history dates
+                    and all(
+                        date in self.target.dates
+                        for date in self.get_forecast_steps(available_date)
+                    )
+                ]
+            )
+        return self._available_dates
 
     @property
     def end_date(self) -> np.datetime64:
         """Return the end date of the dataset."""
-        return self.available_dates[-1]
+        return self.dates[-1]
 
     @property
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
-        return self.available_dates[0]
+        return self.dates[0]
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""
-        return len(self.available_dates)
+        return len(self.dates)
 
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary.
@@ -88,17 +95,13 @@ class CombinedDataset(Dataset):
 
         """
         return {
-            ds.name: ds.get_tchw(self.get_history_steps(self.available_dates[idx]))
+            ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
             for ds in self.inputs
-        } | {
-            "target": self.target.get_tchw(
-                self.get_forecast_steps(self.available_dates[idx])
-            )
-        }
+        } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep."""
-        np_datetime = self.available_dates[idx]
+        np_datetime = self.dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:

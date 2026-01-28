@@ -51,8 +51,7 @@ class ZebraDataset(Dataset):
 
     @cached_property
     def dates(self) -> list[np.datetime64]:
-        """Return all dates in the dataset."""
-        # Remove missing dates individually from each dataset
+        """Return all available dates in the dataset, removing any that are missing."""
         return sorted(
             {
                 date
@@ -104,7 +103,7 @@ class ZebraDataset(Dataset):
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         if self._len is None:
-            self._len = sum(dataset._len for dataset in self.datasets)
+            self._len = len(self.dates)
         return self._len
 
     def __getitem__(self, idx: int) -> ArrayCHW:

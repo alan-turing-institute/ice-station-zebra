@@ -1,0 +1,22 @@
+samp-sicnorth-ssmis-25k-2017-2019-24h-v1:
+  name: samp-sicnorth-ssmis-25k-2017-2019-24h-v1
+  group_as: ssmis-north
+  description: SSMIS sea ice concentration for northern hemisphere
+  attribution: EUMETSAT/OSISAF
+  licence: CC-BY-4.0
+
+  dates:
+    start: '2017-01-01T00:00:00'
+    end: '2017-01-05T23:00:00'
+    frequency: 1d
+
+  input:
+    mars:
+      use_cdsapi_dataset: satellite-sea-ice-concentration
+      param: all
+      # sensor: ssmis
+      # region: [northern_hemisphere]
+      # cdr_type: [cdr]
+      # temporal_aggregation: daily
+      # version: 3_1
+

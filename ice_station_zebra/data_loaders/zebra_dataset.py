@@ -52,7 +52,14 @@ class ZebraDataset(Dataset):
     @cached_property
     def dates(self) -> list[np.datetime64]:
         """Return all dates in the dataset."""
-        return sorted({date for ds in self.datasets for date in ds.dates})
+        # Remove missing dates individually from each dataset
+        return sorted(
+            {
+                date
+                for ds in self.datasets
+                for date in np.delete(ds.dates, list(ds.missing))
+            }
+        )
 
     @cached_property
     def end_date(self) -> np.datetime64:

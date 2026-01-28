@@ -68,6 +68,13 @@ class CombinedDataset(Dataset):
                     )
                 ]
             )
+            if len(self._available_dates) == 0:
+                msg = (
+                    "CombinedDataset has no valid dates. This can happen when there "
+                    "are no valid windows given the configured history/forecast steps or "
+                    "when the input datasets do not have overlapping time ranges."
+                )
+                raise ValueError(msg)
         return self._available_dates
 
     @property

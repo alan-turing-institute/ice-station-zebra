@@ -42,22 +42,36 @@ class CombinedDataset(Dataset):
         self.frequency = frequencies[0]
 
         # Get list of dates that are available in all datasets
-        self.available_dates = [
-            available_date
-            # Iterate over all dates in any dataset
-            for available_date in sorted({date for ds in datasets for date in ds.dates})  # type: ignore[type-var]
-            # Check that all inputs have n_history_steps starting on start_date
-            if all(
-                date in ds.dates
-                for date in self.get_history_steps(available_date)
-                for ds in self.inputs
-            )
-            # Check that the target has n_forecast_steps starting after the history dates
-            and all(
-                date in self.target.dates
-                for date in self.get_forecast_steps(available_date)
-            )
-        ]
+        self.available_dates = sorted(
+            [
+                available_date
+                # Iterate over all dates in any dataset
+                for available_date in sorted(
+                    {date for ds in datasets for date in ds.dates}
+                )  # type: ignore[type-var]
+                # Check that all inputs have n_history_steps starting on start_date
+                if all(
+                    date in ds.dates
+                    for date in self.get_history_steps(available_date)
+                    for ds in self.inputs
+                )
+                # Check that the target has n_forecast_steps starting after the history dates
+                and all(
+                    date in self.target.dates
+                    for date in self.get_forecast_steps(available_date)
+                )
+            ]
+        )
+
+    @property
+    def end_date(self) -> np.datetime64:
+        """Return the end date of the dataset."""
+        return self.available_dates[-1]
+
+    @property
+    def start_date(self) -> np.datetime64:
+        """Return the start date of the dataset."""
+        return self.available_dates[0]
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""
@@ -99,21 +113,3 @@ class CombinedDataset(Dataset):
         return [
             start_date + idx * self.frequency for idx in range(self.n_history_steps)
         ]
-
-    @property
-    def end_date(self) -> np.datetime64:
-        """Return the end date of the dataset."""
-        end_date = {dataset.end_date for dataset in self.inputs}
-        if len(end_date) != 1:
-            msg = f"Datasets have {len(end_date)} different end dates"
-            raise ValueError(msg)
-        return end_date.pop()
-
-    @property
-    def start_date(self) -> np.datetime64:
-        """Return the start date of the dataset."""
-        start_date = {dataset.start_date for dataset in self.inputs}
-        if len(start_date) != 1:
-            msg = f"Datasets have {len(start_date)} different start dates"
-            raise ValueError(msg)
-        return start_date.pop()

@@ -1,6 +1,8 @@
 # Name of the dataset group containing our prediction target
 target:
-  group_name: osisaf-north
+  group_name: sic-ssmis-north
+  variables:
+    - ice_conc
 
 # Number of future steps to predict
 n_forecast_steps: 2

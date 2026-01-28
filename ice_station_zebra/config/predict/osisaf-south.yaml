@@ -1,5 +1,6 @@
 # Name of the dataset group containing our prediction target
-dataset_group: osisaf-south
+target:
+  group_name: osisaf-south
 
 # Number of future steps to predict
 n_forecast_steps: 2

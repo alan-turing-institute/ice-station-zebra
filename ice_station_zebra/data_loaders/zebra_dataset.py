@@ -18,6 +18,7 @@ class ZebraDataset(Dataset):
         input_files: list[Path],
         *,
         date_ranges: Sequence[dict[str, str | None]] = [{"start": None, "end": None}],
+        variables: Sequence[str],
     ) -> None:
         """A dataset for use by Zebra.
 
@@ -33,6 +34,18 @@ class ZebraDataset(Dataset):
         self._input_files = input_files
         self._len: int | None = None
         self._name = name
+        self._variables = set(variables)
+
+    @classmethod
+    def select_variables(
+        cls, instance: "ZebraDataset", variables: Sequence[str]
+    ) -> "ZebraDataset":
+        return cls(
+            name=instance.name,
+            input_files=instance._input_files,
+            date_ranges=instance._date_ranges,
+            variables=variables,
+        )
 
     @property
     def datasets(self) -> list[AnemoiDataset]:
@@ -42,9 +55,15 @@ class ZebraDataset(Dataset):
         """
         if not self._datasets:
             for date_range in self._date_ranges:
-                _dataset = open_dataset(
-                    self._input_files, start=date_range["start"], end=date_range["end"]
-                )
+                # Set the time range for this dataset
+                ds_kwargs: dict[str, str | set[str] | None] = {
+                    "start": date_range["start"],
+                    "end": date_range["end"],
+                }
+                # Select a subset of variables if specified
+                if self._variables:
+                    ds_kwargs["select"] = self._variables
+                _dataset = open_dataset(self._input_files, **ds_kwargs)
                 _dataset._name = self._name
                 self._datasets.append(_dataset)
         return self._datasets

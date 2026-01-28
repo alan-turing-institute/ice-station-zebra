@@ -40,10 +40,13 @@ class ZebraDataModule(LightningDataModule):
             logger.debug("... %s.", dataset_group)
 
         # Check prediction target
-        self.predict_target = config["predict"]["dataset_group"]
-        if self.predict_target not in self.dataset_groups:
-            msg = f"Could not find prediction target {self.predict_target}."
+        self.target_group_name = config["predict"]["target"]["group_name"]
+        if self.target_group_name not in self.dataset_groups:
+            msg = f"Could not find prediction target {self.target_group_name}."
             raise ValueError(msg)
+        self.target_variables: list[str] = config["predict"]["target"].get(
+            "variables", []
+        )
 
         # Set periods for train, validation, and test
         self.batch_size = int(config["data"]["split"]["batch_size"])
@@ -93,7 +96,7 @@ class ZebraDataModule(LightningDataModule):
         return next(
             ZebraDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
-            if name == self.predict_target
+            if name == self.target_group_name
         )
 
     def assign_workers(self, n_workers: int) -> None:
@@ -117,7 +120,8 @@ class ZebraDataModule(LightningDataModule):
             ],
             n_forecast_steps=self.n_forecast_steps,
             n_history_steps=self.n_history_steps,
-            target=self.predict_target,
+            target_group_name=self.target_group_name,
+            target_variables=self.target_variables,
         )
         logger.info(
             "Loaded predict dataset with %d samples between %s and %s.",
@@ -142,7 +146,8 @@ class ZebraDataModule(LightningDataModule):
             ],
             n_forecast_steps=self.n_forecast_steps,
             n_history_steps=self.n_history_steps,
-            target=self.predict_target,
+            target_group_name=self.target_group_name,
+            target_variables=self.target_variables,
         )
         logger.info(
             "Loaded test dataset with %d samples between %s and %s.",
@@ -167,7 +172,8 @@ class ZebraDataModule(LightningDataModule):
             ],
             n_forecast_steps=self.n_forecast_steps,
             n_history_steps=self.n_history_steps,
-            target=self.predict_target,
+            target_group_name=self.target_group_name,
+            target_variables=self.target_variables,
         )
         logger.info(
             "Loaded training dataset with %d samples between %s and %s.",
@@ -192,7 +198,8 @@ class ZebraDataModule(LightningDataModule):
             ],
             n_forecast_steps=self.n_forecast_steps,
             n_history_steps=self.n_history_steps,
-            target=self.predict_target,
+            target_group_name=self.target_group_name,
+            target_variables=self.target_variables,
         )
         logger.info(
             "Loaded validation dataset with %d samples between %s and %s.",

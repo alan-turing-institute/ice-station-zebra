@@ -6,8 +6,8 @@ samp-sicnorth-ssmis-25k-2020-2021-24h-v1:
   licence: CC-BY-4.0
 
   dates:
-    start: '2020-12-30T12:00:00'
-    end: '2021-01-05T12:00:00'
+    start: '2020-12-01T12:00:00'
+    end: '2021-01-31T12:00:00'
     frequency: 1d
 
   input:

@@ -65,9 +65,10 @@ class TestZebraDataset:
         assert isinstance(data_array, np.ndarray)
         assert data_array.shape == (1, 2, 2)
         # Check exception for out of range
-        with pytest.raises(IndexError) as excinfo:
+        with pytest.raises(
+            IndexError, match="Index 10 out of range for dataset of length 5"
+        ):
             dataset[10]
-        assert "Index 10 out of range for dataset of length 5" in str(excinfo.value)
 
     def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(

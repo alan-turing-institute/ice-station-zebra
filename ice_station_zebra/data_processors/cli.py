@@ -6,8 +6,6 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 
-from .filters import register_filters
-from .sources import register_sources
 from .zebra_data_processor_factory import ZebraDataProcessorFactory
 
 # Create the typer app
@@ -26,8 +24,6 @@ def create(
     ] = False,
 ) -> None:
     """Create all datasets."""
-    register_filters()
-    register_sources()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
@@ -54,8 +50,6 @@ def init(
     ] = False,
 ) -> None:
     """Create all datasets."""
-    register_filters()
-    register_sources()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
@@ -69,8 +63,6 @@ def load(
     parts: Annotated[str, typer.Option(help="The part to process, specified as 'i/n'")],
 ) -> None:
     """Load dataset in parts."""
-    register_filters()
-    register_sources()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)
@@ -103,8 +95,6 @@ def load_in_parts(
     ] = False,
 ) -> None:
     """Load all parts for all datasets in parts, recording progress so runs can be resumed."""
-    register_filters()
-    register_sources()
     factory = ZebraDataProcessorFactory(config)
     for ds in factory.datasets:
         if dataset and ds.name != dataset:
@@ -125,8 +115,6 @@ def finalise(
     config: DictConfig,
 ) -> None:
     """Finalise loaded dataset."""
-    register_filters()
-    register_sources()
     factory = ZebraDataProcessorFactory(config)
     for dataset in factory.datasets:
         logger.info("Working on %s.", dataset.name)

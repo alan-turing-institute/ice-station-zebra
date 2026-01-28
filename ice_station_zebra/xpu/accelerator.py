@@ -10,7 +10,7 @@ from lightning.fabric.utilities.device_parser import (
 )
 from lightning.fabric.utilities.exceptions import MisconfigurationException
 from lightning.fabric.utilities.types import _DEVICE
-from lightning.pytorch.accelerators import Accelerator, AcceleratorRegistry
+from lightning.pytorch.accelerators import Accelerator
 from torch import distributed as dist
 from typing_extensions import override
 
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 class XPUAccelerator(Accelerator):
     """Accelerator for Intel XPU GPU devices."""
+
+    description = "Intel Data Center GPU Max - codename Ponte Vecchio"
 
     @override
     def setup_device(self, device: torch.device) -> None:
@@ -159,9 +161,7 @@ class XPUAccelerator(Accelerator):
         )
 
 
-# Add this accelerator to the registry
+# Check for XPU availability
 def xpu_available() -> bool:
     """Register the XPU accelerator with Lightning."""
-    if "xpu" not in AcceleratorRegistry.available_accelerators():
-        XPUAccelerator.register_accelerators(AcceleratorRegistry)
     return XPUAccelerator.is_available()

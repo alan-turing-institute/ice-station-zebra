@@ -16,4 +16,5 @@ def register_filters() -> None:
 
 __all__ = [
     "DoublingFilter",
+    "register_filters",
 ]

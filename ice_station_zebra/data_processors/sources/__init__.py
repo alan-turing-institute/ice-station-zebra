@@ -16,4 +16,5 @@ def register_sources() -> None:
 
 __all__ = [
     "FTPSource",
+    "register_sources",
 ]

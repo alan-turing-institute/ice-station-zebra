@@ -2,7 +2,7 @@ import logging
 
 from lightning.pytorch.accelerators import AcceleratorRegistry
 
-from .accelerator import XPUAccelerator, xpu_available
+from .accelerator import XPUAccelerator
 
 logger = logging.getLogger(__name__)
 
@@ -20,5 +20,5 @@ def register_accelerators() -> None:
 
 __all__ = [
     "XPUAccelerator",
-    "xpu_available",
+    "register_accelerators",
 ]

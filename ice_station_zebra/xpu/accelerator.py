@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import torch
-from lightning.fabric.accelerators.registry import _AcceleratorRegistry
 from lightning.fabric.utilities.device_parser import (
     _check_data_type,
     _check_unique,
@@ -151,17 +150,3 @@ class XPUAccelerator(Accelerator):
     @override
     def name() -> str:
         return "xpu"
-
-    @classmethod
-    def register_accelerators(cls, accelerator_registry: _AcceleratorRegistry) -> None:
-        accelerator_registry.register(
-            "xpu",
-            cls,
-            description="Intel Data Center GPU Max - codename Ponte Vecchio",
-        )
-
-
-# Check for XPU availability
-def xpu_available() -> bool:
-    """Register the XPU accelerator with Lightning."""
-    return XPUAccelerator.is_available()

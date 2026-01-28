@@ -18,7 +18,7 @@ class ZebraDataset(Dataset):
         input_files: list[Path],
         *,
         date_ranges: Sequence[dict[str, str | None]] = [{"start": None, "end": None}],
-        variables: Sequence[str],
+        variables: Sequence[str] = [],
     ) -> None:
         """A dataset for use by Zebra.
 

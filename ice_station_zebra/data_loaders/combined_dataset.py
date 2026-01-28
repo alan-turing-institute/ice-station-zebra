@@ -32,10 +32,9 @@ class CombinedDataset(Dataset):
         self.n_history_steps = n_history_steps
 
         # Create a new dataset for the target with only the selected variables
-        self.target = ZebraDataset.select_variables(
-            next(ds for ds in datasets if ds.name == target_group_name),
-            target_variables,
-        )
+        self.target = next(
+            ds for ds in datasets if ds.name == target_group_name
+        ).subset(variables=target_variables)
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency

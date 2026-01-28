@@ -36,17 +36,6 @@ class ZebraDataset(Dataset):
         self._name = name
         self._variables = set(variables)
 
-    @classmethod
-    def select_variables(
-        cls, instance: "ZebraDataset", variables: Sequence[str]
-    ) -> "ZebraDataset":
-        return cls(
-            name=instance.name,
-            input_files=instance._input_files,
-            date_ranges=instance._date_ranges,
-            variables=variables,
-        )
-
     @property
     def datasets(self) -> list[AnemoiDataset]:
         """Load one or more underlying Anemoi datasets.
@@ -149,3 +138,11 @@ class ZebraDataset(Dataset):
                 return idx
         msg = f"Date {date} not found in the dataset {self.dates[0]} to {self.dates[-1]} by {self.frequency}"
         raise ValueError(msg)
+
+    def subset(self, variables: Sequence[str]) -> "ZebraDataset":
+        return ZebraDataset(
+            name=self.name,
+            input_files=self._input_files,
+            date_ranges=self._date_ranges,
+            variables=variables,
+        )

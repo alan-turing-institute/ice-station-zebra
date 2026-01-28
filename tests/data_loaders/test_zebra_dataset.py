@@ -33,7 +33,16 @@ class TestZebraDataset:
         # Test dates
         assert all(date in dataset.dates for date in self.dates_np)
 
-    def test_dataset_date_ranges(self, mock_dataset: Path) -> None:
+    def test_dataset_dates_end(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": None, "end": self.dates_str[1]}],
+        )
+        assert dataset.start_date == self.dates_np[0]
+        assert dataset.end_date == self.dates_np[1]
+
+    def test_dataset_dates_ranges(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -46,14 +55,14 @@ class TestZebraDataset:
         assert len(dataset.datasets) == 2
         assert len(dataset) == 4
 
-    def test_dataset_end_date(self, mock_dataset: Path) -> None:
+    def test_dataset_dates_start(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            date_ranges=[{"start": None, "end": self.dates_str[1]}],
+            date_ranges=[{"start": self.dates_str[1], "end": None}],
         )
-        assert dataset.start_date == self.dates_np[0]
-        assert dataset.end_date == self.dates_np[1]
+        assert dataset.start_date == self.dates_np[1]
+        assert dataset.end_date == self.dates_np[-1]
 
     def test_dataset_getitem(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -63,7 +72,7 @@ class TestZebraDataset:
         # Check return type and shape
         data_array = dataset[0]
         assert isinstance(data_array, np.ndarray)
-        assert data_array.shape == (1, 2, 2)
+        assert data_array.shape == (3, 2, 2)
         # Check exception for out of range
         with pytest.raises(IndexError) as excinfo:
             dataset[10]
@@ -77,7 +86,7 @@ class TestZebraDataset:
         # Check return type and shape
         data_array = dataset.get_tchw(self.dates_np)
         assert isinstance(data_array, np.ndarray)
-        assert data_array.shape == (5, 1, 2, 2)
+        assert data_array.shape == (5, 3, 2, 2)
         # Check exception for out of range
         with pytest.raises(
             ValueError, match="Date 1970-01-01 not found in the dataset"
@@ -111,7 +120,7 @@ class TestZebraDataset:
         )
         # Test data space
         assert isinstance(dataset.space, DataSpace)
-        assert dataset.space.channels == 1
+        assert dataset.space.channels == 3
         assert dataset.space.shape == (2, 2)
 
     def test_dataset_space_error_shape(self) -> None:
@@ -143,11 +152,85 @@ class TestZebraDataset:
         ):
             _ = dataset.space
 
-    def test_dataset_start_date(self, mock_dataset: Path) -> None:
+    def test_dataset_subset(self, mock_dataset: Path) -> None:
+        """Test the select_variables classmethod."""
+        # Create a dataset with all variables
+        original_dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        assert original_dataset.space.channels == 3
+
+        # Use select_variables to create a subset
+        subset_dataset = original_dataset.subset(variables=["ice_conc"])
+        assert subset_dataset.space.channels == 1
+        assert subset_dataset.name == "mock_dataset"
+
+        # Check that the data shape is correct
+        data_array = subset_dataset[0]
+        assert data_array.shape == (1, 2, 2)
+
+    def test_dataset_subset_preserves_date_ranges(self, mock_dataset: Path) -> None:
+        """Test that select_variables preserves date ranges."""
+        # Create a dataset with date ranges
+        original_dataset = ZebraDataset(
+            name="mock_dataset_multi",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[2]}],
+        )
+
+        # Use select_variables to create a subset
+        subset_dataset = original_dataset.subset(variables=["ice_thickness"])
+
+        # Check that date ranges are preserved
+        assert subset_dataset.start_date == self.dates_np[0]
+        assert subset_dataset.end_date == self.dates_np[2]
+        assert len(subset_dataset) == 3
+
+    def test_dataset_variable_selection_all(self, mock_dataset: Path) -> None:
+        """Test selecting all variables from a multi-variable dataset."""
+        dataset = ZebraDataset(
+            name="mock_dataset_multi",
+            input_files=[mock_dataset],
+            variables=["ice_conc", "ice_thickness", "temperature"],
+        )
+        # Should have 3 channels
+        assert dataset.space.channels == 3
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (3, 2, 2)
+
+    def test_dataset_variable_selection_multiple(self, mock_dataset: Path) -> None:
+        """Test selecting multiple variables from a multi-variable dataset."""
+        dataset = ZebraDataset(
+            name="mock_dataset_multi",
+            input_files=[mock_dataset],
+            variables=["ice_conc", "temperature"],
+        )
+        # Should have 2 channels
+        assert dataset.space.channels == 2
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (2, 2, 2)
+
+    def test_dataset_variable_selection_none(self, mock_dataset: Path) -> None:
+        """Test that not specifying variables loads all variables."""
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
-            date_ranges=[{"start": self.dates_str[1], "end": None}],
         )
-        assert dataset.start_date == self.dates_np[1]
-        assert dataset.end_date == self.dates_np[-1]
+        # Should have all 3 channels (ice_conc, ice_thickness and temperature)
+        assert dataset.space.channels == 3
+
+    def test_dataset_variable_selection_single(self, mock_dataset: Path) -> None:
+        """Test selecting a single variable from a multi-variable dataset."""
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            variables=["ice_conc"],
+        )
+        # Should have only 1 channel
+        assert dataset.space.channels == 1
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (1, 2, 2)

@@ -35,7 +35,8 @@ class NaiveLinearDecoder(BaseDecoder):
         )
 
         # Resize to the desired output shape
-        layers.append(ResizingInterpolation(self.data_space_out.shape))
+        if self.data_space_in.shape != self.data_space_out.shape:
+            layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

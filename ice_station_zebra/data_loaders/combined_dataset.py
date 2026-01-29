@@ -13,7 +13,8 @@ class CombinedDataset(Dataset):
     def __init__(
         self,
         datasets: Sequence[ZebraDataset],
-        target: str,
+        target_group_name: str,
+        target_variables: Sequence[str],
         *,
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
@@ -30,8 +31,10 @@ class CombinedDataset(Dataset):
         self.n_forecast_steps = n_forecast_steps
         self.n_history_steps = n_history_steps
 
-        # Define target and input datasets
-        self.target = next(ds for ds in datasets if ds.name == target)
+        # Create a new dataset for the target with only the selected variables
+        self.target = next(
+            ds for ds in datasets if ds.name == target_group_name
+        ).subset(variables=target_variables)
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency

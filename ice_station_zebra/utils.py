@@ -57,3 +57,10 @@ def to_bool(v: object) -> bool:
             return False
     msg = f"Cannot convert {v!r} to bool"
     raise ValueError(msg)
+
+
+def to_list(value: str | list[str]) -> list[str]:
+    """Convert a string or list of strings to a list of strings."""
+    if isinstance(value, str):
+        return [value]
+    return value

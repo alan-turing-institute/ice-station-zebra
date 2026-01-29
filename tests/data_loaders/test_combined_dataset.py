@@ -1,0 +1,152 @@
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from ice_station_zebra.data_loaders.combined_dataset import CombinedDataset
+from ice_station_zebra.data_loaders.zebra_dataset import ZebraDataset
+
+
+class TestCombinedDataset:
+    dates_str = ("2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05")
+    dates_np = tuple(np.datetime64(s) for s in dates_str)
+
+    def test_combined_dataset_no_valid_dates_non_overlapping_ranges(
+        self, mock_dataset: Path
+    ) -> None:
+        """Test that CombinedDataset raises ValueError when datasets have non-overlapping date ranges."""
+        # Create and combine two datasets with non-overlapping date ranges
+        dataset1 = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
+        )
+        dataset2 = ZebraDataset(
+            name="dataset2",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[3], "end": self.dates_str[4]}],
+        )
+        combined = CombinedDataset(
+            datasets=[dataset1, dataset2],
+            target="dataset1",
+            n_history_steps=1,
+            n_forecast_steps=1,
+        )
+
+        # Confirm that no valid dates are available
+        with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
+            _ = combined.dates
+
+    def test_combined_dataset_no_valid_dates_insufficient_history_steps(
+        self, mock_dataset: Path
+    ) -> None:
+        """Test that CombinedDataset raises ValueError when history steps exceed available dates."""
+        dataset = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
+        )
+
+        # Create combined dataset with history steps larger than available dates
+        combined = CombinedDataset(
+            datasets=[dataset],
+            target="dataset1",
+            n_history_steps=10,  # Only 2 dates available
+            n_forecast_steps=1,
+        )
+
+        # Confirm that no valid dates are available
+        with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
+            _ = combined.dates
+
+    def test_combined_dataset_no_valid_dates_insufficient_forecast_steps(
+        self, mock_dataset: Path
+    ) -> None:
+        """Test that CombinedDataset raises ValueError when forecast steps exceed available dates."""
+        dataset = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
+        )
+
+        # Create combined dataset with forecast steps larger than available dates
+        combined = CombinedDataset(
+            datasets=[dataset],
+            target="dataset1",
+            n_history_steps=1,
+            n_forecast_steps=10,  # Only 2 dates available
+        )
+
+        # Confirm that no valid dates are available
+        with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
+            _ = combined.dates
+
+    def test_combined_dataset_valid_dates(self, mock_dataset: Path) -> None:
+        """Test that CombinedDataset works correctly with valid overlapping dates."""
+        # Create and combine two datasets with overlapping date ranges
+        dataset1 = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+        )
+        dataset2 = ZebraDataset(
+            name="dataset2",
+            input_files=[mock_dataset],
+        )
+        combined = CombinedDataset(
+            datasets=[dataset1, dataset2],
+            target="dataset1",
+            n_history_steps=2,
+            n_forecast_steps=1,
+        )
+
+        # Should not raise an error
+        dates = combined.dates
+        assert len(dates) > 0
+        assert all(isinstance(date, np.datetime64) for date in dates)
+
+    def test_combined_dataset_start_and_end_dates(self, mock_dataset: Path) -> None:
+        """Test that start_date and end_date are correctly calculated from available dates."""
+        dataset1 = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[-2]}],
+        )
+        dataset2 = ZebraDataset(
+            name="dataset2",
+            input_files=[mock_dataset],
+            date_ranges=[{"start": self.dates_str[1], "end": self.dates_str[-1]}],
+        )
+        combined = CombinedDataset(
+            datasets=[dataset1, dataset2],
+            target="dataset1",
+            n_history_steps=1,
+            n_forecast_steps=1,
+        )
+
+        assert combined.start_date == combined.dates[0]
+        assert combined.end_date == combined.dates[-1]
+
+    def test_combined_dataset_lazy_loading(self, mock_dataset: Path) -> None:
+        """Test that dates are lazy-loaded and cached."""
+        dataset = ZebraDataset(
+            name="dataset1",
+            input_files=[mock_dataset],
+        )
+
+        combined = CombinedDataset(
+            datasets=[dataset],
+            target="dataset1",
+            n_history_steps=1,
+            n_forecast_steps=1,
+        )
+
+        # Initially _available_dates should be None
+        assert combined._available_dates is None
+
+        # Access dates for the first time
+        dates1 = combined.dates
+        assert combined._available_dates is not None
+
+        # Access dates again, should return cached value
+        dates2 = combined.dates
+        assert dates1 is dates2

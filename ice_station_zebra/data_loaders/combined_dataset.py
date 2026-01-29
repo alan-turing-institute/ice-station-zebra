@@ -53,14 +53,13 @@ class CombinedDataset(Dataset):
             target_date_set = set(self.target.dates)
             self._available_dates = sorted(
                 available_date
-                # Iterate over all dates in any dataset
                 for available_date in input_date_set
-                # Check that all inputs have n_history_steps starting on start_date
+                # ... if all inputs have n_history_steps starting on start_date
                 if all(
                     date in input_date_set
                     for date in self.get_history_steps(available_date)
                 )
-                # Check that the target has n_forecast_steps starting after the history dates
+                # ... and if the target has n_forecast_steps starting after the history dates
                 and all(
                     date in target_date_set
                     for date in self.get_forecast_steps(available_date)

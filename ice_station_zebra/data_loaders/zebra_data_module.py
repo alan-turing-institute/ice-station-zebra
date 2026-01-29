@@ -94,7 +94,7 @@ class ZebraDataModule(LightningDataModule):
     def output_space(self) -> DataSpace:
         """Return the data space of the desired output."""
         return next(
-            ZebraDataset(name, paths).space
+            ZebraDataset(name, paths, variables=self.target_variables).space
             for name, paths in self.dataset_groups.items()
             if name == self.target_group_name
         )

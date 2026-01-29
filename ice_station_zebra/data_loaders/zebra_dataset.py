@@ -29,7 +29,6 @@ class ZebraDataset(Dataset):
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
         )
         self._input_files = input_files
-        self._len: int | None = None
         self._name = name
 
     @cached_property
@@ -116,9 +115,7 @@ class ZebraDataset(Dataset):
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""
-        if self._len is None:
-            self._len = len(self.dates)
-        return self._len
+        return len(self.dates)
 
     def __getitem__(self, idx: int) -> ArrayCHW:
         """Return the data for a single timestep in [C, H, W] format."""

@@ -20,7 +20,6 @@ class NaiveLinearEncoder(BaseEncoder):
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialise a NaiveLinearEncoder."""
-        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
 
         # Construct list of layers
@@ -31,9 +30,7 @@ class NaiveLinearEncoder(BaseEncoder):
 
         # Resize to the desired latent shape
 
-        layers.append(
-            ResizingInterpolation(self.data_space_out.shape, antialias=antialias)
-        )
+        layers.append(ResizingInterpolation(self.data_space_out.shape))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

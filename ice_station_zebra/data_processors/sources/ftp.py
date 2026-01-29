@@ -30,8 +30,10 @@ class FTPSource(LegacySource):
 
         # Get list of remote file paths
         remote_paths = {
-            iso_date: to_list(Pattern(path_pattern).substitute(date=iso_date))
-            for iso_date in [d.isoformat() for d in dates]
+            date.isoformat(): to_list(
+                Pattern(path_pattern).substitute(date=date, allow_extra=True)
+            )
+            for date in dates
         }
 
         # Connect to the FTP server

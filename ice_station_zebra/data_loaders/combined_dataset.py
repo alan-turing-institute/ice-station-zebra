@@ -48,25 +48,23 @@ class CombinedDataset(Dataset):
     def dates(self) -> list[np.datetime64]:
         """Get list of dates that are available in all datasets."""
         if self._available_dates is None:
+            # Identify dates that exist in all input datasets
+            input_date_set = set.intersection(*(set(ds.dates) for ds in self.inputs))
+            target_date_set = set(self.target.dates)
             self._available_dates = sorted(
-                [
-                    available_date
-                    # Iterate over all dates in any dataset
-                    for available_date in sorted(
-                        {date for ds in self.inputs for date in ds.dates}
-                    )  # type: ignore[type-var]
-                    # Check that all inputs have n_history_steps starting on start_date
-                    if all(
-                        date in ds.dates
-                        for date in self.get_history_steps(available_date)
-                        for ds in self.inputs
-                    )
-                    # Check that the target has n_forecast_steps starting after the history dates
-                    and all(
-                        date in self.target.dates
-                        for date in self.get_forecast_steps(available_date)
-                    )
-                ]
+                available_date
+                # Iterate over all dates in any dataset
+                for available_date in input_date_set
+                # Check that all inputs have n_history_steps starting on start_date
+                if all(
+                    date in input_date_set
+                    for date in self.get_history_steps(available_date)
+                )
+                # Check that the target has n_forecast_steps starting after the history dates
+                and all(
+                    date in target_date_set
+                    for date in self.get_forecast_steps(available_date)
+                )
             )
             if len(self._available_dates) == 0:
                 msg = (

@@ -6,7 +6,6 @@ import typer
 from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
-from ice_station_zebra.xpu import xpu_available
 
 from .evaluator import ZebraEvaluator
 
@@ -25,12 +24,6 @@ def evaluate(
     ],
 ) -> None:
     """Evaluate a model."""
-    if xpu_available():
-        config["train"]["trainer"]["accelerator"] = "xpu"
-        config["train"]["trainer"]["strategy"] = {
-            "_target_": "lightning.pytorch.strategies.SingleDeviceStrategy",
-            "device": "xpu:0",
-        }
     evaluator = ZebraEvaluator(config, Path(checkpoint).resolve())
     evaluator.evaluate()
 

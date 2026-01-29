@@ -1,0 +1,190 @@
+"""Tests for the FTP data source."""
+
+from datetime import datetime
+from unittest.mock import MagicMock
+
+import pytest
+from anemoi.datasets.dates import DatesProvider
+from anemoi.datasets.dates.groups import GroupOfDates
+from anemoi.utils.registry import Registry
+
+from ice_station_zebra.data_processors.sources import FTPSource, register_sources
+
+
+class TestFTPSource:
+    """Test suite for FTPSource class."""
+
+    dates = GroupOfDates(
+        [datetime(2020, 1, day) for day in range(1, 4)],
+        provider=DatesProvider.from_config(
+            start="2020-01-01", end="2020-01-03", frequency="1d"
+        ),
+    )
+
+    def test_ftp_source_registration(self) -> None:
+        """Test that FTPSource is properly registered."""
+        # Mock source registry
+        mock_registry = Registry("anemoi.datasets.create.sources")
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.source_registry",
+                mock_registry,
+            )
+            assert "ftp" not in mock_registry.registered
+            register_sources()
+            assert "ftp" in mock_registry.registered
+            assert mock_registry.lookup("ftp") == FTPSource
+
+    def test_ftp_source_execute_basic(self) -> None:
+        """Test basic FTP source execution with mocked FTP connection."""
+        # Mock ftp.FTP
+        mock_ftp_class = MagicMock()
+        mock_ftp = MagicMock()
+        mock_ftp_class.return_value.__enter__.return_value = mock_ftp
+        mock_ftp_class.return_value.__exit__.return_value = None
+
+        # Mock ftp.load_one
+        mock_load_one = MagicMock()
+        mock_load_one.return_value = MagicMock()
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+            )
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+            )
+
+            # Execute
+            FTPSource._execute(
+                context={},
+                dates=self.dates,
+                url=r"ftp://example.com/data/file.nc",
+                user="testuser",
+                passwd="testpass",  # noqa: S106
+            )
+
+            # Verify FTP session was created with correct credentials
+            mock_ftp_class.assert_called_once_with("example.com")
+            mock_ftp.login.assert_called_once_with(user="testuser", passwd="testpass")  # noqa: S106
+
+            # Verify load_one was called for each date
+            assert mock_load_one.call_count == 3
+
+    def test_ftp_source_execute_anonymous_login(self) -> None:
+        """Test FTP source with anonymous login (default)."""
+        # Mock ftp.FTP
+        mock_ftp_class = MagicMock()
+        mock_ftp = MagicMock()
+        mock_ftp_class.return_value.__enter__.return_value = mock_ftp
+        mock_ftp_class.return_value.__exit__.return_value = None
+
+        # Mock ftp.load_one
+        mock_load_one = MagicMock()
+        mock_load_one.return_value = MagicMock()
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+            )
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+            )
+
+            # Execute without providing user/passwd
+            FTPSource._execute(
+                context={},
+                dates=self.dates,
+                url=r"ftp://example.com/data/file.nc",
+            )
+
+            # Verify FTP session was created with correct credentials
+            mock_ftp_class.assert_called_once_with("example.com")
+            mock_ftp.login.assert_called_once_with(user="anonymous", passwd="")
+
+            # Verify load_one was called for each date
+            assert mock_load_one.call_count == 3
+
+    def test_ftp_source_execute_file_download(self) -> None:
+        """Test that URL parsing works correctly."""
+        # Mock ftp.FTP
+        mock_ftp_class = MagicMock()
+        mock_ftp = MagicMock()
+        mock_ftp_class.return_value.__enter__.return_value = mock_ftp
+        mock_ftp_class.return_value.__exit__.return_value = None
+
+        # Mock ftp.load_one
+        mock_load_one = MagicMock()
+        mock_load_one.return_value = MagicMock()
+
+        # Mock ftp.MultiFieldList
+        mock_multi_field_list = MagicMock()
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+            )
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+            )
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.MultiFieldList",
+                mock_multi_field_list,
+            )
+
+            # Execute with a complex URL
+            FTPSource._execute(
+                context={},
+                dates=self.dates,
+                url=r"ftp://data.server.com/archive/datasets/file.nc",
+            )
+
+            # Verify correct server was used
+            mock_ftp_class.assert_called_once_with("data.server.com")
+
+            # Verify directory change was attempted
+            mock_ftp.cwd.assert_called_with("/archive/datasets")
+            assert mock_ftp.cwd.call_count == 3
+
+            # Verify retrbinary was called to download files
+            assert mock_ftp.retrbinary.call_args.args[0] == "RETR file.nc"
+            assert mock_ftp.retrbinary.call_count == 3
+
+            # Verify MultiFieldList was created with all downloaded files
+            mock_multi_field_list.assert_called_once()
+
+    def test_ftp_source_execute_pattern_substitution(self) -> None:
+        """Test that date patterns are substituted correctly."""
+        # Mock ftp.FTP
+        mock_ftp_class = MagicMock()
+        mock_ftp = MagicMock()
+        mock_ftp_class.return_value.__enter__.return_value = mock_ftp
+        mock_ftp_class.return_value.__exit__.return_value = None
+
+        # Mock ftp.load_one
+        mock_load_one = MagicMock()
+        mock_load_one.return_value = MagicMock()
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+            )
+            mp.setattr(
+                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+            )
+
+            FTPSource._execute(
+                context={},
+                dates=self.dates,
+                url=r"ftp://example.com/data/{date:strftime(%Y%m%d)}.nc",
+            )
+
+            # Verify load_one was called with correct iso dates
+            calls = mock_load_one.call_args_list
+            assert len(calls) == 3
+
+            # Check that iso dates are passed correctly
+            assert "20200101.nc" in str(calls[0])
+            assert "20200102.nc" in str(calls[1])
+            assert "20200103.nc" in str(calls[2])

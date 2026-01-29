@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 from anemoi.datasets.data import open_dataset
 from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
-from cachetools import LRUCache, cachedmethod
 from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
@@ -25,7 +24,6 @@ class ZebraDataset(Dataset):
         We reshape this to CHW before returning.
         """
         super().__init__()
-        self._cache: LRUCache = LRUCache(maxsize=128)
         self._datasets: list[AnemoiDataset] = []
         self._date_ranges = sorted(
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
@@ -33,6 +31,22 @@ class ZebraDataset(Dataset):
         self._input_files = input_files
         self._len: int | None = None
         self._name = name
+
+    @cached_property
+    def _date2idx(self) -> dict[np.datetime64, int]:
+        """Map date to global index in the dataset."""
+        return {date: idx for idx, date in enumerate(self.dates)}
+
+    @cached_property
+    def _idx2anemoi(self) -> dict[int, tuple[int, int]]:
+        """Map global index to a location in an Anemoi dataset."""
+        idx2anemoi = {}
+        for idx_ds, dataset in enumerate(self.datasets):
+            for idx_date, date in enumerate(dataset.dates):
+                idx_global = self._date2idx.get(date, None)
+                if idx_global is not None:
+                    idx2anemoi[idx_global] = (idx_ds, idx_date)
+        return idx2anemoi
 
     @property
     def datasets(self) -> list[AnemoiDataset]:
@@ -108,31 +122,23 @@ class ZebraDataset(Dataset):
 
     def __getitem__(self, idx: int) -> ArrayCHW:
         """Return the data for a single timestep in [C, H, W] format."""
-        ds_idx = idx
-        for dataset in self.datasets:
-            if ds_idx < dataset._len:
-                return dataset[ds_idx].reshape(self.space.chw)
-            ds_idx -= dataset._len
-        msg = f"Index {idx} out of range for dataset of length {len(self)}."
-        raise IndexError(msg)
+        try:
+            idx_ds, idx_date = self._idx2anemoi[idx]
+            return self.datasets[idx_ds][idx_date].reshape(self.space.chw)
+        except KeyError as exc:
+            msg = f"Index {idx} out of range for dataset of length {len(self)}."
+            raise IndexError(msg) from exc
 
     def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
         """Return the data for a series of timesteps in [T, C, H, W] format."""
         return np.stack(
-            [self[self.index_from_date(target_date)] for target_date in dates], axis=0
+            [self[self.to_index(target_date)] for target_date in dates], axis=0
         )
 
-    @cachedmethod(lambda self: self._cache)
-    def index_from_date(self, date: np.datetime64) -> int:
+    def to_index(self, date: np.datetime64) -> int:
         """Return the index of a given date in the dataset."""
-        idx = 0
-        for dataset in self.datasets:
-            try:
-                ds_idx, _, _ = dataset.to_index(date, 0)
-                idx += ds_idx
-            except ValueError:
-                idx += dataset._len
-            else:
-                return idx
-        msg = f"Date {date} not found in the dataset {self.dates[0]} to {self.dates[-1]} by {self.frequency}"
-        raise ValueError(msg)
+        try:
+            return self._date2idx[date]
+        except KeyError as exc:
+            msg = f"Date {date} not found in the dataset {self.start_date} to {self.end_date} every {self.frequency}"
+            raise IndexError(msg) from exc

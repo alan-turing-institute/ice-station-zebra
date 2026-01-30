@@ -1,3 +1,7 @@
 """Data processor package."""
 
-__all__: list[str] = []
+from .cli import datasets_cli
+
+__all__ = [
+    "datasets_cli",
+]

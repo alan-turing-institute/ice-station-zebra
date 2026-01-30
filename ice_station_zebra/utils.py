@@ -1,8 +1,32 @@
+import logging
+import os
 from datetime import UTC, datetime
 
 import torch
+import typer
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
+
+logger = logging.getLogger(__name__)
+
+
+def check_mps_fallback(device_type: str) -> None:
+    """Check whether MPS fallback is needed and enabled."""
+    if device_type != "mps":
+        return
+    if os.environ.get("PYTORCH_ENABLE_MPS_FALLBACK", None):
+        logger.info("CPU fallback enabled for Apple Silicon GPU device.")
+        return
+    msg = (
+        "You are attempting to run on MPS without CPU fallback enabled. "
+        "The operator 'aten::_upsample_bilinear2d_aa_backward.grad_input' "
+        "needed by this code is not yet implemented for the MPS device. "
+        "Please rerun after setting the environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1`. "
+        "Note that this must be set before starting the Python interpreter."
+        "WARNING: this will be slower than running natively on MPS."
+    )
+    logger.error(msg)
+    raise typer.Exit(0)
 
 
 def generate_run_name() -> str:

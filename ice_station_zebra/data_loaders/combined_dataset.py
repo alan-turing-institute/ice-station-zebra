@@ -41,27 +41,52 @@ class CombinedDataset(Dataset):
             raise ValueError(msg)
         self.frequency = frequencies[0]
 
-        # Get list of dates that are available in all datasets
-        self.available_dates = [
-            available_date
-            # Iterate over all dates in any dataset
-            for available_date in sorted({date for ds in datasets for date in ds.dates})  # type: ignore[type-var]
-            # Check that all inputs have n_history_steps starting on start_date
-            if all(
-                date in ds.dates
-                for date in self.get_history_steps(available_date)
-                for ds in self.inputs
+        # Lazy-load dates on first request
+        self._available_dates: list[np.datetime64] | None = None
+
+    @property
+    def dates(self) -> list[np.datetime64]:
+        """Get list of dates that are available in all datasets."""
+        if self._available_dates is None:
+            # Identify dates that exist in all input datasets
+            input_date_set = set.intersection(*(set(ds.dates) for ds in self.inputs))
+            target_date_set = set(self.target.dates)
+            self._available_dates = sorted(
+                available_date
+                for available_date in input_date_set
+                # ... if all inputs have n_history_steps starting on start_date
+                if all(
+                    date in input_date_set
+                    for date in self.get_history_steps(available_date)
+                )
+                # ... and if the target has n_forecast_steps starting after the history dates
+                and all(
+                    date in target_date_set
+                    for date in self.get_forecast_steps(available_date)
+                )
             )
-            # Check that the target has n_forecast_steps starting after the history dates
-            and all(
-                date in self.target.dates
-                for date in self.get_forecast_steps(available_date)
-            )
-        ]
+            if len(self._available_dates) == 0:
+                msg = (
+                    "CombinedDataset has no valid dates. This can happen when there "
+                    "are no valid windows given the configured history/forecast steps or "
+                    "when the input datasets do not have overlapping time ranges."
+                )
+                raise ValueError(msg)
+        return self._available_dates
+
+    @property
+    def end_date(self) -> np.datetime64:
+        """Return the end date of the dataset."""
+        return self.dates[-1]
+
+    @property
+    def start_date(self) -> np.datetime64:
+        """Return the start date of the dataset."""
+        return self.dates[0]
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""
-        return len(self.available_dates)
+        return len(self.dates)
 
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary.
@@ -74,17 +99,13 @@ class CombinedDataset(Dataset):
 
         """
         return {
-            ds.name: ds.get_tchw(self.get_history_steps(self.available_dates[idx]))
+            ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
             for ds in self.inputs
-        } | {
-            "target": self.target.get_tchw(
-                self.get_forecast_steps(self.available_dates[idx])
-            )
-        }
+        } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep."""
-        np_datetime = self.available_dates[idx]
+        np_datetime = self.dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
@@ -99,21 +120,3 @@ class CombinedDataset(Dataset):
         return [
             start_date + idx * self.frequency for idx in range(self.n_history_steps)
         ]
-
-    @property
-    def end_date(self) -> np.datetime64:
-        """Return the end date of the dataset."""
-        end_date = {dataset.end_date for dataset in self.inputs}
-        if len(end_date) != 1:
-            msg = f"Datasets have {len(end_date)} different end dates"
-            raise ValueError(msg)
-        return end_date.pop()
-
-    @property
-    def start_date(self) -> np.datetime64:
-        """Return the start date of the dataset."""
-        start_date = {dataset.start_date for dataset in self.inputs}
-        if len(start_date) != 1:
-            msg = f"Datasets have {len(start_date)} different start dates"
-            raise ValueError(msg)
-        return start_date.pop()

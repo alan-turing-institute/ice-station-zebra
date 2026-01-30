@@ -10,6 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 from ice_station_zebra.callbacks import UnconditionalCheckpoint
 from ice_station_zebra.data_loaders import ZebraDataModule
 from ice_station_zebra.utils import (
+    check_mps_fallback,
     generate_run_name,
     get_device_name,
     get_device_threads,
@@ -114,6 +115,7 @@ class ZebraTrainer:
             self.trainer.num_devices,
             get_device_name(self.trainer.accelerator.name()),
         )
+        check_mps_fallback(self.trainer.accelerator.name())
         self.trainer.fit(
             model=self.model,
             datamodule=self.data_module,

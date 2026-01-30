@@ -8,7 +8,12 @@ from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.utils import get_device_name, get_device_threads, get_timestamp
+from ice_station_zebra.utils import (
+    check_mps_fallback,
+    get_device_name,
+    get_device_threads,
+    get_timestamp,
+)
 
 if TYPE_CHECKING:
     from lightning import Callback, Trainer
@@ -94,7 +99,7 @@ class ZebraEvaluator:
             self.trainer.num_devices,
             get_device_name(self.trainer.accelerator.name()),
         )
-
+        check_mps_fallback(self.trainer.accelerator.name())
         self.trainer.test(
             model=self.model,
             datamodule=self.data_module,

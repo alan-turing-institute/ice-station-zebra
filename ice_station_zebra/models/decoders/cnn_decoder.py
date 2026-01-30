@@ -37,7 +37,6 @@ class CNNDecoder(BaseDecoder):
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNDecoder."""
-        antialias = kwargs.pop("antialias", True)
         super().__init__(**kwargs)
 
         # specify whether the output is bounded between 0 and 1
@@ -74,7 +73,7 @@ class CNNDecoder(BaseDecoder):
             max(minimal_input_shape[1], self.data_space_in.shape[1]),
         )
         if shape != self.data_space_in.shape:
-            layers.append(ResizingInterpolation(shape, antialias=antialias))
+            layers.append(ResizingInterpolation(shape))
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 self.data_space_in.shape,
@@ -100,9 +99,7 @@ class CNNDecoder(BaseDecoder):
 
         # If necessary, resize downwards to match the output shape
         if shape != self.data_space_out.shape:
-            layers.append(
-                ResizingInterpolation(self.data_space_out.shape, antialias=antialias)
-            )
+            layers.append(ResizingInterpolation(self.data_space_out.shape))
             logger.debug(
                 "- ResizingInterpolation from %s to %s",
                 shape,

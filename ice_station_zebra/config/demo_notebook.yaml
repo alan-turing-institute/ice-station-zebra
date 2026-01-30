@@ -11,4 +11,3 @@ loggers:
     entity: null
 
 base_path: ../my_data
-antialias_val: false

@@ -18,7 +18,7 @@
 | ice\_station\_zebra/cli/main.py                                         |       12 |        1 |     92% |        23 |
 | ice\_station\_zebra/config/\_\_init\_\_.py                              |        0 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/\_\_init\_\_.py                       |        3 |        0 |    100% |           |
-| ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       44 |       27 |     39% |27-45, 64, 76, 87-88, 92, 99, 106-110, 115-119 |
+| ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       46 |        6 |     87% |40-41, 89, 101, 108-109 |
 | ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       59 |       37 |     37% |25-72, 85, 93, 101-103, 109-128, 134-153, 159-178, 184-203 |
 | ice\_station\_zebra/data\_loaders/zebra\_dataset.py                     |       78 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/\_\_init\_\_.py                    |        1 |        0 |    100% |           |
@@ -91,7 +91,7 @@
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
 | ice\_station\_zebra/xpu/\_\_init\_\_.py                                 |        2 |        0 |    100% |           |
 | ice\_station\_zebra/xpu/accelerator.py                                  |       79 |       43 |     46% |34-41, 54, 59-61, 76-110, 124-126, 132, 143-146, 151, 155, 165-167 |
-| **TOTAL**                                                               | **3006** | **1054** | **65%** |           |
+| **TOTAL**                                                               | **3008** | **1033** | **66%** |           |
 
 
 ## Setup coverage badge

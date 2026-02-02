@@ -1,7 +1,7 @@
 from .hydra import hydra_adaptor
-from .main import app
+from .main import main
 
 __all__ = [
-    "app",
     "hydra_adaptor",
+    "main",
 ]

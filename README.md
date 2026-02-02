@@ -12,6 +12,24 @@ You will need to install the following tools if you want to develop this project
 
 On an HPC system, this will install to `~/.local/bin`, so make sure that your home directory has enough free space.
 
+### Installing Zebra
+
+:warning: Isambard-AI uses ARM processors, and there is currently no `aarch64` wheel for `cf-units`.
+Before installing on Isambard-AI you will need to set some environment variables:
+```bash
+export UDUNITS2_XML_PATH=/projects/u5gf/seaice/udunits/share/udunits/udunits2.xml
+export UDUNITS2_INCDIR=/projects/u5gf/seaice/udunits/include/
+export UDUNITS2_LIBDIR=/projects/u5gf/seaice/udunits/lib/
+```
+
+You should be able to install the project as follows:
+
+```bash
+git clone git@github.com:alan-turing-institute/ice-station-zebra.git
+cd ice-station-zebra
+uv sync --managed-python
+```
+
 ### Creating your own configuration file
 
 Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.

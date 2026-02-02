@@ -1,13 +1,13 @@
-samp-sicnorth-ssmis-25k-2020-2021-24h-v1:
-  name: samp-sicnorth-ssmis-25k-2020-2021-24h-v1
-  group_as: sic-ssmis-north
-  description: Sea ice concentration for northern hemisphere
+samp-sicsouth-ssmis-25k-2020-2021-24h-v1:
+  name: samp-sicsouth-ssmis-25k-2020-2021-24h-v1
+  group_as: sic-ssmis-south
+  description: Sea ice concentration for southern hemisphere
   attribution: EUMETSAT/OSISAF
   licence: CC-BY-4.0
 
   dates:
-    start: '2020-12-01T12:00:00'
-    end: '2021-01-31T12:00:00'
+    start: '2017-01-01T00:00:00'
+    end: '2019-01-31T23:00:00'
     frequency: 1d
 
   input:
@@ -20,7 +20,7 @@ samp-sicnorth-ssmis-25k-2020-2021-24h-v1:
             end: '2020-12-31T12:00:00'
             frequency: 1d
           ftp:
-            url: ftp://osisaf.met.no/reprocessed/ice/conc/v3p1/{date:strftime(%Y)}/{date:strftime(%m)}/ice_conc_nh_ease2-250_cdr-v3p1_{date:strftime(%Y%m%d)}1200.nc
+            url: ftp://osisaf.met.no/reprocessed/ice/conc/v3p1/{date:strftime(%Y)}/{date:strftime(%m)}/ice_conc_sh_ease2-250_cdr-v3p1_{date:strftime(%Y%m%d)}1200.nc
 
         # OSI-430-a (2021-2025)
         # https://osi-saf.eumetsat.int/products/osi-430-a
@@ -29,7 +29,7 @@ samp-sicnorth-ssmis-25k-2020-2021-24h-v1:
             end: '2025-10-16T12:00:00'
             frequency: 1d
           ftp:
-            url: ftp://osisaf.met.no/reprocessed/ice/conc-cont-reproc/v3p0/{date:strftime(%Y)}/{date:strftime(%m)}/ice_conc_nh_ease2-250_icdr-v3p0_{date:strftime(%Y%m%d)}1200.nc
+            url: ftp://osisaf.met.no/reprocessed/ice/conc-cont-reproc/v3p0/{date:strftime(%Y)}/{date:strftime(%m)}/ice_conc_sh_ease2-250_icdr-v3p0_{date:strftime(%Y%m%d)}1200.nc
 
       # Rescale concentration variables and uncertainties from percent to fraction
       - rescale:

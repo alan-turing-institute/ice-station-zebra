@@ -70,32 +70,37 @@ class DDPM(ZebraModel):
 
         self.osisaf_key = self.output_space.name
 
-        era5_space = next(
-            space
-            for space in self.input_spaces
-            if (space["name"] if isinstance(space, dict) else space.name) == "era5"
-        )
+        # era5_space = next(
+        #     space
+        #     for space in self.input_spaces
+        #     if (space["name"] if isinstance(space, dict) else space.name) == "era5"
+        # )
 
-        # Get channels from either dict or object
-        if isinstance(era5_space, dict):
-            self.era5_space = era5_space["channels"]
-        else:
-            self.era5_space = era5_space.channels
+        # # Get channels from either dict or object
+        # if isinstance(era5_space, dict):
+        #     self.era5_space = era5_space["channels"]
+        # else:
+        #     self.era5_space = era5_space.channels
 
-        # Get the base output channels from output_space
-        if isinstance(self.output_space, dict):
-            self.base_output_channels = self.output_space["channels"]
-        else:
-            self.base_output_channels = self.output_space.channels
+        # # Downweight ERA5 conditioning 
+        # self.era5_weight = 0.25 #0.1 #0.25
+
+        # # Get the base output channels from output_space
+        # if isinstance(self.output_space, dict):
+        #     self.base_output_channels = self.output_space["channels"]
+        # else:
+        #     self.base_output_channels = self.output_space.channels
+        self.base_output_channels = self.output_space.channels
 
         # osisaf channels after squeezing: T_osisaf = self.n_history_steps
         osisaf_channels = self.n_history_steps  # keep T dimension as channels
 
-        # era5 channels after merging time*channels
-        era5_channels = self.n_history_steps * self.era5_space  # T * C2
+        # # era5 channels after merging time*channels
+        # era5_channels = self.n_history_steps * self.era5_space  # T * C2
 
         # total channels for UNet
-        self.input_channels = osisaf_channels + era5_channels
+        # self.input_channels = osisaf_channels + era5_channels
+        self.input_channels = osisaf_channels #+ era5_channels
         self.output_channels = self.n_forecast_steps * self.base_output_channels
         self.timesteps = timesteps
 
@@ -111,41 +116,7 @@ class DDPM(ZebraModel):
             dropout_rate=dropout_rate,
         )
 
-        self.ema = ExponentialMovingAverage(self.model.parameters(), decay=0.995)
-
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
-
-        # Move all diffusion schedules to the correct device
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-            self.diffusion.betas = self.diffusion.betas.to(device)
-            self.diffusion.alphas = self.diffusion.alphas.to(device)
-            self.diffusion.alphas_cumprod = self.diffusion.alphas_cumprod.to(device)
-            self.diffusion.alphas_cumprod_prev = self.diffusion.alphas_cumprod_prev.to(
-                device
-            )
-            self.diffusion.sqrt_alphas_cumprod = self.diffusion.sqrt_alphas_cumprod.to(
-                device
-            )
-            self.diffusion.sqrt_one_minus_alphas_cumprod = (
-                self.diffusion.sqrt_one_minus_alphas_cumprod.to(device)
-            )
-            self.diffusion.sqrt_recip_alphas = self.diffusion.sqrt_recip_alphas.to(
-                device
-            )
-            self.diffusion.posterior_variance = self.diffusion.posterior_variance.to(
-                device
-            )
-            self.diffusion.posterior_log_variance_clipped = (
-                self.diffusion.posterior_log_variance_clipped.to(device)
-            )
-            self.diffusion.posterior_mean_coef1 = (
-                self.diffusion.posterior_mean_coef1.to(device)
-            )
-            self.diffusion.posterior_mean_coef2 = (
-                self.diffusion.posterior_mean_coef2.to(device)
-            )
-            self.ema.to(device)
 
         self.learning_rate = learning_rate
 
@@ -206,23 +177,21 @@ class DDPM(ZebraModel):
         device = x.device
 
         # Start from pure noise
-        y = torch.randn(shape, device=device)
+        y = torch.randn(shape, device=self.device)
 
         dim_threshold = 3
 
-        # Use EMA weights for sampling
-        with self.ema.average_parameters():
-            for t in reversed(range(self.timesteps)):
-                t_batch = torch.full_like(
-                    x[:, 0, 0, 0], t, dtype=torch.long, device=device
-                )
-                pred_v: torch.Tensor = self.model(y, t_batch, x)
-                pred_v = (
-                    pred_v.squeeze(3)
-                    if pred_v.dim() > dim_threshold
-                    else pred_v.squeeze()
-                )
-                y = self.diffusion.p_sample(y, t_batch, pred_v)
+        for t in reversed(range(self.timesteps)):
+            t_batch = torch.full_like(
+                x[:, 0, 0, 0], t, dtype=torch.long, device=self.device
+            )
+            pred_v: torch.Tensor = self.model(y, t_batch, x)
+            pred_v = (
+                pred_v.squeeze(3)
+                if pred_v.dim() > dim_threshold
+                else pred_v.squeeze()
+            )
+            y = self.diffusion.p_sample(y, t_batch, pred_v)
 
         return y
 
@@ -237,62 +206,41 @@ class DDPM(ZebraModel):
         return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
 
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
-        """Merge time dimension into channels for ERA5, squeeze singleton channels for osisaf,and combine them for forecasting together.
-
-        Args:
-            batch: Dictionary containing keys 'osisaf-south' and 'era5'.
-
+        """
+        Prepare OSI-SAF-only inputs.
+    
         Returns:
-            TensorNTCHW: Combined input of shape [B, C_combined, H, W].
-
+            Tensor of shape [B, T, H, W]
         """
         osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
-        era5 = batch["era5"]  # [B, T, 27, H2, W2]
+    
+        # Squeeze singleton channel
+        osisaf_squeezed = osisaf.squeeze(2)  # [B, T, H, W]
+    
+        return osisaf_squeezed
 
-        # pylint: disable=invalid-name
-        B, T, C2, H2, W2 = era5.shape  # noqa: N806
-        H_target, W_target = osisaf.shape[-2:]  # noqa: N806
-
-        # Squeeze singleton channel for osisaf: [B, T, H, W]
-        osisaf_squeezed = osisaf.squeeze(2)
-
-        # Merge ERA5 time and channels: [B, T*C2, H2, W2]
-        era5_merged = era5.view(B, T * C2, H2, W2)
-
-        # Resize to osisaf spatial resolution
-        era5_resized = F.interpolate(
-            era5_merged, size=(H_target, W_target), mode="bilinear", align_corners=False
-        )
-
-        # Flatten osisaf time dimension into channels: [B, T, H, W] → [B, T, H, W] already
-        # Concatenate along channels: [B, T + T*C2, H, W]
-        return torch.cat([osisaf_squeezed, era5_resized], dim=1)
 
     def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
         """One training step using DDPM loss (predicted noise vs. true noise)."""
-        device = batch["target"].device
 
         # Prepare input tensor by combining osisaf-south and era5
-        x = self.prepare_inputs(batch).to(device)  # [B, T, C_combined, H, W]
+        x = self.prepare_inputs(batch) # [B, T, C_combined, H, W]
 
         # Extract target
-        y = batch["target"].squeeze(2).to(device)
-
-        # Scale target to [-1, 1]
-        y_scaled = 2.0 * y - 1.0
+        y = batch["target"].squeeze(2) 
 
         # Sample random timesteps
-        t = torch.randint(0, self.timesteps, (x.shape[0],), device=x.device).long()
+        t = torch.randint(0, self.timesteps, (x.shape[0],), device=self.device).long() #look into this
 
         # Create noisy version using scaled target
-        noise = torch.randn_like(y_scaled)
-        noisy_y = self.diffusion.q_sample(y_scaled, t, noise)
+        noise = torch.randn_like(y)
+        noisy_y = self.diffusion.q_sample(y, t, noise)
 
         # Predict v
-        pred_v = self.model(noisy_y, t, x)  # .squeeze()
+        pred_v = self.model(noisy_y, t, x)
 
         # Compute target v using scaled data
-        target_v = self.diffusion.calculate_v(y_scaled, noise, t)
+        target_v = self.diffusion.calculate_v(y, noise, t)
 
         # Compute loss
         loss = F.mse_loss(pred_v, target_v)
@@ -316,14 +264,12 @@ class DDPM(ZebraModel):
         y = batch["target"].squeeze(2)  # [B, T, H, W]
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
-        # Generate samples (returns [-1, 1] range)
+        # Generate samples
         outputs = self.sample(x, sample_weight)
 
-        # Convert to [0, 1] for metrics and loss
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1)
+        y_hat = torch.clamp(outputs, 0, 1)
 
-        # Calculate loss in [0, 1] space
+        # Calculate loss 
         loss = self.loss(y_hat, y, sample_weight)
         self.log(
             "val_loss",
@@ -334,7 +280,7 @@ class DDPM(ZebraModel):
             sync_dist=True,
         )
 
-        # Update metrics in [0, 1] space
+        # Update metrics
         self.metrics.update(y_hat, y, sample_weight)
         return {"val_loss": loss}
 
@@ -359,9 +305,8 @@ class DDPM(ZebraModel):
 
         outputs = self.sample(x, sample_weight)
 
-        # Convert to [0, 1] for metrics and loss
-        y_hat = (outputs + 1.0) / 2.0
-        y_hat = torch.clamp(y_hat, 0, 1).unsqueeze(2)
+        y_hat = torch.clamp(outputs, 0, 1).unsqueeze(2)
+        
         y = y.unsqueeze(2)
         sample_weight = sample_weight.unsqueeze(2)
 
@@ -378,57 +323,3 @@ class DDPM(ZebraModel):
         self.test_metrics.update(y_hat, y, sample_weight)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)
-
-    def configure_optimizers(self) -> dict[str, Any]:
-        """Set up the optimizer.
-
-        Returns:
-            torch.optim.Optimizer: Adam optimizer.
-
-        """
-        # Add weight decay to discourage large weights (helps generalization)
-        optimizer = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.learning_rate,
-            weight_decay=1e-4,
-            betas=(0.9, 0.95),
-            eps=1e-8,
-        )
-
-        scheduler = {
-            "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=100, eta_min=self.learning_rate * 0.01
-            ),
-            "interval": "epoch",
-            "frequency": 1,
-            "name": "lr",
-        }
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
-
-    def optimizer_step(
-        self,
-        epoch: int,  # noqa: ARG002
-        batch_idx: int,  # noqa: ARG002
-        optimizer: Optimizer,
-        optimizer_closure: Callable[[], None],
-        **kwargs: Any,  # noqa: ARG002
-    ) -> None:
-        """Custom optimizer step used in PyTorch Lightning.
-
-        This method performs a single optimization step using the provided closure,
-        and updates the Exponential Moving Average (EMA) of the model weights.
-
-        Args:
-            epoch (int): Current epoch number.
-            batch_idx (int): Index of the current batch.
-            optimizer (Optimizer): The optimizer instance (e.g., Adam).
-            optimizer_closure (callable): A closure that reevaluates the model and returns the loss.
-            **kwargs: Additional arguments passed by PyTorch Lightning (not used here).
-
-        Notes:
-            - This method is automatically called by PyTorch Lightning during training.
-            - `self.ema.update()` updates the EMA shadow weights after the optimizer step.
-
-        """
-        optimizer.step(closure=optimizer_closure)
-        self.ema.update()

@@ -17,11 +17,11 @@ source:
 resolution:
   - 0p5: 0.5 degree
   - 25k: 25km grid
-- start-year:
+start-year:
   - YYYY: year code
-- end-year:
+end-year:
   - YYYY: year code
-- frequency:
+frequency:
   - 24h: every 24 hours
-- version:
-  - vX: where X increments each time changes are made
+version:
+  - vX: where X increments each time major changes are made

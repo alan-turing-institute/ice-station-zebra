@@ -1,13 +1,13 @@
-samp-sicsouth-ssmis-25k-2020-2021-24h-v1:
-  name: samp-sicsouth-ssmis-25k-2020-2021-24h-v1
-  group_as: sic-ssmis-south
-  description: Sea ice concentration for southern hemisphere
+samp-sicsouth-ssmis-25k-2017-2019-24h-v1:
+  name: samp-sicsouth-ssmis-25k-2017-2019-24h-v1
+  group_as: sic-ssmis
+  description: Sea ice concentration from SMMR/SSMI/SSMIS for southern hemisphere
   attribution: EUMETSAT/OSISAF
   licence: CC-BY-4.0
 
   dates:
-    start: '2017-01-01T00:00:00'
-    end: '2019-01-31T23:00:00'
+    start: '2017-01-01T12:00:00'
+    end: '2019-01-31T12:00:00'
     frequency: 1d
 
   input:

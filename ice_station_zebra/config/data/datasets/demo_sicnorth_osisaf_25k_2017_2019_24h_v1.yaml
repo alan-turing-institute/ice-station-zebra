@@ -1,6 +1,6 @@
 demo-sicnorth-osisaf-25k-2017-2019-24h-v1:
   name: demo-sicnorth-osisaf-25k-2017-2019-24h-v1
-  group_as: osisaf-north
+  group_as: sic-icenet
   description: OSISAF sea ice concentration for northern hemisphere
   attribution: EUMETSAT
   licence: CC-BY-4.0

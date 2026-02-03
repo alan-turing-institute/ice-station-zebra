@@ -48,6 +48,7 @@ class ZebraDataProcessor:
 
     def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
+        # If we are overwriting we delete any existing dataset
         if overwrite:
             logger.info(
                 "Overwrite set to true, redownloading %s to %s",
@@ -55,8 +56,9 @@ class ZebraDataProcessor:
                 self.path_dataset,
             )
             shutil.rmtree(self.path_dataset, ignore_errors=True)
-            self.download()
-        else:
+
+        # Otherwise we check whether a valid dataset exists
+        elif self.path_dataset.exists():
             try:
                 self.inspect()
                 logger.info(
@@ -65,9 +67,15 @@ class ZebraDataProcessor:
                     self.path_dataset,
                 )
             except (AttributeError, FileNotFoundError, PathNotFoundError):
+                # If the dataset is invalid we delete it
                 logger.info("Dataset %s not found at %s.", self.name, self.path_dataset)
                 shutil.rmtree(self.path_dataset, ignore_errors=True)
-                self.download()
+            else:
+                # If the dataset is valid we return here
+                return
+
+        # Download the dataset
+        self.download()
 
     def download(self) -> None:
         """Download a single Anemoi dataset."""

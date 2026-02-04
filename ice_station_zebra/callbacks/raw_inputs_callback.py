@@ -5,25 +5,22 @@ import matplotlib as mpl
 
 mpl.use("Agg")
 
-import dataclasses
 import gc
 import logging
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from lightning.pytorch.loggers import Logger as LightningLogger
 
-from ice_station_zebra.callbacks.metadata import infer_hemisphere
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import PlotSpec
 from ice_station_zebra.utils import parse_np_datetime
 from ice_station_zebra.visualisations.plotting_core import (
-    detect_land_mask_path,
     safe_filename,
 )
 from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
@@ -47,16 +44,12 @@ DEFAULT_MAX_ANIMATION_FRAMES = (
 class RawInputsCallback(Callback):
     """A callback to plot raw input variables during evaluation."""
 
-    save_dir: Path | None
-    video_save_dir: Path | None
-
-    def __init__(  # noqa: PLR0913, PLR0912, PLR0915
+    def __init__(  # noqa: PLR0913
         self,
         *,
         frequency: int | None = None,
         save_dir: str | Path | None = None,
         plot_spec: PlotSpec | None = None,
-        config: dict | None = None,
         timestep_index: int = 0,
         variable_styles: dict[str, dict[str, Any]] | None = None,
         make_video_plots: bool = False,
@@ -72,7 +65,6 @@ class RawInputsCallback(Callback):
             frequency: Create plots every `frequency` batches; `None` plots once per run.
             save_dir: Directory to save static plots to. If None and log_to_wandb=False, no plots saved.
             plot_spec: Plotting specification (colourmap, hemisphere, etc.).
-            config: Configuration dictionary for land mask detection.
             timestep_index: Which history timestep to plot (0 = most recent).
             variable_styles: Per-variable styling overrides (cmap, vmin/vmax, units, etc.).
             make_video_plots: Whether to create temporal animations of raw inputs.
@@ -90,59 +82,9 @@ class RawInputsCallback(Callback):
         else:
             self.frequency = int(max(1, frequency))
 
-        self.config = config or {}
-
-        # Get base_path from config to use as root folder
-        base_path = Path(self.config.get("base_path", "../ice-station-zebra/data"))
-
-        # Resolve save_dir relative to base_path if it's a relative path
-        if save_dir:
-            save_dir_path = Path(save_dir)
-            if save_dir_path.is_absolute():
-                self.save_dir = save_dir_path
-            else:
-                self.save_dir = (base_path / save_dir_path).resolve()
-        else:
-            self.save_dir = None
-        """Create raw input plots and/or animations during evaluation.
-
-        Args:
-            frequency: Create plots every `frequency` batches; `None` plots once per run.
-            save_dir: Directory to save static plots to. If None and log_to_wandb=False, no plots saved.
-            plot_spec: Plotting specification (colourmap, hemisphere, etc.).
-            config: Configuration dictionary for land mask detection.
-            timestep_index: Which history timestep to plot (0 = most recent).
-            variable_styles: Per-variable styling overrides (cmap, vmin/vmax, units, etc.).
-            make_video_plots: Whether to create temporal animations of raw inputs.
-            video_fps: Frames per second for animations.
-            video_format: Video format ("mp4" or "gif").
-            video_save_dir: Directory to save animations. If None and log_to_wandb=False, no videos saved.
-            max_animation_frames: Maximum number of frames to include in animations (None = unlimited).
-                                  Limits temporal accumulation to control memory and file size.
-            log_to_wandb: Whether to log plots and animations to WandB (default: True).
-
-        """
-        super().__init__()
-        if frequency is None:
-            self.frequency = None
-        else:
-            self.frequency = int(max(1, frequency))
-
-        self.config = config or {}
-
-        # Get base_path from config to use as root folder
-        base_path = Path(self.config.get("base_path", "../ice-station-zebra/data"))
-
-        # Resolve save_dir relative to base_path if it's a relative path
-        if save_dir:
-            save_dir_path = Path(save_dir)
-            if save_dir_path.is_absolute():
-                self.save_dir = save_dir_path
-            else:
-                self.save_dir = (base_path / save_dir_path).resolve()
-        else:
-            self.save_dir = None
-
+        self.save_dir: Path | None = (
+            Path(save_dir) if isinstance(save_dir, str) else save_dir
+        )
         self.timestep_index = timestep_index
         self.variable_styles = variable_styles or {}
         self._has_plotted = False
@@ -151,16 +93,9 @@ class RawInputsCallback(Callback):
         self.make_video_plots = make_video_plots
         self.video_fps = video_fps
         self.video_format = video_format
-
-        # Resolve video_save_dir relative to base_path if it's a relative path
-        if video_save_dir:
-            video_save_dir_path = Path(video_save_dir)
-            if video_save_dir_path.is_absolute():
-                self.video_save_dir = video_save_dir_path
-            else:
-                self.video_save_dir = (base_path / video_save_dir_path).resolve()
-        else:
-            self.video_save_dir = self.save_dir
+        self.video_save_dir: Path | None = (
+            Path(video_save_dir) if isinstance(video_save_dir, str) else video_save_dir
+        )
 
         self.max_animation_frames = max_animation_frames
 
@@ -186,65 +121,7 @@ class RawInputsCallback(Callback):
         """Called when the test loop starts."""
         logger.info("RawInputsCallback: Test loop started")
 
-    def _detect_land_mask_path(  # noqa: C901
-        self,
-        dataset: CombinedDataset,
-    ) -> None:
-        """Detect and set the land mask path based on the dataset configuration."""
-        if self._land_mask_path_detected:
-            return
-
-        # Get base path from callback config or use default
-        base_path = self.config.get("base_path", "../ice-station-zebra/data")
-
-        # Try to get dataset name from the target dataset
-        dataset_name = None
-        if hasattr(dataset, "target") and hasattr(dataset.target, "name"):
-            dataset_name = dataset.target.name
-
-        # Detect land mask path
-        land_mask_path = detect_land_mask_path(base_path, dataset_name)
-
-        # Always try to infer hemisphere regardless of land mask presence
-        hemisphere: Literal["north", "south"] | None = None
-        if isinstance(dataset_name, str):
-            low = dataset_name.lower()
-            if "south" in low:
-                hemisphere = cast("Literal['north', 'south']", "south")
-            elif "north" in low:
-                hemisphere = cast("Literal['north', 'south']", "north")
-        if hemisphere is None:
-            hemi_candidate = infer_hemisphere(dataset)
-            if hemi_candidate in ("north", "south"):
-                hemisphere = cast("Literal['north', 'south']", hemi_candidate)
-
-        # Update plot_spec pieces independently
-        if hemisphere is not None and self.plot_spec.hemisphere != hemisphere:
-            self.plot_spec = dataclasses.replace(self.plot_spec, hemisphere=hemisphere)
-
-        if land_mask_path:
-            # Set land mask path when found
-            self.plot_spec = dataclasses.replace(
-                self.plot_spec,
-                land_mask_path=land_mask_path,
-            )
-            logger.info("Auto-detected land mask: %s", land_mask_path)
-
-            # Load the land mask array
-            try:
-                self._land_mask_array = np.load(land_mask_path)
-                logger.debug(
-                    "Loaded land mask array with shape: %s", self._land_mask_array.shape
-                )
-            except Exception:
-                logger.exception("Failed to load land mask from %s", land_mask_path)
-                self._land_mask_array = None
-        else:
-            logger.debug("No land mask found for dataset: %s", dataset_name)
-
-        self._land_mask_path_detected = True
-
-    def on_test_batch_end(  # noqa: C901, PLR0912, PLR0915
+    def on_test_batch_end(  # noqa: C901, PLR0912
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -270,9 +147,6 @@ class RawInputsCallback(Callback):
                 "Dataset is of type %s, skipping raw inputs plotting.", type(dataset)
             )
             return
-
-        # Detect land mask path if not already done
-        self._detect_land_mask_path(dataset)
 
         # Store dataset reference for later use
         if self._dataset_ref is None:

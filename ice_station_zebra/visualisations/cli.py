@@ -7,7 +7,7 @@ from typing import Annotated, Any, cast
 import hydra
 import numpy as np
 import typer
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from ice_station_zebra.callbacks.raw_inputs_callback import (
     DEFAULT_MAX_ANIMATION_FRAMES,
@@ -169,7 +169,6 @@ def plot_raw_inputs(
         if raw_inputs_cfg
         else RawInputsCallback()
     )
-    callback.config = OmegaConf.to_container(config, resolve=True)
 
     # Create data module and prepare data
     data_module = ZebraDataModule(config)
@@ -243,6 +242,8 @@ def plot_raw_inputs(
         if output_dir
         else callback.save_dir or Path("./raw_input_plots")
     )
+    base_path = Path(config["base_path"])
+    save_dir = Path(base_path, save_dir)
 
     # Plot the raw inputs
     results = plot_raw_inputs_for_timestep(
@@ -327,7 +328,6 @@ def animate_raw_inputs(
         if raw_inputs_cfg
         else RawInputsCallback()
     )
-    callback.config = OmegaConf.to_container(config, resolve=True)
 
     # Get settings from callback (with command-line overrides)
     # Use callback's value, or fall back to default constant if None
@@ -339,6 +339,8 @@ def animate_raw_inputs(
         if output_dir
         else callback.video_save_dir or Path("./raw_input_animations")
     )
+    base_path = Path(config["base_path"])
+    save_dir = Path(base_path, save_dir)
 
     # Validate video format
     if video_format not in ("gif", "mp4"):

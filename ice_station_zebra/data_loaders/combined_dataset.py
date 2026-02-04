@@ -1,11 +1,10 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 
 import numpy as np
 from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayTCHW
-from ice_station_zebra.utils import parse_np_datetime
 
 from .zebra_dataset import ZebraDataset
 
@@ -106,7 +105,6 @@ class CombinedDataset(Dataset):
 
     def date_from_index(self, idx: int) -> datetime:
         """Return the date of the timestep."""
-        # return parse_np_datetime(self.available_dates[idx])
         np_datetime = self.dates[idx]
         return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
@@ -122,24 +120,6 @@ class CombinedDataset(Dataset):
         return [
             start_date + idx * self.frequency for idx in range(self.n_history_steps)
         ]
-
-    @property
-    def end_date(self) -> np.datetime64:
-        """Return the end date of the dataset."""
-        end_date = {dataset.end_date for dataset in self.inputs}
-        if len(end_date) != 1:
-            msg = f"Datasets have {len(end_date)} different end dates"
-            raise ValueError(msg)
-        return end_date.pop()
-
-    @property
-    def start_date(self) -> np.datetime64:
-        """Return the start date of the dataset."""
-        start_date = {dataset.start_date for dataset in self.inputs}
-        if len(start_date) != 1:
-            msg = f"Datasets have {len(start_date)} different start dates"
-            raise ValueError(msg)
-        return start_date.pop()
 
     @property
     def input_variable_names(self) -> list[str]:

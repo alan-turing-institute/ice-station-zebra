@@ -194,8 +194,15 @@ def plot_raw_inputs(
     # Get a sample from the dataset
     batch = test_dataset[forecast_date_idx]
 
+    if not test_dataset._available_dates:
+        log.warning(
+            "No dates available for forecast_date_idx=%d",
+            forecast_date_idx,
+        )
+        return
+        
     # Get the forecast start date (as np.datetime64)
-    forecast_start_date = test_dataset.available_dates[forecast_date_idx]
+    forecast_start_date = test_dataset._available_dates[forecast_date_idx]
 
     # Get the history steps for this forecast scenario
     history_dates = test_dataset.get_history_steps(forecast_start_date)

@@ -291,8 +291,16 @@ class RawInputsCallback(Callback):
         # The callback extracts data from batch[0], so we use sample_idx = batch_size * batch_idx + 0
         sample_idx = batch_size * batch_idx
 
+        if not dataset._available_dates:
+            logger.warning(
+                "No dates available for sample_idx=%d; skipping batch %d",
+                sample_idx,
+                batch_idx,
+            )
+            return
+        
         # Get the forecast start date (as np.datetime64) for this sample
-        forecast_start_date = dataset.available_dates[sample_idx]
+        forecast_start_date = dataset._available_dates[sample_idx]
 
         # Get the history steps for this forecast scenario
         history_dates = dataset.get_history_steps(forecast_start_date)

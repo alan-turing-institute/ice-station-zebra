@@ -1,22 +1,20 @@
 import re
 from collections.abc import Sequence
 
-from typer import Typer
 from typer.testing import CliRunner
 
-from ice_station_zebra.cli import app
+from ice_station_zebra.cli.main import app
 
 
 class ZebraCliRunner(CliRunner):
-    def __init__(self, app: Typer) -> None:
+    def __init__(self) -> None:
         """A custom CLI runner for Zebra tests."""
         super().__init__()
-        self.app = app
         self.colorstrip = re.compile(r"\x1b\[[0-9;]*m")
 
     def output(self, commands: Sequence[str]) -> list[str]:
         """Invoke the CLI commands and return the output as a list of strings."""
-        result = super().invoke(self.app, commands, prog_name="zebra")
+        result = super().invoke(app, commands, prog_name="zebra")
         assert result.exit_code == 0, (
             f"Command failed with exit code {result.exit_code}: {result.output}"
         )
@@ -47,14 +45,14 @@ class TestBaseCLI:
     )
 
     def test_help(self) -> None:
-        runner = ZebraCliRunner(app)
+        runner = ZebraCliRunner()
         runner.check_output(
             ["--help"],
             expected_patterns=self.expected_patterns_help,
         )
 
     def test_short_help(self) -> None:
-        runner = ZebraCliRunner(app)
+        runner = ZebraCliRunner()
         runner.check_output(
             ["-h"],
             expected_patterns=self.expected_patterns_help,
@@ -63,7 +61,7 @@ class TestBaseCLI:
 
 class TestDatasetsCLI:
     def test_help(self) -> None:
-        runner = ZebraCliRunner(app)
+        runner = ZebraCliRunner()
         runner.check_output(
             ["datasets", "--help"],
             expected_patterns=[
@@ -81,7 +79,7 @@ class TestDatasetsCLI:
 
 class TestEvaluateCLI:
     def test_help(self) -> None:
-        runner = ZebraCliRunner(app)
+        runner = ZebraCliRunner()
         runner.check_output(
             ["evaluate", "--help"],
             expected_patterns=[
@@ -97,7 +95,7 @@ class TestEvaluateCLI:
 
 class TestTrainCLI:
     def test_help(self) -> None:
-        runner = ZebraCliRunner(app)
+        runner = ZebraCliRunner()
         runner.check_output(
             ["train", "--help"],
             expected_patterns=[

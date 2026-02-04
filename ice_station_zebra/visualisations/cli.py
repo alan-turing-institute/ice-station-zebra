@@ -200,7 +200,7 @@ def plot_raw_inputs(
             forecast_date_idx,
         )
         return
-        
+
     # Get the forecast start date (as np.datetime64)
     forecast_start_date = test_dataset._available_dates[forecast_date_idx]
 

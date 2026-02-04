@@ -244,7 +244,7 @@ class RawInputsCallback(Callback):
 
         self._land_mask_path_detected = True
 
-    def on_test_batch_end(  # noqa: C901, PLR0912
+    def on_test_batch_end(  # noqa: C901, PLR0912, PLR0915
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -298,7 +298,7 @@ class RawInputsCallback(Callback):
                 batch_idx,
             )
             return
-        
+
         # Get the forecast start date (as np.datetime64) for this sample
         forecast_start_date = dataset._available_dates[sample_idx]
 

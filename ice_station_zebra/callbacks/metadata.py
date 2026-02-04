@@ -80,7 +80,7 @@ def extract_variables_by_source(config: dict[str, Any]) -> dict[str, list[str]]:
         return sorted(set(params))
 
     try:
-        datasets = config.get("datasets", {})
+        datasets = config.get("data", {}).get("datasets", {})
         if not isinstance(datasets, dict):
             return vars_by_source
 
@@ -185,7 +185,7 @@ def extract_cadence_from_config(config: dict[str, Any]) -> str | None:
     """
     try:
         predict_group = config.get("predict", {}).get("dataset_group")
-        datasets_cfg = config.get("datasets", {})
+        datasets_cfg = config.get("data", {}).get("datasets", {})
         if isinstance(predict_group, str) and isinstance(datasets_cfg, dict):
             for ds in datasets_cfg.values():
                 if not isinstance(ds, dict):
@@ -216,7 +216,7 @@ def extract_training_date_range(
     start_str: str | None = None
     end_str: str | None = None
     try:
-        split_cfg = config.get("split", {})
+        split_cfg = config.get("data", {}).get("split", {})
         train_ranges = split_cfg.get("train") if isinstance(split_cfg, dict) else None
         if isinstance(train_ranges, list) and train_ranges:
             starts = [r.get("start") for r in train_ranges if isinstance(r, dict)]

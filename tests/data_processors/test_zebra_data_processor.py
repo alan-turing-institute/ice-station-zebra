@@ -23,12 +23,14 @@ def _build_processor(tmp_path: Path, dataset_cfg: dict) -> ZebraDataProcessor:
     full_cfg: DictConfig = OmegaConf.create(
         {
             "base_path": str(tmp_path),
-            "datasets": {
-                "test": {
-                    "name": "test",
-                    "preprocessor": {"type": "dummy"},
-                    **dataset_cfg,
-                }
+            "data": {
+                "datasets": {
+                    "test": {
+                        "name": "test",
+                        "preprocessor": {"type": "dummy"},
+                        **dataset_cfg,
+                    }
+                },
             },
         }
     )

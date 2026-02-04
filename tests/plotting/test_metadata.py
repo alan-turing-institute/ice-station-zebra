@@ -25,11 +25,13 @@ def test_build_metadata_subtitle_full_config_contains_epochs_and_range() -> None
     """build_metadata_subtitle should include epochs and train range when available."""
     config = {
         "train": {"trainer": {"max_epochs": 10}},
-        "split": {
-            "train": [
-                {"start": "2000-01-01", "end": "2010-12-31"},
-                {"start": "2011-01-01", "end": "2020-12-31"},
-            ]
+        "data": {
+            "split": {
+                "train": [
+                    {"start": "2000-01-01", "end": "2010-12-31"},
+                    {"start": "2011-01-01", "end": "2020-12-31"},
+                ]
+            },
         },
     }
 
@@ -122,16 +124,18 @@ def test_format_cadence_display() -> None:
 def test_extract_variables_by_source_sic() -> None:
     """Test extraction of sea ice variables from dataset config."""
     config = {
-        "datasets": {
-            "sic1": {
-                "name": "osisaf-sicsouth",
-                "group_as": "osisaf-south",
+        "data": {
+            "datasets": {
+                "sic1": {
+                    "name": "osisaf-sicsouth",
+                    "group_as": "osisaf-south",
+                },
+                "sic2": {
+                    "name": "osisaf-sicnorth",
+                    "group_as": "osisaf-north",
+                },
             },
-            "sic2": {
-                "name": "osisaf-sicnorth",
-                "group_as": "osisaf-north",
-            },
-        }
+        },
     }
     result = extract_variables_by_source(config)
     assert result == {
@@ -143,18 +147,20 @@ def test_extract_variables_by_source_sic() -> None:
 def test_extract_variables_by_source_weather() -> None:
     """Test extraction of weather variables from dataset config."""
     config = {
-        "datasets": {
-            "era5_1": {
-                "name": "era5-weather",
-                "group_as": "era5",
-                "input": {
-                    "join": [
-                        {"mars": {"param": ["2t", "sp"]}},
-                        {"mars": {"param": ["10u", "10v"]}},
-                    ]
+        "data": {
+            "datasets": {
+                "era5_1": {
+                    "name": "era5-weather",
+                    "group_as": "era5",
+                    "input": {
+                        "join": [
+                            {"mars": {"param": ["2t", "sp"]}},
+                            {"mars": {"param": ["10u", "10v"]}},
+                        ]
+                    },
                 },
             },
-        }
+        },
     }
     result = extract_variables_by_source(config)
     # Should extract and sort params
@@ -164,11 +170,13 @@ def test_extract_variables_by_source_weather() -> None:
 def test_extract_variables_by_source_weather_fallback() -> None:
     """Test weather dataset with no params returns empty (no fallback)."""
     config = {
-        "datasets": {
-            "era5_1": {
-                "name": "era5-weather",
-                "group_as": "era5",
-                "input": {},
+        "data": {
+            "datasets": {
+                "era5_1": {
+                    "name": "era5-weather",
+                    "group_as": "era5",
+                    "input": {},
+                },
             },
         }
     }
@@ -276,15 +284,17 @@ def test_build_metadata_returns_dataclass() -> None:
     """Test that build_metadata returns a Metadata dataclass with extracted fields."""
     config = {
         "train": {"trainer": {"max_epochs": 10}},
-        "split": {
-            "train": [
-                {"start": "2000-01-01", "end": "2010-12-31"},
-            ]
-        },
-        "datasets": {
-            "sic1": {
-                "name": "osisaf-sicsouth",
-                "group_as": "osisaf-south",
+        "data": {
+            "split": {
+                "train": [
+                    {"start": "2000-01-01", "end": "2010-12-31"},
+                ]
+            },
+            "datasets": {
+                "sic1": {
+                    "name": "osisaf-sicsouth",
+                    "group_as": "osisaf-south",
+                },
             },
         },
         "predict": {"dataset_group": "osisaf-south"},
@@ -350,10 +360,12 @@ def test_build_metadata_subtitle_backward_compatible() -> None:
     """Test that build_metadata_subtitle still works and returns same format."""
     config = {
         "train": {"trainer": {"max_epochs": 10}},
-        "split": {
-            "train": [
-                {"start": "2000-01-01", "end": "2010-12-31"},
-            ]
+        "data": {
+            "split": {
+                "train": [
+                    {"start": "2000-01-01", "end": "2010-12-31"},
+                ]
+            },
         },
     }
 
@@ -385,15 +397,17 @@ def test_plotting_callback_metadata_subtitle_from_config() -> None:
     """Test that PlottingCallback sets metadata_subtitle when config is provided."""
     config = {
         "train": {"trainer": {"max_epochs": 5}},
-        "split": {
-            "train": [
-                {"start": "2020-01-01", "end": "2020-01-10"},
-            ]
-        },
-        "datasets": {
-            "sic1": {
-                "name": "osisaf-sicsouth",
-                "group_as": "osisaf-south",
+        "data": {
+            "split": {
+                "train": [
+                    {"start": "2020-01-01", "end": "2020-01-10"},
+                ]
+            },
+            "datasets": {
+                "sic1": {
+                    "name": "osisaf-sicsouth",
+                    "group_as": "osisaf-south",
+                },
             },
         },
         "predict": {"dataset_group": "osisaf-south"},

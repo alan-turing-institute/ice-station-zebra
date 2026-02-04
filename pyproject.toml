@@ -14,8 +14,10 @@ requires-python = ">=3.11,<3.13" # Note "3.13" is currently incompatible with th
 dependencies = [
     "anemoi-datasets>=0.5.25",
     "anemoi-transform>=0.1.16",
+    "anemoi-utils>=0.4.42",
     "cachetools>=6.1.0",
     "cdsapi>=0.7.6",
+    "eccodeslib>=2.40.0", # indirect dependency of icenet that is not automatically installed
     "filelock>=3.12.0",
     "hydra-core>=1.3.2",
     "icenet==0.2.7", # newer versions require netCDF4<1.6.1 which does not work on macOS 15
@@ -25,9 +27,11 @@ dependencies = [
     "netcdf4>=1.7.0",
     "pillow>=11.3.0",
     "pydantic>=2.11.7",
+    "pytorch-triton-xpu>=0.0; sys_platform == 'linux' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'", # only needed for XPU-enabled machines, but we don't have a simple way to determine that
+    "pytorch-triton>=0.0; sys_platform == 'linux' and platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'",
     "torch-ema>=0.3",
+    "torch>=2.8.0",
     "typer>=0.16.0",
-    "types-cachetools>=6.1.0",
     "wandb>=0.21.0",
     "xarray>=2025.3.0",
     "zarr<3.0.0", # v3 is not compatible with anemoi
@@ -40,6 +44,7 @@ dev = [
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "types-cachetools>=6.1.0",
 ]
 notebooks = [
     "cmocean>=4.0.3",
@@ -95,7 +100,6 @@ line-length = 88
 exclude = ["notebooks/*ipynb"]
 
 [tool.ruff.lint]
-# extend-select = ["I"]
 select = ["ALL"]
 ignore = [
     "COM812", # conflicts with formatter
@@ -113,6 +117,9 @@ ignore = [
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 
+[tool.ruff.lint.isort]
+known-third-party = ["wandb"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "DTZ001", # allow unlocalised datetimes in tests
@@ -127,3 +134,29 @@ max-args = 6
 
 [tool.uv.build-backend]
 module-root = ""
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-xpu"
+url = "https://download.pytorch.org/whl/xpu"
+explicit = true
+
+[tool.uv.sources]
+pytorch-triton = { index = "pytorch-cu128" }
+pytorch-triton-xpu = { index = "pytorch-xpu" }
+torch = [
+    # IsambardAI
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
+    # Baskerville
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+    # DAWN
+    { index = "pytorch-xpu", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+]
+triton = [
+    { index = "pytorch-cu128", marker = "platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+    { index = "pytorch-xpu", marker = "platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'" },
+]

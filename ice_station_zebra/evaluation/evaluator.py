@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING
 
 # Set matplotlib backend BEFORE any imports that might use it
@@ -8,11 +8,12 @@ import matplotlib as mpl
 mpl.use("Agg")
 
 import hydra
+import torch
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.utils import get_timestamp
+from ice_station_zebra.utils import get_device_name, get_device_threads, get_timestamp
 
 if TYPE_CHECKING:
     from lightning import Callback, Trainer
@@ -45,7 +46,8 @@ class ZebraEvaluator:
 
         # Load the model from checkpoint
         model_cls: type[ZebraModel] = hydra.utils.get_class(config["model"]["_target_"])
-        self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
+        with torch.serialization.safe_globals([PosixPath]):
+            self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
         # Load inputs into a data module
         self.data_module = ZebraDataModule(config)
@@ -105,6 +107,13 @@ class ZebraEvaluator:
         )
 
     def evaluate(self) -> None:
+        logger.info(
+            "Starting evaluation using %d threads across %d %s device(s).",
+            get_device_threads(),
+            self.trainer.num_devices,
+            get_device_name(self.trainer.accelerator.name()),
+        )
+
         self.trainer.test(
             model=self.model,
             datamodule=self.data_module,

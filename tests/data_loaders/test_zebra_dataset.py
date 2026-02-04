@@ -10,7 +10,7 @@ from ice_station_zebra.types import DataSpace
 class MockAnemoiDataset:
     def __init__(self, channels: int, height: int, width: int) -> None:
         """A mock Anemoi dataset for testing purposes."""
-        self.shape = (0, channels, height * width)
+        self.shape = (1, channels, height * width)
         self.field_shape = (height, width)
 
 
@@ -32,6 +32,26 @@ class TestZebraDataset:
         )
         # Test dates
         assert all(date in dataset.dates for date in self.dates_np)
+
+    def test_dataset_dates_with_missing_dates(
+        self, mock_dataset_missing_dates: Path
+    ) -> None:
+        """Test that missing dates are excluded from ZebraDataset.dates."""
+        # Create ZebraDataset with indices 1 and 3 (2020-01-02 and 2020-01-04) missing
+        dataset = ZebraDataset(
+            name="test_missing", input_files=[mock_dataset_missing_dates]
+        )
+
+        # Check that missing dates are excluded
+        missing_indices = {1, 3}
+        expected_dates = [
+            date for idx, date in enumerate(self.dates_np) if idx not in missing_indices
+        ]
+        assert len(expected_dates) == 3
+
+        assert dataset.dates == expected_dates
+        assert self.dates_np[1] not in dataset.dates  # 2020-01-02 should be missing
+        assert self.dates_np[3] not in dataset.dates  # 2020-01-04 should be missing
 
     def test_dataset_date_ranges(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -65,9 +85,10 @@ class TestZebraDataset:
         assert isinstance(data_array, np.ndarray)
         assert data_array.shape == (1, 2, 2)
         # Check exception for out of range
-        with pytest.raises(IndexError) as excinfo:
+        with pytest.raises(
+            IndexError, match="Index 10 out of range for dataset of length 5"
+        ):
             dataset[10]
-        assert "Index 10 out of range for dataset of length 5" in str(excinfo.value)
 
     def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -80,22 +101,34 @@ class TestZebraDataset:
         assert data_array.shape == (5, 1, 2, 2)
         # Check exception for out of range
         with pytest.raises(
-            ValueError, match="Date 1970-01-01 not found in the dataset"
+            IndexError, match="Date 1970-01-01 not found in the dataset"
         ):
             dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
 
-    def test_dataset_index_from_date(self, mock_dataset: Path) -> None:
+    def test_dataset_get_tchw_with_missing_dates(
+        self, mock_dataset_missing_dates: Path
+    ) -> None:
+        """Test that get_tchw works correctly when dates are missing."""
         dataset = ZebraDataset(
-            name="mock_dataset",
-            input_files=[mock_dataset],
+            name="test_missing", input_files=[mock_dataset_missing_dates]
         )
-        # Check type
-        assert dataset.index_from_date(self.dates_np[0]) == 0
-        # Check exception for out of range
+
+        # Get TCHW for available dates
+        missing_indices = {1, 3}
+        expected_dates = [
+            date for idx, date in enumerate(self.dates_np) if idx not in missing_indices
+        ]
+        assert len(expected_dates) == 3
+
+        # Result should have shape (3, C, H, W)
+        result = dataset.get_tchw(expected_dates)
+        assert result.shape == (3, 1, 2, 2)
+
+        # Attempting to get TCHW for missing dates should raise IndexError
         with pytest.raises(
-            ValueError, match="Date 1970-01-01 not found in the dataset"
+            IndexError, match="Date 2020-01-02 not found in the dataset"
         ):
-            dataset.index_from_date(np.datetime64("1970-01-01"))
+            dataset.get_tchw([self.dates_np[1]])
 
     def test_dataset_len(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -103,6 +136,16 @@ class TestZebraDataset:
             input_files=[mock_dataset],
         )
         assert len(dataset) == 5
+
+    def test_dataset_len_with_missing_dates(
+        self, mock_dataset_missing_dates: Path
+    ) -> None:
+        """Test that dataset length reflects missing dates."""
+        dataset = ZebraDataset(
+            name="test_missing", input_files=[mock_dataset_missing_dates]
+        )
+        # There should be 5 dates with 2 missing
+        assert len(dataset) == 3
 
     def test_dataset_space(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
@@ -119,7 +162,10 @@ class TestZebraDataset:
             name="mock_dataset",
             input_files=[],
         )
-        dataset._datasets = [MockAnemoiDataset(1, 32, 32), MockAnemoiDataset(1, 32, 64)]
+        dataset._datasets = [  # type: ignore[reportAttributeAccessIssue]
+            MockAnemoiDataset(1, 32, 32),
+            MockAnemoiDataset(1, 32, 64),
+        ]
         # Test data space shapes
         with pytest.raises(
             ValueError,
@@ -132,7 +178,7 @@ class TestZebraDataset:
             name="mock_dataset",
             input_files=[],
         )
-        dataset._datasets = [
+        dataset._datasets = [  # type: ignore[reportAttributeAccessIssue]
             MockAnemoiDataset(10, 32, 32),
             MockAnemoiDataset(11, 32, 32),
         ]
@@ -151,3 +197,40 @@ class TestZebraDataset:
         )
         assert dataset.start_date == self.dates_np[1]
         assert dataset.end_date == self.dates_np[-1]
+
+    def test_dataset_to_index(self, mock_dataset: Path) -> None:
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        # Check known dates
+        assert dataset.to_index(self.dates_np[0]) == 0
+        assert dataset.to_index(self.dates_np[3]) == 3
+        # Check exception for out of range
+        with pytest.raises(
+            IndexError, match="Date 1970-01-01 not found in the dataset"
+        ):
+            dataset.to_index(np.datetime64("1970-01-01"))
+
+    def test_dataset_to_index_with_missing_dates(
+        self, mock_dataset_missing_dates: Path
+    ) -> None:
+        """Test that to_index works correctly when dates are missing."""
+        dataset = ZebraDataset(
+            name="test_missing", input_files=[mock_dataset_missing_dates]
+        )
+
+        # Indices should be mapped to available dates only
+        assert dataset.to_index(self.dates_np[0]) == 0  # 2020-01-01
+        assert dataset.to_index(self.dates_np[2]) == 1  # 2020-01-03
+        assert dataset.to_index(self.dates_np[4]) == 2  # 2020-01-05
+
+        # Missing dates should raise IndexError
+        with pytest.raises(
+            IndexError, match="Date 2020-01-02 not found in the dataset"
+        ):
+            dataset.to_index(self.dates_np[1])
+        with pytest.raises(
+            IndexError, match="Date 2020-01-04 not found in the dataset"
+        ):
+            dataset.to_index(self.dates_np[3])

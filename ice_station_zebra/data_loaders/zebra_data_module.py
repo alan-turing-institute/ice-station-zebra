@@ -29,7 +29,7 @@ class ZebraDataModule(LightningDataModule):
 
         # Construct dataset groups
         self.dataset_groups = defaultdict(list)
-        for dataset in config["datasets"].values():
+        for dataset in config["data"]["datasets"].values():
             self.dataset_groups[dataset["group_as"]].append(
                 (
                     self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
@@ -46,22 +46,22 @@ class ZebraDataModule(LightningDataModule):
             raise ValueError(msg)
 
         # Set periods for train, validation, and test
-        self.batch_size = int(config["split"]["batch_size"])
+        self.batch_size = int(config["data"]["split"]["batch_size"])
         self.predict_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
-            for period in config["split"]["predict"]
+            for period in config["data"]["split"]["predict"]
         ]
         self.test_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
-            for period in config["split"]["test"]
+            for period in config["data"]["split"]["test"]
         ]
         self.train_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
-            for period in config["split"]["train"]
+            for period in config["data"]["split"]["train"]
         ]
         self.val_periods = [
             {k: None if v == "None" else v for k, v in period.items()}
-            for period in config["split"]["validate"]
+            for period in config["data"]["split"]["validate"]
         ]
 
         # Set history and forecast steps

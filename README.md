@@ -10,6 +10,26 @@ You will need to install the following tools if you want to develop this project
 
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
+On an HPC system, this will install to `~/.local/bin`, so make sure that your home directory has enough free space.
+
+### Installing Zebra
+
+:warning: Isambard-AI uses ARM processors, and there is currently no `aarch64` wheel for `cf-units`.
+Before installing on Isambard-AI you will need to set the following environment variables:
+```bash
+export UDUNITS2_XML_PATH=/projects/u5gf/seaice/udunits/share/udunits/udunits2.xml
+export UDUNITS2_INCDIR=/projects/u5gf/seaice/udunits/include/
+export UDUNITS2_LIBDIR=/projects/u5gf/seaice/udunits/lib/
+```
+
+You can then install the project as follows (for DAWN / Baskerville, you can ignore the previous step):
+
+```bash
+git clone git@github.com:alan-turing-institute/ice-station-zebra.git
+cd ice-station-zebra
+uv sync --managed-python
+```
+
 ### Creating your own configuration file
 
 Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
@@ -34,7 +54,8 @@ You can also use this config to override other options in the `base.yaml` file, 
 ```yaml
 defaults:
   - base
-  - override /model: encode_unet_decode # Use this format if you want to use a different config
+  - override /model: cnn_unet_cnn # Use this format if you want to use a different config
+  - _self_
 
 # Override specific model parameters
 model:
@@ -50,18 +71,21 @@ Alternatively, you can apply overrides to specific options at the command line l
 uv run zebra <command> ++base_path=/local/path/to/my/data
 ```
 
-Note that `persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
+See `config/demo_north.yaml` for an example of this.
 
-### Running on Baskerville
+Note that `base_persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
 
-As `uv` cannot easily be installed on Baskerville, you should install the `zebra` package directly into a virtual environment that you have set up.
+### HPC-specific configurations
 
-```bash
-source /path/to/venv/activate.sh
-pip install -e .
+For running on a shared HPC systems (Baskerville, DAWN or Isambard-AI), you will want to use the pre-downloaded data and the right GPU accelerator.
+This is handled for you by including the appropriate config file:
+
+```yaml
+defaults:
+  - base_baskerville OR base_dawn OR base_isambardai
+  - override /data: full # if you want to run over the full dataset instead of the sample dataset
+  - _self_
 ```
-
-This means that later commands like `uv run X ...` should simply be `X ...` instead.
 
 ## Running Zebra commands
 
@@ -81,12 +105,19 @@ Run `uv run zebra datasets inspect` to inspect datasets (i.e. to get dataset pro
 
 ### Train
 
+You will need a [Weights & Biases account](https://docs.wandb.ai/models/quickstart) to run a training run.
+[Generate an API key](https://docs.wandb.ai/models/quickstart) then run the following to allow automatic authentication.
+
+```
+export WANDB_API_KEY=<your_api_key>
+wandb login
+```
+
 Run `uv run zebra train` to train using the datasets specified in the config.
 
 :information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the base path to the data defined in your config file.
 
 If you run into a `NotImplementedError` that asks you to set your environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1`, adding `antialias_val: false` in your local configuration file will allow you to train to completion (see [issue 127](https://github.com/alan-turing-institute/ice-station-zebra/issues/127))
-
 
 ### Evaluate
 
@@ -219,8 +250,6 @@ Start and destroy any previously saved data (careful):
 ```bash
 uv run zebra datasets load_in_parts --config-name <your config>.yaml --overwrite
 ```
-
-
 
 ### Manual approach (advanced)
 

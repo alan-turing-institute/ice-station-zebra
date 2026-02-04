@@ -43,7 +43,7 @@ class ZebraDataProcessor:
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
         self.path_preprocessor = _data_path / "preprocessing"
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
-        self.config: DictConfig = OmegaConf.to_object(config["datasets"][name])  # type: ignore[assignment]
+        self.config: DictConfig = OmegaConf.to_object(config["data"]["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
 
     def create(self, *, overwrite: bool) -> None:

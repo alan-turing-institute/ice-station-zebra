@@ -82,39 +82,52 @@ class DDPM(ZebraModel):
 
         self.osisaf_key = self.output_space.name
 
-        # era5_space = next(
-        #     space
-        #     for space in self.input_spaces
-        #     if (space["name"] if isinstance(space, dict) else space.name) == "era5"
-        # )
+        era5_space = next(
+            space
+            for space in self.input_spaces
+            if (space["name"] if isinstance(space, dict) else space.name) == "era5"
+        )
 
-        # # Get channels from either dict or object
-        # if isinstance(era5_space, dict):
-        #     self.era5_space = era5_space["channels"]
-        # else:
-        #     self.era5_space = era5_space.channels
+        # Get channels from either dict or object
+        if isinstance(era5_space, dict):
+            self.era5_space = era5_space["channels"]
+        else:
+            self.era5_space = era5_space.channels
 
-        # # Downweight ERA5 conditioning 
-        # self.era5_weight = 0.25 #0.1 #0.25
+        # Downweight ERA5 conditioning 
+        self.era5_weight = 0.25 #0.1 #0.25
 
-        # # Get the base output channels from output_space
-        # if isinstance(self.output_space, dict):
-        #     self.base_output_channels = self.output_space["channels"]
-        # else:
-        #     self.base_output_channels = self.output_space.channels
+        # Get the base output channels from output_space
+        if isinstance(self.output_space, dict):
+            self.base_output_channels = self.output_space["channels"]
+        else:
+            self.base_output_channels = self.output_space.channels
         self.base_output_channels = self.output_space.channels
 
-        # osisaf channels after squeezing: T_osisaf = self.n_history_steps
-        osisaf_channels = self.n_history_steps  # keep T dimension as channels
+        # # osisaf channels after squeezing: T_osisaf = self.n_history_steps
+        # osisaf_channels = self.n_history_steps  # keep T dimension as channels
 
         # # era5 channels after merging time*channels
         # era5_channels = self.n_history_steps * self.era5_space  # T * C2
 
         # total channels for UNet
         # self.input_channels = osisaf_channels + era5_channels
-        self.input_channels = osisaf_channels #+ era5_channels
         self.output_channels = self.n_forecast_steps * self.base_output_channels
         self.timesteps = timesteps
+        self.cond_channels = 64
+        self.input_channels = self.cond_channels
+
+        self.osisaf_encoder = SimpleEncoder2D(
+            in_channels=self.n_history_steps,
+            out_channels=self.cond_channels // 2,
+        )
+        
+        self.era5_encoder = torch.nn.Sequential(
+            torch.nn.Conv3d(self.era5_space, self.cond_channels // 2, 3, padding=1),
+            torch.nn.GroupNorm(4, self.cond_channels // 2),
+            torch.nn.SiLU(),
+        )
+
 
         self.model = UNetDiffusion(
             input_channels=self.input_channels,

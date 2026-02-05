@@ -1,40 +1,26 @@
-"""Tests for load_in_parts functionality.
-
-This file contains all tests related to the load_in_parts method, including:
-- Basic functionality (loading all parts, force_reset, error handling)
-- File locking behavior (timeouts, retries)
-- PID/host tracking
-"""
-
-from __future__ import annotations
-
 import json
 import shutil
-from typing import TYPE_CHECKING, Any, Literal
+from pathlib import Path
+from typing import Any, Literal
 from unittest.mock import patch
 
 import pytest
 from filelock import Timeout
 from omegaconf import DictConfig, OmegaConf
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
+from ice_station_zebra.data_processors.data_downloader import DataDownloader
 from ice_station_zebra.data_processors.preprocessors.ipreprocessor import IPreprocessor
-
-# adjust import path to where your module is
-from ice_station_zebra.data_processors.zebra_data_processor import (
-    ZebraDataProcessor,
-)
 
 
 class DummyPreprocessor(IPreprocessor):
-    def download(self, preprocessor_path: Path) -> None:  # pragma: no cover - trivial
+    """A dummy preprocessor for testing."""
+
+    def download(self, preprocessor_path: Path) -> None:  # pragma: no cover - unused
         preprocessor_path.mkdir(parents=True, exist_ok=True)
 
 
-def _build_processor(tmp_path: Path, dataset_cfg: dict) -> ZebraDataProcessor:
-    """Helper to create a ZebraDataProcessor with a dummy preprocessor."""
+def _build_downloader(tmp_path: Path, dataset_cfg: dict) -> DataDownloader:
+    """Helper to create a DataDownloader with a dummy preprocessor."""
     full_cfg: DictConfig = OmegaConf.create(
         {
             "base_path": str(tmp_path),
@@ -49,13 +35,13 @@ def _build_processor(tmp_path: Path, dataset_cfg: dict) -> ZebraDataProcessor:
             },
         }
     )
-    return ZebraDataProcessor("test", full_cfg, DummyPreprocessor)
+    return DataDownloader("test", full_cfg, DummyPreprocessor)
 
 
 @pytest.fixture
-def processor_with_directory_dataset(tmp_path: Path) -> ZebraDataProcessor:
-    """Fixture that creates a processor with a directory-based dataset path."""
-    processor = _build_processor(
+def downloader_with_file_dataset(tmp_path: Path) -> DataDownloader:
+    """Fixture that creates a downloader with a file-based dataset path."""
+    downloader = _build_downloader(
         tmp_path,
         {
             "start": "2020-01-01",
@@ -63,12 +49,99 @@ def processor_with_directory_dataset(tmp_path: Path) -> ZebraDataProcessor:
             "group_by": "monthly",
         },
     )
-    processor.path_dataset = tmp_path / "test_dir.zarr"
-    processor.path_dataset.mkdir(parents=True, exist_ok=True)
-    return processor
+    downloader.path_dataset = tmp_path / "test.zarr"
+    # Create the file to ensure it exists
+    downloader.path_dataset.touch()
+    return downloader
 
 
-def _read_tracker(proc: ZebraDataProcessor) -> dict:
+@pytest.fixture
+def downloader_with_directory_dataset(tmp_path: Path) -> DataDownloader:
+    """Fixture that creates a downloader with a directory-based dataset path."""
+    downloader = _build_downloader(
+        tmp_path,
+        {
+            "start": "2020-01-01",
+            "end": "2020-01-31",
+            "group_by": "monthly",
+        },
+    )
+    downloader.path_dataset = tmp_path / "test_dir.zarr"
+    downloader.path_dataset.mkdir(parents=True, exist_ok=True)
+    return downloader
+
+
+def test_part_tracker_path_for_file(
+    downloader_with_file_dataset: DataDownloader,
+) -> None:
+    """When dataset path is a file, tracker should use a sibling JSON with custom suffix."""
+    downloader = downloader_with_file_dataset
+    tracker_path = downloader._part_tracker_path()
+    assert tracker_path == downloader.path_dataset.with_suffix(".load_parts.json")
+    assert downloader.path_dataset.is_file()
+
+
+def test_part_tracker_path_for_directory(
+    downloader_with_directory_dataset: DataDownloader,
+) -> None:
+    """When dataset path is a directory, tracker should live inside it as .load_parts.json."""
+    downloader = downloader_with_directory_dataset
+    tracker_path = downloader._part_tracker_path()
+    assert tracker_path == downloader.path_dataset / ".load_parts.json"
+    assert downloader.path_dataset.is_dir()
+
+
+def test_read_part_tracker_returns_default_when_missing(
+    downloader_with_file_dataset: DataDownloader,
+) -> None:
+    """_read_part_tracker should return an empty completed map when no file exists."""
+    downloader = downloader_with_file_dataset
+    tracker_path = downloader._part_tracker_path()
+    assert not tracker_path.exists()
+    assert downloader._read_part_tracker() == {"completed": {}}
+
+
+def test_write_and_read_part_tracker_roundtrip(
+    downloader_with_file_dataset: DataDownloader,
+) -> None:
+    """_write_part_tracker should persist JSON that _read_part_tracker can load."""
+    downloader = downloader_with_file_dataset
+    data = {"completed": {"1/3": {"completed_at": "2020-01-05T00:00:00Z"}}}
+    downloader._write_part_tracker(data)
+
+    tracker_path = downloader._part_tracker_path()
+    assert tracker_path.exists()
+
+    # File content should be valid JSON with the same structure
+    with tracker_path.open("r", encoding="utf-8") as fh:
+        on_disk = json.load(fh)
+    assert on_disk == data
+    assert downloader._read_part_tracker() == data
+
+
+def test_write_part_tracker_fallback_on_atomic_write_failure(
+    downloader_with_file_dataset: DataDownloader,
+) -> None:
+    """_write_part_tracker should fallback to naive write when atomic write fails."""
+    downloader = downloader_with_file_dataset
+    data = {"completed": {"2/3": {"completed_at": "2020-01-10T00:00:00Z"}}}
+    tracker_path = downloader._part_tracker_path()
+
+    # Mock Path.replace() to raise OSError, simulating atomic write failure
+    with patch.object(
+        Path, "replace", side_effect=OSError("Cross-device link not permitted")
+    ):
+        downloader._write_part_tracker(data)
+
+    # Verify the file was written via fallback path
+    assert tracker_path.exists()
+    with tracker_path.open("r", encoding="utf-8") as fh:
+        on_disk = json.load(fh)
+    assert on_disk == data
+    assert downloader._read_part_tracker() == data
+
+
+def _read_tracker(proc: DataDownloader) -> dict:
     p = proc._part_tracker_path()
     if not p.exists():
         return {"completed": {}}
@@ -76,19 +149,19 @@ def _read_tracker(proc: ZebraDataProcessor) -> dict:
 
 
 def test_load_in_parts_loads_all_parts_successfully(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """load_in_parts should load all parts and track completion."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
 
-    initial_tracker = _read_tracker(processor)
-    processor._write_part_tracker(initial_tracker)
+    initial_tracker = _read_tracker(downloader)
+    downloader._write_part_tracker(initial_tracker)
 
     with (
-        patch.object(processor, "load") as mock_load,
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load") as mock_load,
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(continue_on_error=False, use_lock=False)
+        downloader.load_in_parts(continue_on_error=False, use_lock=False)
         # Should have called load 10 times (for parts 1/10 - 10/10)
         assert mock_load.call_count == 10
         mock_load.assert_any_call(parts="1/10")
@@ -96,7 +169,7 @@ def test_load_in_parts_loads_all_parts_successfully(
         mock_load.assert_any_call(parts="10/10")
 
     # Verify all parts are tracked as completed
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 10
     assert "1/10" in tracker["completed"]
     assert "5/10" in tracker["completed"]
@@ -107,23 +180,23 @@ def test_load_in_parts_loads_all_parts_successfully(
 
 
 def test_load_in_parts_resumes_skipping_completed_parts(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """load_in_parts should skip parts that are already completed."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Pre-mark part 5/10 as completed
     initial_tracker = {
         "completed": {
             "5/10": {"completed_at": "2020-01-15T00:00:00Z"},
         }
     }
-    processor._write_part_tracker(initial_tracker)
+    downloader._write_part_tracker(initial_tracker)
 
     with (
-        patch.object(processor, "load") as mock_load,
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load") as mock_load,
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(continue_on_error=False, use_lock=False)
+        downloader.load_in_parts(continue_on_error=False, use_lock=False)
 
         # Should call load for all 10 parts except 5/10
         assert mock_load.call_count == 9
@@ -137,7 +210,7 @@ def test_load_in_parts_resumes_skipping_completed_parts(
         assert "5/10" not in called_parts
 
     # Verify all parts are now completed
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 10
     assert "1/10" in tracker["completed"]
     assert "5/10" in tracker["completed"]  # Still there from before
@@ -145,10 +218,10 @@ def test_load_in_parts_resumes_skipping_completed_parts(
 
 
 def test_load_in_parts_force_reset_clears_tracker(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """load_in_parts should clear tracker when force_reset=True."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Pre-mark all parts as completed
     initial_tracker = {
         "completed": {
@@ -157,13 +230,13 @@ def test_load_in_parts_force_reset_clears_tracker(
             "10/10": {"completed_at": "2020-01-25T00:00:00Z"},
         }
     }
-    processor._write_part_tracker(initial_tracker)
+    downloader._write_part_tracker(initial_tracker)
 
     with (
-        patch.object(processor, "load") as mock_load,
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load") as mock_load,
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(
+        downloader.load_in_parts(
             continue_on_error=False, force_reset=True, use_lock=False
         )
 
@@ -171,7 +244,7 @@ def test_load_in_parts_force_reset_clears_tracker(
         assert mock_load.call_count == 10
 
     # Verify tracker was cleared and repopulated
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 10
     # Timestamps should be new (not the original ones)
     for part_spec in ["1/10", "5/10", "10/10"]:
@@ -182,13 +255,13 @@ def test_load_in_parts_force_reset_clears_tracker(
 
 
 def test_load_in_parts_continues_on_error_when_enabled(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """load_in_parts should continue to next part when error occurs and continue_on_error=True."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
 
-    initial_tracker = _read_tracker(processor)
-    processor._write_part_tracker(initial_tracker)
+    initial_tracker = _read_tracker(downloader)
+    downloader._write_part_tracker(initial_tracker)
 
     # Make load fail for part 5/10
     call_count = 0
@@ -201,16 +274,16 @@ def test_load_in_parts_continues_on_error_when_enabled(
             raise RuntimeError(error_msg)
 
     with (
-        patch.object(processor, "load", side_effect=mock_load_side_effect),
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load", side_effect=mock_load_side_effect),
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(continue_on_error=True, use_lock=False)
+        downloader.load_in_parts(continue_on_error=True, use_lock=False)
 
         # Should have attempted all 10 parts
         assert call_count == 10
 
     # All 10 parts marked as completed except 5/10 marked as failed
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 9
     assert "1/10" in tracker["completed"]
     assert "5/10" not in tracker["completed"]
@@ -218,13 +291,13 @@ def test_load_in_parts_continues_on_error_when_enabled(
 
 
 def test_load_in_parts_raises_on_error_when_continue_disabled(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """load_in_parts should raise exception when error occurs and continue_on_error=False."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
 
-    initial_tracker = _read_tracker(processor)
-    processor._write_part_tracker(initial_tracker)
+    initial_tracker = _read_tracker(downloader)
+    downloader._write_part_tracker(initial_tracker)
 
     # Make load fail for part 5/10
     error_msg = "Simulated load failure"
@@ -235,14 +308,14 @@ def test_load_in_parts_raises_on_error_when_continue_disabled(
         # First 4 parts should succeed
 
     with (
-        patch.object(processor, "load", side_effect=mock_load_side_effect),
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load", side_effect=mock_load_side_effect),
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
         pytest.raises(RuntimeError, match=error_msg),
     ):
-        processor.load_in_parts(continue_on_error=False, use_lock=False)
+        downloader.load_in_parts(continue_on_error=False, use_lock=False)
 
     # Only first 4 parts should be marked as completed (5/10 failed and raised)
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 4
     assert "1/10" in tracker["completed"]
     assert "4/10" in tracker["completed"]
@@ -252,13 +325,13 @@ def test_load_in_parts_raises_on_error_when_continue_disabled(
 
 def test_lock_timeout_skips_part(
     monkeypatch: pytest.MonkeyPatch,
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Simulate FileLock timeout on acquisition by having FileLock.__enter__ raise Timeout.
 
     The implementation treats lock-timeout as a skip for that part (it will be retried on next run).
     """
-    proc = processor_with_directory_dataset
+    proc = downloader_with_directory_dataset
 
     # Patch FileLock to raise Timeout on entering context
     timeout_msg = "could not acquire"
@@ -279,7 +352,7 @@ def test_lock_timeout_skips_part(
             return False
 
     monkeypatch.setattr(
-        "ice_station_zebra.data_processors.zebra_data_processor.FileLock", BadLock
+        "ice_station_zebra.data_processors.data_downloader.FileLock", BadLock
     )
 
     calls = []
@@ -304,20 +377,20 @@ def test_lock_timeout_skips_part(
 
 
 def test_total_parts_override(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Test that total_parts overrides the computed total parts."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
 
-    initial_tracker = _read_tracker(processor)
-    processor._write_part_tracker(initial_tracker)
+    initial_tracker = _read_tracker(downloader)
+    downloader._write_part_tracker(initial_tracker)
 
     # Override to 5 parts instead of computed 10
     with (
-        patch.object(processor, "load") as mock_load,
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load") as mock_load,
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(
+        downloader.load_in_parts(
             continue_on_error=False,
             use_lock=False,
             total_parts=5,
@@ -332,17 +405,17 @@ def test_total_parts_override(
         mock_load.assert_any_call(parts="5/5")
 
     # Verify all 5 parts are tracked as completed
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 5
     for part_spec in ["1/5", "2/5", "3/5", "4/5", "5/5"]:
         assert part_spec in tracker["completed"]
 
 
 def test_overwrite_deletes_dataset_and_tracker(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Test that overwrite deletes dataset and tracker, then initializes."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Create some initial state
     initial_tracker = {
         "completed": {
@@ -352,21 +425,23 @@ def test_overwrite_deletes_dataset_and_tracker(
             "5/10": {"started_at": "2020-01-10T00:00:00Z"},
         },
     }
-    processor._write_part_tracker(initial_tracker)
+    downloader._write_part_tracker(initial_tracker)
     # Create some dataset content
-    if processor.path_dataset.exists():
-        if processor.path_dataset.is_dir():
-            shutil.rmtree(processor.path_dataset)
+    if downloader.path_dataset.exists():
+        if downloader.path_dataset.is_dir():
+            shutil.rmtree(downloader.path_dataset)
         else:
-            processor.path_dataset.unlink()
-    processor.path_dataset.mkdir(parents=True, exist_ok=True)
-    (processor.path_dataset / "some_file").touch()
+            downloader.path_dataset.unlink()
+    downloader.path_dataset.mkdir(parents=True, exist_ok=True)
+    (downloader.path_dataset / "some_file").touch()
 
     with (
-        patch.object(processor, "init") as mock_init,
-        patch.object(processor, "load") as mock_load,
+        patch.object(downloader, "init") as mock_init,
+        patch.object(downloader, "load") as mock_load,
     ):
-        processor.load_in_parts(continue_on_error=False, use_lock=False, overwrite=True)
+        downloader.load_in_parts(
+            continue_on_error=False, use_lock=False, overwrite=True
+        )
 
         # Should have called init to reinitialize the dataset
         mock_init.assert_called_once_with(overwrite=False)
@@ -375,7 +450,7 @@ def test_overwrite_deletes_dataset_and_tracker(
         assert mock_load.call_count == 10
 
     # Verify tracker was cleared and repopulated
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 10
     # All parts should have new timestamps
     for part_spec in ["1/10", "5/10", "10/10"]:
@@ -386,10 +461,10 @@ def test_overwrite_deletes_dataset_and_tracker(
 
 
 def test_overwrite_skips_force_reset(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Test that force_reset is skipped when overwrite is used."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Create initial tracker state
     initial_tracker = {
         "completed": {
@@ -399,21 +474,21 @@ def test_overwrite_skips_force_reset(
             "5/10": {"started_at": "2020-01-10T00:00:00Z"},
         },
     }
-    processor._write_part_tracker(initial_tracker)
+    downloader._write_part_tracker(initial_tracker)
     # Ensure dataset directory exists
-    if processor.path_dataset.exists():
-        if processor.path_dataset.is_dir():
-            shutil.rmtree(processor.path_dataset)
+    if downloader.path_dataset.exists():
+        if downloader.path_dataset.is_dir():
+            shutil.rmtree(downloader.path_dataset)
         else:
-            processor.path_dataset.unlink()
-    processor.path_dataset.mkdir(parents=True, exist_ok=True)
+            downloader.path_dataset.unlink()
+    downloader.path_dataset.mkdir(parents=True, exist_ok=True)
 
     with (
-        patch.object(processor, "init") as mock_init,
-        patch.object(processor, "load") as mock_load,
+        patch.object(downloader, "init") as mock_init,
+        patch.object(downloader, "load") as mock_load,
     ):
         # Both overwrite and force_reset are True
-        processor.load_in_parts(
+        downloader.load_in_parts(
             continue_on_error=False,
             use_lock=False,
             overwrite=True,
@@ -427,23 +502,23 @@ def test_overwrite_skips_force_reset(
 
 
 def test_automatic_initialization_when_dataset_missing(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Test that dataset is automatically initialized if it doesn't exist."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Remove the dataset file/directory
-    if processor.path_dataset.exists():
-        if processor.path_dataset.is_dir():
-            shutil.rmtree(processor.path_dataset)
+    if downloader.path_dataset.exists():
+        if downloader.path_dataset.is_dir():
+            shutil.rmtree(downloader.path_dataset)
         else:
-            processor.path_dataset.unlink()
+            downloader.path_dataset.unlink()
 
     with (
-        patch.object(processor, "init") as mock_init,
-        patch.object(processor, "inspect", side_effect=FileNotFoundError("not found")),
-        patch.object(processor, "load") as mock_load,
+        patch.object(downloader, "init") as mock_init,
+        patch.object(downloader, "inspect", side_effect=FileNotFoundError("not found")),
+        patch.object(downloader, "load") as mock_load,
     ):
-        processor.load_in_parts(continue_on_error=False, use_lock=False)
+        downloader.load_in_parts(continue_on_error=False, use_lock=False)
 
         # Should have called init to initialize the missing dataset
         mock_init.assert_called_once_with(overwrite=False)
@@ -452,10 +527,10 @@ def test_automatic_initialization_when_dataset_missing(
 
 
 def test_force_reset_clears_in_progress(
-    processor_with_directory_dataset: ZebraDataProcessor,
+    downloader_with_directory_dataset: DataDownloader,
 ) -> None:
     """Test that force_reset clears both completed and in_progress entries."""
-    processor = processor_with_directory_dataset
+    downloader = downloader_with_directory_dataset
     # Pre-mark some parts as completed and in_progress
     initial_tracker: dict[str, Any] = {
         "completed": {
@@ -469,13 +544,13 @@ def test_force_reset_clears_in_progress(
             },
         },
     }
-    processor._write_part_tracker(initial_tracker)
+    downloader._write_part_tracker(initial_tracker)
 
     with (
-        patch.object(processor, "load") as mock_load,
-        patch.object(processor, "inspect"),  # Mock inspect to assume dataset exists
+        patch.object(downloader, "load") as mock_load,
+        patch.object(downloader, "inspect"),  # Mock inspect to assume dataset exists
     ):
-        processor.load_in_parts(
+        downloader.load_in_parts(
             continue_on_error=False, force_reset=True, use_lock=False
         )
 
@@ -483,7 +558,7 @@ def test_force_reset_clears_in_progress(
         assert mock_load.call_count == 10
 
     # Verify tracker was cleared and repopulated (no in_progress entries)
-    tracker = processor._read_part_tracker()
+    tracker = downloader._read_part_tracker()
     assert len(tracker["completed"]) == 10
     assert "in_progress" not in tracker or len(tracker.get("in_progress", {})) == 0
     # Timestamps should be new

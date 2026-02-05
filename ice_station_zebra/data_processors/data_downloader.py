@@ -30,11 +30,11 @@ from .preprocessors import IPreprocessor
 logger = logging.getLogger(__name__)
 
 
-class ZebraDataProcessor:
+class DataDownloader:
     def __init__(
         self, name: str, config: DictConfig, cls_preprocessor: type[IPreprocessor]
     ) -> None:
-        """Initialise a ZebraDataProcessor from a config.
+        """Initialise a DataDownloader from a config.
 
         Register a preprocessor if appropriate.
         """

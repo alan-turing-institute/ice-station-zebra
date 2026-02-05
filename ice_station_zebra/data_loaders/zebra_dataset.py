@@ -129,12 +129,11 @@ class ZebraDataset(Dataset):
         The variable names are extracted from the underlying Anemoi dataset.
         All datasets must have the same variables.
         """
-        # Check all datasets have the same variables
-        per_ds_variables = [tuple(ds.variables) for ds in self.datasets]
-        if len(set(per_ds_variables)) != 1:
-            msg = f"All datasets must have the same variables, found {len(set(per_ds_variables))} different sets"
+        variable_names = {tuple(sorted(ds.variables)) for ds in self.datasets}
+        if len(variable_names) != 1:
+            msg = f"Found {len(variable_names)} different sets of variables across {len(self.datasets)} datasets."
             raise ValueError(msg)
-        return list(self.datasets[0].variables)
+        return list(variable_names.pop())
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""

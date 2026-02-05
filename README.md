@@ -15,24 +15,26 @@
 | ice\_station\_zebra/callbacks/weight\_averaging.py                      |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | ice\_station\_zebra/cli/\_\_init\_\_.py                                 |        3 |        0 |    100% |           |
 | ice\_station\_zebra/cli/hydra.py                                        |       29 |        3 |     90% |     39-41 |
-| ice\_station\_zebra/cli/main.py                                         |       22 |        8 |     64% | 30-42, 46 |
+| ice\_station\_zebra/cli/main.py                                         |       24 |        8 |     67% | 34-46, 50 |
 | ice\_station\_zebra/config/\_\_init\_\_.py                              |        0 |        0 |    100% |           |
 | ice\_station\_zebra/data\_loaders/\_\_init\_\_.py                       |        3 |        0 |    100% |           |
-| ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       46 |        6 |     87% |40-41, 89, 101, 108-109 |
-| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       59 |       37 |     37% |25-72, 85, 93, 101-103, 109-128, 134-153, 159-178, 184-203 |
-| ice\_station\_zebra/data\_loaders/zebra\_dataset.py                     |       78 |        0 |    100% |           |
+| ice\_station\_zebra/data\_loaders/combined\_dataset.py                  |       46 |        6 |     87% |43-44, 92, 104, 111-112 |
+| ice\_station\_zebra/data\_loaders/zebra\_data\_module.py                |       60 |       38 |     37% |25-75, 88, 96, 104-106, 112-132, 138-158, 164-184, 190-210 |
+| ice\_station\_zebra/data\_loaders/zebra\_dataset.py                     |       85 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/\_\_init\_\_.py                    |        1 |        0 |    100% |           |
-| ice\_station\_zebra/data\_processors/cli.py                             |       61 |       33 |     46% |28-32, 39-42, 55-59, 69-73, 102-109, 123-127, 131 |
-| ice\_station\_zebra/data\_processors/filters/\_\_init\_\_.py            |        5 |        1 |     80% |         8 |
+| ice\_station\_zebra/data\_processors/cli.py                             |       55 |       28 |     49% |27-30, 37-40, 53-56, 66-69, 98-104, 118-121, 125 |
+| ice\_station\_zebra/data\_processors/filters/\_\_init\_\_.py            |        9 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/filters/doubling\_filter.py        |       11 |        4 |     64% |16-17, 21-22 |
 | ice\_station\_zebra/data\_processors/preprocessors/\_\_init\_\_.py      |        4 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/preprocessors/icenet\_sic.py       |       63 |       46 |     27% |20-26, 30, 35-66, 74-131 |
 | ice\_station\_zebra/data\_processors/preprocessors/ipreprocessor.py     |        9 |        0 |    100% |           |
 | ice\_station\_zebra/data\_processors/preprocessors/null.py              |        5 |        1 |     80% |         9 |
-| ice\_station\_zebra/data\_processors/zebra\_data\_processor.py          |      197 |       71 |     64% |51-70, 74-76, 85-86, 98-128, 155-160, 173-174, 191-192, 198-204, 266-288, 292, 298-304, 317-328, 343-347, 359-360, 432 |
+| ice\_station\_zebra/data\_processors/sources/\_\_init\_\_.py            |        9 |        0 |    100% |           |
+| ice\_station\_zebra/data\_processors/sources/ftp.py                     |       31 |        0 |    100% |           |
+| ice\_station\_zebra/data\_processors/zebra\_data\_processor.py          |      198 |       72 |     64% |52-78, 82-84, 93-94, 106-136, 163-168, 181-182, 199-200, 206-212, 274-296, 300, 306-312, 325-336, 351-355, 367-368, 440 |
 | ice\_station\_zebra/data\_processors/zebra\_data\_processor\_factory.py |       11 |        4 |     64% |     19-26 |
 | ice\_station\_zebra/evaluation/\_\_init\_\_.py                          |        1 |        0 |    100% |           |
-| ice\_station\_zebra/evaluation/cli.py                                   |       20 |        6 |     70% | 28-35, 39 |
+| ice\_station\_zebra/evaluation/cli.py                                   |       16 |        3 |     81% | 27-28, 32 |
 | ice\_station\_zebra/evaluation/evaluator.py                             |       41 |       28 |     32% |27-86, 91-97 |
 | ice\_station\_zebra/exceptions.py                                       |        3 |        0 |    100% |           |
 | ice\_station\_zebra/models/\_\_init\_\_.py                              |        5 |        0 |    100% |           |
@@ -74,24 +76,25 @@
 | ice\_station\_zebra/models/processors/unet.py                           |       53 |        0 |    100% |           |
 | ice\_station\_zebra/models/processors/vit.py                            |       36 |       27 |     25% |36-69, 83-108 |
 | ice\_station\_zebra/models/zebra\_model.py                              |       54 |        0 |    100% |           |
+| ice\_station\_zebra/plugins.py                                          |       10 |        0 |    100% |           |
 | ice\_station\_zebra/training/\_\_init\_\_.py                            |        1 |        0 |    100% |           |
-| ice\_station\_zebra/training/cli.py                                     |       18 |        6 |     67% | 21-28, 32 |
+| ice\_station\_zebra/training/cli.py                                     |       14 |        3 |     79% | 20-21, 25 |
 | ice\_station\_zebra/training/trainer.py                                 |       31 |       17 |     45% |34-107, 110-117 |
 | ice\_station\_zebra/types/\_\_init\_\_.py                               |        5 |        0 |    100% |           |
 | ice\_station\_zebra/types/complex\_datatypes.py                         |       36 |       13 |     64% |37, 52-59, 63-65, 69 |
 | ice\_station\_zebra/types/enums.py                                      |        7 |        0 |    100% |           |
 | ice\_station\_zebra/types/simple\_datatypes.py                          |       47 |        0 |    100% |           |
 | ice\_station\_zebra/types/typedefs.py                                   |       11 |        0 |    100% |           |
-| ice\_station\_zebra/utils.py                                            |       29 |       20 |     31% |10, 15-27, 32, 37, 42-45 |
+| ice\_station\_zebra/utils.py                                            |       37 |       21 |     43% |11, 16-28, 33, 38, 43-46, 59 |
 | ice\_station\_zebra/visualisations/\_\_init\_\_.py                      |        5 |        0 |    100% |           |
 | ice\_station\_zebra/visualisations/convert.py                           |       40 |       21 |     48% |28-34, 47-79 |
 | ice\_station\_zebra/visualisations/layout.py                            |      205 |       28 |     86% |180, 417, 423, 437, 533-536, 538, 593-610, 622, 646, 661, 669-671, 724-730 |
 | ice\_station\_zebra/visualisations/plotting\_core.py                    |      139 |       59 |     58% |52-58, 87-88, 111, 122-123, 168, 178-205, 229-230, 232-233, 255-256, 258-259, 297-300, 326-330, 360-361, 364, 381, 396, 423-425, 428-429, 437 |
 | ice\_station\_zebra/visualisations/plotting\_maps.py                    |      220 |       40 |     82% |170-172, 188, 196-198, 254-257, 265-266, 289-292, 328-330, 338-339, 343-364, 478-493, 597, 603-604, 622-630, 690, 787, 820, 827, 839 |
 | ice\_station\_zebra/visualisations/range\_check.py                      |       79 |       16 |     80% |32, 36-39, 46-47, 56, 61-63, 101, 110, 147, 168, 174 |
-| ice\_station\_zebra/xpu/\_\_init\_\_.py                                 |        2 |        0 |    100% |           |
-| ice\_station\_zebra/xpu/accelerator.py                                  |       79 |       43 |     46% |34-41, 54, 59-61, 76-110, 124-126, 132, 143-146, 151, 155, 165-167 |
-| **TOTAL**                                                               | **3006** | **1032** | **66%** |           |
+| ice\_station\_zebra/xpu/\_\_init\_\_.py                                 |        9 |        0 |    100% |           |
+| ice\_station\_zebra/xpu/accelerator.py                                  |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
+| **TOTAL**                                                               | **3065** | **1019** | **67%** |           |
 
 
 ## Setup coverage badge

@@ -113,7 +113,6 @@ class ZebraEvaluator:
             self.trainer.num_devices,
             get_device_name(self.trainer.accelerator.name()),
         )
-
         self.trainer.test(
             model=self.model,
             datamodule=self.data_module,

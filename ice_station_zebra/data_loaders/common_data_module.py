@@ -15,9 +15,9 @@ from .single_dataset import SingleDataset
 logger = logging.getLogger(__name__)
 
 
-class ZebraDataModule(LightningDataModule):
+class CommonDataModule(LightningDataModule):
     def __init__(self, config: DictConfig) -> None:
-        """Initialise a ZebraDataModule from a config.
+        """Initialise a CommonDataModule from a config.
 
         The config specifies all datasets used and how to group them. Data splits are
         also determined from the config, and the appropriate data loaders are created.

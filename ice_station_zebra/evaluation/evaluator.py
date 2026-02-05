@@ -9,7 +9,7 @@ import torch
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
 
-from ice_station_zebra.data_loaders import ZebraDataModule
+from ice_station_zebra.data_loaders import CommonDataModule
 from ice_station_zebra.utils import get_device_name, get_device_threads, get_timestamp
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class ZebraEvaluator:
             self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
         # Load inputs into a data module
-        self.data_module = ZebraDataModule(config)
+        self.data_module = CommonDataModule(config)
 
         # Add callbacks
         callbacks: list[Callback] = []

@@ -1,9 +1,9 @@
 from .combined_dataset import CombinedDataset
+from .common_data_module import CommonDataModule
 from .single_dataset import SingleDataset
-from .zebra_data_module import ZebraDataModule
 
 __all__ = [
     "CombinedDataset",
+    "CommonDataModule",
     "SingleDataset",
-    "ZebraDataModule",
 ]

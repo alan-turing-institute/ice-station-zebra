@@ -12,9 +12,10 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
-from ice_station_zebra.data_loaders import ZebraDataModule
+from ice_station_zebra.data_loaders import CommonDataModule
 from ice_station_zebra.types import ArrayHW, ArrayTHW, PlotSpec
 from ice_station_zebra.visualisations.land_mask import LandMask
+
 from tests.conftest import make_varying_sic_stream
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep
@@ -168,7 +169,7 @@ def checkpoint_data(
         # Load data module
         # Ensure DictConfig type for constructor
         dm_config = cast("DictConfig", config)
-        data_module = ZebraDataModule(dm_config)
+        data_module = CommonDataModule(dm_config)
         data_module.setup("test")
         test_dataloader = data_module.test_dataloader()
 

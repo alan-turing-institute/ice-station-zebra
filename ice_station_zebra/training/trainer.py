@@ -8,7 +8,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
 
 from ice_station_zebra.callbacks import UnconditionalCheckpoint
-from ice_station_zebra.data_loaders import ZebraDataModule
+from ice_station_zebra.data_loaders import CommonDataModule
 from ice_station_zebra.utils import (
     generate_run_name,
     get_device_name,
@@ -31,7 +31,7 @@ class ZebraTrainer:
     def __init__(self, config: DictConfig) -> None:
         """Initialize the Zebra trainer."""
         # Load inputs into a data module
-        self.data_module = ZebraDataModule(config)
+        self.data_module = CommonDataModule(config)
 
         # Construct the model
         self.model: BaseModel = hydra.utils.instantiate(

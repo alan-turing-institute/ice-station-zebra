@@ -64,3 +64,16 @@ def parse_np_datetime(dt: np.datetime64) -> datetime:
 
     msg = f"Cannot parse datetime value {dt!r}"
     raise ValueError(msg)
+
+
+def normalise_date(np_datetime: np.datetime64) -> np.datetime64:
+    """Normalise a datetime to midnight."""
+    dt: datetime = np_datetime.astype(datetime)
+    return np.datetime64(dt.date())
+
+
+def to_list(value: str | list[str]) -> list[str]:
+    """Convert a string or list of strings to a list of strings."""
+    if isinstance(value, str):
+        return [value]
+    return value

@@ -7,12 +7,16 @@ from hydra.core.utils import simple_stdout_log_config
 
 from ice_station_zebra.data_processors.cli import datasets_cli
 from ice_station_zebra.evaluation.cli import evaluation_cli
+from ice_station_zebra.plugins import register_plugins
 from ice_station_zebra.training.cli import training_cli
 from ice_station_zebra.visualisations.cli import visualisations_cli
 
 # Configure logging
 simple_stdout_log_config()
 logger = logging.getLogger(__name__)
+
+# Register all plugins
+register_plugins()
 
 # Create the typer app
 app = typer.Typer(

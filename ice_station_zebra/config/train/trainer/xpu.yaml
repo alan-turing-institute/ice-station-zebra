@@ -5,5 +5,5 @@ defaults:
 
 accelerator: xpu
 strategy:
-  - _target_: lightning.pytorch.strategies.SingleDeviceStrategy
-  - device: xpu:0
+  _target_: lightning.pytorch.strategies.SingleDeviceStrategy
+  device: xpu:0

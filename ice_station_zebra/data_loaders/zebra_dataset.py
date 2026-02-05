@@ -8,6 +8,7 @@ from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
+from ice_station_zebra.utils import normalise_date
 
 
 class ZebraDataset(Dataset):
@@ -75,7 +76,7 @@ class ZebraDataset(Dataset):
         """Return all available dates in the dataset, removing any that are missing."""
         return sorted(
             {
-                date
+                normalise_date(date)
                 for ds in self.datasets
                 for date in np.delete(ds.dates, list(ds.missing))
             }

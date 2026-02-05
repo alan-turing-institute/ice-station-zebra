@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -319,3 +320,30 @@ class TestZebraDataset:
             IndexError, match="Date 2020-01-04 not found in the dataset"
         ):
             dataset.to_index(self.dates_np[3])
+
+    def test_dataset_datetime_normalization(
+        self, mock_dataset_non_normalized_times: Path
+    ) -> None:
+        """Test that datetime normalization is applied to all dates."""
+        dataset = ZebraDataset(
+            name="test_normalized",
+            input_files=[mock_dataset_non_normalized_times],
+        )
+
+        # All dates should be normalized to 00:00:00
+        for date in dataset.dates:
+            dt: datetime = date.astype(datetime)
+            assert dt.hour == 0
+            assert dt.minute == 0
+            assert dt.second == 0
+            assert dt.microsecond == 0
+
+        # Check specific normalized dates
+        expected_dates = [
+            np.datetime64("2020-01-01"),
+            np.datetime64("2020-01-02"),
+            np.datetime64("2020-01-03"),
+            np.datetime64("2020-01-04"),
+            np.datetime64("2020-01-05"),
+        ]
+        assert dataset.dates == expected_dates

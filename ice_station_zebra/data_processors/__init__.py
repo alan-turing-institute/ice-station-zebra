@@ -1,3 +1,3 @@
-"""Data processor package."""
+"""Data processor module."""
 
 __all__: list[str] = []

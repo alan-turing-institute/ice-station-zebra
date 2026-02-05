@@ -1,5 +1,3 @@
-from .cli import evaluation_cli
+"""Model evaluation module."""
 
-__all__ = [
-    "evaluation_cli",
-]
+__all__: list[str] = []

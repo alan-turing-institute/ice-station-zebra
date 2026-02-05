@@ -45,20 +45,6 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
     return None
 
 
-def to_bool(v: object) -> bool:
-    """Convert a text string to a boolean."""
-    if isinstance(v, bool):
-        return v
-    if isinstance(v, str):
-        s = v.strip().lower()
-        if s in {"true"}:
-            return True
-        if s in {"false"}:
-            return False
-    msg = f"Cannot convert {v!r} to bool"
-    raise ValueError(msg)
-
-
 def to_list(value: str | list[str]) -> list[str]:
     """Convert a string or list of strings to a list of strings."""
     if isinstance(value, str):

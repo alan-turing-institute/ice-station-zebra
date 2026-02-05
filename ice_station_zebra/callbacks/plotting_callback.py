@@ -212,7 +212,7 @@ class PlottingCallback(Callback):
                     )
         except InvalidArrayError as err:
             logger.warning("Static plotting skipped due to invalid arrays: %s", err)
-        except Exception:
+        except (ValueError, MemoryError, OSError):
             logger.exception("Static plotting failed")
 
     def log_video_plots(

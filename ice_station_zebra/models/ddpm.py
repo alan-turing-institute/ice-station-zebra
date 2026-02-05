@@ -9,9 +9,9 @@ from torchmetrics import MetricCollection
 from ice_station_zebra.models.diffusion import GaussianDiffusion, UNetDiffusion
 from ice_station_zebra.types import ModelTestOutput, TensorNTCHW
 
+from .base_model import BaseModel
 from .losses import WeightedMSELoss
 from .metrics import IceNetAccuracy, SIEError
-from .zebra_model import ZebraModel
 
 # Unset SLURM_NTASKS if it's causing issues
 if "SLURM_NTASKS" in os.environ:
@@ -53,7 +53,7 @@ class SimpleEncoder2D(torch.nn.Module):
         return self.net(x)
 
 
-class DDPM(ZebraModel):
+class DDPM(BaseModel):
     """Denoising Diffusion Probabilistic Model (DDPM).
 
     Input space:
@@ -89,7 +89,7 @@ class DDPM(ZebraModel):
             normalization (str): Normalization layer type (e.g., "groupnorm").
             time_embed_dim (int): Dimensionality of the timestep embedding.
             dropout_rate (float): Dropout probability applied inside the UNet blocks.
-            **kwargs: Additional arguments passed to ``ZebraModel``.
+            **kwargs: Additional arguments passed to ``BaseModel``.
 
         """
         super().__init__(**kwargs)

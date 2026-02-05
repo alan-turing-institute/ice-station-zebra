@@ -15,7 +15,7 @@ from ice_station_zebra.utils import get_device_name, get_device_threads, get_tim
 if TYPE_CHECKING:
     from lightning import Callback, Trainer
 
-    from ice_station_zebra.models import ZebraModel
+    from ice_station_zebra.models import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class ZebraEvaluator:
             logger.debug("Could not find model configuration file at %s.", config_path)
 
         # Load the model from checkpoint
-        model_cls: type[ZebraModel] = hydra.utils.get_class(config["model"]["_target_"])
+        model_cls: type[BaseModel] = hydra.utils.get_class(config["model"]["_target_"])
         with torch.serialization.safe_globals([PosixPath]):
             self.model = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
 

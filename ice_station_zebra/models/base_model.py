@@ -16,7 +16,7 @@ from omegaconf import DictConfig
 from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
-class ZebraModel(LightningModule, ABC):
+class BaseModel(LightningModule, ABC):
     """A base class for all models used in the IceNetMP project."""
 
     def __init__(  # noqa: PLR0913
@@ -31,7 +31,7 @@ class ZebraModel(LightningModule, ABC):
         scheduler: DictConfig,
         **_kwargs: Any,
     ) -> None:
-        """Initialise a ZebraModel.
+        """Initialise a BaseModel.
 
         Input spaces and the desired output space must be specified, as must the number
         of forecast and history steps.

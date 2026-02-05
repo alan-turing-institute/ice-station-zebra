@@ -19,7 +19,7 @@ from ice_station_zebra.utils import (
 if TYPE_CHECKING:
     from lightning import Callback, Trainer
 
-    from ice_station_zebra.models import ZebraModel
+    from ice_station_zebra.models import BaseModel
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class ZebraTrainer:
         self.data_module = ZebraDataModule(config)
 
         # Construct the model
-        self.model: ZebraModel = hydra.utils.instantiate(
+        self.model: BaseModel = hydra.utils.instantiate(
             dict(
                 {
                     "input_spaces": [

@@ -4,11 +4,11 @@ import pytest
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.models import ZebraModel
+from ice_station_zebra.models import BaseModel
 from ice_station_zebra.types import ModelTestOutput, TensorNTCHW
 
 
-class FakeDataModel(ZebraModel):
+class FakeDataModel(BaseModel):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialise a fake data model for testing purposes."""
         super().__init__(*args, **kwargs)
@@ -24,7 +24,7 @@ class FakeDataModel(ZebraModel):
         return torch.randn(b, self.t, self.c, self.h, self.w)
 
 
-class TestZebraModel:
+class TestBaseModel:
     @pytest.mark.parametrize("test_input_chw", [(4, 512, 512), (1, 10, 20)])
     @pytest.mark.parametrize("test_output_chw", [(1, 432, 432), (19, 10, 20)])
     @pytest.mark.parametrize("test_n_forecast_steps", [0, 1, 2, 5])

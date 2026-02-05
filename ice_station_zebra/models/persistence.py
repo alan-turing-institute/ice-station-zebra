@@ -6,10 +6,10 @@ from torch import nn
 
 from ice_station_zebra.types import TensorNTCHW
 
-from .zebra_model import ZebraModel
+from .base_model import BaseModel
 
 
-class Persistence(ZebraModel):
+class Persistence(BaseModel):
     def __init__(
         self,
         **kwargs: Any,

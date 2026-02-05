@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.types import DataSpace, TensorNTCHW
 
-from .zebra_model import ZebraModel
+from .base_model import BaseModel
 
 if TYPE_CHECKING:
     from ice_station_zebra.models.decoders import BaseDecoder
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ice_station_zebra.models.processors import BaseProcessor
 
 
-class EncodeProcessDecode(ZebraModel):
+class EncodeProcessDecode(BaseModel):
     def __init__(
         self,
         *,

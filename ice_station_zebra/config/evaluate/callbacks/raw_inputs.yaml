@@ -4,7 +4,7 @@ raw_inputs:
   frequency: null               # Plot once; set N to repeat every N batches
   timestep_index: 0             # Which history timestep to plot (0 = most recent)
   save_dir: ./raw_input_plots   # Directory to save plots (null to skip saving to disk)
-  log_to_wandb: true            # Whether to log plots to WandB (if false and save_dir null, nothing saved)
+  log_to_wandb: false            # Whether to log plots to WandB (if false and save_dir null, nothing saved)
 
   # Animation configuration (following PlottingCallback pattern)
   make_video_plots: false       # Set to true to create temporal animations

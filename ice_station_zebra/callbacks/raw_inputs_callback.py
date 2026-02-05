@@ -57,7 +57,7 @@ class RawInputsCallback(Callback):
         video_format: Literal["mp4", "gif"] = "gif",
         video_save_dir: str | Path | None = None,
         max_animation_frames: int | None = None,
-        log_to_wandb: bool = True,
+        log_to_wandb: bool = False,
     ) -> None:
         """Create raw input plots and/or animations during evaluation.
 
@@ -73,7 +73,7 @@ class RawInputsCallback(Callback):
             video_save_dir: Directory to save animations. If None and log_to_wandb=False, no videos saved.
             max_animation_frames: Maximum number of frames to include in animations (None = unlimited).
                                   Limits temporal accumulation to control memory and file size.
-            log_to_wandb: Whether to log plots and animations to WandB (default: True).
+            log_to_wandb: Whether to log plots and animations to WandB (default: False).
 
         """
         super().__init__()
@@ -121,7 +121,7 @@ class RawInputsCallback(Callback):
         """Called when the test loop starts."""
         logger.info("RawInputsCallback: Test loop started")
 
-    def on_test_batch_end(  # noqa: C901, PLR0912
+    def on_test_batch_end(  # noqa: C901, PLR0912, PLR0915
         self,
         trainer: Trainer,
         _module: LightningModule,
@@ -185,10 +185,11 @@ class RawInputsCallback(Callback):
 
         # Determine if we should plot static plots this batch
         should_plot_static = False
-        if self.frequency is None:
-            should_plot_static = not self._has_plotted
-        else:
-            should_plot_static = batch_idx % self.frequency == 0
+        if self.log_to_wandb:
+            if self.frequency is None:
+                should_plot_static = not self._has_plotted
+            else:
+                should_plot_static = batch_idx % self.frequency == 0
 
         # Always accumulate temporal data if animations are enabled
         # (regardless of static plot frequency)

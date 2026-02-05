@@ -45,6 +45,7 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
             return logger
     return None
 
+
 def parse_np_datetime(dt: np.datetime64) -> datetime:
     """Convert numpy-like datetime to aware datetime in UTC.
 

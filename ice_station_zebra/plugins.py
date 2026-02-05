@@ -9,7 +9,7 @@ logger = getLogger(__name__)
 
 def register_plugins() -> None:
     """Register all plugins."""
-    logger.info("Registering plugins...")
+    logger.debug("Registering plugins with external libraries...")
     register_accelerators()
     register_filters()
     register_sources()

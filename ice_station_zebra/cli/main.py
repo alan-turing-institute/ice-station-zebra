@@ -20,7 +20,7 @@ register_plugins()
 # Create the typer app
 app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
-    help="Entrypoint for zebra application commands",
+    help="Entrypoint for imp CLI application.",
     no_args_is_help=True,
 )
 app.add_typer(datasets_cli, name="datasets")

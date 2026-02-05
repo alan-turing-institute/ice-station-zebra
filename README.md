@@ -48,7 +48,7 @@ base_path: /local/path/to/my/data
 You can then run this with, e.g.:
 
 ```bash
-uv run zebra <command> --config-name <your local config>.yaml
+uv run imp <command> --config-name <your local config>.yaml
 ```
 You can also use this config to override other options in the `base.yaml` file, as shown below:
 
@@ -69,7 +69,7 @@ base_path: /local/path/to/my/data
 Alternatively, you can apply overrides to specific options at the command line like this:
 
 ```bash
-uv run zebra <command> ++base_path=/local/path/to/my/data
+uv run imp <command> ++base_path=/local/path/to/my/data
 ```
 
 See `config/demo_north.yaml` for an example of this.
@@ -96,13 +96,13 @@ defaults:
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi` (e.g. the ERA5 data).
 
-Run `uv run zebra datasets create` to download datasets.
+Run `uv run imp datasets create` to download datasets.
 
 N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 
 ### Inspect
 
-Run `uv run zebra datasets inspect` to inspect datasets (i.e. to get dataset properties and statistical summaries of the variables).
+Run `uv run imp datasets inspect` to inspect datasets (i.e. to get dataset properties and statistical summaries of the variables).
 
 ### Train
 
@@ -114,19 +114,19 @@ export WANDB_API_KEY=<your_api_key>
 wandb login
 ```
 
-Run `uv run zebra train` to train using the datasets specified in the config.
+Run `uv run imp train` to train using the datasets specified in the config.
 
 :information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the base path to the data defined in your config file.
 
 :warning: If you are running on macOS, you may need to prepend your `uv` run command with `PYTORCH_ENABLE_MPS_FALLBACK=1`. For example:
 
-```
-PYTORCH_ENABLE_MPS_FALLBACK=1 uv run zebra train
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 uv run imp train
 ```
 
 ### Evaluate
 
-Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
+Run `uv run imp evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
 
 ### Visualisations
 
@@ -208,7 +208,7 @@ For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary
 The `load_in_parts` command automates the process of downloading datasets in parts, tracking progress, and allowing you to resume interrupted downloads:
 
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml
+uv run imp datasets load_in_parts --config-name <your config>.yaml
 ```
 
 This command will:
@@ -220,7 +220,7 @@ This command will:
 You will then need to finalise the dataset when done.
 
 ```bash
-uv run zebra datasets finalise --config-name <your config>.yaml
+uv run imp datasets finalise --config-name <your config>.yaml
 ```
 
 #### Options
@@ -235,21 +235,21 @@ uv run zebra datasets finalise --config-name <your config>.yaml
 
 Load all parts for all datasets, resuming from where you left off:
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml
+uv run imp datasets load_in_parts --config-name <your config>.yaml
 ```
 
 Load a specific dataset with a custom number of parts:
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
+uv run imp datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
 ```
 
 Start fresh, clearing any previous progress (doesn't delete any data):
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-reset
+uv run imp datasets load_in_parts --config-name <your config>.yaml --force-reset
 ```
 Start and destroy any previously saved data (careful):
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --overwrite
+uv run imp datasets load_in_parts --config-name <your config>.yaml --overwrite
 ```
 
 ### Manual approach (advanced)
@@ -258,15 +258,15 @@ If you need more control, you can manually manage the download process:
 
 1. First initialise the dataset:
 ```bash
-uv run zebra datasets init --config-name <your config>.yaml
+uv run imp datasets init --config-name <your config>.yaml
 ```
 
 2. Then load each part `i` of the total `n` in turn:
 ```bash
-uv run zebra datasets load --config-name <your config>.yaml --parts i/n
+uv run imp datasets load --config-name <your config>.yaml --parts i/n
 ```
 
 3. When all the parts are loaded, finalise the dataset:
 ```bash
-uv run zebra datasets finalise --config-name <your config>.yaml
+uv run imp datasets finalise --config-name <your config>.yaml
 ```

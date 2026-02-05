@@ -14,7 +14,7 @@ class EnhancedCliRunner(CliRunner):
 
     def output(self, commands: Sequence[str]) -> list[str]:
         """Invoke the CLI commands and return the output as a list of strings."""
-        result = super().invoke(app, commands, prog_name="zebra")
+        result = super().invoke(app, commands, prog_name="imp")
         assert result.exit_code == 0, (
             f"Command failed with exit code {result.exit_code}: {result.output}"
         )
@@ -34,8 +34,8 @@ class EnhancedCliRunner(CliRunner):
 
 class TestBaseCLI:
     expected_patterns_help = (
-        r"Usage: zebra \[OPTIONS\] COMMAND \[ARGS\]...",
-        r"Entrypoint for zebra application commands",
+        r"Usage: imp \[OPTIONS\] COMMAND \[ARGS\]...",
+        r"Entrypoint for imp CLI application.",
         r"--install-completion\s+Install completion for the current shell.",
         r"--show-completion\s+Show completion for the current shell",
         r"--help\s+-h\s+Show this message and exit.",
@@ -65,7 +65,7 @@ class TestDatasetsCLI:
         runner.check_output(
             ["datasets", "--help"],
             expected_patterns=[
-                r"Usage: zebra datasets \[OPTIONS\] COMMAND \[ARGS\]...",
+                r"Usage: imp datasets \[OPTIONS\] COMMAND \[ARGS\]...",
                 r"Manage datasets",
                 r"--help\s+-h\s+Show this message and exit.",
                 r"create\s+Create all datasets.",
@@ -83,7 +83,7 @@ class TestEvaluateCLI:
         runner.check_output(
             ["evaluate", "--help"],
             expected_patterns=[
-                r"Usage: zebra evaluate \[OPTIONS\] \[OVERRIDES\]...",
+                r"Usage: imp evaluate \[OPTIONS\] \[OVERRIDES\]...",
                 r"Evaluate a model",
                 r"overrides\s+\[OVERRIDES\]...\s+Apply space-separated Hydra config",
                 r"--checkpoint\s+TEXT\s+Specify the path to a trained model",
@@ -99,7 +99,7 @@ class TestTrainCLI:
         runner.check_output(
             ["train", "--help"],
             expected_patterns=[
-                r"Usage: zebra train \[OPTIONS\] \[OVERRIDES\]...",
+                r"Usage: imp train \[OPTIONS\] \[OVERRIDES\]...",
                 r"Train a model",
                 r"overrides\s+\[OVERRIDES\]...\s+Apply space-separated Hydra config",
                 r"--config-name\s+TEXT\s+Specify the name of a file to load from the",

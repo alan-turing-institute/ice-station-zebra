@@ -53,7 +53,7 @@ notebooks = [
 ]
 
 [project.scripts]
-zebra = "ice_station_zebra.cli:main"
+imp = "ice_station_zebra.cli:main"
 
 [tool.coverage.paths]
 source = ["ice_station_zebra/"]

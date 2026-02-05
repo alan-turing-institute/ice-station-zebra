@@ -5,7 +5,7 @@ defaults:
   - loggers:
     - wandb
   - model: naive_unet_naive
-  - predict: sic-osisaf
+  - predict: sic-icenet
   - train: default
   - _self_
 

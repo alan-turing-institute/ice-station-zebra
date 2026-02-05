@@ -230,20 +230,67 @@ class DDPM(ZebraModel):
             sample_weight = torch.ones_like(prediction)
         return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
 
-    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
+    # def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
+    #     """
+    #     Prepare OSI-SAF-only inputs.
+    
+    #     Returns:
+    #         Tensor of shape [B, T, H, W]
+    #     """
+    #     osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
+    
+    #     # Squeeze singleton channel
+    #     osisaf_squeezed = osisaf.squeeze(2)  # [B, T, H, W]
+    
+    #     return osisaf_squeezed
+
+    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """
-        Prepare OSI-SAF-only inputs.
+        Encode OSISAF and ERA5 separately, then concatenate.
+    
+        Args:
+            batch: Dictionary with
+                'osisaf-south' [B, T, 1, H, W]
+                'era5' [B, T, C, H2, W2]
     
         Returns:
-            Tensor of shape [B, T, H, W]
+            Conditioning tensor [B, cond_channels, H, W]
         """
-        osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
+        osisaf = batch[self.osisaf_key]    # [B, T, 1, H, W]
+        era5 = batch["era5"]               # [B, T, C, H2, W2]
     
-        # Squeeze singleton channel
-        osisaf_squeezed = osisaf.squeeze(2)  # [B, T, H, W]
+        # Squeeze OSISAF singleton channel
+        osisaf = osisaf.squeeze(2)         # [B, T, H, W]
     
-        return osisaf_squeezed
-
+        # Resize ERA5 spatially to match OSISAF resolution
+        B, T, C, H2, W2 = era5.shape
+        H, W = osisaf.shape[-2:]
+    
+        # Flatten batch and time dimensions for spatial interpolation
+        # [B, T, C, H2, W2] -> [B*T, C, H2, W2]
+        era5_flat = era5.reshape(B * T, C, H2, W2)
+        era5_resized = F.interpolate(
+            era5_flat,
+            size=(H, W),
+            mode="bilinear",
+            align_corners=False,
+        )
+        # Reshape back to [B, T, C, H, W]
+        era5 = era5_resized.reshape(B, T, C, H, W)
+        
+        # Permute to [B, C, T, H, W] for Conv3d
+        era5 = era5.permute(0, 2, 1, 3, 4)  # [B, C, T, H, W]
+    
+        # Encode both inputs
+        osisaf_features = self.osisaf_encoder(osisaf)   # [B, cond//2, H, W]
+        era5_features = self.era5_encoder(era5)         # [B, cond//2, T, H, W]
+        
+        # Pool over time dimension for ERA5
+        era5_features = era5_features.mean(dim=2)       # [B, cond//2, H, W]
+    
+        # Concatenate along channel dimension
+        conditioning = torch.cat([osisaf_features, era5_features], dim=1)  # [B, cond, H, W]
+        return conditioning
 
     def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
         """One training step using DDPM loss (predicted noise vs. true noise)."""

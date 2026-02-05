@@ -19,14 +19,14 @@ class TestZebraDataset:
     dates_str = ("2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05")
     dates_np = tuple(np.datetime64(s) for s in dates_str)
 
-    def test_dataset_name(self) -> None:
+    def test_name(self) -> None:
         dataset = ZebraDataset(
             name="test_dataset",
             input_files=[],
         )
         assert dataset.name == "test_dataset"
 
-    def test_dataset_dates(self, mock_dataset: Path) -> None:
+    def test_dates(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -34,7 +34,7 @@ class TestZebraDataset:
         # Test dates
         assert all(date in dataset.dates for date in self.dates_np)
 
-    def test_dataset_dates_end(self, mock_dataset: Path) -> None:
+    def test_end_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -43,7 +43,7 @@ class TestZebraDataset:
         assert dataset.start_date == self.dates_np[0]
         assert dataset.end_date == self.dates_np[1]
 
-    def test_dataset_dates_ranges(self, mock_dataset: Path) -> None:
+    def test_date_ranges(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -56,9 +56,7 @@ class TestZebraDataset:
         assert len(dataset.datasets) == 2
         assert len(dataset) == 4
 
-    def test_dataset_dates_with_missing_dates(
-        self, mock_dataset_missing_dates: Path
-    ) -> None:
+    def test_missing_dates(self, mock_dataset_missing_dates: Path) -> None:
         """Test that missing dates are excluded from ZebraDataset.dates."""
         # Create ZebraDataset with indices 1 and 3 (2020-01-02 and 2020-01-04) missing
         dataset = ZebraDataset(
@@ -76,7 +74,7 @@ class TestZebraDataset:
         assert self.dates_np[1] not in dataset.dates  # 2020-01-02 should be missing
         assert self.dates_np[3] not in dataset.dates  # 2020-01-04 should be missing
 
-    def test_dataset_dates_start(self, mock_dataset: Path) -> None:
+    def test_start_date(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -85,7 +83,34 @@ class TestZebraDataset:
         assert dataset.start_date == self.dates_np[1]
         assert dataset.end_date == self.dates_np[-1]
 
-    def test_dataset_getitem(self, mock_dataset: Path) -> None:
+    def test_datetime_normalization(
+        self, mock_dataset_non_normalized_times: Path
+    ) -> None:
+        """Test that datetime normalization is applied to all dates."""
+        dataset = ZebraDataset(
+            name="test_normalized",
+            input_files=[mock_dataset_non_normalized_times],
+        )
+
+        # All dates should be normalized to 00:00:00
+        for date in dataset.dates:
+            dt: datetime = date.astype("datetime64[us]").astype(datetime)
+            assert dt.hour == 0
+            assert dt.minute == 0
+            assert dt.second == 0
+            assert dt.microsecond == 0
+
+        # Check specific normalized dates
+        expected_dates = [
+            np.datetime64("2020-01-01"),
+            np.datetime64("2020-01-02"),
+            np.datetime64("2020-01-03"),
+            np.datetime64("2020-01-04"),
+            np.datetime64("2020-01-05"),
+        ]
+        assert dataset.dates == expected_dates
+
+    def test_getitem(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -100,7 +125,7 @@ class TestZebraDataset:
         ):
             dataset[10]
 
-    def test_dataset_get_tchw(self, mock_dataset: Path) -> None:
+    def test_get_tchw(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -115,7 +140,7 @@ class TestZebraDataset:
         ):
             dataset.get_tchw([np.datetime64("1970-01-01"), np.datetime64("1970-01-02")])
 
-    def test_dataset_get_tchw_with_missing_dates(
+    def test_get_tchw_with_missing_dates(
         self, mock_dataset_missing_dates: Path
     ) -> None:
         """Test that get_tchw works correctly when dates are missing."""
@@ -140,16 +165,14 @@ class TestZebraDataset:
         ):
             dataset.get_tchw([self.dates_np[1]])
 
-    def test_dataset_len(self, mock_dataset: Path) -> None:
+    def test_len(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
         )
         assert len(dataset) == 5
 
-    def test_dataset_len_with_missing_dates(
-        self, mock_dataset_missing_dates: Path
-    ) -> None:
+    def test_len_with_missing_dates(self, mock_dataset_missing_dates: Path) -> None:
         """Test that dataset length reflects missing dates."""
         dataset = ZebraDataset(
             name="test_missing", input_files=[mock_dataset_missing_dates]
@@ -157,7 +180,7 @@ class TestZebraDataset:
         # There should be 5 dates with 2 missing
         assert len(dataset) == 3
 
-    def test_dataset_space(self, mock_dataset: Path) -> None:
+    def test_space(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -167,7 +190,7 @@ class TestZebraDataset:
         assert dataset.space.channels == 3
         assert dataset.space.shape == (2, 2)
 
-    def test_dataset_space_error_shape(self) -> None:
+    def test_space_error_shape(self) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[],
@@ -183,7 +206,7 @@ class TestZebraDataset:
         ):
             _ = dataset.space
 
-    def test_dataset_space_error_channels(self) -> None:
+    def test_space_error_channels(self) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[],
@@ -199,7 +222,7 @@ class TestZebraDataset:
         ):
             _ = dataset.space
 
-    def test_dataset_subset(self, mock_dataset: Path) -> None:
+    def test_subset(self, mock_dataset: Path) -> None:
         """Test the select_variables classmethod."""
         # Create a dataset with all variables
         original_dataset = ZebraDataset(
@@ -217,7 +240,7 @@ class TestZebraDataset:
         data_array = subset_dataset[0]
         assert data_array.shape == (1, 2, 2)
 
-    def test_dataset_subset_preserves_date_ranges(self, mock_dataset: Path) -> None:
+    def test_subset_preserves_date_ranges(self, mock_dataset: Path) -> None:
         """Test that select_variables preserves date ranges."""
         # Create a dataset with date ranges
         original_dataset = ZebraDataset(
@@ -234,57 +257,7 @@ class TestZebraDataset:
         assert subset_dataset.end_date == self.dates_np[2]
         assert len(subset_dataset) == 3
 
-    def test_dataset_variable_selection_all(self, mock_dataset: Path) -> None:
-        """Test selecting all variables from a multi-variable dataset."""
-        dataset = ZebraDataset(
-            name="mock_dataset_multi",
-            input_files=[mock_dataset],
-            variables=["ice_conc", "ice_thickness", "temperature"],
-        )
-        # Should have 3 channels
-        assert dataset.space.channels == 3
-        # Check data shape
-        data_array = dataset[0]
-        assert data_array.shape == (3, 2, 2)
-
-    def test_dataset_variable_selection_multiple(self, mock_dataset: Path) -> None:
-        """Test selecting multiple variables from a multi-variable dataset."""
-        dataset = ZebraDataset(
-            name="mock_dataset_multi",
-            input_files=[mock_dataset],
-            variables=["ice_conc", "temperature"],
-        )
-        # Should have 2 channels
-        assert dataset.space.channels == 2
-        # Check data shape
-        data_array = dataset[0]
-        assert data_array.shape == (2, 2, 2)
-
-    def test_dataset_variable_selection_none(self, mock_dataset: Path) -> None:
-        """Test that not specifying variables loads all variables."""
-        dataset = ZebraDataset(
-            name="mock_dataset",
-            input_files=[mock_dataset],
-        )
-        # Should have all 3 channels (ice_conc, ice_thickness and temperature)
-        assert dataset.space.channels == 3
-
-    def test_dataset_variable_selection_single(self, mock_dataset: Path) -> None:
-        """Test selecting a single variable from a multi-variable dataset."""
-        dataset = ZebraDataset(
-            name="mock_dataset",
-            input_files=[mock_dataset],
-            variables=["ice_conc"],
-        )
-        # Should have only 1 channel
-        assert dataset.space.channels == 1
-        # Check data shape
-        data_array = dataset[0]
-        assert data_array.shape == (1, 2, 2)
-        assert dataset.start_date == self.dates_np[0]
-        assert dataset.end_date == self.dates_np[-1]
-
-    def test_dataset_to_index(self, mock_dataset: Path) -> None:
+    def test_to_index(self, mock_dataset: Path) -> None:
         dataset = ZebraDataset(
             name="mock_dataset",
             input_files=[mock_dataset],
@@ -298,7 +271,7 @@ class TestZebraDataset:
         ):
             dataset.to_index(np.datetime64("1970-01-01"))
 
-    def test_dataset_to_index_with_missing_dates(
+    def test_to_index_with_missing_dates(
         self, mock_dataset_missing_dates: Path
     ) -> None:
         """Test that to_index works correctly when dates are missing."""
@@ -321,29 +294,52 @@ class TestZebraDataset:
         ):
             dataset.to_index(self.dates_np[3])
 
-    def test_dataset_datetime_normalization(
-        self, mock_dataset_non_normalized_times: Path
-    ) -> None:
-        """Test that datetime normalization is applied to all dates."""
+    def test_variable_selection_all(self, mock_dataset: Path) -> None:
+        """Test selecting all variables from a multi-variable dataset."""
         dataset = ZebraDataset(
-            name="test_normalized",
-            input_files=[mock_dataset_non_normalized_times],
+            name="mock_dataset_multi",
+            input_files=[mock_dataset],
+            variables=["ice_conc", "ice_thickness", "temperature"],
         )
+        # Should have 3 channels
+        assert dataset.space.channels == 3
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (3, 2, 2)
 
-        # All dates should be normalized to 00:00:00
-        for date in dataset.dates:
-            dt: datetime = date.astype(datetime)
-            assert dt.hour == 0
-            assert dt.minute == 0
-            assert dt.second == 0
-            assert dt.microsecond == 0
+    def test_variable_selection_multiple(self, mock_dataset: Path) -> None:
+        """Test selecting multiple variables from a multi-variable dataset."""
+        dataset = ZebraDataset(
+            name="mock_dataset_multi",
+            input_files=[mock_dataset],
+            variables=["ice_conc", "temperature"],
+        )
+        # Should have 2 channels
+        assert dataset.space.channels == 2
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (2, 2, 2)
 
-        # Check specific normalized dates
-        expected_dates = [
-            np.datetime64("2020-01-01"),
-            np.datetime64("2020-01-02"),
-            np.datetime64("2020-01-03"),
-            np.datetime64("2020-01-04"),
-            np.datetime64("2020-01-05"),
-        ]
-        assert dataset.dates == expected_dates
+    def test_variable_selection_none(self, mock_dataset: Path) -> None:
+        """Test that not specifying variables loads all variables."""
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+        )
+        # Should have all 3 channels (ice_conc, ice_thickness and temperature)
+        assert dataset.space.channels == 3
+
+    def test_variable_selection_single(self, mock_dataset: Path) -> None:
+        """Test selecting a single variable from a multi-variable dataset."""
+        dataset = ZebraDataset(
+            name="mock_dataset",
+            input_files=[mock_dataset],
+            variables=["ice_conc"],
+        )
+        # Should have only 1 channel
+        assert dataset.space.channels == 1
+        # Check data shape
+        data_array = dataset[0]
+        assert data_array.shape == (1, 2, 2)
+        assert dataset.start_date == self.dates_np[0]
+        assert dataset.end_date == self.dates_np[-1]

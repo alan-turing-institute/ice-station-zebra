@@ -120,7 +120,29 @@ def mock_data() -> dict[str, dict[str, Any]]:
                     [[0.2, 0.7], [0.1, 0.3]],
                     [[0.1, 0.6], [0.0, 0.4]],
                 ],
-            }
+            },
+            "ice_thickness": {
+                "dims": ("time", "lat", "lon"),
+                "attrs": {},
+                "data": [
+                    [[1.5, 1.0], [1.6, 0.0]],
+                    [[1.5, 0.9], [1.6, 0.1]],
+                    [[1.5, 0.9], [1.6, 0.1]],
+                    [[1.5, 0.9], [1.6, 0.2]],
+                    [[1.5, 0.8], [1.6, 0.2]],
+                ],
+            },
+            "temperature": {
+                "dims": ("time", "lat", "lon"),
+                "attrs": {},
+                "data": [
+                    [[273.0, 274.0], [275.0, 276.0]],
+                    [[273.5, 274.5], [275.5, 276.5]],
+                    [[274.0, 275.0], [276.0, 277.0]],
+                    [[274.5, 275.5], [276.5, 277.5]],
+                    [[275.0, 276.0], [277.0, 278.0]],
+                ],
+            },
         },
     }
 
@@ -164,6 +186,22 @@ def mock_data_missing_dates() -> dict[str, dict[str, Any]]:
             }
         },
     }
+
+
+@pytest.fixture(scope="session")
+def mock_data_non_normalized_times(
+    mock_data: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Fixture to create a mock dataset for testing."""
+    output = dict(**mock_data)
+    output["coords"]["time"]["data"] = [
+        datetime.datetime(2020, 1, 1, 3, 47, 42),
+        datetime.datetime(2020, 1, 2, 3, 47, 42),
+        datetime.datetime(2020, 1, 3, 3, 47, 42),
+        datetime.datetime(2020, 1, 4, 3, 47, 42),
+        datetime.datetime(2020, 1, 5, 3, 47, 42),
+    ]
+    return output
 
 
 @pytest.fixture(scope="session")
@@ -226,6 +264,45 @@ def mock_dataset_missing_dates(
         }
     )
     zarr_path = tmpdir_factory.mktemp("data").join("mock_dataset_missing_dates.zarr")
+    Create().run(
+        AnemoiCreateArgs(
+            path=str(zarr_path),
+            config=config,
+            overwrite=True,
+        )
+    )
+    return Path(str(zarr_path))
+
+
+@pytest.fixture(scope="session")
+def mock_dataset_non_normalized_times(
+    tmpdir_factory: pytest.TempdirFactory,
+    mock_data_non_normalized_times: dict[str, dict[str, Any]],
+) -> Path:
+    """Fixture to create a mock file with non-normalized times for testing."""
+    # Use the mock data to create a NetCDF file
+    netcdf_path = tmpdir_factory.mktemp("data").join(
+        "mock_dataset_non_normalized_times.nc"
+    )
+    xr.Dataset.from_dict(mock_data_non_normalized_times).to_netcdf(netcdf_path)
+    # Create an Anemoi dataset from the NetCDF file
+    config = DictConfig(
+        {
+            "dates": {
+                "start": "2020-01-01T03:47:42",
+                "end": "2020-01-05T23:00:00",
+                "frequency": "24h",
+            },
+            "input": {
+                "netcdf": {
+                    "path": str(netcdf_path),
+                }
+            },
+        }
+    )
+    zarr_path = tmpdir_factory.mktemp("data").join(
+        "mock_dataset_non_normalized_times.zarr"
+    )
     Create().run(
         AnemoiCreateArgs(
             path=str(zarr_path),

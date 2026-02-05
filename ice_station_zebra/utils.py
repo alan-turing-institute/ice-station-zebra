@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+import numpy as np
 import torch
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
@@ -43,3 +44,16 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
         if isinstance(logger, WandbLogger):
             return logger
     return None
+
+
+def normalise_date(np_datetime: np.datetime64) -> np.datetime64:
+    """Normalise a datetime to midnight."""
+    dt: datetime = np_datetime.astype(datetime)
+    return np.datetime64(dt.date())
+
+
+def to_list(value: str | list[str]) -> list[str]:
+    """Convert a string or list of strings to a list of strings."""
+    if isinstance(value, str):
+        return [value]
+    return value

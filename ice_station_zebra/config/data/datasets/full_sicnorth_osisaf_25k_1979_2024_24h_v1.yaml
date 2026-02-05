@@ -1,6 +1,6 @@
 full-sicnorth-osisaf-25k-1979-2024-24h-v1:
   name: full-sicnorth-osisaf-25k-1979-2024-24h-v1
-  group_as: osisaf
+  group_as: sic-icenet
   description: OSISAF sea ice concentration for northern hemisphere
   attribution: EUMETSAT
   licence: CC-BY-4.0

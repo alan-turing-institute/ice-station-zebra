@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.cli import hydra_adaptor
 
-from .zebra_data_processor_factory import ZebraDataProcessorFactory
+from .data_downloader_factory import DataDownloaderFactory
 
 # Create the typer app
 datasets_cli = typer.Typer(help="Manage datasets")
@@ -24,20 +24,20 @@ def create(
     ] = False,
 ) -> None:
     """Create all datasets."""
-    factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.create(overwrite=overwrite)
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.create(overwrite=overwrite)
 
 
 @datasets_cli.command("inspect")
 @hydra_adaptor
 def inspect(config: DictConfig) -> None:
     """Inspect all datasets."""
-    factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.inspect()
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.inspect()
 
 
 @datasets_cli.command("init")
@@ -50,10 +50,10 @@ def init(
     ] = False,
 ) -> None:
     """Create all datasets."""
-    factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.init(overwrite=overwrite)
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.init(overwrite=overwrite)
 
 
 @datasets_cli.command("load")
@@ -63,10 +63,10 @@ def load(
     parts: Annotated[str, typer.Option(help="The part to process, specified as 'i/n'")],
 ) -> None:
     """Load dataset in parts."""
-    factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.load(parts=parts)
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.load(parts=parts)
 
 
 @datasets_cli.command("load_in_parts")
@@ -95,13 +95,13 @@ def load_in_parts(
     ] = False,
 ) -> None:
     """Load all parts for all datasets in parts, recording progress so runs can be resumed."""
-    factory = ZebraDataProcessorFactory(config)
-    for ds in factory.datasets:
-        if dataset and ds.name != dataset:
-            logger.info("Not loading %s.", ds.name)
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        if dataset and downloader.name != dataset:
+            logger.info("Not loading %s.", downloader.name)
             continue
-        logger.info("Working on %s.", ds.name)
-        ds.load_in_parts(
+        logger.info("Working on %s.", downloader.name)
+        downloader.load_in_parts(
             continue_on_error=continue_on_error,
             force_reset=force_reset,
             total_parts=total_parts,
@@ -115,10 +115,10 @@ def finalise(
     config: DictConfig,
 ) -> None:
     """Finalise loaded dataset."""
-    factory = ZebraDataProcessorFactory(config)
-    for dataset in factory.datasets:
-        logger.info("Working on %s.", dataset.name)
-        dataset.finalise()
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.finalise()
 
 
 if __name__ == "__main__":

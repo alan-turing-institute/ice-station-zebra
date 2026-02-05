@@ -45,7 +45,7 @@ class ZebraDataset(Dataset):
         idx2anemoi = {}
         for idx_ds, dataset in enumerate(self.datasets):
             for idx_date, date in enumerate(dataset.dates):
-                idx_global = self._date2idx.get(date, None)
+                idx_global = self._date2idx.get(normalise_date(date), None)
                 if idx_global is not None:
                     idx2anemoi[idx_global] = (idx_ds, idx_date)
         return idx2anemoi

@@ -8,7 +8,7 @@ from ice_station_zebra.cli.main import app
 
 class ZebraCliRunner(CliRunner):
     def __init__(self) -> None:
-        """A custom CLI runner for Zebra tests."""
+        """A custom CLI runner for IceNetMP tests."""
         super().__init__()
         self.colorstrip = re.compile(r"\x1b\[[0-9;]*m")
 

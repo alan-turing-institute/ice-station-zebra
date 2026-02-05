@@ -17,7 +17,7 @@ from ice_station_zebra.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
 class ZebraModel(LightningModule, ABC):
-    """A base class for all models used in the Ice Station Zebra project."""
+    """A base class for all models used in the IceNetMP project."""
 
     def __init__(  # noqa: PLR0913
         self,

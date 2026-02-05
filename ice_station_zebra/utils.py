@@ -46,30 +46,15 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
     return None
 
 
-def parse_np_datetime(dt: np.datetime64) -> datetime:
-    """Convert numpy-like datetime to aware datetime in UTC.
-
-    Accepts objects such as ``np.datetime64``, plain ``datetime`` or their string
-    representations. Supports values with and without microseconds.
-    """
-    if isinstance(dt, datetime):
-        return dt.astimezone(UTC)
-
-    date_str = str(dt)
-    for fmt in ("%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return datetime.strptime(date_str, fmt).astimezone(UTC)
-        except ValueError:
-            continue
-
-    msg = f"Cannot parse datetime value {dt!r}"
-    raise ValueError(msg)
-
-
 def normalise_date(np_datetime: np.datetime64) -> np.datetime64:
     """Normalise a datetime to midnight."""
-    dt: datetime = np_datetime.astype(datetime)
+    dt: datetime = np_datetime.astype("datetime64[ms]").astype(datetime)
     return np.datetime64(dt.date())
+
+
+def parse_np_datetime(dt: np.datetime64) -> datetime:
+    """Convert numpy datetime64 to aware datetime in UTC."""
+    return dt.astype("datetime64[ms]").astype(datetime).astimezone(UTC)
 
 
 def to_list(value: str | list[str]) -> list[str]:

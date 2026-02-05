@@ -6,7 +6,7 @@ from typing import Literal
 import numpy as np
 from omegaconf import DictConfig
 
-from ice_station_zebra.data_loaders import ZebraDataset
+from ice_station_zebra.data_loaders import SingleDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ArrayHW, ArrayTHW, ModelTestOutput, PlotSpec
 
@@ -35,7 +35,7 @@ class Plotter:
         self.plot_spec.metadata_subtitle = format_metadata_subtitle(metadata)
 
     def log_static_inputs(
-        self, inputs: list[ZebraDataset], dates: list[datetime], image_loggers: list
+        self, inputs: list[SingleDataset], dates: list[datetime], image_loggers: list
     ) -> None:
         """Extract and log raw input plots."""
         try:
@@ -95,7 +95,7 @@ class Plotter:
             logger.warning("Static plotting failed: %s", exc)
 
     def log_video_inputs(
-        self, inputs: list[ZebraDataset], dates: list[datetime], video_loggers: list
+        self, inputs: list[SingleDataset], dates: list[datetime], video_loggers: list
     ) -> None:
         """Extract and log raw input plots."""
         for input_ds in inputs:

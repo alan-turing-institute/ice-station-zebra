@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from ice_station_zebra.types import ArrayTCHW, DataloaderArgs, DataSpace
 
 from .combined_dataset import CombinedDataset
-from .zebra_dataset import ZebraDataset
+from .single_dataset import SingleDataset
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class ZebraDataModule(LightningDataModule):
     def input_spaces(self) -> list[DataSpace]:
         """Return the data space for each input."""
         return [
-            ZebraDataset(name, paths).space
+            SingleDataset(name, paths).space
             for name, paths in self.dataset_groups.items()
         ]
 
@@ -94,7 +94,7 @@ class ZebraDataModule(LightningDataModule):
     def output_space(self) -> DataSpace:
         """Return the data space of the desired output."""
         return next(
-            ZebraDataset(name, paths, variables=self.target_variables).space
+            SingleDataset(name, paths, variables=self.target_variables).space
             for name, paths in self.dataset_groups.items()
             if name == self.target_group_name
         )
@@ -111,7 +111,7 @@ class ZebraDataModule(LightningDataModule):
         """Construct predict dataloader."""
         dataset = CombinedDataset(
             [
-                ZebraDataset(
+                SingleDataset(
                     name,
                     paths,
                     date_ranges=self.predict_periods,
@@ -137,7 +137,7 @@ class ZebraDataModule(LightningDataModule):
         """Construct test dataloader."""
         dataset = CombinedDataset(
             [
-                ZebraDataset(
+                SingleDataset(
                     name,
                     paths,
                     date_ranges=self.test_periods,
@@ -163,7 +163,7 @@ class ZebraDataModule(LightningDataModule):
         """Construct train dataloader."""
         dataset = CombinedDataset(
             [
-                ZebraDataset(
+                SingleDataset(
                     name,
                     paths,
                     date_ranges=self.train_periods,
@@ -189,7 +189,7 @@ class ZebraDataModule(LightningDataModule):
         """Construct validation dataloader."""
         dataset = CombinedDataset(
             [
-                ZebraDataset(
+                SingleDataset(
                     name,
                     paths,
                     date_ranges=self.val_periods,

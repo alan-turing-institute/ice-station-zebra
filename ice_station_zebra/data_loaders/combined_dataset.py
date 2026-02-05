@@ -6,20 +6,20 @@ from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayTCHW
 
-from .zebra_dataset import ZebraDataset
+from .single_dataset import SingleDataset
 
 
 class CombinedDataset(Dataset):
     def __init__(
         self,
-        datasets: Sequence[ZebraDataset],
+        datasets: Sequence[SingleDataset],
         target_group_name: str,
         target_variables: Sequence[str],
         *,
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
     ) -> None:
-        """Initialise a combined dataset from a sequence of ZebraDatasets.
+        """Initialise a combined dataset from a sequence of SingleDatasets.
 
         One of the datasets must be the target and all must have the same frequency. The
         number of forecast and history steps can be set, which will determine the shape

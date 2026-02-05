@@ -12,7 +12,7 @@ from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
 from ice_station_zebra.utils import normalise_date
 
 
-class ZebraDataset(Dataset):
+class SingleDataset(Dataset):
     def __init__(
         self,
         name: str,
@@ -160,8 +160,8 @@ class ZebraDataset(Dataset):
             [self[self.to_index(target_date)] for target_date in dates], axis=0
         )
 
-    def subset(self, variables: Sequence[str]) -> "ZebraDataset":
-        return ZebraDataset(
+    def subset(self, variables: Sequence[str]) -> "SingleDataset":
+        return SingleDataset(
             name=self.name,
             input_files=self._input_files,
             date_ranges=self._date_ranges,

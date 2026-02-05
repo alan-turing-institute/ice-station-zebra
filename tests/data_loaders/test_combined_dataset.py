@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from ice_station_zebra.data_loaders.combined_dataset import CombinedDataset
-from ice_station_zebra.data_loaders.zebra_dataset import ZebraDataset
+from ice_station_zebra.data_loaders.single_dataset import SingleDataset
 
 
 class TestCombinedDataset:
@@ -14,12 +14,12 @@ class TestCombinedDataset:
     def test_no_valid_dates_non_overlapping_ranges(self, mock_dataset: Path) -> None:
         """Test that CombinedDataset raises ValueError when datasets have non-overlapping date ranges."""
         # Create and combine two datasets with non-overlapping date ranges
-        dataset1 = ZebraDataset(
+        dataset1 = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
         )
-        dataset2 = ZebraDataset(
+        dataset2 = SingleDataset(
             name="dataset2",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[3], "end": self.dates_str[4]}],
@@ -40,7 +40,7 @@ class TestCombinedDataset:
         self, mock_dataset: Path
     ) -> None:
         """Test that CombinedDataset raises ValueError when history steps exceed available dates."""
-        dataset = ZebraDataset(
+        dataset = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
@@ -63,7 +63,7 @@ class TestCombinedDataset:
         self, mock_dataset: Path
     ) -> None:
         """Test that CombinedDataset raises ValueError when forecast steps exceed available dates."""
-        dataset = ZebraDataset(
+        dataset = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[1]}],
@@ -84,12 +84,12 @@ class TestCombinedDataset:
 
     def test_no_valid_dates_incompatible_times(self, mock_dataset: Path) -> None:
         """Test that CombinedDataset raises ValueError when datasets have incompatible times."""
-        dataset = ZebraDataset(
+        dataset = SingleDataset(
             name="dataset",
             input_files=[mock_dataset],
         )
         # Apply an offset of 12h to the dates in a second dataset
-        dataset_offset = ZebraDataset(
+        dataset_offset = SingleDataset(
             name="dataset_offset",
             input_files=[mock_dataset],
         )
@@ -113,11 +113,11 @@ class TestCombinedDataset:
     def test_valid_dates(self, mock_dataset: Path) -> None:
         """Test that CombinedDataset works correctly with valid overlapping dates."""
         # Create and combine two datasets with overlapping date ranges
-        dataset1 = ZebraDataset(
+        dataset1 = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
         )
-        dataset2 = ZebraDataset(
+        dataset2 = SingleDataset(
             name="dataset2",
             input_files=[mock_dataset],
         )
@@ -136,12 +136,12 @@ class TestCombinedDataset:
 
     def test_start_and_end_dates(self, mock_dataset: Path) -> None:
         """Test that start_date and end_date are correctly calculated from available dates."""
-        dataset1 = ZebraDataset(
+        dataset1 = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[0], "end": self.dates_str[-2]}],
         )
-        dataset2 = ZebraDataset(
+        dataset2 = SingleDataset(
             name="dataset2",
             input_files=[mock_dataset],
             date_ranges=[{"start": self.dates_str[1], "end": self.dates_str[-1]}],
@@ -159,7 +159,7 @@ class TestCombinedDataset:
 
     def test_lazy_loading(self, mock_dataset: Path) -> None:
         """Test that dates are lazy-loaded and cached."""
-        dataset = ZebraDataset(
+        dataset = SingleDataset(
             name="dataset1",
             input_files=[mock_dataset],
         )

@@ -24,7 +24,8 @@ class PlottingCallback(Callback):
     def __init__(
         self,
         *,
-        frequency: int = 10,
+        frequency: int = 5,
+        make_input_plots: bool = True,
         make_static_plots: bool = True,
         make_video_plots: bool = True,
         plot_spec: PlotSpec | None = None,
@@ -34,6 +35,7 @@ class PlottingCallback(Callback):
 
         Args:
             frequency: Create a new plot every `frequency` batches.
+            make_input_plots: Whether to plot the raw inputs.
             make_static_plots: Whether to create static plots.
             make_video_plots: Whether to create video plots.
             video_fps: Frames per second for video plots.
@@ -45,6 +47,7 @@ class PlottingCallback(Callback):
         """
         super().__init__()
         self.frequency = int(max(1, frequency))
+        self.make_input_plots = make_input_plots
         self.make_static_plots = make_static_plots
         self.make_video_plots = make_video_plots
         self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
@@ -53,7 +56,6 @@ class PlottingCallback(Callback):
         """Set metadata for the plotter."""
         self.plotter.set_metadata(config, model_name)
 
-    # --- Lightning Hook ---
     def on_test_batch_end(
         self,
         trainer: Trainer,
@@ -63,7 +65,7 @@ class PlottingCallback(Callback):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        """Called when the test batch ends."""
+        """Called at the end of each test batch."""
         # Only run plotting every `frequency` batches
         if batch_idx % self.frequency:
             return
@@ -93,10 +95,19 @@ class PlottingCallback(Callback):
             for tt in range(n_timesteps)
         ]
 
+        # Set hemisphere for plotting based on dataset
         self.plotter.set_hemisphere(dataset.hemisphere)
 
+        # Get loggers that support image and video logging
+        image_loggers = [ll for ll in trainer.loggers if hasattr(ll, "log_image")]
+        video_loggers = [ll for ll in trainer.loggers if hasattr(ll, "log_video")]
+
         if self.make_static_plots:
-            self.plotter.log_static_plots(outputs, dates, trainer.loggers)
+            self.plotter.log_static_outputs(outputs, dates, image_loggers)
+            if self.make_input_plots:
+                self.plotter.log_static_inputs(dataset.inputs, dates, image_loggers)
 
         if self.make_video_plots:
-            self.plotter.log_video_plots(outputs, dates, trainer.loggers)
+            self.plotter.log_video_outputs(outputs, dates, video_loggers)
+            if self.make_input_plots:
+                self.plotter.log_video_inputs(dataset.inputs, dates, image_loggers)

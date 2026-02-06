@@ -2,5 +2,4 @@ defaults:
   - callbacks:
     - metric_summary
     - plotting
-    - raw_inputs
   - _self_

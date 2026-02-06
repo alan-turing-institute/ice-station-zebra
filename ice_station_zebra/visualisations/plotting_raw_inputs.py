@@ -7,11 +7,9 @@ This module is intentionally lightweight and single-panel oriented while reusing
 layout and formatting helpers from the sea-ice plotting stack to keep appearances aligned.
 """
 
-from __future__ import annotations
-
 import logging
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,6 +17,7 @@ from matplotlib import animation
 from matplotlib.colors import TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
+from ice_station_zebra.types import PlotSpec
 from ice_station_zebra.visualisations.animation_helper import hold_anim, release_anim
 from ice_station_zebra.visualisations.layout import (
     build_single_panel_figure,
@@ -27,7 +26,6 @@ from ice_station_zebra.visualisations.layout import (
     set_suptitle_with_box,
 )
 from ice_station_zebra.visualisations.plotting_core import (
-    VariableStyle,
     colourmap_with_bad,
     create_normalisation,
     load_land_mask,
@@ -37,14 +35,12 @@ from ice_station_zebra.visualisations.plotting_core import (
 )
 
 if TYPE_CHECKING:
-    import io
-    from collections.abc import Sequence
-    from pathlib import Path
-
     from matplotlib.text import Text
-    from PIL.ImageFile import ImageFile
+import io
+from collections.abc import Sequence
+from pathlib import Path
 
-    from ice_station_zebra.types import PlotSpec
+from PIL.ImageFile import ImageFile
 
 logger = logging.getLogger(__name__)
 
@@ -70,33 +66,22 @@ def _format_title(
     return f"{variable}{units_s}{hemi}   Shown: {shown}"
 
 
-def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
+def plot_raw_inputs_for_timestep(  # noqa: C901, PLR0912, PLR0915
     *,
-    channel_arrays: list[np.ndarray],
-    channel_names: list[str],
+    channels: dict[str, np.ndarray],
     when: date | datetime,
     plot_spec_base: PlotSpec,
     land_mask: np.ndarray | None = None,
-    styles: dict[str, dict[str, Any]] | None = None,
     save_dir: Path | None = None,
-) -> list[tuple[str, ImageFile, Path | None]]:
+) -> dict[str, list[ImageFile]]:
     """Plot one image per input channel as a static map.
 
     Returns list of (name, PIL.ImageFile, saved_path|None).
     """
-    if len(channel_arrays) != len(channel_names):
-        msg = (
-            f"Channels count mismatch: arrays={len(channel_arrays)} "
-            f"names={len(channel_names)}"
-        )
-        raise InvalidArrayError(msg)
-
-    # Ensure we pick up styles either from the explicit argument or from the PlotSpec
-    if styles is None:
-        # some callers may embed variable_styles inside the plot_spec dataclass
-        styles = getattr(plot_spec_base, "variable_styles", None)
-
-    results: list[tuple[str, ImageFile, Path | None]] = []
+    channel_arrays = list(channels.values())
+    channel_names = list(channels.keys())
+    styles = plot_spec_base.per_variable_styles
+    results: dict[str, list[ImageFile]] = {}
     land_mask_cache: dict[tuple[int, int], np.ndarray | None] = {}
 
     from . import convert  # noqa: PLC0415  # local import to avoid circulars
@@ -137,17 +122,7 @@ def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
                 )
 
         # Prefer an explicit styles dict, otherwise fall back to the PlotSpec attribute if present
-        styles_effective = (
-            styles
-            if styles is not None
-            else getattr(plot_spec_base, "variable_styles", None)
-        )
-        logger.debug(
-            "plot_raw_inputs: incoming name=%r; using styles keys=%s",
-            name,
-            list(styles_effective.keys()) if styles_effective else None,
-        )
-        style = style_for_variable(name, styles_effective)
+        style = style_for_variable(name, styles)
         logger.debug(
             "plot_raw_inputs: resolved style for %r => cmap=%r, vmin=%r, vmax=%r, origin=%r",
             name,
@@ -224,7 +199,7 @@ def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
 
         # Save to disk if requested (colons in variable names replaced)
         file_base = name.replace(":", "__")
-        saved_path = save_figure(fig, save_dir, file_base)
+        save_figure(fig, save_dir, file_base)
 
         # Convert to PIL
         try:
@@ -232,22 +207,21 @@ def plot_raw_inputs_for_timestep(  # noqa: PLR0913, C901, PLR0912, PLR0915
         finally:
             plt.close(fig)
 
-        results.append((name, pil_img, saved_path))
+        # Add image to results dict
+        if name not in results:
+            results[name] = []
+        results[name].append(pil_img)
 
     return results
 
 
-def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
+def video_raw_input_for_variable(  # noqa: PLR0915
     *,
     variable_name: str,
     data_stream: np.ndarray,
     dates: Sequence[date | datetime],
-    plot_spec_base: PlotSpec,
+    plot_spec: PlotSpec,
     land_mask: np.ndarray | None = None,
-    style: VariableStyle | None = None,
-    styles: dict[str, dict[str, Any]] | None = None,
-    fps: int = 2,
-    video_format: Literal["mp4", "gif"] = "gif",
     save_path: Path | None = None,
 ) -> io.BytesIO:
     """Create animation showing temporal evolution of a single variable.
@@ -259,12 +233,10 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
         variable_name: Name of the variable (e.g., "era5:2t", "osisaf-south:ice_conc").
         data_stream: 3D array of data over time [T, H, W].
         dates: Sequence of dates corresponding to each timestep (length must match T).
-        plot_spec_base: Base plotting specification (colourmap, hemisphere, etc.).
+        plot_spec: Base plotting specification (colourmap, hemisphere, etc.).
         land_mask: Optional 2D boolean array marking land areas [H, W].
         style: Optional pre-computed VariableStyle for this variable.
         styles: Optional dictionary of style configurations for matching.
-        fps: Frames per second for the output video.
-        video_format: Output format, either "mp4" or "gif".
         save_path: Optional path to save the video file to disk.
 
     Returns:
@@ -301,8 +273,7 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
             data_stream = np.where(land_mask, np.nan, data_stream)
 
     # Get styling for this variable
-    if style is None:
-        style = style_for_variable(variable_name, styles)
+    style = style_for_variable(variable_name, plot_spec.per_variable_styles)
 
     # Create stable normalisation across all frames
     # Use global min/max to prevent colour scale "breathing"
@@ -325,11 +296,11 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
     fig, ax, cax = build_single_panel_figure(
         height=height,
         width=width,
-        colourbar_location=plot_spec_base.colourbar_location,
+        colourbar_location=plot_spec.colourbar_location,
     )
 
     # Render initial frame
-    cmap_name = style.cmap or plot_spec_base.colourmap
+    cmap_name = style.cmap or plot_spec.colourmap
     cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
     origin = style.origin or "lower"
     image = ax.imshow(
@@ -337,7 +308,7 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
     )
 
     # Create colourbar (stable across all frames)
-    orientation = plot_spec_base.colourbar_location
+    orientation = plot_spec.colourbar_location
     cbar = fig.colorbar(image, ax=ax, cax=cax, orientation=orientation)
     is_vertical = orientation == "vertical"
 
@@ -373,9 +344,7 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
     try:
         title_text = set_suptitle_with_box(
             fig,
-            _format_title(
-                variable_name, plot_spec_base.hemisphere, dates[0], style.units
-            ),
+            _format_title(variable_name, plot_spec.hemisphere, dates[0], style.units),
         )
     except (ValueError, AttributeError, RuntimeError) as err:
         logger.debug("Failed to draw title: %s; continuing without title.", err)
@@ -390,7 +359,7 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
         if title_text is not None:
             title_text.set_text(
                 _format_title(
-                    variable_name, plot_spec_base.hemisphere, dates[tt], style.units
+                    variable_name, plot_spec.hemisphere, dates[tt], style.units
                 )
             )
 
@@ -401,7 +370,7 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
         fig,
         animate,
         frames=n_timesteps,
-        interval=1000 // fps,
+        interval=1000 // plot_spec.video_fps,
         blit=False,
         repeat=True,
     )
@@ -411,7 +380,9 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
 
     try:
         # Save to BytesIO buffer
-        video_buffer = convert.save_animation(anim, fps=fps, video_format=video_format)
+        video_buffer = convert.save_animation(
+            anim, fps=plot_spec.video_fps, video_format=plot_spec.video_format
+        )
 
         # Optionally save to disk
         if save_path is not None:
@@ -429,18 +400,14 @@ def video_raw_input_for_variable(  # noqa: PLR0913, C901, PLR0915
         plt.close(fig)
 
 
-def video_raw_inputs_for_timesteps(  # noqa: PLR0913
+def video_raw_inputs_for_timesteps(
     *,
-    channel_arrays_stream: list[np.ndarray],
-    channel_names: list[str],
+    channels: dict[str, np.ndarray],
     dates: Sequence[date | datetime],
-    plot_spec_base: PlotSpec,
+    plot_spec: PlotSpec,
     land_mask: np.ndarray | None = None,
-    styles: dict[str, dict[str, Any]] | None = None,
-    fps: int = 2,
-    video_format: Literal["mp4", "gif"] = "gif",
     save_dir: Path | None = None,
-) -> list[tuple[str, io.BytesIO, Path | None]]:
+) -> dict[str, io.BytesIO]:  # list[tuple[str, io.BytesIO, Path | None]]:
     """Create animations for multiple input variables over time.
 
     This is a convenience wrapper around `video_raw_input_for_variable()` that
@@ -448,14 +415,10 @@ def video_raw_inputs_for_timesteps(  # noqa: PLR0913
     land masking to all variables.
 
     Args:
-        channel_arrays_stream: List of 3D arrays, one per variable [T, H, W].
-        channel_names: List of variable names corresponding to each array.
+        channels: Dictionary of variable name to THW 3D array of values.
         dates: Sequence of dates for each timestep (length must match T).
-        plot_spec_base: Base plotting specification.
+        plot_spec: Plotting specification.
         land_mask: Optional 2D land mask to apply to all variables.
-        styles: Optional dictionary of style configurations.
-        fps: Frames per second for videos.
-        video_format: Output format ("mp4" or "gif").
         save_dir: Optional directory to save videos to disk.
 
     Returns:
@@ -465,14 +428,10 @@ def video_raw_inputs_for_timesteps(  # noqa: PLR0913
         InvalidArrayError: If arrays/names count mismatch or invalid shapes.
 
     """
-    if len(channel_arrays_stream) != len(channel_names):
-        msg = (
-            f"Channel count mismatch: {len(channel_arrays_stream)} arrays, "
-            f"{len(channel_names)} names"
-        )
-        raise InvalidArrayError(msg)
+    channel_names = list(channels.keys())
+    channel_arrays_stream = list(channels.values())
 
-    results: list[tuple[str, io.BytesIO, Path | None]] = []
+    results: dict[str, io.BytesIO] = {}
 
     for data_stream, var_name in zip(channel_arrays_stream, channel_names, strict=True):
         logger.debug("Creating animation for variable: %s", var_name)
@@ -482,7 +441,7 @@ def video_raw_inputs_for_timesteps(  # noqa: PLR0913
         if save_dir is not None:
             # Sanitise variable name for filename
             file_base = var_name.replace(":", "__")
-            suffix = ".gif" if video_format == "gif" else ".mp4"
+            suffix = ".mp4" if plot_spec.video_format == "mp4" else ".gif"
             save_path = save_dir / f"{safe_filename(file_base)}{suffix}"
 
         try:
@@ -491,15 +450,12 @@ def video_raw_inputs_for_timesteps(  # noqa: PLR0913
                 variable_name=var_name,
                 data_stream=data_stream,
                 dates=dates,
-                plot_spec_base=plot_spec_base,
+                plot_spec=plot_spec,
                 land_mask=land_mask,
-                styles=styles,
-                fps=fps,
-                video_format=video_format,
                 save_path=save_path,
             )
 
-            results.append((var_name, video_buffer, save_path))
+            results[var_name] = video_buffer
 
         except (InvalidArrayError, ValueError, MemoryError, OSError):
             logger.exception(

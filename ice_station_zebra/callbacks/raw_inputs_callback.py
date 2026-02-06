@@ -7,7 +7,7 @@ mpl.use("Agg")
 
 import gc
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -25,7 +25,6 @@ from ice_station_zebra.visualisations.plotting_core import (
 )
 from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.plotting_raw_inputs import (
-    plot_raw_inputs_for_timestep,
     video_raw_inputs_for_timesteps,
 )
 
@@ -239,129 +238,6 @@ class RawInputsCallback(Callback):
                 batch_idx,
                 self.frequency,
             )
-
-    def _extract_channel_data(
-        self,
-        batch: Mapping[str, Any],
-        dataset: CombinedDataset,
-    ) -> tuple[list[np.ndarray], list[str]]:
-        """Extract channel data from batch without plotting.
-
-        Returns:
-            Tuple of (channel_arrays, channel_names).
-
-        """
-        # Collect all input channel arrays
-        channel_arrays = []
-        for ds in dataset.inputs:
-            if ds.name not in batch:
-                logger.warning("Dataset %s not found in batch, skipping", ds.name)
-                continue
-
-            input_data = batch[ds.name]  # Shape: [B, T, C, H, W]
-
-            # Take first batch and specified timestep
-            if input_data.ndim != EXPECTED_INPUT_NDIM:
-                logger.warning(
-                    "Expected 5D input data [B,T,C,H,W], got shape %s for %s",
-                    input_data.shape,
-                    ds.name,
-                )
-                continue
-
-            timestep_data = input_data[0, self.timestep_index]  # Shape: [C, H, W]
-
-            # Add each channel as a 2D array
-            for c in range(timestep_data.shape[0]):
-                channel_arr = timestep_data[c].detach().cpu().numpy()
-                channel_arrays.append(channel_arr)
-
-        if not channel_arrays:
-            logger.warning("No input channels found in batch")
-            return [], []
-
-        # Get all input variable names across all input datasets.
-        channel_names = [
-            f"{ds.name}:{var_name}"
-            for ds in dataset.inputs
-            for var_name in ds.variable_names
-        ]
-
-        if len(channel_arrays) != len(channel_names):
-            logger.warning(
-                "Mismatch: %d channel arrays but %d channel names. Using generic names.",
-                len(channel_arrays),
-                len(channel_names),
-            )
-            channel_names = [f"channel_{i}" for i in range(len(channel_arrays))]
-
-        return channel_arrays, channel_names
-
-    def log_raw_inputs(
-        self,
-        batch: Mapping[str, Any],
-        dataset: CombinedDataset,
-        date: Any,  # noqa: ANN401
-        lightning_loggers: list[LightningLogger],
-        _batch_idx: int,
-    ) -> None:
-        """Extract and log raw input plots."""
-        # Early return if nothing will be saved
-        if not self.log_to_wandb and self.save_dir is None:
-            logger.debug(
-                "Skipping raw inputs plotting: log_to_wandb=False and save_dir=None"
-            )
-            return
-
-        try:
-            # Extract data
-            channel_arrays, channel_names = self._extract_channel_data(batch, dataset)
-
-            if not channel_arrays:
-                logger.warning(
-                    "No input channels found in batch, skipping raw inputs plotting"
-                )
-                return
-
-            # Plot the raw inputs
-            results = plot_raw_inputs_for_timestep(
-                channel_arrays=channel_arrays,
-                channel_names=channel_names,
-                when=date,
-                plot_spec_base=self.plot_spec,
-                land_mask=self._land_mask_array,
-                styles=self.variable_styles,
-                save_dir=self.save_dir,
-            )
-
-            # Log to WandB if enabled
-            if self.log_to_wandb:
-                for lightning_logger in lightning_loggers:
-                    if hasattr(lightning_logger, "log_image"):
-                        # Group images by their name for logging
-                        for var_name, pil_image, _saved_path in results:
-                            safe_name = safe_filename(var_name.replace(":", "__"))
-                            lightning_logger.log_image(
-                                key=f"raw_inputs/{safe_name}",
-                                images=[pil_image],
-                            )
-                    else:
-                        logger.debug(
-                            "Logger %s does not support images.",
-                            lightning_logger.name
-                            if lightning_logger.name
-                            else "unknown",
-                        )
-
-            logger.debug(
-                "Plotted %d raw input variables (saved to disk: %s, logged to WandB: %s)",
-                len(results),
-                self.save_dir is not None,
-                self.log_to_wandb,
-            )
-
-        except Exception:
-            logger.exception("Failed to log raw inputs")
 
     def _accumulate_temporal_data(
         self,

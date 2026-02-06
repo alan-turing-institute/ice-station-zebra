@@ -139,7 +139,7 @@ class ZebraDataset(Dataset):
         if len(variable_names) != 1:
             msg = f"Found {len(variable_names)} different sets of variables across {len(self.datasets)} datasets."
             raise ValueError(msg)
-        return list(variable_names.pop())
+        return self.datasets[0].variables
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""

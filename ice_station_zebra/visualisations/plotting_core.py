@@ -473,32 +473,6 @@ def validate_2d_pair(
     return ground_truth.shape  # (H, W)
 
 
-def validate_3d_streams(
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
-) -> tuple[int, int, int]:
-    """Validate that both arrays are 3D [T,H,W] and have the same shape.
-
-    Args:
-        ground_truth_stream: The ground truth array. [T,H,W]
-        prediction_stream: The prediction array. [T,H,W]
-
-    Returns:
-        The shape of the arrays. (T,H,W)
-
-    Raises:
-        InvalidArrayError: If the arrays are not 2D or have different shapes.
-
-    """
-    if not (ground_truth_stream.ndim == prediction_stream.ndim == 3):  # noqa: PLR2004
-        msg = f"Expected 3D [T,H,W]; got ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
-        raise InvalidArrayError(msg)
-    if ground_truth_stream.shape != prediction_stream.shape:
-        msg = f"Shape mismatch: ground truth={ground_truth_stream.shape}, prediction={prediction_stream.shape}"
-        raise InvalidArrayError(msg)
-    return ground_truth_stream.shape  # type: ignore[return-value]
-
-
 def compute_display_ranges(
     ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:

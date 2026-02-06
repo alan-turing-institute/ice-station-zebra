@@ -35,7 +35,6 @@ from ice_station_zebra.visualisations.plotting_core import (
     prepare_difference_stream,
     safe_filename,
     style_for_variable,
-    validate_3d_streams,
 )
 
 from .convert import save_animation
@@ -109,8 +108,10 @@ def plot_video_prediction(
 
     """
     # Check the shapes of the arrays
-    shape = validate_3d_streams(ground_truth_stream, prediction_stream)
-    n_timesteps, height, width = shape
+    if ground_truth_stream.shape != prediction_stream.shape:
+        msg = f"Prediction ({prediction_stream.shape}) has a different shape to ground truth ({ground_truth_stream.shape})."
+        raise InvalidArrayError(msg)
+    n_timesteps, height, width = ground_truth_stream.shape
     if len(dates) != n_timesteps:
         error_msg = (
             f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"

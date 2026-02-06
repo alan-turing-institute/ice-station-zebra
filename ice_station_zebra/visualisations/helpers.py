@@ -24,7 +24,6 @@ from .plotting_core import (
     levels_from_spec,
     load_land_mask,
     make_diff_colourmap,
-    validate_2d_pair,
 )
 from .range_check import compute_range_check_report
 
@@ -76,7 +75,10 @@ def _prepare_static_plot(
         Tuple of (height, width, land_mask, layout_config, warnings, contour levels).
 
     """
-    height, width = validate_2d_pair(ground_truth, prediction)
+    if ground_truth.shape != prediction.shape:
+        msg = f"Prediction ({prediction.shape}) has a different shape to ground truth ({ground_truth.shape})."
+        raise InvalidArrayError(msg)
+    height, width = ground_truth.shape
     land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
 
     (gt_min, gt_max), (_pred_min, _pred_max) = compute_display_ranges(

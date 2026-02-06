@@ -444,35 +444,6 @@ def prepare_difference_stream(
     raise ValueError(msg)
 
 
-# --- Validation ---
-
-
-def validate_2d_pair(
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
-) -> tuple[int, int]:
-    """Validate that both arrays are 2D [H,W] and have the same shape.
-
-    Args:
-        ground_truth: The ground truth array. [H,W]
-        prediction: The prediction array. [H,W]
-
-    Returns:
-        The shape of the arrays. (H, W)
-
-    Raises:
-        InvalidArrayError: If the arrays are not 2D or have different shapes.
-
-    """
-    if not (ground_truth.ndim == prediction.ndim == 2):  # noqa: PLR2004
-        msg = f"Expected 2D [H,W]; got ground truth={ground_truth.shape}, prediction={prediction.shape}"
-        raise InvalidArrayError(msg)
-    if ground_truth.shape != prediction.shape:
-        msg = f"Shape mismatch: ground truth={ground_truth.shape}, prediction={prediction.shape}"
-        raise InvalidArrayError(msg)
-    return ground_truth.shape  # (H, W)
-
-
 def compute_display_ranges(
     ground_truth: np.ndarray, prediction: np.ndarray, plot_spec: PlotSpec
 ) -> tuple[tuple[float, float], tuple[float, float]]:

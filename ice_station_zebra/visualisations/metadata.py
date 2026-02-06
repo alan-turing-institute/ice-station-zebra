@@ -6,13 +6,11 @@ and format them for display in plot titles.
 
 import contextlib
 import logging
-from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any, cast
 
 from omegaconf import DictConfig, OmegaConf
 
-from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import Metadata
 
 logger = logging.getLogger(__name__)
@@ -350,85 +348,6 @@ def build_metadata_subtitle(
     """
     metadata = build_metadata(config, model_name=model_name)
     return format_metadata_subtitle(metadata)
-
-
-def infer_hemisphere(dataset: CombinedDataset) -> str | None:  # noqa: C901, PLR0912
-    """Infer hemisphere from dataset name or config as a fallback.
-
-    Priority:
-    1) CombinedDataset.target.name containing "north"/"south"
-    2) Any input dataset name containing "north"/"south"
-    3) Dataset-level name or config strings containing the keywords
-
-    Args:
-        dataset: CombinedDataset instance to infer hemisphere from.
-
-    Returns:
-        "north" or "south" (lowercase) when detected, otherwise None.
-
-    """
-    candidate_names: list[str] = []
-
-    # 1) Target dataset name
-    target = getattr(dataset, "target", None)
-    target_name = getattr(target, "name", None)
-    if isinstance(target_name, str) and target_name:
-        candidate_names.append(target_name)
-
-    # 2) Top-level dataset name
-    ds_name = getattr(dataset, "name", None)
-    if isinstance(ds_name, str) and ds_name:
-        candidate_names.append(ds_name)
-
-    # 3) Inputs: may be a Sequence of objects, mappings or plain strings
-    inputs = getattr(dataset, "inputs", None)
-    if isinstance(inputs, Sequence) and not isinstance(inputs, (str, bytes)):
-        for item in inputs:
-            # If the item is a mapping-like object (dict), try key access
-            if isinstance(item, Mapping):
-                name = item.get("name") or item.get("dataset_name") or None
-            else:
-                # Otherwise try attribute access, then try if item itself is a string
-                name = (
-                    getattr(item, "name", None) if not isinstance(item, str) else item
-                )
-
-            if isinstance(name, str) and name:
-                candidate_names.append(name)
-
-    # 4) Generic config-like hints: look for a config attribute (mapping) and make a string of a few keys
-    config_like = getattr(dataset, "config", None) or getattr(
-        dataset, "dataset_config", None
-    )
-    if isinstance(config_like, Mapping):
-        # Check a few plausible keys
-        for key in ("name", "dataset", "dataset_name", "target"):
-            val = config_like.get(key)
-            if isinstance(val, str) and val:
-                candidate_names.append(val)
-        # As a last resort, make the mapping (small) into a string and use as a candidate
-        try:
-            maybe_str = str(config_like)
-            if maybe_str:
-                candidate_names.append(maybe_str)
-        except TypeError as exc:
-            logger.debug(
-                "Failed to extract config hint for hemisphere inference: %s",
-                exc,
-                exc_info=True,
-            )
-
-    # Normalise and search for hemisphere keywords.
-    for cand in candidate_names:
-        low = cand.lower()
-        if "north" in low:
-            logger.debug("Inferred hemisphere 'north' from dataset hint: %s", cand)
-            return "north"
-        if "south" in low:
-            logger.debug("Inferred hemisphere 'south' from dataset hint: %s", cand)
-            return "south"
-
-    return None
 
 
 # --- Internal helpers to reduce complexity/branching ---

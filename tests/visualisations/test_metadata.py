@@ -18,7 +18,6 @@ from ice_station_zebra.visualisations.metadata import (
     extract_variables_by_source,
     format_cadence_display,
     format_metadata_subtitle,
-    infer_hemisphere,
 )
 
 
@@ -222,65 +221,6 @@ class MockTarget:
     def __init__(self, name: str) -> None:
         """Initialise mock target with a name."""
         self.name = name
-
-
-def test_infer_hemisphere_from_target() -> None:
-    """Test hemisphere inference from target dataset name."""
-    dataset = MockDataset(target_name="osisaf-sicsouth")
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(target_name="osisaf-sicnorth")
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-    dataset = MockDataset(target_name="some-other-name")
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_top_level_name() -> None:
-    """Test hemisphere inference from top-level dataset name."""
-    dataset = MockDataset(name="combined-south")
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(name="combined-north")
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_inputs() -> None:
-    """Test hemisphere inference from input dataset names."""
-    # Inputs as dict-like mappings
-    dataset = MockDataset(
-        inputs=[
-            {"name": "input-south-dataset"},
-            {"dataset_name": "other-dataset"},
-        ]
-    )
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    # Inputs as objects with .name attribute
-    dataset = MockDataset(
-        inputs=[
-            MockTarget("input-north-dataset"),
-        ]
-    )
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_config() -> None:
-    """Test hemisphere inference from config dict."""
-    dataset = MockDataset(config={"name": "config-south-name"})
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(config={"dataset": "config-north-dataset"})
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_no_match() -> None:
-    """Test hemisphere inference returns None when no matches."""
-    dataset = MockDataset()
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
-
-    dataset = MockDataset(name="no-hemisphere-indicator")
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
 
 
 def test_build_metadata_returns_dataclass() -> None:

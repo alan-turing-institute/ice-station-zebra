@@ -18,7 +18,6 @@ from matplotlib.colors import TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import PlotSpec
-from ice_station_zebra.visualisations.animation_helper import hold_anim, release_anim
 from ice_station_zebra.visualisations.layout import (
     build_single_panel_figure,
     format_linear_ticks,
@@ -227,27 +226,25 @@ def plot_video_prediction(
             title_text.set_text(_build_title_video(plot_spec, dates, tt))
         return ()
 
-    # Create the animation object
-    animation_object = animation.FuncAnimation(
-        fig,
-        animate,
-        frames=n_timesteps,
-        interval=1000 // fps,
-        blit=False,
-        repeat=True,
-    )
-    # Keep a strong reference to prevent garbage collection during save
-    hold_anim(animation_object)
-
     # Save -> BytesIO and clean up temp file
     try:
+        # Create the animation object
+        animation_object = animation.FuncAnimation(
+            fig,
+            animate,
+            frames=n_timesteps,
+            interval=1000 // fps,
+            blit=False,
+            repeat=True,
+        )
+        # Write to BytesIO buffer
         video_buffer = save_animation(
             animation_object, fps=fps, video_format=video_format
         )
+        # Return the video buffer
         return {"sea-ice_concentration-video-maps": video_buffer}
     finally:
-        # Drop strong reference now that saving is done
-        release_anim(animation_object)
+        # Clean up by closing figure
         plt.close(fig)
 
 
@@ -403,25 +400,20 @@ def plot_video_single_input(  # noqa: PLR0915
             )
         return ()
 
-    # Create animation object
-    anim = animation.FuncAnimation(
-        fig,
-        animate,
-        frames=n_timesteps,
-        interval=1000 // plot_spec.video_fps,
-        blit=False,
-        repeat=True,
-    )
-
-    # Keep strong reference to prevent garbage collection during save
-    hold_anim(anim)
-
     try:
-        # Save to BytesIO buffer
+        # Create animation object
+        anim = animation.FuncAnimation(
+            fig,
+            animate,
+            frames=n_timesteps,
+            interval=1000 // plot_spec.video_fps,
+            blit=False,
+            repeat=True,
+        )
+        # Write to BytesIO buffer
         video_buffer = convert.save_animation(
             anim, fps=plot_spec.video_fps, video_format=plot_spec.video_format
         )
-
         # Optionally save to disk
         if save_path is not None:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -429,12 +421,10 @@ def plot_video_single_input(  # noqa: PLR0915
             logger.debug("Saved animation to %s", save_path)
             # Reset buffer position after writing
             video_buffer.seek(0)
-
+        # Return the video buffer
         return video_buffer
-
     finally:
-        # Clean up: remove from cache and close figure
-        release_anim(anim)
+        # Clean up by closing figure
         plt.close(fig)
 
 

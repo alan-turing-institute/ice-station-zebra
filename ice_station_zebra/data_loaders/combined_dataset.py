@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from typing import Literal
 
 import numpy as np
@@ -117,11 +116,6 @@ class CombinedDataset(Dataset):
             ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
             for ds in self.inputs
         } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
-
-    def date_from_index(self, idx: int) -> datetime:
-        """Return the date of the timestep."""
-        np_datetime = self.dates[idx]
-        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""

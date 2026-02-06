@@ -6,6 +6,11 @@ from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
 
 
+def datetime_from_npdatetime(dt: np.datetime64) -> datetime:
+    """Convert numpy datetime64 to aware datetime in UTC."""
+    return dt.astype("datetime64[ms]").astype(datetime).astimezone(UTC)
+
+
 def generate_run_name() -> str:
     """Generate a unique run name based on the current timestamp."""
     return f"run-{get_timestamp()}-{generate_id()}"
@@ -50,11 +55,6 @@ def normalise_date(np_datetime: np.datetime64) -> np.datetime64:
     """Normalise a datetime to midnight."""
     dt: datetime = np_datetime.astype("datetime64[ms]").astype(datetime)
     return np.datetime64(dt.date())
-
-
-def parse_np_datetime(dt: np.datetime64) -> datetime:
-    """Convert numpy datetime64 to aware datetime in UTC."""
-    return dt.astype("datetime64[ms]").astype(datetime).astimezone(UTC)
 
 
 def to_list(value: str | list[str]) -> list[str]:

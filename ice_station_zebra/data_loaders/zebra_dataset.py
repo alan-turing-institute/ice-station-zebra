@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
@@ -29,6 +30,11 @@ class ZebraDataset(Dataset):
         self._datasets: list[AnemoiDataset] = []
         self._date_ranges = sorted(
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
+        )
+        self.hemisphere: Literal["north", "south"] = (
+            "north"
+            if any("north" in str(input_file).lower() for input_file in input_files)
+            else "south"
         )
         self._input_files = input_files
         self._name = name

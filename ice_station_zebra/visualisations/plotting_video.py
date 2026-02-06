@@ -64,7 +64,7 @@ logger = logging.getLogger(__name__)
 
 
 # --- Video Map Plot ---
-def plot_video_prediction(
+def plot_video_prediction(  # noqa: C901
     plot_spec: PlotSpec,
     ground_truth_stream: np.ndarray,
     prediction_stream: np.ndarray,

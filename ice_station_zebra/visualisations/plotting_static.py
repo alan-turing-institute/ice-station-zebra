@@ -54,8 +54,8 @@ logger = logging.getLogger(__name__)
 
 def plot_static_prediction(
     plot_spec: PlotSpec,
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
+    ground_truth_hw: np.ndarray,
+    prediction_hw: np.ndarray,
     date: date | datetime,
 ) -> dict[str, list[ImageFile]]:
     """Create static maps comparing ground truth and prediction sea ice concentration data.
@@ -66,8 +66,8 @@ def plot_static_prediction(
     Args:
         plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
             other visualisation parameters.
-        ground_truth: 2D array of ground truth sea ice concentration values.
-        prediction: 2D array of predicted sea ice concentration values. Must have
+        ground_truth_hw: 2D array of ground truth sea ice concentration values.
+        prediction_hw: 2D array of predicted sea ice concentration values. Must have
             the same shape as ground_truth.
         date: Date/datetime for the data being visualised, used in the plot title.
 
@@ -87,7 +87,12 @@ def plot_static_prediction(
         layout_config,
         warnings,
         levels,
-    ) = _prepare_static_plot(plot_spec, ground_truth, prediction)
+    ) = _prepare_static_plot(plot_spec, ground_truth_hw, prediction_hw)
+
+    # Check shape of arrays
+    if ground_truth_hw.shape != prediction_hw.shape:
+        msg = f"Prediction ({prediction_hw.shape}) has a different shape to ground truth ({ground_truth_hw.shape})."
+        raise InvalidArrayError(msg)
 
     # Initialise the figure and axes with dynamic top spacing if needed
     fig, axs, cbar_axes = build_layout(
@@ -99,14 +104,14 @@ def plot_static_prediction(
 
     # Prepare difference rendering parameters if needed
     difference, diff_colour_scale = _prepare_difference(
-        plot_spec, ground_truth, prediction
+        plot_spec, ground_truth_hw, prediction_hw
     )
 
     # Draw the ground truth and prediction map images
     image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
         axs,
-        ground_truth,
-        prediction,
+        ground_truth_hw,
+        prediction_hw,
         plot_spec,
         diff_colour_scale,
         precomputed_difference=difference,

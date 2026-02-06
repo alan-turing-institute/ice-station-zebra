@@ -9,7 +9,6 @@ if TYPE_CHECKING:  # TC003: only used for typing
 import pytest
 
 from ice_station_zebra.callbacks.metadata import (
-    Metadata,
     build_metadata,
     build_metadata_subtitle,
     calculate_training_points,
@@ -19,6 +18,7 @@ from ice_station_zebra.callbacks.metadata import (
     infer_hemisphere,
 )
 from ice_station_zebra.callbacks.plotting_callback import PlottingCallback
+from ice_station_zebra.types import Metadata
 
 
 def test_build_metadata_subtitle_full_config_contains_epochs_and_range() -> None:

@@ -7,39 +7,13 @@ and format them for display in plot titles.
 import contextlib
 import logging
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from ice_station_zebra.data_loaders import CombinedDataset
+from ice_station_zebra.types import Metadata
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Metadata:
-    """Structured metadata extracted from training configuration.
-
-    Attributes:
-        model: Model name (if available).
-        epochs: Maximum number of training epochs (if available).
-        start: Training start date string (if available).
-        end: Training end date string (if available).
-        cadence: Training data cadence string (if available).
-        n_points: Number of training points calculated from date range and cadence.
-        vars_by_source: Dictionary mapping dataset source names to lists of variable names.
-        n_history_steps: Number of history steps used as model input window (days).
-
-    """
-
-    model: str | None = None
-    epochs: int | None = None
-    start: str | None = None
-    end: str | None = None
-    cadence: str | None = None
-    n_points: int | None = None
-    n_history_steps: int | None = None
-    vars_by_source: dict[str, list[str]] | None = None
 
 
 def extract_variables_by_source(config: dict[str, Any]) -> dict[str, list[str]]:  # noqa: C901

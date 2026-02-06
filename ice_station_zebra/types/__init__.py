@@ -8,6 +8,7 @@ from .simple_datatypes import (
     AnemoiLoadArgs,
     DataloaderArgs,
     DiffColourmapSpec,
+    Metadata,
     PlotSpec,
 )
 from .typedefs import (
@@ -33,6 +34,7 @@ __all__ = [
     "DiffColourmapSpec",
     "DiffMode",
     "DiffStrategy",
+    "Metadata",
     "ModelTestOutput",
     "PlotSpec",
     "TensorDimensions",

@@ -88,7 +88,33 @@ class DiffColourmapSpec(NamedTuple):
     cmap: str
 
 
-@dataclass(frozen=True)
+@dataclass
+class Metadata:
+    """Structured metadata extracted from training configuration.
+
+    Attributes:
+        model: Model name (if available).
+        epochs: Maximum number of training epochs (if available).
+        start: Training start date string (if available).
+        end: Training end date string (if available).
+        cadence: Training data cadence string (if available).
+        n_points: Number of training points calculated from date range and cadence.
+        vars_by_source: Dictionary mapping dataset source names to lists of variable names.
+        n_history_steps: Number of history steps used as model input window (days).
+
+    """
+
+    model: str | None = None
+    epochs: int | None = None
+    start: str | None = None
+    end: str | None = None
+    cadence: str | None = None
+    n_points: int | None = None
+    n_history_steps: int | None = None
+    vars_by_source: dict[str, list[str]] | None = None
+
+
+@dataclass
 class PlotSpec:
     """Configure how sea-ice plots are rendered.
 

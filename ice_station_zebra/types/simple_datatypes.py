@@ -177,3 +177,7 @@ class PlotSpec:
 
     # Footer control
     include_footer_metadata: bool = True
+
+    # Video settings
+    video_fps: int = 2
+    video_format: Literal["mp4", "gif"] = "mp4"

@@ -19,7 +19,7 @@ from lightning.pytorch.loggers import Logger as LightningLogger
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import PlotSpec
-from ice_station_zebra.utils import parse_np_datetime
+from ice_station_zebra.utils import datetime_from_npdatetime
 from ice_station_zebra.visualisations.plotting_core import (
     safe_filename,
 )
@@ -181,7 +181,7 @@ class RawInputsCallback(Callback):
 
         # Get the actual date of the timestep being plotted
         timestep_date_np = history_dates[self.timestep_index]
-        date = parse_np_datetime(timestep_date_np)
+        date = datetime_from_npdatetime(timestep_date_np)
 
         # Determine if we should plot static plots this batch
         should_plot_static = False
@@ -280,8 +280,12 @@ class RawInputsCallback(Callback):
             logger.warning("No input channels found in batch")
             return [], []
 
-        # Get variable names from dataset
-        channel_names = dataset.input_variable_names
+        # Get all input variable names across all input datasets.
+        channel_names = [
+            f"{ds.name}:{var_name}"
+            for ds in dataset.inputs
+            for var_name in ds.variable_names
+        ]
 
         if len(channel_arrays) != len(channel_names):
             logger.warning(

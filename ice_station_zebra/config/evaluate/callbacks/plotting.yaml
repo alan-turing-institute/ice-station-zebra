@@ -1,11 +1,10 @@
 plotting:
   # Callback behaviour
   _target_: ice_station_zebra.callbacks.PlottingCallback
-  frequency: 20
+  frequency: 5
   make_static_plots: true
   make_video_plots: true
-  video_fps: 2
-  video_format: gif             # mp4 or gif
+  base_path: ${base_path}
   plot_spec:
     _target_: ice_station_zebra.types.PlotSpec
     # Plot specification
@@ -24,3 +23,5 @@ plotting:
     colourbar_location: "horizontal"
     colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
     include_footer_metadata: true
+    video_fps: 2
+    video_format: gif             # mp4 or gif

@@ -10,6 +10,8 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
+from omegaconf import DictConfig, OmegaConf
+
 from ice_station_zebra.data_loaders import CombinedDataset
 from ice_station_zebra.types import Metadata
 
@@ -207,7 +209,7 @@ def extract_training_date_range(
 
 
 def build_metadata(
-    config: dict[str, Any],
+    config: DictConfig,
     model_name: str | None = None,
 ) -> Metadata:
     """Build structured metadata from configuration.
@@ -224,6 +226,8 @@ def build_metadata(
         Metadata dataclass instance with extracted information.
 
     """
+    config = OmegaConf.to_container(config, resolve=True)
+
     # Extract training date range
     start_str, end_str = extract_training_date_range(config)
 

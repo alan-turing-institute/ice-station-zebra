@@ -6,6 +6,8 @@ mpl.use("Agg")
 
 from ice_station_zebra.types import PlotSpec
 
+from .metadata import build_metadata
+from .plotter import Plotter
 from .plotting_core import detect_land_mask_path
 from .plotting_maps import (
     DEFAULT_SIC_SPEC,
@@ -17,6 +19,8 @@ from .range_check import compute_range_check_report
 __all__ = [
     "DEFAULT_SIC_SPEC",
     "PlotSpec",
+    "Plotter",
+    "build_metadata",
     "compute_range_check_report",
     "detect_land_mask_path",
     "plot_maps",

@@ -54,28 +54,12 @@ class ZebraEvaluator:
 
         # Add callbacks
         callbacks: list[Callback] = []
-        callbacks_dict = config["evaluate"].get("callbacks") or {}
-        for cfg in callbacks_dict.values():
-            # Skip configs without _target_ (they can't be instantiated)
-            # Convert DictConfig to a plain dict for easier checking
-            cfg_dict = (
-                OmegaConf.to_container(cfg, resolve=True)
-                if isinstance(cfg, DictConfig)
-                else cfg
-            )
-            if not isinstance(cfg_dict, dict) or "_target_" not in cfg_dict:
-                logger.warning(
-                    "Skipping callback config without _target_: %s",
-                    cfg_dict,
-                )
-                continue
-            callback = hydra.utils.instantiate(cfg_dict)
-            # Pass config to PlottingCallback for land mask detection
-            if callback.__class__.__name__ == "PlottingCallback":
-                callback.config = OmegaConf.to_container(config, resolve=True)
-            callbacks.append(callback)
-        for callback in callbacks:
+        for cfg in config.get("evaluate", {}).get("callbacks", {}).values():
+            callback = hydra.utils.instantiate(cfg)
             logger.debug("Adding evaluation callback %s.", callback.__class__.__name__)
+            if hasattr(callback, "set_metadata"):
+                callback.set_metadata(config, model_cls.__name__)
+            callbacks.append(callback)
 
         # Construct lightning loggers
         lightning_loggers = [

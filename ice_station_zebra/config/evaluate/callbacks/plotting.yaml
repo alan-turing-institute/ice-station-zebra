@@ -25,7 +25,7 @@ plotting:
     colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
     include_footer_metadata: true
     video_fps: 2
-    video_format: gif             # mp4 or gif
+    video_format: mp4             # mp4 or gif
 
     # Per-variable styles
     per_variable_styles:

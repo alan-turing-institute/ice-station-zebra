@@ -12,7 +12,7 @@ import logging
 from collections.abc import Sequence
 from datetime import date, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,15 +63,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def plot_video_prediction(  # noqa: PLR0913
+def plot_video_prediction(
     *,
     dates: Sequence[date | datetime],
-    fps: int = 2,
     ground_truth_stream: np.ndarray,
     land_mask: LandMask,
     plot_spec: PlotSpec,
     prediction_stream: np.ndarray,
-    video_format: Literal["mp4", "gif"] = "gif",
 ) -> dict[str, io.BytesIO]:
     """Generate animated visualisations showing the temporal evolution of sea ice concentration.
 
@@ -90,9 +88,6 @@ def plot_video_prediction(  # noqa: PLR0913
             Must have the same length as the time dimension of the data arrays.
         include_difference: Whether to include difference visualisation in the animation.
         land_mask: Land mask to apply to the data.
-        fps: Frames per second for the output video. Higher values create smoother
-            but larger animations.
-        video_format: Output video format, either "mp4" or "gif".
         diff_strategy: Strategy for computing differences over time:
             - "precompute": Calculate all differences upfront (memory intensive)
             - "two-pass": Scan data to determine colour scale, compute per-frame
@@ -231,13 +226,15 @@ def plot_video_prediction(  # noqa: PLR0913
             fig,
             animate,
             frames=n_timesteps,
-            interval=1000 // fps,
+            interval=1000 // plot_spec.video_fps,
             blit=False,
             repeat=True,
         )
         # Write to BytesIO buffer
         video_buffer = save_animation(
-            animation_object, fps=fps, video_format=video_format
+            animation_object,
+            fps=plot_spec.video_fps,
+            video_format=plot_spec.video_format,
         )
         # Return the video buffer
         return {"sea-ice_concentration-video-maps": video_buffer}

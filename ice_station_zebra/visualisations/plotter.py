@@ -140,12 +140,10 @@ class Plotter:
             np_prediction_thw = outputs.prediction[0, :, 0].detach().cpu().numpy()
             video_data = plot_video_prediction(
                 dates=dates,
-                fps=self.plot_spec.video_fps,
                 ground_truth_stream=np_ground_truth_thw,
                 land_mask=self.land_mask,
                 plot_spec=self.plot_spec,
                 prediction_stream=np_prediction_thw,
-                video_format=self.plot_spec.video_format,
             )
             for video_logger in video_loggers:
                 for key, video_buffer in video_data.items():

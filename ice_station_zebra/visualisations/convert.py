@@ -62,7 +62,6 @@ def save_animation(
     video_format: Literal["mp4", "gif"] = "gif",
 ) -> io.BytesIO:
     """Save an animation to a temporary file and return BytesIO (with cleanup)."""
-    fps_value: int = int(fps)
     suffix = ".gif" if video_format.lower() == "gif" else ".mp4"
 
     writer: animation.AbstractMovieWriter | None = None
@@ -71,10 +70,10 @@ def save_animation(
             try:
                 # Save video to tempfile
                 writer = (
-                    animation.PillowWriter(fps=fps_value)
+                    animation.PillowWriter(fps=fps)
                     if suffix == ".gif"
                     else animation.FFMpegWriter(
-                        fps=fps_value,
+                        fps=fps,
                         codec="libx264",
                         bitrate=1800,
                         # Ensure dimensions are compatible with yuv420p (even width/height)

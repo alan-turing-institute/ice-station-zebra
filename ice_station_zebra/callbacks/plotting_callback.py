@@ -38,10 +38,7 @@ class PlottingCallback(Callback):
             make_input_plots: Whether to plot the raw inputs.
             make_static_plots: Whether to create static plots.
             make_video_plots: Whether to create video plots.
-            video_fps: Frames per second for video plots.
-            video_format: Format for video plots (mp4 or gif).
-            plot_spec: Plotting specification to use (contains difference settings,
-                      timestep selection, etc.).
+            plot_spec: Plotting specification to use (contains difference settings, timestep selection, etc.).
             base_path: Base path for finding land masks.
 
         """

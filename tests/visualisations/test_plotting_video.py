@@ -18,6 +18,7 @@ import pytest
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import PlotSpec
 from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC, convert
+from ice_station_zebra.visualisations.land_mask import LandMask
 from ice_station_zebra.visualisations.plotting_video import (
     plot_video_inputs,
     plot_video_prediction,
@@ -59,11 +60,11 @@ class TestPlotVideoPrediction:
         spec = replace(DEFAULT_SIC_SPEC, include_difference=True)
 
         result = plot_video_prediction(
-            spec,
-            ground_truth_stream,
-            prediction_stream,
-            dates,
-            fps=2,
+            dates=dates,
+            ground_truth_stream=ground_truth_stream,
+            land_mask=LandMask(None, "north"),
+            plot_spec=spec,
+            prediction_stream=prediction_stream,
             video_format=video_format,
         )
 
@@ -84,10 +85,11 @@ def test_video_single_variable_basic(
 ) -> None:
     """Test basic video creation for a single variable."""
     video_buffer = plot_video_single_input(
-        variable_name="era5:2t",
-        np_array_thw=era5_temperature_thw,
         dates=test_dates_short,
+        land_mask=LandMask(None, "north"),
+        np_array_thw=era5_temperature_thw,
         plot_spec=base_plot_spec,
+        variable_name="era5:2t",
     )
 
     assert isinstance(video_buffer, io.BytesIO)
@@ -98,16 +100,16 @@ def test_video_single_variable_basic(
 def test_video_with_land_mask(
     era5_temperature_thw: np.ndarray,
     test_dates_short: list[date],
-    land_mask_2d: np.ndarray,
+    mock_land_mask: LandMask,
     base_plot_spec: PlotSpec,
 ) -> None:
     """Test video creation with land mask."""
     video_buffer = plot_video_single_input(
-        variable_name="era5:2t",
-        np_array_thw=era5_temperature_thw,
         dates=test_dates_short,
+        land_mask=mock_land_mask,
+        np_array_thw=era5_temperature_thw,
         plot_spec=base_plot_spec,
-        land_mask=land_mask_2d,
+        variable_name="era5:2t",
     )
 
     assert isinstance(video_buffer, io.BytesIO)
@@ -125,11 +127,12 @@ def test_video_save_to_disk(
     save_path = tmp_path / "test_animation.gif"
 
     video_buffer = plot_video_single_input(
-        variable_name="era5:2t",
-        np_array_thw=era5_temperature_thw,
         dates=test_dates_short,
+        land_mask=LandMask(None, "north"),
+        np_array_thw=era5_temperature_thw,
         plot_spec=base_plot_spec,
         save_path=save_path,
+        variable_name="era5:2t",
     )
 
     assert isinstance(video_buffer, io.BytesIO)
@@ -147,10 +150,11 @@ def test_video_formats(
     """Test creating videos in different formats."""
     plot_spec = replace(base_plot_spec, video_format=video_format)
     video_buffer = plot_video_single_input(
-        variable_name="era5:2t",
-        np_array_thw=era5_temperature_thw,
         dates=test_dates_short,
+        land_mask=LandMask(None, "north"),
+        np_array_thw=era5_temperature_thw,
         plot_spec=plot_spec,
+        variable_name="era5:2t",
     )
 
     assert isinstance(video_buffer, io.BytesIO)
@@ -190,6 +194,7 @@ def test_video_multiple_variables(
     results = plot_video_inputs(
         channels=channels,
         dates=test_dates_short,
+        land_mask=LandMask(None, "north"),
         plot_spec=base_plot_spec,
     )
 
@@ -215,10 +220,11 @@ def test_video_wrong_dimension(
 
     with pytest.raises(InvalidArrayError, match="Expected 3D"):
         plot_video_single_input(
-            variable_name="era5:2t",
-            np_array_thw=wrong_dim_array,
             dates=test_dates_short,
+            land_mask=LandMask(None, "north"),
+            np_array_thw=wrong_dim_array,
             plot_spec=base_plot_spec,
+            variable_name="era5:2t",
         )
 
 
@@ -236,10 +242,11 @@ def test_video_mismatched_dates(
         InvalidArrayError, match="Number of dates.*!= number of timesteps"
     ):
         plot_video_single_input(
-            variable_name="era5:2t",
-            np_array_thw=era5_temperature_thw,
             dates=wrong_dates,
+            land_mask=LandMask(None, "north"),
+            np_array_thw=era5_temperature_thw,
             plot_spec=base_plot_spec,
+            variable_name="era5:2t",
         )
 
 
@@ -253,6 +260,7 @@ def test_full_workflow_video(
     video_results = plot_video_inputs(
         channels=multi_channel_thw,
         dates=test_dates_short,
+        land_mask=LandMask(None, "north"),
         plot_spec=base_plot_spec,
     )
 

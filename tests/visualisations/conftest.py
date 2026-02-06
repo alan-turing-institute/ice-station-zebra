@@ -14,6 +14,7 @@ from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
 from ice_station_zebra.types import PlotSpec
+from ice_station_zebra.visualisations.land_mask import LandMask
 from tests.conftest import make_varying_sic_stream
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep
@@ -292,11 +293,13 @@ def test_dates_short() -> list[date]:
 
 
 @pytest.fixture
-def land_mask_2d() -> np.ndarray:
+def mock_land_mask() -> LandMask:
     """Create a simple circular land mask for testing [H, W]."""
+    land_mask = LandMask(None, "north")
     dist = make_central_distance_grid(TEST_HEIGHT, TEST_WIDTH)
     radius = min(TEST_HEIGHT, TEST_WIDTH) * 0.25
-    return (dist < radius).astype(bool)
+    land_mask.add_mask((dist < radius).astype(bool))
+    return land_mask
 
 
 @pytest.fixture

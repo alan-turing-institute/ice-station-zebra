@@ -7,8 +7,11 @@ This module is intentionally lightweight and single-panel oriented while reusing
 layout and formatting helpers from the sea-ice plotting stack to keep appearances aligned.
 """
 
+import io
 import logging
+from collections.abc import Sequence
 from datetime import date, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
@@ -30,7 +33,6 @@ from ice_station_zebra.visualisations.plotting_core import (
     compute_display_ranges_stream,
     create_normalisation,
     levels_from_spec,
-    load_land_mask,
     make_diff_colourmap,
     prepare_difference_stream,
     safe_filename,
@@ -44,6 +46,7 @@ from .helpers import (
     _draw_frame,
     _format_title,
 )
+from .land_mask import LandMask
 from .layout import (
     LayoutConfig,
     TitleFooterConfig,
@@ -56,20 +59,18 @@ from .layout import (
 
 if TYPE_CHECKING:
     from matplotlib.text import Text
-import io
-from collections.abc import Sequence
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
-# --- Video Map Plot ---
-def plot_video_prediction(  # noqa: C901
-    plot_spec: PlotSpec,
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
+def plot_video_prediction(  # noqa: PLR0913
+    *,
     dates: Sequence[date | datetime],
     fps: int = 2,
+    ground_truth_stream: np.ndarray,
+    land_mask: LandMask,
+    plot_spec: PlotSpec,
+    prediction_stream: np.ndarray,
     video_format: Literal["mp4", "gif"] = "gif",
 ) -> dict[str, io.BytesIO]:
     """Generate animated visualisations showing the temporal evolution of sea ice concentration.
@@ -88,6 +89,7 @@ def plot_video_prediction(  # noqa: C901
         dates: List of date/datetime objects corresponding to each timestep.
             Must have the same length as the time dimension of the data arrays.
         include_difference: Whether to include difference visualisation in the animation.
+        land_mask: Land mask to apply to the data.
         fps: Frames per second for the output video. Higher values create smoother
             but larger animations.
         video_format: Output video format, either "mp4" or "gif".
@@ -118,14 +120,9 @@ def plot_video_prediction(  # noqa: C901
         )
         raise InvalidArrayError(error_msg)
 
-    # Load land mask if specified
-    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
-
-    # Apply land mask to data streams if provided
-    if land_mask is not None:
-        # Mask out land areas by setting them to NaN
-        ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
-        prediction_stream = np.where(land_mask, np.nan, prediction_stream)
+    # Apply land mask to data streams
+    ground_truth_stream = land_mask.apply_to(ground_truth_stream)
+    prediction_stream = land_mask.apply_to(prediction_stream)
 
     # Initialise the figure and axes with a larger footer space for videos
     layout_config = LayoutConfig(title_footer=TitleFooterConfig(footer_space=0.11))
@@ -168,11 +165,11 @@ def plot_video_prediction(  # noqa: C901
         ground_truth_stream[0],
         prediction_stream[0],
         plot_spec,
-        diff_colour_scale,
-        precomputed_diff_0,
-        levels,
+        land_mask,
+        diff_colour_scale=diff_colour_scale,
+        precomputed_difference=precomputed_diff_0,
+        levels_override=levels,
         display_ranges_override=display_ranges,
-        land_mask=land_mask,
     )
     # Restore axis titles after drawing (they were cleared in _draw_frame)
     _set_titles(axs, plot_spec)
@@ -214,11 +211,11 @@ def plot_video_prediction(  # noqa: C901
             ground_truth_stream[tt],
             prediction_stream[tt],
             plot_spec,
-            diff_colour_scale,
-            precomputed_diff_tt,
-            levels,
+            land_mask,
+            diff_colour_scale=diff_colour_scale,
+            precomputed_difference=precomputed_diff_tt,
+            levels_override=levels,
             display_ranges_override=display_ranges,
-            land_mask=land_mask,
         )
         # Restore axis titles after drawing (they were cleared in _draw_frame)
         _set_titles(axs, plot_spec)
@@ -251,12 +248,12 @@ def plot_video_prediction(  # noqa: C901
 
 def plot_video_single_input(  # noqa: PLR0915
     *,
-    variable_name: str,
-    np_array_thw: np.ndarray,
     dates: Sequence[date | datetime],
+    land_mask: LandMask,
+    np_array_thw: np.ndarray,
     plot_spec: PlotSpec,
-    land_mask: np.ndarray | None = None,
     save_path: Path | None = None,
+    variable_name: str,
 ) -> io.BytesIO:
     """Create animation showing temporal evolution of a single variable.
 
@@ -293,18 +290,8 @@ def plot_video_single_input(  # noqa: PLR0915
         msg = f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         raise InvalidArrayError(msg)
 
-    # Apply land mask if provided
-    if land_mask is not None:
-        if land_mask.shape != (height, width):
-            logger.debug(
-                "Land mask shape %s doesn't match data shape (%d, %d), skipping mask",
-                land_mask.shape,
-                height,
-                width,
-            )
-        else:
-            # Mask out land areas by setting them to NaN
-            np_array_thw = np.where(land_mask, np.nan, np_array_thw)
+    # Apply land mask
+    np_array_thw = land_mask.apply_to(np_array_thw)
 
     # Get styling for this variable
     style = style_for_variable(variable_name, plot_spec.per_variable_styles)
@@ -433,8 +420,8 @@ def plot_video_inputs(
     *,
     channels: dict[str, np.ndarray],
     dates: Sequence[date | datetime],
+    land_mask: LandMask,
     plot_spec: PlotSpec,
-    land_mask: np.ndarray | None = None,
     save_dir: Path | None = None,
 ) -> dict[str, io.BytesIO]:
     """Create animations for multiple input variables over time.
@@ -447,7 +434,7 @@ def plot_video_inputs(
         channels: Dictionary of variable name to THW 3D array of values.
         dates: Sequence of dates for each timestep (length must match T).
         plot_spec: Plotting specification.
-        land_mask: Optional 2D land mask to apply to all variables.
+        land_mask: Land mask to apply to all variables.
         save_dir: Optional directory to save videos to disk.
 
     Returns:
@@ -470,7 +457,7 @@ def plot_video_inputs(
         if save_dir is not None:
             # Sanitise variable name for filename
             file_base = var_name.replace(":", "__")
-            suffix = ".mp4" if plot_spec.video_format == "mp4" else ".gif"
+            suffix = ".gif" if plot_spec.video_format == "gif" else ".mp4"
             save_path = save_dir / f"{safe_filename(file_base)}{suffix}"
 
         try:

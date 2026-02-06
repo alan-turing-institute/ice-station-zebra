@@ -11,6 +11,7 @@ from matplotlib.text import Text
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
+from .land_mask import LandMask
 from .layout import (
     LayoutConfig,
     TitleFooterConfig,
@@ -22,7 +23,6 @@ from .plotting_core import (
     compute_difference,
     compute_display_ranges,
     levels_from_spec,
-    load_land_mask,
     make_diff_colourmap,
 )
 from .range_check import compute_range_check_report
@@ -68,18 +68,17 @@ def _prepare_static_plot(
     plot_spec: PlotSpec,
     ground_truth: np.ndarray,
     prediction: np.ndarray,
-) -> tuple[int, int, np.ndarray | None, LayoutConfig | None, list[str], np.ndarray]:
+) -> tuple[int, int, LayoutConfig | None, list[str], np.ndarray]:
     """Validate arrays and compute helpers needed for plotting.
 
     Returns:
-        Tuple of (height, width, land_mask, layout_config, warnings, contour levels).
+        Tuple of (height, width, layout_config, warnings, contour levels).
 
     """
     if ground_truth.shape != prediction.shape:
         msg = f"Prediction ({prediction.shape}) has a different shape to ground truth ({ground_truth.shape})."
         raise InvalidArrayError(msg)
     height, width = ground_truth.shape
-    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
 
     (gt_min, gt_max), (_pred_min, _pred_max) = compute_display_ranges(
         ground_truth, prediction, plot_spec
@@ -101,7 +100,7 @@ def _prepare_static_plot(
         layout_config = LayoutConfig(title_footer=TitleFooterConfig(title_space=0.10))
 
     levels = levels_from_spec(plot_spec)
-    return height, width, land_mask, layout_config, warnings, levels
+    return height, width, layout_config, warnings, levels
 
 
 def _prepare_difference(
@@ -145,33 +144,6 @@ def _maybe_add_footer(fig: Figure, plot_spec: PlotSpec) -> None:
             set_footer_with_box(fig, footer_text)
     except Exception:
         logger.exception("Failed to draw footer; continuing without footer.")
-
-
-def _apply_land_mask(
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
-    difference: np.ndarray | None,
-    land_mask: np.ndarray | None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
-    """Apply land mask to data arrays by setting land areas to NaN.
-
-    Args:
-        ground_truth: Ground truth data array.
-        prediction: Prediction data array.
-        difference: Optional difference data array.
-        land_mask: Optional land mask where True indicates land areas.
-
-    Returns:
-        Tuple of (masked_ground_truth, masked_prediction, masked_difference).
-
-    """
-    if land_mask is not None:
-        ground_truth = np.where(land_mask, np.nan, ground_truth)
-        prediction = np.where(land_mask, np.nan, prediction)
-        if difference is not None:
-            difference = np.where(land_mask, np.nan, difference)
-
-    return ground_truth, prediction, difference
 
 
 def _format_title(
@@ -305,12 +277,13 @@ def _draw_frame(  # noqa: PLR0913
     ground_truth: np.ndarray,
     prediction: np.ndarray,
     plot_spec: PlotSpec,
+    land_mask: LandMask,
+    *,
     diff_colour_scale: DiffColourmapSpec | None = None,
     precomputed_difference: np.ndarray | None = None,
     levels_override: np.ndarray | None = None,
     display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
     | None = None,
-    land_mask: np.ndarray | None = None,
 ) -> tuple:
     """Draw a complete visualisation frame with ground truth, prediction, and optional difference.
 
@@ -325,6 +298,7 @@ def _draw_frame(  # noqa: PLR0913
         prediction: 2D array of predicted values to plot.
         plot_spec: Plotting specification containing colourmap, value ranges, and other
             display parameters.
+        land_mask: LandMask instance for applying land area overlays in grey.
         diff_colour_scale: Optional DiffColourmapSpec containing normalisation and colour
             mapping parameters for difference plots.
         precomputed_difference: Optional pre-computed difference array. If None and
@@ -333,8 +307,6 @@ def _draw_frame(  # noqa: PLR0913
             from plot_spec.
         display_ranges_override: Optional custom display ranges for stable animation.
             If None, ranges are computed from the data.
-        land_mask: Optional 2D boolean array where True indicates land areas to overlay
-            in grey. If None, no land overlay is applied.
 
     Returns:
         Tuple containing (image_groundtruth, image_prediction, image_difference, diff_colour_scale).
@@ -345,10 +317,17 @@ def _draw_frame(  # noqa: PLR0913
     for ax in axs:
         _clear_plot(ax)
 
-    # Apply land mask to data if provided
-    ground_truth, prediction, difference = _apply_land_mask(
-        ground_truth, prediction, precomputed_difference, land_mask
+    # Compute difference if required
+    difference = (
+        precomputed_difference
+        if precomputed_difference is not None
+        else compute_difference(ground_truth, prediction, plot_spec.diff_mode)
     )
+
+    # Apply land mask to data if provided
+    ground_truth = land_mask.apply_to(ground_truth)
+    prediction = land_mask.apply_to(prediction)
+    difference = land_mask.apply_to(difference)
 
     # Compute display ranges - use override if provided for stable animation
     (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
@@ -372,12 +351,6 @@ def _draw_frame(  # noqa: PLR0913
 
     image_difference = None
     if plot_spec.include_difference:
-        # Use the difference from land mask application, or compute if not available
-        if difference is None:
-            difference = compute_difference(
-                ground_truth, prediction, plot_spec.diff_mode
-            )
-
         # Expect colour scale to be provided by caller; no fallback here
         if diff_colour_scale is None:
             error_msg = "diff_colour_scale must be provided when including difference"
@@ -422,7 +395,6 @@ def _draw_frame(  # noqa: PLR0913
             )
 
     # Optional: visually mark NaNs as semi-transparent grey overlays
-
     def _overlay_nans(ax: Axes, arr: np.ndarray, land_color: str = "white") -> None:
         """Overlay NaNs as semi-transparent grey overlays.
 
@@ -452,12 +424,11 @@ def _draw_frame(  # noqa: PLR0913
             )
 
     # Optional: visually mark NaNs as semi-transparent grey overlays here
-    if land_mask is not None:
-        _overlay_nans(axs[0], ground_truth, land_color="white")
-        _overlay_nans(axs[1], prediction, land_color="white")
-        if plot_spec.include_difference and difference is not None:
-            # Use black for the difference panel so zero (white) remains distinguishable from land
-            _overlay_nans(axs[2], difference, land_color="black")
+    _overlay_nans(axs[0], ground_truth, land_color="white")
+    _overlay_nans(axs[1], prediction, land_color="white")
+    if plot_spec.include_difference and difference is not None:
+        # Use black for the difference panel so zero (white) remains distinguishable from land
+        _overlay_nans(axs[2], difference, land_color="black")
 
     return image_groundtruth, image_prediction, image_difference, diff_colour_scale
 

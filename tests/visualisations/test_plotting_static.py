@@ -5,10 +5,9 @@ covering ERA5 weather data, OSISAF sea ice concentration, and various
 styling configurations.
 """
 
-import tempfile
+import logging
 from dataclasses import replace
 from datetime import date
-from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
@@ -18,6 +17,7 @@ from PIL.ImageFile import ImageFile
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import PlotSpec
 from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
+from ice_station_zebra.visualisations.land_mask import LandMask
 from ice_station_zebra.visualisations.plotting_core import style_for_variable
 from ice_station_zebra.visualisations.plotting_static import (
     plot_static_inputs,
@@ -25,10 +25,7 @@ from ice_station_zebra.visualisations.plotting_static import (
 )
 from ice_station_zebra.visualisations.range_check import compute_range_check_report
 
-# Import test constants from conftest
 from .conftest import TEST_DATE
-
-# --- Tests for plot_static_prediction ---
 
 
 class TestPlotStaticPrediction:
@@ -40,7 +37,13 @@ class TestPlotStaticPrediction:
         ground_truth, prediction, date = sic_pair_2d
         spec = replace(DEFAULT_SIC_SPEC, include_difference=True)
 
-        result = plot_static_prediction(spec, ground_truth, prediction, date)
+        result = plot_static_prediction(
+            date=date,
+            ground_truth_hw=ground_truth,
+            land_mask=LandMask(None, "north"),
+            plot_spec=spec,
+            prediction_hw=prediction,
+        )
 
         assert "sea-ice_concentration-static-maps" in result
         images = result["sea-ice_concentration-static-maps"]
@@ -83,7 +86,13 @@ class TestPlotStaticPrediction:
         )
 
         # Ensure plot_static_prediction runs without error and returns an image
-        result = plot_static_prediction(spec, ground_truth, prediction, date)
+        result = plot_static_prediction(
+            date=date,
+            ground_truth_hw=ground_truth,
+            land_mask=LandMask(None, "north"),
+            plot_spec=spec,
+            prediction_hw=prediction,
+        )
         images = result["sea-ice_concentration-static-maps"]
         assert len(images) == 1, "Expected 1 image"
         assert images[0].width > 0, "Image width should be greater than 0"
@@ -98,54 +107,49 @@ class TestPlotStaticPrediction:
         height, width = ground_truth.shape
 
         # Create a simple land mask with land in the centre
-        land_mask = np.zeros((height, width), dtype=bool)
+        land_mask = LandMask(None, "north")
+        mask = np.zeros((height, width), dtype=bool)
         centre_h, centre_w = height // 2, width // 2
-        land_mask[centre_h - 5 : centre_h + 5, centre_w - 5 : centre_w + 5] = True
+        mask[centre_h - 5 : centre_h + 5, centre_w - 5 : centre_w + 5] = True
+        land_mask.add_mask(mask)
 
-        # Save land mask to temporary file
-        with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_file:
-            np.save(tmp_file.name, land_mask)
-            land_mask_path = tmp_file.name
-
-        try:
-            spec = replace(
-                DEFAULT_SIC_SPEC, include_difference=True, land_mask_path=land_mask_path
-            )
-
-            result = plot_static_prediction(spec, ground_truth, prediction, date)
-
-            assert "sea-ice_concentration-static-maps" in result
-            images = result["sea-ice_concentration-static-maps"]
-            assert len(images) == 1
-            image = images[0]
-            assert image.width > 0
-            assert image.height > 0
-        finally:
-            # Clean up temporary file
-            Path(land_mask_path).unlink(missing_ok=True)
+        spec = replace(DEFAULT_SIC_SPEC, include_difference=True)
+        result = plot_static_prediction(
+            date=date,
+            ground_truth_hw=ground_truth,
+            land_mask=LandMask(None, "north"),
+            plot_spec=spec,
+            prediction_hw=prediction,
+        )
+        assert "sea-ice_concentration-static-maps" in result
+        images = result["sea-ice_concentration-static-maps"]
+        assert len(images) == 1
+        image = images[0]
+        assert image.width > 0
+        assert image.height > 0
 
     def test_with_invalid_land_mask_shape(
         self,
         sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
-        """plot_static_prediction should raise InvalidArrayError for wrong land mask shape."""
+        """plot_static_prediction should log a warning for missing land mask shape."""
         ground_truth, prediction, date = sic_pair_2d
 
         # Create land mask with wrong shape
+        land_mask = LandMask(None, "north")
         wrong_shape_mask = np.zeros((10, 10), dtype=bool)
+        land_mask.add_mask(wrong_shape_mask)
 
-        with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_file:
-            np.save(tmp_file.name, wrong_shape_mask)
-            land_mask_path = tmp_file.name
-
-        try:
-            spec = replace(DEFAULT_SIC_SPEC, land_mask_path=land_mask_path)
-
-            with pytest.raises(InvalidArrayError):  # Should raise InvalidArrayError
-                plot_static_prediction(spec, ground_truth, prediction, date)
-        finally:
-            # Clean up temporary file
-            Path(land_mask_path).unlink(missing_ok=True)
+        with caplog.at_level(logging.WARNING):
+            plot_static_prediction(
+                date=date,
+                ground_truth_hw=ground_truth,
+                land_mask=land_mask,
+                plot_spec=DEFAULT_SIC_SPEC,
+                prediction_hw=prediction,
+            )
+            assert "No land mask available for shape (48, 48)." in caplog.text
 
 
 # --- Tests for plot_static_inputs ---
@@ -158,8 +162,9 @@ class TestPlotStaticInputs:
         """Test basic single channel plotting."""
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=base_plot_spec,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -170,15 +175,15 @@ class TestPlotStaticInputs:
     def test_land_mask(
         self,
         era5_temperature_2d: np.ndarray,
-        land_mask_2d: np.ndarray,
+        mock_land_mask: LandMask,
         base_plot_spec: PlotSpec,
     ) -> None:
         """Test plotting with land mask applied."""
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
-            when=TEST_DATE,
+            land_mask=mock_land_mask,
             plot_spec_base=base_plot_spec,
-            land_mask=land_mask_2d,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -195,9 +200,10 @@ class TestPlotStaticInputs:
         """Test plotting with custom variable styling."""
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=base_plot_spec,
             styles=variable_styles,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -214,9 +220,10 @@ class TestPlotStaticInputs:
         """Test plotting multiple channels at once."""
         results = plot_static_inputs(
             channels=multi_channel_hw,
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=base_plot_spec,
             styles=variable_styles,
+            when=TEST_DATE,
         )
 
         assert len(results) == len(multi_channel_hw)
@@ -242,9 +249,10 @@ class TestPlotStaticInputs:
 
         results = plot_static_inputs(
             channels={"era5:q_10": era5_humidity_2d},
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=base_plot_spec,
             styles=styles_with_scientific,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -267,8 +275,9 @@ class TestPlotStaticInputs:
 
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=plot_spec,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -294,8 +303,9 @@ class TestPlotStaticInputs:
 
         results = plot_static_inputs(
             channels={var_name: data},
-            when=TEST_DATE,
+            land_mask=LandMask(None, "north"),
             plot_spec_base=base_plot_spec,
+            when=TEST_DATE,
         )
 
         assert len(results) == 1
@@ -314,12 +324,10 @@ class TestPlotStaticInputs:
         with pytest.raises(InvalidArrayError, match="Expected 2D"):
             plot_static_inputs(
                 channels={"era5:2t": wrong_dim_array},
-                when=TEST_DATE,
+                land_mask=LandMask(None, "north"),
                 plot_spec_base=base_plot_spec,
+                when=TEST_DATE,
             )
-
-
-# --- Tests for Style Resolution ---
 
 
 class TestStyleForVariable:

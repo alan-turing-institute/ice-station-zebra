@@ -31,6 +31,7 @@ from .helpers import (
     _prepare_difference,
     _prepare_static_plot,
 )
+from .land_mask import LandMask
 from .layout import (
     _add_colourbars,
     _set_axes_limits,
@@ -44,7 +45,6 @@ from .layout import (
 from .plotting_core import (
     colourmap_with_bad,
     create_normalisation,
-    load_land_mask,
     save_figure,
     style_for_variable,
 )
@@ -53,10 +53,12 @@ logger = logging.getLogger(__name__)
 
 
 def plot_static_prediction(
-    plot_spec: PlotSpec,
-    ground_truth_hw: np.ndarray,
-    prediction_hw: np.ndarray,
+    *,
     date: date | datetime,
+    ground_truth_hw: np.ndarray,
+    land_mask: LandMask,
+    plot_spec: PlotSpec,
+    prediction_hw: np.ndarray,
 ) -> dict[str, list[ImageFile]]:
     """Create static maps comparing ground truth and prediction sea ice concentration data.
 
@@ -67,6 +69,7 @@ def plot_static_prediction(
         plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
             other visualisation parameters.
         ground_truth_hw: 2D array of ground truth sea ice concentration values.
+        land_mask: Land mask to apply to the data.
         prediction_hw: 2D array of predicted sea ice concentration values. Must have
             the same shape as ground_truth.
         date: Date/datetime for the data being visualised, used in the plot title.
@@ -83,7 +86,6 @@ def plot_static_prediction(
     (
         height,
         width,
-        land_mask,
         layout_config,
         warnings,
         levels,
@@ -113,10 +115,10 @@ def plot_static_prediction(
         ground_truth_hw,
         prediction_hw,
         plot_spec,
-        diff_colour_scale,
+        land_mask,
+        diff_colour_scale=diff_colour_scale,
         precomputed_difference=difference,
         levels_override=levels,
-        land_mask=land_mask,
     )
 
     # Restore axis titles after drawing (they were cleared in _draw_frame)
@@ -148,14 +150,14 @@ def plot_static_prediction(
         plt.close(fig)
 
 
-def plot_static_inputs(  # noqa: C901, PLR0912, PLR0915
+def plot_static_inputs(
     *,
     channels: dict[str, np.ndarray],
-    when: date | datetime,
+    land_mask: LandMask,
     plot_spec_base: PlotSpec,
-    land_mask: np.ndarray | None = None,
-    styles: dict[str, dict[str, Any]] | None = None,
     save_dir: Path | None = None,
+    styles: dict[str, dict[str, Any]] | None = None,
+    when: date | datetime,
 ) -> dict[str, list[ImageFile]]:
     """Plot one image per input channel as a static map.
 
@@ -165,7 +167,6 @@ def plot_static_inputs(  # noqa: C901, PLR0912, PLR0915
     channel_names = list(channels.keys())
     styles = styles or plot_spec_base.per_variable_styles
     results: dict[str, list[ImageFile]] = {}
-    land_mask_cache: dict[tuple[int, int], np.ndarray | None] = {}
 
     from . import convert  # noqa: PLC0415  # local import to avoid circulars
 
@@ -176,33 +177,7 @@ def plot_static_inputs(  # noqa: C901, PLR0912, PLR0915
             raise InvalidArrayError(msg)
 
         # Apply land mask (mask out land to NaN)
-        active_mask = land_mask
-        if active_mask is None and plot_spec_base.land_mask_path:
-            shape = arr.shape
-            if shape not in land_mask_cache:
-                try:
-                    land_mask_cache[shape] = load_land_mask(
-                        plot_spec_base.land_mask_path, shape
-                    )
-                except InvalidArrayError:
-                    logger.exception(
-                        "Failed to load land mask for '%s' with shape %s", name, shape
-                    )
-                    land_mask_cache[shape] = None
-            active_mask = land_mask_cache.get(shape)
-
-        # Apply mask if available, creating a new variable to avoid overwriting loop variable
-        arr_to_plot = arr
-        if active_mask is not None:
-            if active_mask.shape == arr.shape:
-                arr_to_plot = np.where(active_mask, np.nan, arr)
-            else:
-                logger.debug(
-                    "Skipping land mask for '%s': mask shape %s != array shape %s",
-                    name,
-                    active_mask.shape,
-                    arr.shape,
-                )
+        arr_to_plot = land_mask.apply_to(arr)
 
         # Prefer an explicit styles dict, otherwise fall back to the PlotSpec attribute if present
         style = style_for_variable(name, styles)

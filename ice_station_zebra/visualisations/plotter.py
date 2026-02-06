@@ -10,6 +10,7 @@ from ice_station_zebra.data_loaders import ZebraDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ModelTestOutput, PlotSpec
 
+from .land_mask import LandMask
 from .metadata import build_metadata, format_metadata_subtitle
 from .plotting_static import plot_static_inputs, plot_static_prediction
 from .plotting_video import plot_video_inputs, plot_video_prediction
@@ -20,29 +21,13 @@ logger = logging.getLogger(__name__)
 class Plotter:
     def __init__(self, base_path: str | None, plot_spec: PlotSpec) -> None:
         """A helper class to create and log plots."""
+        self.base_path = Path(base_path) if base_path else None
         self.plot_spec = plot_spec
-
-        # Find land mask paths for both hemispheres
-        self.land_masks: dict[Literal["north", "south"], Path] = {}
-        if base_path:
-            base_path_ = Path(base_path)
-            if land_masks_south := list(
-                base_path_.glob(
-                    "data/preprocessing/*/IceNetSIC/data/masks/south/masks/land_mask.npy"
-                )
-            ):
-                self.land_masks["south"] = land_masks_south[0].resolve()
-            if land_masks_north := list(
-                base_path_.glob(
-                    "data/preprocessing/*/IceNetSIC/data/masks/north/masks/land_mask.npy"
-                )
-            ):
-                self.land_masks["north"] = land_masks_north[0].resolve()
 
     def set_hemisphere(self, hemisphere: Literal["north", "south"]) -> None:
         """Set the hemisphere and update the plot spec accordingly."""
         self.plot_spec.hemisphere = hemisphere
-        self.plot_spec.land_mask_path = str(self.land_masks[hemisphere])
+        self.land_mask = LandMask(self.base_path, hemisphere)
 
     def set_metadata(self, config: DictConfig, model_name: str) -> None:
         """Set metadata for the plotter based on the model test output."""
@@ -66,12 +51,12 @@ class Plotter:
                 # Plot and log input static images
                 for key, image_list in plot_static_inputs(
                     channels=channels,
-                    when=date,
+                    land_mask=self.land_mask,
                     plot_spec_base=self.plot_spec,
-                    land_mask=None,
                     save_dir=Path(
                         "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/"
                     ),
+                    when=date,
                 ).items():
                     for image_logger in image_loggers:
                         image_logger.log_image(key=key, images=image_list)
@@ -101,7 +86,11 @@ class Plotter:
             )
             # Plot and log output static images
             for key, image_list in plot_static_prediction(
-                self.plot_spec, np_ground_truth_hw, np_prediction_hw, date
+                date=date,
+                ground_truth_hw=np_ground_truth_hw,
+                land_mask=self.land_mask,
+                plot_spec=self.plot_spec,
+                prediction_hw=np_prediction_hw,
             ).items():
                 for image_logger in image_loggers:
                     image_logger.log_image(key=key, images=image_list)
@@ -116,7 +105,7 @@ class Plotter:
         """Extract and log raw input plots."""
         for input_ds in inputs:
             # Create animations for all variables
-            np_dates = [np.datetime64(date) for date in dates]
+            np_dates = [np.datetime64(date.replace(tzinfo=None)) for date in dates]
             channels = {
                 variable_name: input_ds.get_tchw(np_dates)[:, channel, :]
                 for channel, variable_name in enumerate(input_ds.variable_names)
@@ -125,7 +114,7 @@ class Plotter:
                 channels=channels,
                 dates=dates,
                 plot_spec=self.plot_spec,
-                land_mask=None,
+                land_mask=self.land_mask,
                 save_dir=Path(
                     "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/videos"
                 ),
@@ -150,11 +139,12 @@ class Plotter:
             np_ground_truth_thw = outputs.target[0, :, 0].detach().cpu().numpy()
             np_prediction_thw = outputs.prediction[0, :, 0].detach().cpu().numpy()
             video_data = plot_video_prediction(
-                self.plot_spec,
-                np_ground_truth_thw,
-                np_prediction_thw,
-                dates,
+                dates=dates,
                 fps=self.plot_spec.video_fps,
+                ground_truth_stream=np_ground_truth_thw,
+                land_mask=self.land_mask,
+                plot_spec=self.plot_spec,
+                prediction_stream=np_prediction_thw,
                 video_format=self.plot_spec.video_format,
             )
             for video_logger in video_loggers:

@@ -12,35 +12,33 @@ from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
 from ice_station_zebra.types import ModelTestOutput, PlotSpec, TensorDimensions
 
 from .metadata import build_metadata, format_metadata_subtitle
-from .plotting_maps import plot_maps, video_maps
-from .plotting_raw_inputs import (
-    plot_raw_inputs_for_timestep,
-    video_raw_inputs_for_timesteps,
-)
+from .plotting_static import plot_static_inputs, plot_static_prediction
+from .plotting_video import plot_video_inputs, plot_video_prediction
 
 logger = logging.getLogger(__name__)
 
 
 class Plotter:
-    def __init__(self, base_path: str, plot_spec: PlotSpec) -> None:
+    def __init__(self, base_path: str | None, plot_spec: PlotSpec) -> None:
         """A helper class to create and log plots."""
-        self.base_path = Path(base_path)
         self.plot_spec = plot_spec
 
         # Find land mask paths for both hemispheres
         self.land_masks: dict[Literal["north", "south"], Path] = {}
-        if land_masks_south := list(
-            self.base_path.glob(
-                "data/preprocessing/*/IceNetSIC/data/masks/south/masks/land_mask.npy"
-            )
-        ):
-            self.land_masks["south"] = land_masks_south[0].resolve()
-        if land_masks_north := list(
-            self.base_path.glob(
-                "data/preprocessing/*/IceNetSIC/data/masks/north/masks/land_mask.npy"
-            )
-        ):
-            self.land_masks["north"] = land_masks_north[0].resolve()
+        if base_path:
+            base_path_ = Path(base_path)
+            if land_masks_south := list(
+                base_path_.glob(
+                    "data/preprocessing/*/IceNetSIC/data/masks/south/masks/land_mask.npy"
+                )
+            ):
+                self.land_masks["south"] = land_masks_south[0].resolve()
+            if land_masks_north := list(
+                base_path_.glob(
+                    "data/preprocessing/*/IceNetSIC/data/masks/north/masks/land_mask.npy"
+                )
+            ):
+                self.land_masks["north"] = land_masks_north[0].resolve()
 
     def set_hemisphere(self, hemisphere: Literal["north", "south"]) -> None:
         """Set the hemisphere and update the plot spec accordingly."""
@@ -65,7 +63,7 @@ class Plotter:
                 )
 
                 # Plot and log input static images
-                for key, image_list in plot_raw_inputs_for_timestep(
+                for key, image_list in plot_static_inputs(
                     channels=channels,
                     when=date,
                     plot_spec_base=self.plot_spec,
@@ -90,7 +88,7 @@ class Plotter:
                 outputs, self.plot_spec.selected_timestep, dates
             )
             # Plot and log output static images
-            for key, image_list in plot_maps(
+            for key, image_list in plot_static_prediction(
                 self.plot_spec, np_ground_truth, np_prediction, date
             ).items():
                 for image_logger in image_loggers:
@@ -107,7 +105,7 @@ class Plotter:
         for input_ds in inputs:
             # Create animations for all variables
             channels = _extract_video_data_per_channel(input_ds, dates)
-            videos = video_raw_inputs_for_timesteps(
+            videos = plot_video_inputs(
                 channels=channels,
                 dates=dates,
                 plot_spec=self.plot_spec,
@@ -133,7 +131,7 @@ class Plotter:
         """Create and log video plots."""
         try:
             ground_truth_stream, prediction_stream = _extract_video_data(outputs)
-            video_data = video_maps(
+            video_data = plot_video_prediction(
                 self.plot_spec,
                 ground_truth_stream,
                 prediction_stream,

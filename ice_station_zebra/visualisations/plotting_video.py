@@ -9,7 +9,7 @@ layout and formatting helpers from the sea-ice plotting stack to keep appearance
 
 import logging
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,11 +27,33 @@ from ice_station_zebra.visualisations.layout import (
 )
 from ice_station_zebra.visualisations.plotting_core import (
     colourmap_with_bad,
+    compute_difference,
+    compute_display_ranges_stream,
     create_normalisation,
+    levels_from_spec,
     load_land_mask,
+    make_diff_colourmap,
+    prepare_difference_stream,
     safe_filename,
-    save_figure,
     style_for_variable,
+    validate_3d_streams,
+)
+
+from .convert import save_animation
+from .helpers import (
+    _build_footer_video,
+    _build_title_video,
+    _draw_frame,
+    _format_title,
+)
+from .layout import (
+    LayoutConfig,
+    TitleFooterConfig,
+    _add_colourbars,
+    _set_axes_limits,
+    _set_titles,
+    build_layout,
+    set_footer_with_box,
 )
 
 if TYPE_CHECKING:
@@ -40,185 +62,199 @@ import io
 from collections.abc import Sequence
 from pathlib import Path
 
-from PIL.ImageFile import ImageFile
-
 logger = logging.getLogger(__name__)
 
 
-def _format_title(
-    variable: str, hemisphere: str | None, when: date | datetime, units: str | None
-) -> str:
-    """Format a title string for a raw input variable plot.
+# --- Video Map Plot ---
+def plot_video_prediction(
+    plot_spec: PlotSpec,
+    ground_truth_stream: np.ndarray,
+    prediction_stream: np.ndarray,
+    dates: Sequence[date | datetime],
+    fps: int = 2,
+    video_format: Literal["mp4", "gif"] = "gif",
+) -> dict[str, io.BytesIO]:
+    """Generate animated visualisations showing the temporal evolution of sea ice concentration.
+
+    Compares ground truth data with model predictions. Supports multiple video formats and
+    difference computation strategies for optimal performance with large datasets.
 
     Args:
-        variable: Variable name.
-        hemisphere: Hemisphere ("north" or "south"), if applicable.
-        when: Date or datetime of the data.
-        units: Display units for the variable.
+        plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
+            other visualisation parameters.
+        ground_truth_stream: 3D array with shape (time, height, width) containing
+            ground truth sea ice concentration values over time.
+        prediction_stream: 3D array with shape (time, height, width) containing
+            predicted sea ice concentration values. Must have the same shape as
+            ground_truth_stream.
+        dates: List of date/datetime objects corresponding to each timestep.
+            Must have the same length as the time dimension of the data arrays.
+        include_difference: Whether to include difference visualisation in the animation.
+        fps: Frames per second for the output video. Higher values create smoother
+            but larger animations.
+        video_format: Output video format, either "mp4" or "gif".
+        diff_strategy: Strategy for computing differences over time:
+            - "precompute": Calculate all differences upfront (memory intensive)
+            - "two-pass": Scan data to determine colour scale, compute per-frame
+            - "per-frame": Compute differences on-demand (memory efficient)
 
     Returns:
-        Formatted title string.
+        Dictionary mapping video names to BytesIO objects containing the encoded video data.
+        Currently returns a single key "sea-ice_concentration-video-maps" containing the video
+        data suitable for direct wandb.Video logging.
+
+    Raises:
+        InvalidArrayError: If arrays have incompatible shapes or if the number of
+            dates doesn't match the number of timesteps.
+        VideoRenderError: If video encoding fails.
 
     """
-    hemi = f" ({hemisphere.capitalize()})" if hemisphere else ""
-    units_s = f" [{units}]" if units else ""
-    shown = when.date().isoformat() if isinstance(when, datetime) else when.isoformat()
-    return f"{variable}{units_s}{hemi}   Shown: {shown}"
-
-
-def plot_raw_inputs_for_timestep(  # noqa: C901, PLR0912, PLR0915
-    *,
-    channels: dict[str, np.ndarray],
-    when: date | datetime,
-    plot_spec_base: PlotSpec,
-    land_mask: np.ndarray | None = None,
-    save_dir: Path | None = None,
-) -> dict[str, list[ImageFile]]:
-    """Plot one image per input channel as a static map.
-
-    Returns list of (name, PIL.ImageFile, saved_path|None).
-    """
-    channel_arrays = list(channels.values())
-    channel_names = list(channels.keys())
-    styles = plot_spec_base.per_variable_styles
-    results: dict[str, list[ImageFile]] = {}
-    land_mask_cache: dict[tuple[int, int], np.ndarray | None] = {}
-
-    from . import convert  # noqa: PLC0415  # local import to avoid circulars
-
-    expected_ndim = 2
-    for arr, name in zip(channel_arrays, channel_names, strict=True):
-        if arr.ndim != expected_ndim:
-            msg = f"Expected 2D [H,W] for channel '{name}', got {arr.shape}"
-            raise InvalidArrayError(msg)
-
-        # Apply land mask (mask out land to NaN)
-        active_mask = land_mask
-        if active_mask is None and plot_spec_base.land_mask_path:
-            shape = arr.shape
-            if shape not in land_mask_cache:
-                try:
-                    land_mask_cache[shape] = load_land_mask(
-                        plot_spec_base.land_mask_path, shape
-                    )
-                except InvalidArrayError:
-                    logger.exception(
-                        "Failed to load land mask for '%s' with shape %s", name, shape
-                    )
-                    land_mask_cache[shape] = None
-            active_mask = land_mask_cache.get(shape)
-
-        # Apply mask if available, creating a new variable to avoid overwriting loop variable
-        arr_to_plot = arr
-        if active_mask is not None:
-            if active_mask.shape == arr.shape:
-                arr_to_plot = np.where(active_mask, np.nan, arr)
-            else:
-                logger.debug(
-                    "Skipping land mask for '%s': mask shape %s != array shape %s",
-                    name,
-                    active_mask.shape,
-                    arr.shape,
-                )
-
-        # Prefer an explicit styles dict, otherwise fall back to the PlotSpec attribute if present
-        style = style_for_variable(name, styles)
-        logger.debug(
-            "plot_raw_inputs: resolved style for %r => cmap=%r, vmin=%r, vmax=%r, origin=%r",
-            name,
-            style.cmap,
-            style.vmin,
-            style.vmax,
-            style.origin,
+    # Check the shapes of the arrays
+    shape = validate_3d_streams(ground_truth_stream, prediction_stream)
+    n_timesteps, height, width = shape
+    if len(dates) != n_timesteps:
+        error_msg = (
+            f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         )
+        raise InvalidArrayError(error_msg)
 
-        # Create normalisation using shared function
-        norm, vmin, vmax = create_normalisation(
-            arr_to_plot,
-            vmin=style.vmin,
-            vmax=style.vmax,
-            centre=style.two_slope_centre,
+    # Load land mask if specified
+    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
+
+    # Apply land mask to data streams if provided
+    if land_mask is not None:
+        # Mask out land areas by setting them to NaN
+        ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
+        prediction_stream = np.where(land_mask, np.nan, prediction_stream)
+
+    # Initialise the figure and axes with a larger footer space for videos
+    layout_config = LayoutConfig(title_footer=TitleFooterConfig(footer_space=0.11))
+    fig, axs, cbar_axes = build_layout(
+        plot_spec=plot_spec,
+        height=height,
+        width=width,
+        layout_config=layout_config,
+    )
+    levels = levels_from_spec(plot_spec)
+
+    # Stable ranges for the whole animation
+    display_ranges = compute_display_ranges_stream(
+        ground_truth_stream, prediction_stream, plot_spec
+    )
+
+    # Prepare the difference array according to the strategy; also ensure a colour scale exists
+    difference_stream, diff_colour_scale = prepare_difference_stream(
+        include_difference=plot_spec.include_difference,
+        diff_mode=plot_spec.diff_mode,
+        strategy=plot_spec.diff_strategy,
+        ground_truth_stream=ground_truth_stream,
+        prediction_stream=prediction_stream,
+    )
+    if plot_spec.include_difference and diff_colour_scale is None:
+        # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
+        first_diff = compute_difference(
+            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
         )
+        diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
+    precomputed_diff_0 = (
+        difference_stream[0]
+        if (plot_spec.include_difference and difference_stream is not None)
+        else None
+    )
 
-        # Build figure and axis
-        height, width = arr_to_plot.shape
-        fig, ax, cax = build_single_panel_figure(
-            height=height,
-            width=width,
-            colourbar_location=plot_spec_base.colourbar_location,
-        )
+    # Initial frame
+    image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
+        axs,
+        ground_truth_stream[0],
+        prediction_stream[0],
+        plot_spec,
+        diff_colour_scale,
+        precomputed_diff_0,
+        levels,
+        display_ranges_override=display_ranges,
+        land_mask=land_mask,
+    )
+    # Restore axis titles after drawing (they were cleared in _draw_frame)
+    _set_titles(axs, plot_spec)
+    # Colourbars and title
+    _add_colourbars(
+        axs,
+        image_groundtruth=image_groundtruth,
+        image_prediction=image_prediction,
+        image_difference=image_difference,
+        plot_spec=plot_spec,
+        diff_colour_scale=diff_colour_scale,
+        cbar_axes=cbar_axes,
+    )
+    _set_axes_limits(axs, width=width, height=height)
+    try:
+        title_text = set_suptitle_with_box(fig, _build_title_video(plot_spec, dates, 0))
+    except Exception:
+        logger.exception("Failed to draw suptitle; continuing without title.")
+        title_text = None
 
-        # Render
-        cmap_name = style.cmap or plot_spec_base.colourmap
-        cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
-        origin = style.origin or "lower"
-        image = ax.imshow(
-            arr_to_plot, cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
-        )
-
-        # Colourbar
-        orientation = plot_spec_base.colourbar_location
-        cbar = fig.colorbar(image, ax=ax, cax=cax, orientation=orientation)
-        is_vertical = orientation == "vertical"
-        decimals = style.decimals if style.decimals is not None else 2
-        use_scientific = (
-            style.use_scientific_notation
-            if style.use_scientific_notation is not None
-            else False
-        )
-        if isinstance(norm, TwoSlopeNorm):
-            format_symmetric_ticks(
-                cbar,
-                vmin=vmin,
-                vmax=vmax,
-                decimals=decimals,
-                is_vertical=is_vertical,
-                centre=norm.vcenter,
-                use_scientific_notation=use_scientific,
-            )
-        else:
-            format_linear_ticks(
-                cbar,
-                vmin=vmin,
-                vmax=vmax,
-                decimals=decimals,
-                is_vertical=is_vertical,
-                use_scientific_notation=use_scientific,
-            )
-
-        # Title
+    # Footer metadata at the bottom (static across frames)
+    if getattr(plot_spec, "include_footer_metadata", True):
         try:
-            set_suptitle_with_box(
-                fig,
-                _format_title(name, plot_spec_base.hemisphere, when, style.units),
-            )
-        except (ValueError, AttributeError, RuntimeError) as err:
-            logger.debug(
-                "Failed to draw raw-inputs title: %s; continuing without title.", err
-            )
+            footer_text = _build_footer_video(plot_spec, dates)
+            if footer_text:
+                set_footer_with_box(fig, footer_text)
+        except Exception:
+            logger.exception("Failed to draw footer; continuing without footer.")
 
-        # Save to disk if requested (colons in variable names replaced)
-        file_base = name.replace(":", "__")
-        save_figure(fig, save_dir, file_base)
+    # Animation function
+    def animate(tt: int) -> tuple[()]:
+        precomputed_diff_tt = (
+            difference_stream[tt]
+            if (plot_spec.include_difference and difference_stream is not None)
+            else None
+        )
+        _draw_frame(
+            axs,
+            ground_truth_stream[tt],
+            prediction_stream[tt],
+            plot_spec,
+            diff_colour_scale,
+            precomputed_diff_tt,
+            levels,
+            display_ranges_override=display_ranges,
+            land_mask=land_mask,
+        )
+        # Restore axis titles after drawing (they were cleared in _draw_frame)
+        _set_titles(axs, plot_spec)
 
-        # Convert to PIL
-        try:
-            pil_img = convert.image_from_figure(fig)
-        finally:
-            plt.close(fig)
+        if title_text is not None:
+            title_text.set_text(_build_title_video(plot_spec, dates, tt))
+        return ()
 
-        # Add image to results dict
-        if name not in results:
-            results[name] = []
-        results[name].append(pil_img)
+    # Create the animation object
+    animation_object = animation.FuncAnimation(
+        fig,
+        animate,
+        frames=n_timesteps,
+        interval=1000 // fps,
+        blit=False,
+        repeat=True,
+    )
+    # Keep a strong reference to prevent garbage collection during save
+    hold_anim(animation_object)
 
-    return results
+    # Save -> BytesIO and clean up temp file
+    try:
+        video_buffer = save_animation(
+            animation_object, fps=fps, video_format=video_format
+        )
+        return {"sea-ice_concentration-video-maps": video_buffer}
+    finally:
+        # Drop strong reference now that saving is done
+        release_anim(animation_object)
+        plt.close(fig)
 
 
-def video_raw_input_for_variable(  # noqa: PLR0915
+def plot_video_single_input(  # noqa: PLR0915
     *,
     variable_name: str,
-    data_stream: np.ndarray,
+    np_array_thw: np.ndarray,
     dates: Sequence[date | datetime],
     plot_spec: PlotSpec,
     land_mask: np.ndarray | None = None,
@@ -231,7 +267,7 @@ def video_raw_input_for_variable(  # noqa: PLR0915
 
     Args:
         variable_name: Name of the variable (e.g., "era5:2t", "osisaf-south:ice_conc").
-        data_stream: 3D array of data over time [T, H, W].
+        np_array_thw: 3D array of data over time [T, H, W].
         dates: Sequence of dates corresponding to each timestep (length must match T).
         plot_spec: Base plotting specification (colourmap, hemisphere, etc.).
         land_mask: Optional 2D boolean array marking land areas [H, W].
@@ -250,11 +286,11 @@ def video_raw_input_for_variable(  # noqa: PLR0915
     from . import convert  # noqa: PLC0415  # Local import to avoid circulars
 
     # Validate input
-    if data_stream.ndim != 3:  # noqa: PLR2004
-        msg = f"Expected 3D data [T,H,W], got shape {data_stream.shape}"
+    if np_array_thw.ndim != 3:  # noqa: PLR2004
+        msg = f"Expected 3D data [T,H,W], got shape {np_array_thw.shape}"
         raise InvalidArrayError(msg)
 
-    n_timesteps, height, width = data_stream.shape
+    n_timesteps, height, width = np_array_thw.shape
     if len(dates) != n_timesteps:
         msg = f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         raise InvalidArrayError(msg)
@@ -270,15 +306,19 @@ def video_raw_input_for_variable(  # noqa: PLR0915
             )
         else:
             # Mask out land areas by setting them to NaN
-            data_stream = np.where(land_mask, np.nan, data_stream)
+            np_array_thw = np.where(land_mask, np.nan, np_array_thw)
 
     # Get styling for this variable
     style = style_for_variable(variable_name, plot_spec.per_variable_styles)
 
     # Create stable normalisation across all frames
     # Use global min/max to prevent colour scale "breathing"
-    data_min = float(np.nanmin(data_stream)) if np.isfinite(data_stream).any() else 0.0
-    data_max = float(np.nanmax(data_stream)) if np.isfinite(data_stream).any() else 1.0
+    data_min = (
+        float(np.nanmin(np_array_thw)) if np.isfinite(np_array_thw).any() else 0.0
+    )
+    data_max = (
+        float(np.nanmax(np_array_thw)) if np.isfinite(np_array_thw).any() else 1.0
+    )
 
     # Override with style limits if provided
     effective_vmin = style.vmin if style.vmin is not None else data_min
@@ -286,7 +326,7 @@ def video_raw_input_for_variable(  # noqa: PLR0915
 
     # Create normalisation using first frame to establish type
     norm, vmin, vmax = create_normalisation(
-        data_stream[0],
+        np_array_thw[0],
         vmin=effective_vmin,
         vmax=effective_vmax,
         centre=style.two_slope_centre,
@@ -304,7 +344,7 @@ def video_raw_input_for_variable(  # noqa: PLR0915
     cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
     origin = style.origin or "lower"
     image = ax.imshow(
-        data_stream[0], cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
+        np_array_thw[0], cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
     )
 
     # Create colourbar (stable across all frames)
@@ -353,8 +393,7 @@ def video_raw_input_for_variable(  # noqa: PLR0915
     def animate(tt: int) -> tuple[()]:
         """Update function for each frame of the animation."""
         # Update image data
-        image.set_data(data_stream[tt])
-
+        image.set_data(np_array_thw[tt])
         # Update title with current date
         if title_text is not None:
             title_text.set_text(
@@ -362,7 +401,6 @@ def video_raw_input_for_variable(  # noqa: PLR0915
                     variable_name, plot_spec.hemisphere, dates[tt], style.units
                 )
             )
-
         return ()
 
     # Create animation object
@@ -400,17 +438,17 @@ def video_raw_input_for_variable(  # noqa: PLR0915
         plt.close(fig)
 
 
-def video_raw_inputs_for_timesteps(
+def plot_video_inputs(
     *,
     channels: dict[str, np.ndarray],
     dates: Sequence[date | datetime],
     plot_spec: PlotSpec,
     land_mask: np.ndarray | None = None,
     save_dir: Path | None = None,
-) -> dict[str, io.BytesIO]:  # list[tuple[str, io.BytesIO, Path | None]]:
+) -> dict[str, io.BytesIO]:
     """Create animations for multiple input variables over time.
 
-    This is a convenience wrapper around `video_raw_input_for_variable()` that
+    This is a convenience wrapper around `plot_video_single_input()` that
     processes multiple variables in a batch, applying consistent styling and
     land masking to all variables.
 
@@ -422,7 +460,7 @@ def video_raw_inputs_for_timesteps(
         save_dir: Optional directory to save videos to disk.
 
     Returns:
-        List of tuples (variable_name, video_buffer, saved_path).
+        Dictionary mapping variable_name to video_buffer.
 
     Raises:
         InvalidArrayError: If arrays/names count mismatch or invalid shapes.
@@ -446,9 +484,9 @@ def video_raw_inputs_for_timesteps(
 
         try:
             # Create animation for this variable
-            video_buffer = video_raw_input_for_variable(
+            video_buffer = plot_video_single_input(
                 variable_name=var_name,
-                data_stream=data_stream,
+                np_array_thw=data_stream,
                 dates=dates,
                 plot_spec=plot_spec,
                 land_mask=land_mask,

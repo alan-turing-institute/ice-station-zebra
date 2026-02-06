@@ -8,7 +8,7 @@ import contextlib
 import logging
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from omegaconf import DictConfig, OmegaConf
 
@@ -209,7 +209,7 @@ def extract_training_date_range(
 
 
 def build_metadata(
-    config: DictConfig,
+    config_: DictConfig,
     model_name: str | None = None,
 ) -> Metadata:
     """Build structured metadata from configuration.
@@ -219,14 +219,14 @@ def build_metadata(
     is not available in the config.
 
     Args:
-        config: Configuration dictionary containing training and dataset info.
+        config_: Configuration dictionary containing training and dataset info.
         model_name: Optional model name (if not provided, will not be included).
 
     Returns:
         Metadata dataclass instance with extracted information.
 
     """
-    config = OmegaConf.to_container(config, resolve=True)
+    config = cast("dict[str, Any]", OmegaConf.to_container(config_, resolve=True))
 
     # Extract training date range
     start_str, end_str = extract_training_date_range(config)
@@ -332,7 +332,7 @@ def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901, P
 
 
 def build_metadata_subtitle(
-    config: dict[str, Any],
+    config: DictConfig,
     model_name: str | None = None,
 ) -> str | None:
     """Build metadata subtitle for plot titles.

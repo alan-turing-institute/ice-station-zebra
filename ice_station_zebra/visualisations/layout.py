@@ -13,29 +13,25 @@ Main Components:
 
 """
 
-from __future__ import annotations
-
 import contextlib
+import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.colorbar import Colorbar
 from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.contour import QuadContourSet
+from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FuncFormatter
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
+from ice_station_zebra.types import PlotSpec
 
-    from matplotlib.axes import Axes
-    from matplotlib.colorbar import Colorbar
-    from matplotlib.contour import QuadContourSet
-    from matplotlib.figure import Figure
-
-    from .plotting_core import DiffColourmapSpec, PlotSpec
-
-import logging
+from .plotting_core import DiffColourmapSpec
 
 logger = logging.getLogger(__name__)
 

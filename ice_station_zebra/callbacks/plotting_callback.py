@@ -8,9 +8,9 @@ from omegaconf import DictConfig
 from torch import Tensor
 
 from ice_station_zebra.data_loaders import CombinedDataset
-from ice_station_zebra.types import ModelTestOutput
+from ice_station_zebra.types import ModelTestOutput, PlotSpec
 from ice_station_zebra.utils import datetime_from_npdatetime
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC, PlotSpec, Plotter
+from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC, Plotter
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -29,7 +29,7 @@ class PlottingCallback(Callback):
         make_static_plots: bool = True,
         make_video_plots: bool = True,
         plot_spec: PlotSpec | None = None,
-        base_path: str,
+        base_path: str | None = None,
     ) -> None:
         """Create plots during evaluation.
 

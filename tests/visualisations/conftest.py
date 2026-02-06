@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import hydra
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -16,8 +15,6 @@ from omegaconf import errors as oc_errors
 from ice_station_zebra.data_loaders import ZebraDataModule
 from ice_station_zebra.types import PlotSpec
 from tests.conftest import make_varying_sic_stream
-
-mpl.use("Agg")
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep
 # long-lived references to animation objects beyond saving to buffer.
@@ -30,6 +27,7 @@ warnings.filterwarnings(
 TEST_DATE = date(2020, 1, 15)
 TEST_HEIGHT = 48
 TEST_WIDTH = 48
+N_TIMESTEPS = 4
 
 
 @pytest.fixture(autouse=True)
@@ -102,7 +100,7 @@ def sic_pair_3d_stream(
     with a bit of noise to mimic day-to-day change.
     """
     rng = np.random.default_rng(100)
-    timesteps, height, width = 4, 48, 48
+    timesteps, height, width = N_TIMESTEPS, 48, 48
 
     dist = make_central_distance_grid(height, width)
 
@@ -290,7 +288,7 @@ def base_plot_spec() -> PlotSpec:
 @pytest.fixture
 def test_dates_short() -> list[date]:
     """Generate a short sequence of test dates for animations (4 days)."""
-    return [TEST_DATE + timedelta(days=i) for i in range(4)]
+    return [TEST_DATE + timedelta(days=i) for i in range(N_TIMESTEPS)]
 
 
 @pytest.fixture
@@ -338,7 +336,7 @@ def osisaf_ice_conc_2d() -> np.ndarray:
 
 
 @pytest.fixture
-def era5_temperature_3d(test_dates_short: list[date]) -> np.ndarray:
+def era5_temperature_thw(test_dates_short: list[date]) -> np.ndarray:
     """Generate synthetic 3D temperature stream [T, H, W]."""
     rng = np.random.default_rng(100)
     n_timesteps = len(test_dates_short)
@@ -350,21 +348,47 @@ def era5_temperature_3d(test_dates_short: list[date]) -> np.ndarray:
 
 
 @pytest.fixture
-def multi_channel_data() -> tuple[list[np.ndarray], list[str]]:
+def multi_channel_hw() -> dict[str, np.ndarray]:
     """Generate multiple channels of raw input data."""
     rng = np.random.default_rng(100)
-    channels = [
-        rng.uniform(270, 280, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
+    return {
+        # temperature
+        "era5:2t": rng.uniform(270, 280, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
             np.float32
-        ),  # temperature
-        rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),  # u-wind
-        rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),  # v-wind
-        rng.uniform(0, 1, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
-            np.float32
-        ),  # ice conc
-    ]
-    names = ["era5:2t", "era5:10u", "era5:10v", "osisaf-south:ice_conc"]
-    return channels, names
+        ),
+        # u-wind
+        "era5:10u": rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),
+        # v-wind
+        "era5:10v": rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),
+        # ice conc
+        "osisaf-south:ice_conc": rng.uniform(
+            0, 1, size=(TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+    }
+
+
+@pytest.fixture
+def multi_channel_thw() -> dict[str, np.ndarray]:
+    """Generate multiple channels of raw input data."""
+    rng = np.random.default_rng(100)
+    return {
+        # temperature
+        "era5:2t": rng.uniform(
+            270, 280, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # u-wind
+        "era5:10u": rng.normal(
+            0, 5, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # v-wind
+        "era5:10v": rng.normal(
+            0, 5, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # ice conc
+        "osisaf-south:ice_conc": rng.uniform(
+            0, 1, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+    }
 
 
 @pytest.fixture

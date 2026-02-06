@@ -1,59 +1,32 @@
-"""Sea ice concentration visualisation module for creating static maps and animations.
-
-- Static map plotting with optional difference visualisation
-- Animated video generation (MP4/GIF formats)
-- Flexible plotting specifications and colour schemes
-- Multiple difference computation strategies
-- Date formatting
-
-"""
-
-import io
 import logging
 from collections.abc import Sequence
 from datetime import date, datetime
-from typing import Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import animation
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 from matplotlib.text import Text
-from PIL.ImageFile import ImageFile
 
 from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
 
-from . import convert
-from .animation_helper import hold_anim, release_anim
 from .layout import (
     LayoutConfig,
     TitleFooterConfig,
-    _add_colourbars,
-    _set_axes_limits,
-    _set_titles,
-    build_layout,
     draw_badge_with_box,
     set_footer_with_box,
-    set_suptitle_with_box,
 )
 from .plotting_core import (
     colourmap_with_bad,
     compute_difference,
     compute_display_ranges,
-    compute_display_ranges_stream,
     levels_from_spec,
     load_land_mask,
     make_diff_colourmap,
-    prepare_difference_stream,
     validate_2d_pair,
-    validate_3d_streams,
 )
 from .range_check import compute_range_check_report
-
-logger = logging.getLogger(__name__)
 
 #: Default plotting specification for sea ice concentration visualisation
 DEFAULT_SIC_SPEC = PlotSpec(
@@ -71,6 +44,8 @@ DEFAULT_SIC_SPEC = PlotSpec(
     severe_outside=0.20,
     include_shared_range_mismatch_check=True,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_linspace(vmin: float, vmax: float, n: int) -> np.ndarray:
@@ -170,287 +145,6 @@ def _maybe_add_footer(fig: Figure, plot_spec: PlotSpec) -> None:
         logger.exception("Failed to draw footer; continuing without footer.")
 
 
-# --- Static Map Plot ---
-def plot_maps(
-    plot_spec: PlotSpec,
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
-    date: date | datetime,
-) -> dict[str, list[ImageFile]]:
-    """Create static maps comparing ground truth and prediction sea ice concentration data.
-
-    Create static maps and (optional) the difference. The plots use contour mapping with customisable colour
-    schemes and include proper axis scaling and colourbars.
-
-    Args:
-        plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
-            other visualisation parameters.
-        ground_truth: 2D array of ground truth sea ice concentration values.
-        prediction: 2D array of predicted sea ice concentration values. Must have
-            the same shape as ground_truth.
-        date: Date/datetime for the data being visualised, used in the plot title.
-
-    Returns:
-        Dictionary mapping plot names to lists of PIL ImageFile objects. Currently
-        returns a single key "sea-ice_concentration-static-maps" containing a list
-        with one image representing the generated plot.
-
-    Raises:
-        InvalidArrayError: If ground_truth and prediction arrays have incompatible shapes.
-
-    """
-    (
-        height,
-        width,
-        land_mask,
-        layout_config,
-        warnings,
-        levels,
-    ) = _prepare_static_plot(plot_spec, ground_truth, prediction)
-
-    # Initialise the figure and axes with dynamic top spacing if needed
-    fig, axs, cbar_axes = build_layout(
-        plot_spec=plot_spec,
-        height=height,
-        width=width,
-        layout_config=layout_config,
-    )
-
-    # Prepare difference rendering parameters if needed
-    difference, diff_colour_scale = _prepare_difference(
-        plot_spec, ground_truth, prediction
-    )
-
-    # Draw the ground truth and prediction map images
-    image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
-        axs,
-        ground_truth,
-        prediction,
-        plot_spec,
-        diff_colour_scale,
-        precomputed_difference=difference,
-        levels_override=levels,
-        land_mask=land_mask,
-    )
-
-    # Restore axis titles after drawing (they were cleared in _draw_frame)
-    _set_titles(axs, plot_spec)
-
-    # Colourbars and title
-    _add_colourbars(
-        axs,
-        image_groundtruth=image_groundtruth,
-        image_prediction=image_prediction,
-        image_difference=image_difference,
-        plot_spec=plot_spec,
-        cbar_axes=cbar_axes,
-    )
-
-    _set_axes_limits(axs, width=width, height=height)
-    try:
-        title_text = set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
-    except Exception:
-        logger.exception("Failed to draw suptitle; continuing without title.")
-        title_text = None
-
-    _draw_warning_badge(fig, title_text, warnings)
-    _maybe_add_footer(fig, plot_spec)
-
-    try:
-        return {"sea-ice_concentration-static-maps": [convert.image_from_figure(fig)]}
-    finally:
-        plt.close(fig)
-
-
-# --- Video Map Plot ---
-def video_maps(
-    plot_spec: PlotSpec,
-    ground_truth_stream: np.ndarray,
-    prediction_stream: np.ndarray,
-    dates: Sequence[date | datetime],
-    fps: int = 2,
-    video_format: Literal["mp4", "gif"] = "gif",
-) -> dict[str, io.BytesIO]:
-    """Generate animated visualisations showing the temporal evolution of sea ice concentration.
-
-    Compares ground truth data with model predictions. Supports multiple video formats and
-    difference computation strategies for optimal performance with large datasets.
-
-    Args:
-        plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
-            other visualisation parameters.
-        ground_truth_stream: 3D array with shape (time, height, width) containing
-            ground truth sea ice concentration values over time.
-        prediction_stream: 3D array with shape (time, height, width) containing
-            predicted sea ice concentration values. Must have the same shape as
-            ground_truth_stream.
-        dates: List of date/datetime objects corresponding to each timestep.
-            Must have the same length as the time dimension of the data arrays.
-        include_difference: Whether to include difference visualisation in the animation.
-        fps: Frames per second for the output video. Higher values create smoother
-            but larger animations.
-        video_format: Output video format, either "mp4" or "gif".
-        diff_strategy: Strategy for computing differences over time:
-            - "precompute": Calculate all differences upfront (memory intensive)
-            - "two-pass": Scan data to determine colour scale, compute per-frame
-            - "per-frame": Compute differences on-demand (memory efficient)
-
-    Returns:
-        Dictionary mapping video names to BytesIO objects containing the encoded video data.
-        Currently returns a single key "sea-ice_concentration-video-maps" containing the video
-        data suitable for direct wandb.Video logging.
-
-    Raises:
-        InvalidArrayError: If arrays have incompatible shapes or if the number of
-            dates doesn't match the number of timesteps.
-        VideoRenderError: If video encoding fails.
-
-    """
-    # Check the shapes of the arrays
-    shape = validate_3d_streams(ground_truth_stream, prediction_stream)
-    n_timesteps, height, width = shape
-    if len(dates) != n_timesteps:
-        error_msg = (
-            f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
-        )
-        raise InvalidArrayError(error_msg)
-
-    # Load land mask if specified
-    land_mask = load_land_mask(plot_spec.land_mask_path, (height, width))
-
-    # Apply land mask to data streams if provided
-    if land_mask is not None:
-        # Mask out land areas by setting them to NaN
-        ground_truth_stream = np.where(land_mask, np.nan, ground_truth_stream)
-        prediction_stream = np.where(land_mask, np.nan, prediction_stream)
-
-    # Initialise the figure and axes with a larger footer space for videos
-    layout_config = LayoutConfig(title_footer=TitleFooterConfig(footer_space=0.11))
-    fig, axs, cbar_axes = build_layout(
-        plot_spec=plot_spec,
-        height=height,
-        width=width,
-        layout_config=layout_config,
-    )
-    levels = levels_from_spec(plot_spec)
-
-    # Stable ranges for the whole animation
-    display_ranges = compute_display_ranges_stream(
-        ground_truth_stream, prediction_stream, plot_spec
-    )
-
-    # Prepare the difference array according to the strategy; also ensure a colour scale exists
-    difference_stream, diff_colour_scale = prepare_difference_stream(
-        include_difference=plot_spec.include_difference,
-        diff_mode=plot_spec.diff_mode,
-        strategy=plot_spec.diff_strategy,
-        ground_truth_stream=ground_truth_stream,
-        prediction_stream=prediction_stream,
-    )
-    if plot_spec.include_difference and diff_colour_scale is None:
-        # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
-        first_diff = compute_difference(
-            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
-        )
-        diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
-    precomputed_diff_0 = (
-        difference_stream[0]
-        if (plot_spec.include_difference and difference_stream is not None)
-        else None
-    )
-
-    # Initial frame
-    image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
-        axs,
-        ground_truth_stream[0],
-        prediction_stream[0],
-        plot_spec,
-        diff_colour_scale,
-        precomputed_diff_0,
-        levels,
-        display_ranges_override=display_ranges,
-        land_mask=land_mask,
-    )
-    # Restore axis titles after drawing (they were cleared in _draw_frame)
-    _set_titles(axs, plot_spec)
-    # Colourbars and title
-    _add_colourbars(
-        axs,
-        image_groundtruth=image_groundtruth,
-        image_prediction=image_prediction,
-        image_difference=image_difference,
-        plot_spec=plot_spec,
-        diff_colour_scale=diff_colour_scale,
-        cbar_axes=cbar_axes,
-    )
-    _set_axes_limits(axs, width=width, height=height)
-    try:
-        title_text = set_suptitle_with_box(fig, _build_title_video(plot_spec, dates, 0))
-    except Exception:
-        logger.exception("Failed to draw suptitle; continuing without title.")
-        title_text = None
-
-    # Footer metadata at the bottom (static across frames)
-    if getattr(plot_spec, "include_footer_metadata", True):
-        try:
-            footer_text = _build_footer_video(plot_spec, dates)
-            if footer_text:
-                set_footer_with_box(fig, footer_text)
-        except Exception:
-            logger.exception("Failed to draw footer; continuing without footer.")
-
-    # Animation function
-    def animate(tt: int) -> tuple[()]:
-        precomputed_diff_tt = (
-            difference_stream[tt]
-            if (plot_spec.include_difference and difference_stream is not None)
-            else None
-        )
-        _draw_frame(
-            axs,
-            ground_truth_stream[tt],
-            prediction_stream[tt],
-            plot_spec,
-            diff_colour_scale,
-            precomputed_diff_tt,
-            levels,
-            display_ranges_override=display_ranges,
-            land_mask=land_mask,
-        )
-        # Restore axis titles after drawing (they were cleared in _draw_frame)
-        _set_titles(axs, plot_spec)
-
-        if title_text is not None:
-            title_text.set_text(_build_title_video(plot_spec, dates, tt))
-        return ()
-
-    # Create the animation object
-    animation_object = animation.FuncAnimation(
-        fig,
-        animate,
-        frames=n_timesteps,
-        interval=1000 // fps,
-        blit=False,
-        repeat=True,
-    )
-    # Keep a strong reference to prevent garbage collection during save
-    hold_anim(animation_object)
-
-    # Save -> BytesIO and clean up temp file
-    try:
-        video_buffer = convert.save_animation(
-            animation_object, fps=fps, video_format=video_format
-        )
-        return {"sea-ice_concentration-video-maps": video_buffer}
-    finally:
-        # Drop strong reference now that saving is done
-        release_anim(animation_object)
-        plt.close(fig)
-
-
-# ---- Helper functions ----
-
-
 def _apply_land_mask(
     ground_truth: np.ndarray,
     prediction: np.ndarray,
@@ -476,6 +170,27 @@ def _apply_land_mask(
             difference = np.where(land_mask, np.nan, difference)
 
     return ground_truth, prediction, difference
+
+
+def _format_title(
+    variable: str, hemisphere: str | None, when: date | datetime, units: str | None
+) -> str:
+    """Format a title string for a raw input variable plot.
+
+    Args:
+        variable: Variable name.
+        hemisphere: Hemisphere ("north" or "south"), if applicable.
+        when: Date or datetime of the data.
+        units: Display units for the variable.
+
+    Returns:
+        Formatted title string.
+
+    """
+    hemi = f" ({hemisphere.capitalize()})" if hemisphere else ""
+    units_s = f" [{units}]" if units else ""
+    shown = when.date().isoformat() if isinstance(when, datetime) else when.isoformat()
+    return f"{variable}{units_s}{hemi}   Shown: {shown}"
 
 
 def _compute_display_ranges(

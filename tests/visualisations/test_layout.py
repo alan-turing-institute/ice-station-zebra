@@ -5,10 +5,10 @@ from dataclasses import replace
 from itertools import combinations
 from typing import TYPE_CHECKING, Any
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pytest
 
+from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.layout import (
     _set_axes_limits,
     build_layout,
@@ -17,11 +17,8 @@ from ice_station_zebra.visualisations.layout import (
     set_footer_with_box,
     set_suptitle_with_box,
 )
-from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 
 from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
-
-mpl.use("Agg")
 
 # Silence Matplotlib animation warning in this test module
 pytestmark = pytest.mark.filterwarnings(

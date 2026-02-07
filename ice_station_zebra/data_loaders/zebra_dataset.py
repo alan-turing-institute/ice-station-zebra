@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
@@ -29,6 +30,11 @@ class ZebraDataset(Dataset):
         self._datasets: list[AnemoiDataset] = []
         self._date_ranges = sorted(
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
+        )
+        self.hemisphere: Literal["north", "south"] = (
+            "north"
+            if any("north" in str(input_file).lower() for input_file in input_files)
+            else "south"
         )
         self._input_files = input_files
         self._name = name
@@ -121,6 +127,19 @@ class ZebraDataset(Dataset):
     def start_date(self) -> np.datetime64:
         """Return the start date of the dataset."""
         return self.dates[0]
+
+    @cached_property
+    def variable_names(self) -> list[str]:
+        """Return the variable names for this dataset.
+
+        The variable names are extracted from the underlying Anemoi dataset.
+        All datasets must have the same variables.
+        """
+        variable_names = {tuple(sorted(ds.variables)) for ds in self.datasets}
+        if len(variable_names) != 1:
+            msg = f"Found {len(variable_names)} different sets of variables across {len(self.datasets)} datasets."
+            raise ValueError(msg)
+        return self.datasets[0].variables
 
     def __len__(self) -> int:
         """Return the total length of the dataset."""

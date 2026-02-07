@@ -1,61 +1,23 @@
 from __future__ import annotations
 
-import dataclasses
 from typing import TYPE_CHECKING, Any
+
+from omegaconf import DictConfig
 
 if TYPE_CHECKING:  # TC003: only used for typing
     from collections.abc import Mapping, Sequence
 
 import pytest
 
-from ice_station_zebra.callbacks.metadata import (
-    Metadata,
+from ice_station_zebra.callbacks.plotting_callback import PlottingCallback
+from ice_station_zebra.types import Metadata
+from ice_station_zebra.visualisations.metadata import (
     build_metadata,
-    build_metadata_subtitle,
     calculate_training_points,
     extract_variables_by_source,
     format_cadence_display,
     format_metadata_subtitle,
-    infer_hemisphere,
 )
-from ice_station_zebra.callbacks.plotting_callback import PlottingCallback
-
-
-def test_build_metadata_subtitle_full_config_contains_epochs_and_range() -> None:
-    """build_metadata_subtitle should include epochs and train range when available."""
-    config = {
-        "train": {"trainer": {"max_epochs": 10}},
-        "data": {
-            "split": {
-                "train": [
-                    {"start": "2000-01-01", "end": "2010-12-31"},
-                    {"start": "2011-01-01", "end": "2020-12-31"},
-                ]
-            },
-        },
-    }
-
-    subtitle = build_metadata_subtitle(config)
-
-    # Be tolerant of formatting (spaces, separators) — just assert presence of the key pieces.
-    assert subtitle is not None, (
-        "Expected a subtitle string when config contains metadata"
-    )
-    assert "Epoch" in subtitle
-    assert "10" in subtitle
-    assert "Training Dates:" in subtitle
-    assert "2000-01-01" in subtitle
-    assert "2020-12-31" in subtitle
-
-
-def test_build_metadata_subtitle_missing_fields_returns_none() -> None:
-    """When no relevant metadata is present, build_metadata_subtitle should return None."""
-    config: dict[str, Any] = {}
-    assert build_metadata_subtitle(config) is None
-
-    # Config present but missing expected keys
-    config2: dict[str, Any] = {"some_other_section": {"foo": "bar"}}
-    assert build_metadata_subtitle(config2) is None
 
 
 @pytest.mark.parametrize(
@@ -104,7 +66,7 @@ def test_calculate_training_points_invalid_returns_none() -> None:
     # completely should return None
     assert calculate_training_points("2020-01-01", "2020-01-10", "0d") is None
     assert calculate_training_points("2020-01-01", "2020-01-10", "-1h") is None
-    # These should return None due to unrecognized format
+    # These should return None due to unrecognised format
     assert calculate_training_points("2020-01-01", "2020-01-10", "xyz") is None
     assert calculate_training_points("2020-01-01", "2020-01-10", "123") is None
 
@@ -202,7 +164,7 @@ class MockDataset:
         name: str | None = None,
         config: Mapping[str, Any] | None = None,
     ) -> None:
-        """Initialize mock dataset with optional attributes for tests."""
+        """Initialise mock dataset with optional attributes for tests."""
         if target_name:
             self.target = MockTarget(target_name)
         else:
@@ -217,88 +179,31 @@ class MockTarget:
     """Mock target dataset component."""
 
     def __init__(self, name: str) -> None:
-        """Initialize mock target with a name."""
+        """Initialise mock target with a name."""
         self.name = name
-
-
-def test_infer_hemisphere_from_target() -> None:
-    """Test hemisphere inference from target dataset name."""
-    dataset = MockDataset(target_name="osisaf-sicsouth")
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(target_name="osisaf-sicnorth")
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-    dataset = MockDataset(target_name="some-other-name")
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_top_level_name() -> None:
-    """Test hemisphere inference from top-level dataset name."""
-    dataset = MockDataset(name="combined-south")
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(name="combined-north")
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_inputs() -> None:
-    """Test hemisphere inference from input dataset names."""
-    # Inputs as dict-like mappings
-    dataset = MockDataset(
-        inputs=[
-            {"name": "input-south-dataset"},
-            {"dataset_name": "other-dataset"},
-        ]
-    )
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    # Inputs as objects with .name attribute
-    dataset = MockDataset(
-        inputs=[
-            MockTarget("input-north-dataset"),
-        ]
-    )
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_from_config() -> None:
-    """Test hemisphere inference from config dict."""
-    dataset = MockDataset(config={"name": "config-south-name"})
-    assert infer_hemisphere(dataset) == "south"  # type: ignore[arg-type]
-
-    dataset = MockDataset(config={"dataset": "config-north-dataset"})
-    assert infer_hemisphere(dataset) == "north"  # type: ignore[arg-type]
-
-
-def test_infer_hemisphere_no_match() -> None:
-    """Test hemisphere inference returns None when no matches."""
-    dataset = MockDataset()
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
-
-    dataset = MockDataset(name="no-hemisphere-indicator")
-    assert infer_hemisphere(dataset) is None  # type: ignore[arg-type]
 
 
 def test_build_metadata_returns_dataclass() -> None:
     """Test that build_metadata returns a Metadata dataclass with extracted fields."""
-    config = {
-        "train": {"trainer": {"max_epochs": 10}},
-        "data": {
-            "split": {
-                "train": [
-                    {"start": "2000-01-01", "end": "2010-12-31"},
-                ]
-            },
-            "datasets": {
-                "sic1": {
-                    "name": "osisaf-sicsouth",
-                    "group_as": "osisaf-south",
+    config = DictConfig(
+        {
+            "train": {"trainer": {"max_epochs": 10}},
+            "data": {
+                "split": {
+                    "train": [
+                        {"start": "2000-01-01", "end": "2010-12-31"},
+                    ]
+                },
+                "datasets": {
+                    "sic1": {
+                        "name": "osisaf-sicsouth",
+                        "group_as": "osisaf-south",
+                    },
                 },
             },
-        },
-        "predict": {"dataset_group": "osisaf-south"},
-    }
+            "predict": {"dataset_group": "osisaf-south"},
+        }
+    )
 
     metadata = build_metadata(config, model_name="test_model")
 
@@ -312,7 +217,7 @@ def test_build_metadata_returns_dataclass() -> None:
 
 def test_build_metadata_empty_config() -> None:
     """Test build_metadata with empty config returns Metadata with None fields."""
-    metadata = build_metadata({})
+    metadata = build_metadata(DictConfig({}))
 
     assert isinstance(metadata, Metadata)
     assert metadata.model is None
@@ -356,78 +261,38 @@ def test_format_metadata_subtitle_minimal() -> None:
     assert subtitle is None
 
 
-def test_build_metadata_subtitle_backward_compatible() -> None:
-    """Test that build_metadata_subtitle still works and returns same format."""
-    config = {
-        "train": {"trainer": {"max_epochs": 10}},
-        "data": {
-            "split": {
-                "train": [
-                    {"start": "2000-01-01", "end": "2010-12-31"},
-                ]
-            },
-        },
-    }
-
-    # Should work the same way as before
-    subtitle = build_metadata_subtitle(config)
-
-    assert subtitle is not None
-    assert "Epoch" in subtitle
-    assert "10" in subtitle
-    assert "2000-01-01" in subtitle
-    assert "2010-12-31" in subtitle
-
-
-def test_plotting_callback_detect_land_mask_sets_hemisphere() -> None:
-    """Test that PlottingCallback._detect_land_mask_path sets hemisphere from dataset."""
-    callback = PlottingCallback(config={})
-    # Should start with no hemisphere
-    assert callback.plot_spec.hemisphere is None
-
-    # Create a mock dataset with south in the name
-    dataset = MockDataset(target_name="osisaf-sicsouth")
-    callback._detect_land_mask_path(dataset)  # type: ignore[arg-type]
-
-    # Hemisphere should be set
-    assert callback.plot_spec.hemisphere == "south"
-
-
 def test_plotting_callback_metadata_subtitle_from_config() -> None:
     """Test that PlottingCallback sets metadata_subtitle when config is provided."""
-    config = {
-        "train": {"trainer": {"max_epochs": 5}},
-        "data": {
-            "split": {
-                "train": [
-                    {"start": "2020-01-01", "end": "2020-01-10"},
-                ]
-            },
-            "datasets": {
-                "sic1": {
-                    "name": "osisaf-sicsouth",
-                    "group_as": "osisaf-south",
+    config = DictConfig(
+        {
+            "train": {"trainer": {"max_epochs": 5}},
+            "data": {
+                "split": {
+                    "train": [
+                        {"start": "2020-01-01", "end": "2020-01-10"},
+                    ]
+                },
+                "datasets": {
+                    "sic1": {
+                        "name": "osisaf-sicsouth",
+                        "group_as": "osisaf-south",
+                    },
                 },
             },
-        },
-        "predict": {"dataset_group": "osisaf-south"},
-    }
-    callback = PlottingCallback(config=config)
-    # Should start with no metadata subtitle
-    assert (
-        callback.plot_spec.metadata_subtitle is None
-        or callback.plot_spec.metadata_subtitle == ""
+            "predict": {"dataset_group": "osisaf-south"},
+        }
     )
 
-    # Manually build metadata (simulating what happens in on_test_batch_end)
-    metadata = build_metadata_subtitle(config, model_name="test_model")
-    if metadata:
-        callback.plot_spec = dataclasses.replace(
-            callback.plot_spec, metadata_subtitle=metadata
-        )
+    # Should start with no metadata subtitle
+    callback = PlottingCallback()
+    assert (
+        callback.plotter.plot_spec.metadata_subtitle is None
+        or callback.plotter.plot_spec.metadata_subtitle == ""
+    )
 
-    # Metadata should now be set
-    assert callback.plot_spec.metadata_subtitle is not None
-    assert "Epoch" in callback.plot_spec.metadata_subtitle
-    assert "5" in callback.plot_spec.metadata_subtitle
-    assert "2020-01-01" in callback.plot_spec.metadata_subtitle
+    # Check that metadata can be set
+    callback.set_metadata(config, model_name="test_model")
+    assert callback.plotter.plot_spec.metadata_subtitle is not None
+    assert "Model: test_model" in callback.plotter.plot_spec.metadata_subtitle
+    assert "Epoch: 5" in callback.plotter.plot_spec.metadata_subtitle
+    assert "2020-01-01" in callback.plotter.plot_spec.metadata_subtitle

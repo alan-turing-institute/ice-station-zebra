@@ -78,7 +78,7 @@ class DiffColourmapSpec(NamedTuple):
         norm: Normalisation for mapping values to colours (e.g. TwoSlopeNorm for signed diffs).
         vmin: Lower bound if no norm is provided.
         vmax: Upper bound if no norm is provided.
-        cmap: Matplotlib colormap name.
+        cmap: Matplotlib colourmap name.
 
     """
 
@@ -88,7 +88,33 @@ class DiffColourmapSpec(NamedTuple):
     cmap: str
 
 
-@dataclass(frozen=True)
+@dataclass
+class Metadata:
+    """Structured metadata extracted from training configuration.
+
+    Attributes:
+        model: Model name (if available).
+        epochs: Maximum number of training epochs (if available).
+        start: Training start date string (if available).
+        end: Training end date string (if available).
+        cadence: Training data cadence string (if available).
+        n_points: Number of training points calculated from date range and cadence.
+        vars_by_source: Dictionary mapping dataset source names to lists of variable names.
+        n_history_steps: Number of history steps used as model input window (days).
+
+    """
+
+    model: str | None = None
+    epochs: int | None = None
+    start: str | None = None
+    end: str | None = None
+    cadence: str | None = None
+    n_points: int | None = None
+    n_history_steps: int | None = None
+    vars_by_source: dict[str, list[str]] | None = None
+
+
+@dataclass
 class PlotSpec:
     """Configure how sea-ice plots are rendered.
 
@@ -98,7 +124,7 @@ class PlotSpec:
         title_prediction: Title above the prediction panel.
         title_difference: Title above the difference panel.
         n_contour_levels: Number of contour levels per panel.
-        colourmap: Colormap used for GT/prediction panels.
+        colourmap: colourmap used for GT/prediction panels.
         include_difference: Whether to draw a difference panel.
         diff_mode: Difference definition (e.g. "signed", "absolute", "smape").
         diff_strategy: Strategy for animations (precompute, two-pass, per-frame).
@@ -140,9 +166,6 @@ class PlotSpec:
     severe_outside: float = 0.20
     include_shared_range_mismatch_check: bool = True
 
-    # Land mask overlay
-    land_mask_path: str | None = None
-
     # Optional metadata for titling
     # hemisphere: "north" | "south" when known (used in titles)
     hemisphere: Literal["north", "south"] | None = None
@@ -151,3 +174,10 @@ class PlotSpec:
 
     # Footer control
     include_footer_metadata: bool = True
+
+    # Video settings
+    video_fps: int = 2
+    video_format: Literal["mp4", "gif"] = "mp4"
+
+    # Per-variable styles
+    per_variable_styles: dict[str, dict[str, str | float | bool]] | None = None

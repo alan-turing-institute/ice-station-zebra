@@ -3,22 +3,18 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING, Literal
 
-import matplotlib as mpl
 import numpy as np
 import pytest
 
 if TYPE_CHECKING:
-    # Imports used only for type annotations
     from collections.abc import Callable
     from datetime import date
 
-mpl.use("Agg")
-
+from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.plotting_core import (
     compute_display_ranges,
     make_diff_colourmap,
 )
-from ice_station_zebra.visualisations.plotting_maps import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.range_check import compute_range_check_report
 
 

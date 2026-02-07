@@ -39,24 +39,22 @@ class Plotter:
     ) -> None:
         """Extract and log raw input plots."""
         try:
-            date = dates[self.plot_spec.selected_timestep]
+            idx_date = self.plot_spec.selected_timestep
             for input_ds in inputs:
                 # Get static data for this timestep
                 channels = {
-                    variable_name: input_ds[self.plot_spec.selected_timestep][
-                        channel, :
-                    ]
+                    f"{input_ds.name}:{variable_name}": input_ds[idx_date][channel, :]
                     for channel, variable_name in enumerate(input_ds.variable_names)
                 }
                 # Plot and log input static images
                 for key, image_list in plot_static_inputs(
                     channels=channels,
                     land_mask=self.land_mask,
-                    plot_spec_base=self.plot_spec,
+                    plot_spec=self.plot_spec,
                     save_dir=Path(
                         "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/"
                     ),
-                    when=date,
+                    when=dates[idx_date],
                 ).items():
                     for image_logger in image_loggers:
                         image_logger.log_image(key=key, images=image_list)

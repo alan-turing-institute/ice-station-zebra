@@ -129,20 +129,3 @@ class CombinedDataset(Dataset):
         return [
             start_date + idx * self.frequency for idx in range(self.n_history_steps)
         ]
-
-    @property
-    def input_variable_names(self) -> list[str]:
-        """Return all input variable names across all input datasets.
-
-        Variable names are prefixed with the dataset name for disambiguation.
-        Format: "{dataset_name}:{variable_name}"
-
-        Returns:
-            List of variable names in the order they appear in the combined input channels.
-
-        """
-        return [
-            f"{ds.name}:{var_name}"
-            for ds in self.inputs
-            for var_name in ds.variable_names
-        ]

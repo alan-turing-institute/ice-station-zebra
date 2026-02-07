@@ -42,7 +42,7 @@ def image_from_figure(fig: Figure) -> ImageFile:
     return Image.open(buf)
 
 
-def save_animation(
+def video_from_animation(
     anim: animation.FuncAnimation,
     *,
     fps: int = 2,

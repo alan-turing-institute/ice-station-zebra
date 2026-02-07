@@ -51,9 +51,6 @@ class Plotter:
                     variables,
                     land_mask=self.land_mask,
                     plot_spec=self.plot_spec,
-                    save_dir=Path(
-                        "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/"
-                    ),
                     when=dates[idx_date],
                 )
                 for image_name, image_list in images.items():
@@ -109,9 +106,6 @@ class Plotter:
                 dates=dates,
                 plot_spec=self.plot_spec,
                 land_mask=self.land_mask,
-                save_dir=Path(
-                    "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/videos"
-                ),
             )
 
             # Log input videos

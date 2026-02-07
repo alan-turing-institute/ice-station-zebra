@@ -10,7 +10,6 @@
 
 import logging
 from datetime import date, datetime
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
@@ -42,7 +41,6 @@ from .layout import (
 from .plotting_core import (
     colourmap_with_bad,
     create_normalisation,
-    save_figure,
     style_for_variable,
 )
 
@@ -146,7 +144,6 @@ def plot_static_inputs(
     *,
     land_mask: LandMask,
     plot_spec: PlotSpec,
-    save_dir: Path | None = None,
     when: date | datetime,
 ) -> dict[str, list[ImageFile]]:
     """Plot one image per input channel as a static map.
@@ -234,10 +231,6 @@ def plot_static_inputs(
             logger.debug(
                 "Failed to draw static inputs title: %s; continuing without title.", err
             )
-
-        # Save to disk if requested (colons in variable names replaced)
-        file_base = variable_name.replace(":", "__")
-        save_figure(fig, save_dir, file_base)
 
         try:
             pil_img = image_from_figure(fig)

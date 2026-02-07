@@ -11,7 +11,6 @@ import io
 import logging
 from collections.abc import Sequence
 from datetime import date, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -34,13 +33,12 @@ from ice_station_zebra.visualisations.plotting_core import (
     levels_from_spec,
     make_diff_colourmap,
     prepare_difference_stream,
-    safe_filename,
     safe_nanmax,
     safe_nanmin,
     style_for_variable,
 )
 
-from .convert import save_animation
+from .convert import video_from_animation
 from .helpers import (
     _build_footer_video,
     _build_title_video,
@@ -217,7 +215,6 @@ def plot_video_prediction(
             title_text.set_text(_build_title_video(plot_spec, dates, tt))
         return ()
 
-    # Save -> BytesIO and clean up temp file
     try:
         # Create the animation object
         animation_object = animation.FuncAnimation(
@@ -229,7 +226,7 @@ def plot_video_prediction(
             repeat=True,
         )
         # Write to BytesIO buffer
-        video_buffer = save_animation(
+        video_buffer = video_from_animation(
             animation_object,
             fps=plot_spec.video_fps,
             video_format=plot_spec.video_format,
@@ -241,14 +238,13 @@ def plot_video_prediction(
         plt.close(fig)
 
 
-def plot_video_single_input(  # noqa: PLR0915
+def plot_video_single_input(
     variable_name: str,
     variable_values: ArrayTHW,
     *,
     dates: Sequence[date | datetime],
     land_mask: LandMask,
     plot_spec: PlotSpec,
-    save_path: Path | None = None,
 ) -> io.BytesIO:
     """Create animation showing temporal evolution of a single variable.
 
@@ -259,7 +255,6 @@ def plot_video_single_input(  # noqa: PLR0915
         dates: Sequence of dates corresponding to each timestep (length must match T).
         land_mask: Optional 2D boolean array marking land areas [H, W].
         plot_spec: Base plotting specification (colourmap, hemisphere, etc.).
-        save_path: Optional path to save the video file to disk.
         variable_name: Name of the variable (e.g., "era5:2t", "osisaf-south:ice_conc").
         variable_values: 3D array of data over time [T, H, W].
 
@@ -271,8 +266,6 @@ def plot_video_single_input(  # noqa: PLR0915
         VideoRenderError: If video encoding fails.
 
     """
-    from . import convert  # noqa: PLC0415  # Local import to avoid circulars
-
     # Validate input
     if variable_values.ndim != 3:  # noqa: PLR2004
         msg = f"Expected 3D data [T,H,W], got shape {variable_values.shape}"
@@ -391,19 +384,10 @@ def plot_video_single_input(  # noqa: PLR0915
             blit=False,
             repeat=True,
         )
-        # Write to BytesIO buffer
-        video_buffer = convert.save_animation(
+        # Return a BytesIO video buffer
+        return video_from_animation(
             anim, fps=plot_spec.video_fps, video_format=plot_spec.video_format
         )
-        # Optionally save to disk
-        if save_path is not None:
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            save_path.write_bytes(video_buffer.getvalue())
-            logger.debug("Saved animation to %s", save_path)
-            # Reset buffer position after writing
-            video_buffer.seek(0)
-        # Return the video buffer
-        return video_buffer
     finally:
         # Clean up by closing figure
         plt.close(fig)
@@ -415,7 +399,6 @@ def plot_video_inputs(
     dates: Sequence[date | datetime],
     land_mask: LandMask,
     plot_spec: PlotSpec,
-    save_dir: Path | None = None,
 ) -> dict[str, io.BytesIO]:
     """Create animations for multiple input variables over time.
 
@@ -427,7 +410,6 @@ def plot_video_inputs(
         dates: Sequence of dates for each timestep (length must match T).
         plot_spec: Plotting specification.
         land_mask: Land mask to apply to all variables.
-        save_dir: Optional directory to save videos to disk.
         variables: Dictionary of variable name to THW 3D array of values.
 
     Returns:
@@ -443,14 +425,6 @@ def plot_video_inputs(
     for variable_name, variable_values in variables.items():
         logger.debug("Creating animation for variable: %s", variable_name)
 
-        # Determine save path if save_dir is provided
-        save_path: Path | None = None
-        if save_dir is not None:
-            # Sanitise variable name for filename
-            file_base = variable_name.replace(":", "__")
-            suffix = ".gif" if plot_spec.video_format == "gif" else ".mp4"
-            save_path = save_dir / f"{safe_filename(file_base)}{suffix}"
-
         try:
             # Create animation for this variable
             video_buffer = plot_video_single_input(
@@ -459,7 +433,6 @@ def plot_video_inputs(
                 dates=dates,
                 land_mask=land_mask,
                 plot_spec=plot_spec,
-                save_path=save_path,
             )
 
             results[variable_name] = video_buffer

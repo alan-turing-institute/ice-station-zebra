@@ -9,7 +9,6 @@ import io
 from collections.abc import Callable, Sequence
 from dataclasses import replace
 from datetime import date, timedelta
-from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -30,8 +29,10 @@ from .conftest import TEST_DATE, TEST_HEIGHT, TEST_WIDTH
 
 
 @pytest.fixture
-def fake_save_animation(monkeypatch: pytest.MonkeyPatch) -> Callable[..., io.BytesIO]:
-    """Monkeypatch save_animation so video_maps runs fast in tests."""
+def fake_video_from_animation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Callable[..., io.BytesIO]:
+    """Monkeypatch video_from_animation so video_maps runs fast in tests."""
 
     def _fake_save(
         _anim: object,
@@ -39,10 +40,10 @@ def fake_save_animation(monkeypatch: pytest.MonkeyPatch) -> Callable[..., io.Byt
         fps: int = 2,  # noqa: ARG001
         video_format: str = "gif",  # noqa: ARG001
     ) -> io.BytesIO:
-        # Parameters match real save_animation signature but are unused in fake
+        # Parameters match real video_from_animation signature but are unused in fake
         return io.BytesIO(b"fake-video-data")
 
-    monkeypatch.setattr(convert, "save_animation", _fake_save)
+    monkeypatch.setattr(convert, "video_from_animation", _fake_save)
     return _fake_save
 
 
@@ -52,7 +53,7 @@ class TestPlotVideoPrediction:
     def test_returns_buffer(
         self,
         sic_pair_3d_stream: tuple[np.ndarray, np.ndarray, Sequence[date]],
-        fake_save_animation: Callable[..., io.BytesIO],
+        fake_video_from_animation: Callable[..., io.BytesIO],
         video_format: Literal["gif", "mp4"],
     ) -> None:
         """video_maps should produce a dict with a BytesIO video buffer (fast path)."""
@@ -70,7 +71,7 @@ class TestPlotVideoPrediction:
         )
 
         # Reference the fixture to avoid unused-argument lint error
-        assert fake_save_animation is not None
+        assert fake_video_from_animation is not None
 
         assert "sea-ice_concentration-video-maps" in result
         buffer = result["sea-ice_concentration-video-maps"]
@@ -117,29 +118,6 @@ class TestPlotVideoSingleInput:
         assert isinstance(video_buffer, io.BytesIO)
         video_buffer.seek(0)
         assert len(video_buffer.read()) > 1000
-
-    def test_video_save_to_disk(
-        self,
-        era5_temperature_thw: np.ndarray,
-        test_dates_short: list[date],
-        base_plot_spec: PlotSpec,
-        tmp_path: Path,
-    ) -> None:
-        """Test saving video to disk."""
-        save_path = tmp_path / "test_animation.gif"
-
-        video_buffer = plot_video_single_input(
-            "era5:2t",
-            era5_temperature_thw,
-            dates=test_dates_short,
-            land_mask=LandMask(None, "north"),
-            plot_spec=base_plot_spec,
-            save_path=save_path,
-        )
-
-        assert isinstance(video_buffer, io.BytesIO)
-        assert save_path.exists()
-        assert save_path.stat().st_size > 1000
 
     @pytest.mark.parametrize("video_format", ["gif", "mp4"])
     def test_video_formats(

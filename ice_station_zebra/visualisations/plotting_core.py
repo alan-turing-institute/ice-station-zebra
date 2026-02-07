@@ -1,8 +1,7 @@
 import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 import matplotlib as mpl
 import numpy as np
@@ -11,9 +10,6 @@ from matplotlib.colors import Colormap, Normalize, TwoSlopeNorm
 from ice_station_zebra.types import DiffColourmapSpec, DiffMode, DiffStrategy, PlotSpec
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -486,52 +482,3 @@ def compute_display_ranges_stream(
     prediction_min = float(np.nanmin(prediction_stream))
     prediction_max = float(np.nanmax(prediction_stream))
     return (groundtruth_min, groundtruth_max), (prediction_min, prediction_max)
-
-
-def safe_filename(name: str) -> str:
-    """Sanitise a string for use as a filename.
-
-    Replaces non-alphanumeric characters (except hyphens and underscores)
-    with hyphens and strips leading/trailing hyphens.
-
-    Args:
-        name: Input string to sanitise.
-
-    Returns:
-        Sanitised filename string.
-
-    Examples:
-        >>> safe_filename("era5:2t")
-        'era5-2t'
-        >>> safe_filename("My Variable Name!")
-        'My-Variable-Name'
-
-    """
-    keep = [c if c.isalnum() or c in ("-", "_") else "-" for c in name.strip()]
-    return "".join(keep).strip("-") or "var"
-
-
-def save_figure(
-    fig: "plt.Figure", save_dir: Path | None, base_name: str
-) -> Path | None:
-    """Save a matplotlib figure to disk as PNG.
-
-    Creates the save directory if it doesn't exist. Sanitises the filename
-    to avoid filesystem issues.
-
-    Args:
-        fig: Matplotlib Figure object to save.
-        save_dir: Directory to save the figure in. If None, does not save.
-        base_name: Base name for the file (will be sanitised).
-
-    Returns:
-        Path to the saved file, or None if save_dir was None.
-
-    """
-    if save_dir is None:
-        return None
-
-    save_dir.mkdir(parents=True, exist_ok=True)
-    path = save_dir / f"{safe_filename(base_name)}.png"
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    return path

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib as mpl
 import numpy as np
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import Colormap, Normalize, TwoSlopeNorm
 
 from ice_station_zebra.types import DiffColourmapSpec, DiffMode, DiffStrategy, PlotSpec
 
@@ -44,9 +44,7 @@ class VariableStyle:
     use_scientific_notation: bool | None = None
 
 
-def colourmap_with_bad(
-    cmap_name: str | None, bad_color: str = "#dcdcdc"
-) -> mpl.colors.Colormap:
+def colourmap_with_bad(cmap_name: str | None, bad_color: str = "#dcdcdc") -> Colormap:
     """Create a colourmap copy with a specified color for bad (NaN) values.
 
     This function copies the specified colourmap and sets the 'bad' color to handle
@@ -184,9 +182,6 @@ def style_for_variable(  # noqa: C901, PLR0911
         return VariableStyle(**{k: spec.get(k) for k in VariableStyle.__annotations__})
 
     return VariableStyle()
-
-
-# --- Colour Scale Generation ---
 
 
 def levels_from_spec(spec: PlotSpec) -> np.ndarray:
@@ -355,16 +350,6 @@ def make_diff_colourmap(
     raise ValueError(msg)
 
 
-# ---- Range check for colourmap ----
-"""
-The range_check-report API has been moved to visualisations/range_check.py.
-This module imports and re-exports the symbols for backward compatibility.
-"""
-
-
-# ---- Handling the difference stream ----
-
-
 def prepare_difference_stream(
     *,
     include_difference: bool,
@@ -408,24 +393,20 @@ def prepare_difference_stream(
         return difference_stream, colour_scale
 
     if strategy == "two-pass":
-        if diff_mode == "signed":
-            # find max |diff| without storing full stream
-            max_abs = 0.0
-            for tt in range(n_timesteps):
-                difference = compute_difference(
-                    ground_truth_stream[tt], prediction_stream[tt], "signed"
-                )
-                max_abs = max(max_abs, float(np.nanmax(np.abs(difference)) or 0.0))
-            colour_scale = make_diff_colourmap(max_abs, mode="signed")
-            return None, colour_scale
-        # find max diff for sequential scale without storing full stream
-        max_val = 0.0
-        for tt in range(n_timesteps):
-            difference = compute_difference(
+        differences = [
+            compute_difference(
                 ground_truth_stream[tt], prediction_stream[tt], diff_mode
             )
-            max_val = max(max_val, float(np.nanmax(difference) or 0.0))
-        colour_scale = make_diff_colourmap(max_val, mode=diff_mode)
+            for tt in range(n_timesteps)
+        ]
+        max_ = max(
+            float(
+                np.nanmax(np.abs(difference) if diff_mode == "signed" else difference)
+                or 0.0
+            )
+            for difference in differences
+        )
+        colour_scale = make_diff_colourmap(max_, mode=diff_mode)
         return None, colour_scale
 
     if strategy == "per-frame":

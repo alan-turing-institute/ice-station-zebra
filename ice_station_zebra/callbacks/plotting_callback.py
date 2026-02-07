@@ -107,4 +107,4 @@ class PlottingCallback(Callback):
         if self.make_video_plots:
             self.plotter.log_video_outputs(outputs, dates, video_loggers)
             if self.make_input_plots:
-                self.plotter.log_video_inputs(dataset.inputs, dates, image_loggers)
+                self.plotter.log_video_inputs(dataset.inputs, dates, video_loggers)

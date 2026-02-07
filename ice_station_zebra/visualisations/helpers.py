@@ -167,30 +167,6 @@ def _format_title(
     return f"{variable}{units_s}{hemi}   Shown: {shown}"
 
 
-def _compute_display_ranges(
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
-    plot_spec: PlotSpec,
-    display_ranges_override: tuple[tuple[float, float], tuple[float, float]]
-    | None = None,
-) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Compute display ranges for ground truth and prediction plots.
-
-    Args:
-        ground_truth: Ground truth data array.
-        prediction: Prediction data array.
-        plot_spec: Plotting specification.
-        display_ranges_override: Optional override ranges for stable animation.
-
-    Returns:
-        Tuple of ((gt_vmin, gt_vmax), (pred_vmin, pred_vmax)).
-
-    """
-    if display_ranges_override is not None:
-        return display_ranges_override
-    return compute_display_ranges(ground_truth, prediction, plot_spec)
-
-
 def _draw_main_panels(  # noqa: PLR0913
     axs: list,
     ground_truth: np.ndarray,
@@ -331,9 +307,9 @@ def _draw_frame(  # noqa: PLR0913
 
     # Compute display ranges - use override if provided for stable animation
     (groundtruth_vmin, groundtruth_vmax), (prediction_vmin, prediction_vmax) = (
-        _compute_display_ranges(
-            ground_truth, prediction, plot_spec, display_ranges_override
-        )
+        compute_display_ranges(ground_truth, prediction, plot_spec)
+        if display_ranges_override is None
+        else display_ranges_override
     )
 
     # Draw ground truth and prediction panels

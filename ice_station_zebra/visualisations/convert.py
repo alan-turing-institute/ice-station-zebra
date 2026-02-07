@@ -7,8 +7,6 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib import animation
 from matplotlib.figure import Figure
 from PIL import Image
@@ -42,17 +40,6 @@ def image_from_figure(fig: Figure) -> ImageFile:
     fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
     buf.seek(0)
     return Image.open(buf)
-
-
-def image_from_array(a: np.ndarray) -> ImageFile:
-    """Convert a numpy array to a PIL image file."""
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(a)
-    ax.axis("off")
-    try:
-        return image_from_figure(fig)
-    finally:
-        plt.close(fig)
 
 
 def save_animation(

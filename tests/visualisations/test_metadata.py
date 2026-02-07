@@ -13,51 +13,11 @@ from ice_station_zebra.callbacks.plotting_callback import PlottingCallback
 from ice_station_zebra.types import Metadata
 from ice_station_zebra.visualisations.metadata import (
     build_metadata,
-    build_metadata_subtitle,
     calculate_training_points,
     extract_variables_by_source,
     format_cadence_display,
     format_metadata_subtitle,
 )
-
-
-def test_build_metadata_subtitle_full_config_contains_epochs_and_range() -> None:
-    """build_metadata_subtitle should include epochs and train range when available."""
-    config = DictConfig(
-        {
-            "train": {"trainer": {"max_epochs": 10}},
-            "data": {
-                "split": {
-                    "train": [
-                        {"start": "2000-01-01", "end": "2010-12-31"},
-                        {"start": "2011-01-01", "end": "2020-12-31"},
-                    ]
-                },
-            },
-        }
-    )
-
-    subtitle = build_metadata_subtitle(config)
-
-    # Be tolerant of formatting (spaces, separators) — just assert presence of the key pieces.
-    assert subtitle is not None, (
-        "Expected a subtitle string when config contains metadata"
-    )
-    assert "Epoch" in subtitle
-    assert "10" in subtitle
-    assert "Training Dates:" in subtitle
-    assert "2000-01-01" in subtitle
-    assert "2020-12-31" in subtitle
-
-
-def test_build_metadata_subtitle_missing_fields_returns_none() -> None:
-    """When no relevant metadata is present, build_metadata_subtitle should return None."""
-    config = DictConfig({})
-    assert build_metadata_subtitle(config) is None
-
-    # Config present but missing expected keys
-    config2 = DictConfig({"some_other_section": {"foo": "bar"}})
-    assert build_metadata_subtitle(config2) is None
 
 
 @pytest.mark.parametrize(
@@ -299,31 +259,6 @@ def test_format_metadata_subtitle_minimal() -> None:
     subtitle = format_metadata_subtitle(metadata)
 
     assert subtitle is None
-
-
-def test_build_metadata_subtitle_backward_compatible() -> None:
-    """Test that build_metadata_subtitle still works and returns same format."""
-    config = DictConfig(
-        {
-            "train": {"trainer": {"max_epochs": 10}},
-            "data": {
-                "split": {
-                    "train": [
-                        {"start": "2000-01-01", "end": "2010-12-31"},
-                    ]
-                },
-            },
-        }
-    )
-
-    # Should work the same way as before
-    subtitle = build_metadata_subtitle(config)
-
-    assert subtitle is not None
-    assert "Epoch" in subtitle
-    assert "10" in subtitle
-    assert "2000-01-01" in subtitle
-    assert "2010-12-31" in subtitle
 
 
 def test_plotting_callback_metadata_subtitle_from_config() -> None:

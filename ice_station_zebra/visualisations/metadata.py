@@ -329,30 +329,6 @@ def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901, P
     return "\n".join(lines) if lines else None
 
 
-def build_metadata_subtitle(
-    config: DictConfig,
-    model_name: str | None = None,
-) -> str | None:
-    """Build metadata subtitle for plot titles.
-
-    Convenience function that combines build_metadata and format_metadata_subtitle.
-    Maintains backward compatibility with existing code.
-
-    Args:
-        config: Configuration dictionary containing training and dataset info.
-        model_name: Optional model name (if not provided, will not be included).
-
-    Returns:
-        Formatted metadata string with newlines, or None if no metadata available.
-
-    """
-    metadata = build_metadata(config, model_name=model_name)
-    return format_metadata_subtitle(metadata)
-
-
-# --- Internal helpers to reduce complexity/branching ---
-
-
 def _clean_date_str(date_str: str) -> str:
     """Return date-only portion of an ISO string (strip any time part)."""
     return date_str.split("T")[0] if "T" in date_str else date_str

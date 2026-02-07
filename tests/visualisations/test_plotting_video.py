@@ -56,17 +56,17 @@ class TestPlotVideoPrediction:
         video_format: Literal["gif", "mp4"],
     ) -> None:
         """video_maps should produce a dict with a BytesIO video buffer (fast path)."""
-        ground_truth_stream, prediction_stream, dates = sic_pair_3d_stream
+        ground_truth, prediction, dates = sic_pair_3d_stream
         spec = replace(
             DEFAULT_SIC_SPEC, include_difference=True, video_format=video_format
         )
 
         result = plot_video_prediction(
+            ground_truth,
+            prediction,
             dates=dates,
-            ground_truth_stream=ground_truth_stream,
             land_mask=LandMask(None, "north"),
             plot_spec=spec,
-            prediction_stream=prediction_stream,
         )
 
         # Reference the fixture to avoid unused-argument lint error
@@ -87,11 +87,11 @@ class TestPlotVideoSingleInput:
     ) -> None:
         """Test basic video creation for a single variable."""
         video_buffer = plot_video_single_input(
+            "era5:2t",
+            era5_temperature_thw,
             dates=test_dates_short,
             land_mask=LandMask(None, "north"),
-            np_array_thw=era5_temperature_thw,
             plot_spec=base_plot_spec,
-            variable_name="era5:2t",
         )
 
         assert isinstance(video_buffer, io.BytesIO)
@@ -107,11 +107,11 @@ class TestPlotVideoSingleInput:
     ) -> None:
         """Test video creation with land mask."""
         video_buffer = plot_video_single_input(
+            "era5:2t",
+            era5_temperature_thw,
             dates=test_dates_short,
             land_mask=mock_land_mask,
-            np_array_thw=era5_temperature_thw,
             plot_spec=base_plot_spec,
-            variable_name="era5:2t",
         )
 
         assert isinstance(video_buffer, io.BytesIO)
@@ -129,12 +129,12 @@ class TestPlotVideoSingleInput:
         save_path = tmp_path / "test_animation.gif"
 
         video_buffer = plot_video_single_input(
+            "era5:2t",
+            era5_temperature_thw,
             dates=test_dates_short,
             land_mask=LandMask(None, "north"),
-            np_array_thw=era5_temperature_thw,
             plot_spec=base_plot_spec,
             save_path=save_path,
-            variable_name="era5:2t",
         )
 
         assert isinstance(video_buffer, io.BytesIO)
@@ -152,11 +152,11 @@ class TestPlotVideoSingleInput:
         """Test creating videos in different formats."""
         plot_spec = replace(base_plot_spec, video_format=video_format)
         video_buffer = plot_video_single_input(
+            "era5:2t",
+            era5_temperature_thw,
             dates=test_dates_short,
             land_mask=LandMask(None, "north"),
-            np_array_thw=era5_temperature_thw,
             plot_spec=plot_spec,
-            variable_name="era5:2t",
         )
 
         assert isinstance(video_buffer, io.BytesIO)
@@ -182,11 +182,11 @@ class TestPlotVideoSingleInput:
 
         with pytest.raises(InvalidArrayError, match="Expected 3D"):
             plot_video_single_input(
+                "era5:2t",
+                wrong_dim_array,
                 dates=test_dates_short,
                 land_mask=LandMask(None, "north"),
-                np_array_thw=wrong_dim_array,
                 plot_spec=base_plot_spec,
-                variable_name="era5:2t",
             )
 
     def test_video_mismatched_dates(
@@ -204,11 +204,11 @@ class TestPlotVideoSingleInput:
             InvalidArrayError, match="Number of dates.*!= number of timesteps"
         ):
             plot_video_single_input(
+                "era5:2t",
+                era5_temperature_thw,
                 dates=wrong_dates,
                 land_mask=LandMask(None, "north"),
-                np_array_thw=era5_temperature_thw,
                 plot_spec=base_plot_spec,
-                variable_name="era5:2t",
             )
 
 
@@ -223,7 +223,7 @@ class TestPlotVideoInputs:
         n_timesteps = len(test_dates_short)
 
         # Create data streams for multiple variables
-        channels = {
+        variables = {
             "era5:2t": rng.uniform(
                 270, 280, size=(n_timesteps, TEST_HEIGHT, TEST_WIDTH)
             ).astype(np.float32),
@@ -236,14 +236,14 @@ class TestPlotVideoInputs:
         }
 
         results = plot_video_inputs(
-            channels=channels,
             dates=test_dates_short,
             land_mask=LandMask(None, "north"),
             plot_spec=base_plot_spec,
+            variables=variables,
         )
 
-        assert len(results) == len(channels)
-        for name in channels:
+        assert len(results) == len(variables)
+        for name in variables:
             assert name in results
             video_buffer = results[name]
             assert isinstance(video_buffer, io.BytesIO)
@@ -259,10 +259,10 @@ class TestPlotVideoInputs:
         """Test complete workflow: static plots + videos for multiple variables."""
         # Create videos
         video_results = plot_video_inputs(
-            channels=multi_channel_thw,
             dates=test_dates_short,
             land_mask=LandMask(None, "north"),
             plot_spec=base_plot_spec,
+            variables=multi_channel_thw,
         )
 
         assert len(video_results) == len(multi_channel_thw)

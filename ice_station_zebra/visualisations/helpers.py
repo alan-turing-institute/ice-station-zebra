@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.text import Text
 
 from ice_station_zebra.exceptions import InvalidArrayError
-from ice_station_zebra.types import DiffColourmapSpec, PlotSpec
+from ice_station_zebra.types import ArrayHW, DiffColourmapSpec, PlotSpec
 
 from .land_mask import LandMask
 from .layout import (
@@ -274,8 +274,8 @@ def _draw_main_panels(  # noqa: PLR0913
 
 def _draw_frame(  # noqa: PLR0913
     axs: list,
-    ground_truth: np.ndarray,
-    prediction: np.ndarray,
+    ground_truth: ArrayHW,
+    prediction: ArrayHW,
     plot_spec: PlotSpec,
     land_mask: LandMask,
     *,

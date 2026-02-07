@@ -180,4 +180,4 @@ class PlotSpec:
     video_format: Literal["mp4", "gif"] = "mp4"
 
     # Per-variable styles
-    per_variable_styles: dict[str, dict[str, str | float]] | None = None
+    per_variable_styles: dict[str, dict[str, str | float | bool]] | None = None

@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 from ice_station_zebra.data_loaders import ZebraDataset
 from ice_station_zebra.exceptions import InvalidArrayError, VideoRenderError
-from ice_station_zebra.types import ModelTestOutput, PlotSpec
+from ice_station_zebra.types import ArrayHW, ArrayTHW, ModelTestOutput, PlotSpec
 
 from .land_mask import LandMask
 from .metadata import build_metadata, format_metadata_subtitle
@@ -42,22 +42,23 @@ class Plotter:
             idx_date = self.plot_spec.selected_timestep
             for input_ds in inputs:
                 # Get static data for this timestep
-                channels = {
-                    f"{input_ds.name}:{variable_name}": input_ds[idx_date][channel, :]
-                    for channel, variable_name in enumerate(input_ds.variable_names)
+                variables = {
+                    f"{input_ds.name}:{v_name}": input_ds[idx_date][channel, :]
+                    for channel, v_name in enumerate(input_ds.variable_names)
                 }
                 # Plot and log input static images
-                for key, image_list in plot_static_inputs(
-                    channels=channels,
+                images = plot_static_inputs(
+                    variables,
                     land_mask=self.land_mask,
                     plot_spec=self.plot_spec,
                     save_dir=Path(
                         "/Users/jrobinson/Developer/forecasting/sea-ice/ice-station-zebra/outputs/"
                     ),
                     when=dates[idx_date],
-                ).items():
+                )
+                for image_name, image_list in images.items():
                     for image_logger in image_loggers:
-                        image_logger.log_image(key=key, images=image_list)
+                        image_logger.log_image(key=image_name, images=image_list)
         except InvalidArrayError as exc:
             logger.warning("Static plotting skipped due to invalid arrays: %s", exc)
         except (IndexError, ValueError, MemoryError, OSError) as exc:
@@ -68,30 +69,25 @@ class Plotter:
     ) -> None:
         """Create and log static image plots."""
         try:
-            date = dates[self.plot_spec.selected_timestep]
+            idx_date = self.plot_spec.selected_timestep
             # Use the first batch, first channel -> [H,W]
-            np_ground_truth_hw = (
-                outputs.target[0, self.plot_spec.selected_timestep, 0]
-                .detach()
-                .cpu()
-                .numpy()
+            ground_truth: ArrayHW = (
+                outputs.target[0, idx_date, 0].detach().cpu().numpy()
             )
-            np_prediction_hw = (
-                outputs.prediction[0, self.plot_spec.selected_timestep, 0]
-                .detach()
-                .cpu()
-                .numpy()
+            prediction: ArrayHW = (
+                outputs.prediction[0, idx_date, 0].detach().cpu().numpy()
             )
             # Plot and log output static images
-            for key, image_list in plot_static_prediction(
-                date=date,
-                ground_truth_hw=np_ground_truth_hw,
+            images = plot_static_prediction(
+                ground_truth,
+                prediction,
+                date=dates[idx_date],
                 land_mask=self.land_mask,
                 plot_spec=self.plot_spec,
-                prediction_hw=np_prediction_hw,
-            ).items():
+            )
+            for image_name, image_list in images.items():
                 for image_logger in image_loggers:
-                    image_logger.log_image(key=key, images=image_list)
+                    image_logger.log_image(key=image_name, images=image_list)
         except InvalidArrayError as err:
             logger.warning("Static plotting skipped due to invalid arrays: %s", err)
         except (IndexError, ValueError, MemoryError, OSError) as exc:
@@ -104,12 +100,12 @@ class Plotter:
         for input_ds in inputs:
             # Create animations for all variables
             np_dates = [np.datetime64(date.replace(tzinfo=None)) for date in dates]
-            channels = {
-                variable_name: input_ds.get_tchw(np_dates)[:, channel, :]
-                for channel, variable_name in enumerate(input_ds.variable_names)
+            variables = {
+                f"{input_ds.name}:{v_name}": input_ds.get_tchw(np_dates)[:, channel, :]
+                for channel, v_name in enumerate(input_ds.variable_names)
             }
             videos = plot_video_inputs(
-                channels=channels,
+                variables,
                 dates=dates,
                 plot_spec=self.plot_spec,
                 land_mask=self.land_mask,
@@ -120,10 +116,10 @@ class Plotter:
 
             # Log input videos
             for video_logger in video_loggers:
-                for key, video_buffer in videos.items():
+                for video_name, video_buffer in videos.items():
                     video_buffer.seek(0)
                     video_logger.log_video(
-                        key=key,
+                        key=video_name,
                         videos=[video_buffer],
                         format=[self.plot_spec.video_format],
                     )
@@ -134,20 +130,20 @@ class Plotter:
         """Create and log video plots."""
         try:
             # Use the first batch, first channel -> [T,H,W]
-            np_ground_truth_thw = outputs.target[0, :, 0].detach().cpu().numpy()
-            np_prediction_thw = outputs.prediction[0, :, 0].detach().cpu().numpy()
+            ground_truth: ArrayTHW = outputs.target[0, :, 0].detach().cpu().numpy()
+            prediction: ArrayTHW = outputs.prediction[0, :, 0].detach().cpu().numpy()
             video_data = plot_video_prediction(
+                ground_truth,
+                prediction,
                 dates=dates,
-                ground_truth_stream=np_ground_truth_thw,
                 land_mask=self.land_mask,
                 plot_spec=self.plot_spec,
-                prediction_stream=np_prediction_thw,
             )
             for video_logger in video_loggers:
-                for key, video_buffer in video_data.items():
+                for video_name, video_buffer in video_data.items():
                     video_buffer.seek(0)
                     video_logger.log_video(
-                        key=key,
+                        key=video_name,
                         videos=[video_buffer],
                         format=[self.plot_spec.video_format],
                     )

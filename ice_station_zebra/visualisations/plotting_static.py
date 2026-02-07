@@ -13,11 +13,10 @@ from datetime import date, datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.colors import TwoSlopeNorm
 from PIL.ImageFile import ImageFile
 
-from ice_station_zebra.types import PlotSpec
+from ice_station_zebra.types import ArrayHW, PlotSpec
 
 from .convert import image_from_figure
 from .helpers import (
@@ -51,12 +50,12 @@ logger = logging.getLogger(__name__)
 
 
 def plot_static_prediction(
+    ground_truth: ArrayHW,
+    prediction: ArrayHW,
     *,
     date: date | datetime,
-    ground_truth_hw: np.ndarray,
     land_mask: LandMask,
     plot_spec: PlotSpec,
-    prediction_hw: np.ndarray,
 ) -> dict[str, list[ImageFile]]:
     """Create static maps comparing ground truth and prediction sea ice concentration data.
 
@@ -64,16 +63,15 @@ def plot_static_prediction(
     schemes and include proper axis scaling and colourbars.
 
     Args:
+        ground_truth: 2D array of ground truth sea ice concentration values.
+        prediction: 2D array of predicted sea ice concentration values.
         plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
             other visualisation parameters.
-        ground_truth_hw: 2D array of ground truth sea ice concentration values.
         land_mask: Land mask to apply to the data.
-        prediction_hw: 2D array of predicted sea ice concentration values. Must have
-            the same shape as ground_truth.
         date: Date/datetime for the data being visualised, used in the plot title.
 
     Returns:
-        Dictionary mapping plot names to lists of PIL ImageFile objects. Currently
+        Dictionary that maps plot names to lists of PIL ImageFile objects. Currently
         returns a single key "sea-ice_concentration-static-maps" containing a list
         with one image representing the generated plot.
 
@@ -87,7 +85,7 @@ def plot_static_prediction(
         layout_config,
         warnings,
         levels,
-    ) = _prepare_static_plot(plot_spec, ground_truth_hw, prediction_hw)
+    ) = _prepare_static_plot(plot_spec, ground_truth, prediction)
 
     # Initialise the figure and axes with dynamic top spacing if needed
     fig, axs, cbar_axes = build_layout(
@@ -99,14 +97,14 @@ def plot_static_prediction(
 
     # Prepare difference rendering parameters if needed
     difference, diff_colour_scale = _prepare_difference(
-        plot_spec, ground_truth_hw, prediction_hw
+        plot_spec, ground_truth, prediction
     )
 
     # Draw the ground truth and prediction map images
     image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
         axs,
-        ground_truth_hw,
-        prediction_hw,
+        ground_truth,
+        prediction,
         plot_spec,
         land_mask,
         diff_colour_scale=diff_colour_scale,
@@ -144,8 +142,8 @@ def plot_static_prediction(
 
 
 def plot_static_inputs(
+    variables: dict[str, ArrayHW],
     *,
-    channels: dict[str, np.ndarray],
     land_mask: LandMask,
     plot_spec: PlotSpec,
     save_dir: Path | None = None,
@@ -157,21 +155,21 @@ def plot_static_inputs(
     """
     results: dict[str, list[ImageFile]] = {}
 
-    for name, array in channels.items():
-        if array.ndim != 2:  # noqa: PLR2004
-            msg = f"Expected 2D [H,W] for channel '{name}', got {array.shape}"
+    for variable_name, variable_values in variables.items():
+        if variable_values.ndim != 2:  # noqa: PLR2004
+            msg = f"Expected 2D [H,W] for channel '{variable_name}', got {variable_values.shape}"
             logger.warning(msg)
             continue
 
         # Apply land mask (mask out land to NaN)
-        masked_array = land_mask.apply_to(array)
+        masked_variable_values = land_mask.apply_to(variable_values)
 
         # Construct the style for this variable
-        style = style_for_variable(name, plot_spec.per_variable_styles)
+        style = style_for_variable(variable_name, plot_spec.per_variable_styles)
 
         # Create normalisation using shared function
         norm, vmin, vmax = create_normalisation(
-            masked_array,
+            masked_variable_values,
             vmin=style.vmin,
             vmax=style.vmax,
             centre=style.two_slope_centre,
@@ -179,8 +177,8 @@ def plot_static_inputs(
 
         # Build figure and axis
         fig, ax, cax = build_single_panel_figure(
-            height=masked_array.shape[0],
-            width=masked_array.shape[1],
+            height=masked_variable_values.shape[0],
+            width=masked_variable_values.shape[1],
             colourbar_location=plot_spec.colourbar_location,
         )
 
@@ -189,7 +187,11 @@ def plot_static_inputs(
         cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
         origin = style.origin or "lower"
         image = ax.imshow(
-            masked_array, cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
+            masked_variable_values,
+            cmap=cmap,
+            norm=norm,
+            origin=origin,
+            interpolation="nearest",
         )
 
         # Colourbar
@@ -226,7 +228,7 @@ def plot_static_inputs(
         try:
             set_suptitle_with_box(
                 fig,
-                _format_title(name, plot_spec.hemisphere, when, style.units),
+                _format_title(variable_name, plot_spec.hemisphere, when, style.units),
             )
         except (ValueError, AttributeError, RuntimeError) as err:
             logger.debug(
@@ -234,7 +236,7 @@ def plot_static_inputs(
             )
 
         # Save to disk if requested (colons in variable names replaced)
-        file_base = name.replace(":", "__")
+        file_base = variable_name.replace(":", "__")
         save_figure(fig, save_dir, file_base)
 
         try:
@@ -243,8 +245,8 @@ def plot_static_inputs(
             plt.close(fig)
 
         # Add image to results dict
-        if name not in results:
-            results[name] = []
-        results[name].append(pil_img)
+        if variable_name not in results:
+            results[variable_name] = []
+        results[variable_name].append(pil_img)
 
     return results

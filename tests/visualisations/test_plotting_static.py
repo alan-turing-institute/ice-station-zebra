@@ -14,7 +14,6 @@ import numpy as np
 import pytest
 from PIL.ImageFile import ImageFile
 
-from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import PlotSpec
 from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
 from ice_station_zebra.visualisations.land_mask import LandMask
@@ -38,11 +37,11 @@ class TestPlotStaticPrediction:
         spec = replace(DEFAULT_SIC_SPEC, include_difference=True)
 
         result = plot_static_prediction(
+            ground_truth,
+            prediction,
             date=date,
-            ground_truth_hw=ground_truth,
             land_mask=LandMask(None, "north"),
             plot_spec=spec,
-            prediction_hw=prediction,
         )
 
         assert "sea-ice_concentration-static-maps" in result
@@ -87,11 +86,11 @@ class TestPlotStaticPrediction:
 
         # Ensure plot_static_prediction runs without error and returns an image
         result = plot_static_prediction(
+            ground_truth,
+            prediction,
             date=date,
-            ground_truth_hw=ground_truth,
             land_mask=LandMask(None, "north"),
             plot_spec=spec,
-            prediction_hw=prediction,
         )
         images = result["sea-ice_concentration-static-maps"]
         assert len(images) == 1, "Expected 1 image"
@@ -115,11 +114,11 @@ class TestPlotStaticPrediction:
 
         spec = replace(DEFAULT_SIC_SPEC, include_difference=True)
         result = plot_static_prediction(
+            ground_truth,
+            prediction,
             date=date,
-            ground_truth_hw=ground_truth,
             land_mask=LandMask(None, "north"),
             plot_spec=spec,
-            prediction_hw=prediction,
         )
         assert "sea-ice_concentration-static-maps" in result
         images = result["sea-ice_concentration-static-maps"]
@@ -143,11 +142,11 @@ class TestPlotStaticPrediction:
 
         with caplog.at_level(logging.WARNING):
             plot_static_prediction(
+                ground_truth,
+                prediction,
                 date=date,
-                ground_truth_hw=ground_truth,
                 land_mask=land_mask,
                 plot_spec=DEFAULT_SIC_SPEC,
-                prediction_hw=prediction,
             )
             assert "No land mask available for shape (48, 48)." in caplog.text
 
@@ -161,7 +160,7 @@ class TestPlotStaticInputs:
     ) -> None:
         """Test basic single channel plotting."""
         results = plot_static_inputs(
-            channels={"era5:2t": era5_temperature_2d},
+            {"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
             plot_spec=base_plot_spec,
             when=TEST_DATE,
@@ -180,7 +179,7 @@ class TestPlotStaticInputs:
     ) -> None:
         """Test plotting with land mask applied."""
         results = plot_static_inputs(
-            channels={"era5:2t": era5_temperature_2d},
+            {"era5:2t": era5_temperature_2d},
             land_mask=mock_land_mask,
             plot_spec=base_plot_spec,
             when=TEST_DATE,
@@ -198,11 +197,11 @@ class TestPlotStaticInputs:
         variable_styles: dict[str, dict[str, Any]],
     ) -> None:
         """Test plotting with custom variable styling."""
+        plot_spec = replace(base_plot_spec, per_variable_styles=variable_styles)
         results = plot_static_inputs(
-            channels={"era5:2t": era5_temperature_2d},
+            {"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
-            plot_spec=base_plot_spec,
-            styles=variable_styles,
+            plot_spec=plot_spec,
             when=TEST_DATE,
         )
 
@@ -218,7 +217,7 @@ class TestPlotStaticInputs:
     ) -> None:
         """Test plotting multiple channels at once."""
         results = plot_static_inputs(
-            channels=multi_channel_hw,
+            multi_channel_hw,
             land_mask=LandMask(None, "north"),
             plot_spec=base_plot_spec,
             when=TEST_DATE,
@@ -236,7 +235,7 @@ class TestPlotStaticInputs:
         base_plot_spec: PlotSpec,
     ) -> None:
         """Test plotting with scientific notation enabled."""
-        styles_with_scientific = {
+        styles_with_scientific: dict[str, dict[str, str | float | bool]] = {
             "era5:q_10": {
                 "cmap": "viridis",
                 "decimals": 2,
@@ -247,7 +246,7 @@ class TestPlotStaticInputs:
         plot_spec = replace(base_plot_spec, per_variable_styles=styles_with_scientific)
 
         results = plot_static_inputs(
-            channels={"era5:q_10": era5_humidity_2d},
+            {"era5:q_10": era5_humidity_2d},
             land_mask=LandMask(None, "north"),
             plot_spec=plot_spec,
             when=TEST_DATE,
@@ -272,7 +271,7 @@ class TestPlotStaticInputs:
         )
 
         results = plot_static_inputs(
-            channels={"era5:2t": era5_temperature_2d},
+            {"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
             plot_spec=plot_spec,
             when=TEST_DATE,
@@ -300,7 +299,7 @@ class TestPlotStaticInputs:
         data = request.getfixturevalue(fixture_name)
 
         results = plot_static_inputs(
-            channels={var_name: data},
+            {var_name: data},
             land_mask=LandMask(None, "north"),
             plot_spec=base_plot_spec,
             when=TEST_DATE,
@@ -314,18 +313,21 @@ class TestPlotStaticInputs:
     def test_wrong_dimension(
         self,
         base_plot_spec: PlotSpec,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test error when input array is not 2D."""
         rng = np.random.default_rng(42)
         wrong_dim_array = rng.random((5, 5, 5)).astype(np.float32)  # 3D instead of 2D
 
-        with pytest.raises(InvalidArrayError, match="Expected 2D"):
+        with caplog.at_level(logging.WARNING):
             plot_static_inputs(
-                channels={"era5:2t": wrong_dim_array},
+                {"era5:2t": wrong_dim_array},
                 land_mask=LandMask(None, "north"),
                 plot_spec=base_plot_spec,
                 when=TEST_DATE,
             )
+
+            assert "Expected 2D" in caplog.text
 
 
 class TestStyleForVariable:

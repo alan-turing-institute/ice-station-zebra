@@ -13,7 +13,9 @@ from .simple_datatypes import (
 )
 from .typedefs import (
     ArrayCHW,
+    ArrayHW,
     ArrayTCHW,
+    ArrayTHW,
     DiffMode,
     DiffStrategy,
     TensorNCHW,
@@ -27,7 +29,9 @@ __all__ = [
     "AnemoiInspectArgs",
     "AnemoiLoadArgs",
     "ArrayCHW",
+    "ArrayHW",
     "ArrayTCHW",
+    "ArrayTHW",
     "BetaSchedule",
     "DataSpace",
     "DataloaderArgs",

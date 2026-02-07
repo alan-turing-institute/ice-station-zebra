@@ -15,12 +15,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib import animation
 from matplotlib.colors import TwoSlopeNorm
 
 from ice_station_zebra.exceptions import InvalidArrayError
-from ice_station_zebra.types import PlotSpec
+from ice_station_zebra.types import ArrayTHW, PlotSpec
 from ice_station_zebra.visualisations.layout import (
     build_single_panel_figure,
     format_linear_ticks,
@@ -36,6 +35,8 @@ from ice_station_zebra.visualisations.plotting_core import (
     make_diff_colourmap,
     prepare_difference_stream,
     safe_filename,
+    safe_nanmax,
+    safe_nanmin,
     style_for_variable,
 )
 
@@ -64,12 +65,12 @@ logger = logging.getLogger(__name__)
 
 
 def plot_video_prediction(
+    ground_truth: ArrayTHW,
+    prediction: ArrayTHW,
     *,
     dates: Sequence[date | datetime],
-    ground_truth_stream: np.ndarray,
     land_mask: LandMask,
     plot_spec: PlotSpec,
-    prediction_stream: np.ndarray,
 ) -> dict[str, io.BytesIO]:
     """Generate animated visualisations showing the temporal evolution of sea ice concentration.
 
@@ -77,21 +78,16 @@ def plot_video_prediction(
     difference computation strategies for optimal performance with large datasets.
 
     Args:
-        plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
-            other visualisation parameters.
-        ground_truth_stream: 3D array with shape (time, height, width) containing
+        ground_truth: 3D array with shape (time, height, width) containing
             ground truth sea ice concentration values over time.
-        prediction_stream: 3D array with shape (time, height, width) containing
+        prediction: 3D array with shape (time, height, width) containing
             predicted sea ice concentration values. Must have the same shape as
             ground_truth_stream.
         dates: List of date/datetime objects corresponding to each timestep.
             Must have the same length as the time dimension of the data arrays.
-        include_difference: Whether to include difference visualisation in the animation.
         land_mask: Land mask to apply to the data.
-        diff_strategy: Strategy for computing differences over time:
-            - "precompute": Calculate all differences upfront (memory intensive)
-            - "two-pass": Scan data to determine colour scale, compute per-frame
-            - "per-frame": Compute differences on-demand (memory efficient)
+        plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
+            other visualisation parameters.
 
     Returns:
         Dictionary mapping video names to BytesIO objects containing the encoded video data.
@@ -105,19 +101,19 @@ def plot_video_prediction(
 
     """
     # Check the shapes of the arrays
-    if ground_truth_stream.shape != prediction_stream.shape:
-        msg = f"Prediction ({prediction_stream.shape}) has a different shape to ground truth ({ground_truth_stream.shape})."
+    n_timesteps, height, width = ground_truth.shape
+    if ground_truth.shape != prediction.shape:
+        msg = f"Prediction ({prediction.shape}) has a different shape to ground truth ({ground_truth.shape})."
         raise InvalidArrayError(msg)
-    n_timesteps, height, width = ground_truth_stream.shape
-    if len(dates) != n_timesteps:
+    if len(dates) != ground_truth.shape[0]:
         error_msg = (
             f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         )
         raise InvalidArrayError(error_msg)
 
     # Apply land mask to data streams
-    ground_truth_stream = land_mask.apply_to(ground_truth_stream)
-    prediction_stream = land_mask.apply_to(prediction_stream)
+    masked_ground_truth = land_mask.apply_to(ground_truth)
+    masked_prediction = land_mask.apply_to(prediction)
 
     # Initialise the figure and axes with a larger footer space for videos
     layout_config = LayoutConfig(title_footer=TitleFooterConfig(footer_space=0.11))
@@ -131,7 +127,7 @@ def plot_video_prediction(
 
     # Stable ranges for the whole animation
     display_ranges = compute_display_ranges_stream(
-        ground_truth_stream, prediction_stream, plot_spec
+        masked_ground_truth, masked_prediction, plot_spec
     )
 
     # Prepare the difference array according to the strategy; also ensure a colour scale exists
@@ -139,13 +135,15 @@ def plot_video_prediction(
         include_difference=plot_spec.include_difference,
         diff_mode=plot_spec.diff_mode,
         strategy=plot_spec.diff_strategy,
-        ground_truth_stream=ground_truth_stream,
-        prediction_stream=prediction_stream,
+        ground_truth_stream=masked_ground_truth,
+        prediction_stream=masked_prediction,
     )
     if plot_spec.include_difference and diff_colour_scale is None:
         # Per-frame strategy: infer a stable colour scale from the first frame to avoid breathing
         first_diff = compute_difference(
-            ground_truth_stream[0], prediction_stream[0], plot_spec.diff_mode
+            masked_ground_truth[0],
+            masked_prediction[0],
+            plot_spec.diff_mode,
         )
         diff_colour_scale = make_diff_colourmap(first_diff, mode=plot_spec.diff_mode)
     precomputed_diff_0 = (
@@ -157,8 +155,8 @@ def plot_video_prediction(
     # Initial frame
     image_groundtruth, image_prediction, image_difference, _ = _draw_frame(
         axs,
-        ground_truth_stream[0],
-        prediction_stream[0],
+        masked_ground_truth[0],
+        masked_prediction[0],
         plot_spec,
         land_mask,
         diff_colour_scale=diff_colour_scale,
@@ -203,8 +201,8 @@ def plot_video_prediction(
         )
         _draw_frame(
             axs,
-            ground_truth_stream[tt],
-            prediction_stream[tt],
+            masked_ground_truth[tt],
+            masked_prediction[tt],
             plot_spec,
             land_mask,
             diff_colour_scale=diff_colour_scale,
@@ -244,13 +242,13 @@ def plot_video_prediction(
 
 
 def plot_video_single_input(  # noqa: PLR0915
+    variable_name: str,
+    variable_values: ArrayTHW,
     *,
     dates: Sequence[date | datetime],
     land_mask: LandMask,
-    np_array_thw: np.ndarray,
     plot_spec: PlotSpec,
     save_path: Path | None = None,
-    variable_name: str,
 ) -> io.BytesIO:
     """Create animation showing temporal evolution of a single variable.
 
@@ -258,14 +256,12 @@ def plot_video_single_input(  # noqa: PLR0915
     with consistent colour scaling across all frames to avoid visual "breathing".
 
     Args:
-        variable_name: Name of the variable (e.g., "era5:2t", "osisaf-south:ice_conc").
-        np_array_thw: 3D array of data over time [T, H, W].
         dates: Sequence of dates corresponding to each timestep (length must match T).
-        plot_spec: Base plotting specification (colourmap, hemisphere, etc.).
         land_mask: Optional 2D boolean array marking land areas [H, W].
-        style: Optional pre-computed VariableStyle for this variable.
-        styles: Optional dictionary of style configurations for matching.
+        plot_spec: Base plotting specification (colourmap, hemisphere, etc.).
         save_path: Optional path to save the video file to disk.
+        variable_name: Name of the variable (e.g., "era5:2t", "osisaf-south:ice_conc").
+        variable_values: 3D array of data over time [T, H, W].
 
     Returns:
         BytesIO buffer containing the encoded video data.
@@ -278,29 +274,25 @@ def plot_video_single_input(  # noqa: PLR0915
     from . import convert  # noqa: PLC0415  # Local import to avoid circulars
 
     # Validate input
-    if np_array_thw.ndim != 3:  # noqa: PLR2004
-        msg = f"Expected 3D data [T,H,W], got shape {np_array_thw.shape}"
+    if variable_values.ndim != 3:  # noqa: PLR2004
+        msg = f"Expected 3D data [T,H,W], got shape {variable_values.shape}"
         raise InvalidArrayError(msg)
 
-    n_timesteps, height, width = np_array_thw.shape
+    n_timesteps, height, width = variable_values.shape
     if len(dates) != n_timesteps:
         msg = f"Number of dates ({len(dates)}) != number of timesteps ({n_timesteps})"
         raise InvalidArrayError(msg)
 
     # Apply land mask
-    np_array_thw = land_mask.apply_to(np_array_thw)
+    masked_variable_values = land_mask.apply_to(variable_values)
 
     # Get styling for this variable
     style = style_for_variable(variable_name, plot_spec.per_variable_styles)
 
     # Create stable normalisation across all frames
     # Use global min/max to prevent colour scale "breathing"
-    data_min = (
-        float(np.nanmin(np_array_thw)) if np.isfinite(np_array_thw).any() else 0.0
-    )
-    data_max = (
-        float(np.nanmax(np_array_thw)) if np.isfinite(np_array_thw).any() else 1.0
-    )
+    data_min = safe_nanmin(masked_variable_values)
+    data_max = safe_nanmax(masked_variable_values)
 
     # Override with style limits if provided
     effective_vmin = style.vmin if style.vmin is not None else data_min
@@ -308,7 +300,7 @@ def plot_video_single_input(  # noqa: PLR0915
 
     # Create normalisation using first frame to establish type
     norm, vmin, vmax = create_normalisation(
-        np_array_thw[0],
+        masked_variable_values[0],
         vmin=effective_vmin,
         vmax=effective_vmax,
         centre=style.two_slope_centre,
@@ -326,7 +318,11 @@ def plot_video_single_input(  # noqa: PLR0915
     cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
     origin = style.origin or "lower"
     image = ax.imshow(
-        np_array_thw[0], cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
+        masked_variable_values[0],
+        cmap=cmap,
+        norm=norm,
+        origin=origin,
+        interpolation="nearest",
     )
 
     # Create colourbar (stable across all frames)
@@ -375,7 +371,7 @@ def plot_video_single_input(  # noqa: PLR0915
     def animate(tt: int) -> tuple[()]:
         """Update function for each frame of the animation."""
         # Update image data
-        image.set_data(np_array_thw[tt])
+        image.set_data(masked_variable_values[tt])
         # Update title with current date
         if title_text is not None:
             title_text.set_text(
@@ -414,8 +410,8 @@ def plot_video_single_input(  # noqa: PLR0915
 
 
 def plot_video_inputs(
+    variables: dict[str, ArrayTHW],
     *,
-    channels: dict[str, np.ndarray],
     dates: Sequence[date | datetime],
     land_mask: LandMask,
     plot_spec: PlotSpec,
@@ -428,11 +424,11 @@ def plot_video_inputs(
     land masking to all variables.
 
     Args:
-        channels: Dictionary of variable name to THW 3D array of values.
         dates: Sequence of dates for each timestep (length must match T).
         plot_spec: Plotting specification.
         land_mask: Land mask to apply to all variables.
         save_dir: Optional directory to save videos to disk.
+        variables: Dictionary of variable name to THW 3D array of values.
 
     Returns:
         Dictionary mapping variable_name to video_buffer.
@@ -441,38 +437,36 @@ def plot_video_inputs(
         InvalidArrayError: If arrays/names count mismatch or invalid shapes.
 
     """
-    channel_names = list(channels.keys())
-    channel_arrays_stream = list(channels.values())
-
     results: dict[str, io.BytesIO] = {}
 
-    for data_stream, var_name in zip(channel_arrays_stream, channel_names, strict=True):
-        logger.debug("Creating animation for variable: %s", var_name)
+    # for data_stream, var_name in zip(channel_arrays_stream, channel_names, strict=True):
+    for variable_name, variable_values in variables.items():
+        logger.debug("Creating animation for variable: %s", variable_name)
 
         # Determine save path if save_dir is provided
         save_path: Path | None = None
         if save_dir is not None:
             # Sanitise variable name for filename
-            file_base = var_name.replace(":", "__")
+            file_base = variable_name.replace(":", "__")
             suffix = ".gif" if plot_spec.video_format == "gif" else ".mp4"
             save_path = save_dir / f"{safe_filename(file_base)}{suffix}"
 
         try:
             # Create animation for this variable
             video_buffer = plot_video_single_input(
-                variable_name=var_name,
-                np_array_thw=data_stream,
+                variable_name,
+                variable_values,
                 dates=dates,
-                plot_spec=plot_spec,
                 land_mask=land_mask,
+                plot_spec=plot_spec,
                 save_path=save_path,
             )
 
-            results[var_name] = video_buffer
+            results[variable_name] = video_buffer
 
         except (InvalidArrayError, ValueError, MemoryError, OSError):
             logger.exception(
-                "Failed to create animation for variable %s, skipping", var_name
+                "Failed to create animation for variable %s, skipping", variable_name
             )
             continue
 

@@ -11,17 +11,15 @@
 import logging
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import TwoSlopeNorm
 from PIL.ImageFile import ImageFile
 
-from ice_station_zebra.exceptions import InvalidArrayError
 from ice_station_zebra.types import PlotSpec
 
-from . import convert
+from .convert import image_from_figure
 from .helpers import (
     _build_title_static,
     _draw_frame,
@@ -91,11 +89,6 @@ def plot_static_prediction(
         levels,
     ) = _prepare_static_plot(plot_spec, ground_truth_hw, prediction_hw)
 
-    # Check shape of arrays
-    if ground_truth_hw.shape != prediction_hw.shape:
-        msg = f"Prediction ({prediction_hw.shape}) has a different shape to ground truth ({ground_truth_hw.shape})."
-        raise InvalidArrayError(msg)
-
     # Initialise the figure and axes with dynamic top spacing if needed
     fig, axs, cbar_axes = build_layout(
         plot_spec=plot_spec,
@@ -145,7 +138,7 @@ def plot_static_prediction(
     _maybe_add_footer(fig, plot_spec)
 
     try:
-        return {"sea-ice_concentration-static-maps": [convert.image_from_figure(fig)]}
+        return {"sea-ice_concentration-static-maps": [image_from_figure(fig)]}
     finally:
         plt.close(fig)
 
@@ -154,68 +147,53 @@ def plot_static_inputs(
     *,
     channels: dict[str, np.ndarray],
     land_mask: LandMask,
-    plot_spec_base: PlotSpec,
+    plot_spec: PlotSpec,
     save_dir: Path | None = None,
-    styles: dict[str, dict[str, Any]] | None = None,
     when: date | datetime,
 ) -> dict[str, list[ImageFile]]:
     """Plot one image per input channel as a static map.
 
-    Returns list of (name, PIL.ImageFile, saved_path|None).
+    Returns list of (name, list[PIL.ImageFile]).
     """
-    channel_arrays = list(channels.values())
-    channel_names = list(channels.keys())
-    styles = styles or plot_spec_base.per_variable_styles
     results: dict[str, list[ImageFile]] = {}
 
-    from . import convert  # noqa: PLC0415  # local import to avoid circulars
-
-    expected_ndim = 2
-    for arr, name in zip(channel_arrays, channel_names, strict=True):
-        if arr.ndim != expected_ndim:
-            msg = f"Expected 2D [H,W] for channel '{name}', got {arr.shape}"
-            raise InvalidArrayError(msg)
+    for name, array in channels.items():
+        if array.ndim != 2:  # noqa: PLR2004
+            msg = f"Expected 2D [H,W] for channel '{name}', got {array.shape}"
+            logger.warning(msg)
+            continue
 
         # Apply land mask (mask out land to NaN)
-        arr_to_plot = land_mask.apply_to(arr)
+        masked_array = land_mask.apply_to(array)
 
-        # Prefer an explicit styles dict, otherwise fall back to the PlotSpec attribute if present
-        style = style_for_variable(name, styles)
-        logger.debug(
-            "plot_raw_inputs: resolved style for %r => cmap=%r, vmin=%r, vmax=%r, origin=%r",
-            name,
-            style.cmap,
-            style.vmin,
-            style.vmax,
-            style.origin,
-        )
+        # Construct the style for this variable
+        style = style_for_variable(name, plot_spec.per_variable_styles)
 
         # Create normalisation using shared function
         norm, vmin, vmax = create_normalisation(
-            arr_to_plot,
+            masked_array,
             vmin=style.vmin,
             vmax=style.vmax,
             centre=style.two_slope_centre,
         )
 
         # Build figure and axis
-        height, width = arr_to_plot.shape
         fig, ax, cax = build_single_panel_figure(
-            height=height,
-            width=width,
-            colourbar_location=plot_spec_base.colourbar_location,
+            height=masked_array.shape[0],
+            width=masked_array.shape[1],
+            colourbar_location=plot_spec.colourbar_location,
         )
 
         # Render
-        cmap_name = style.cmap or plot_spec_base.colourmap
+        cmap_name = style.cmap or plot_spec.colourmap
         cmap = colourmap_with_bad(cmap_name, bad_color="lightgrey")
         origin = style.origin or "lower"
         image = ax.imshow(
-            arr_to_plot, cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
+            masked_array, cmap=cmap, norm=norm, origin=origin, interpolation="nearest"
         )
 
         # Colourbar
-        orientation = plot_spec_base.colourbar_location
+        orientation = plot_spec.colourbar_location
         cbar = fig.colorbar(image, ax=ax, cax=cax, orientation=orientation)
         is_vertical = orientation == "vertical"
         decimals = style.decimals if style.decimals is not None else 2
@@ -248,20 +226,19 @@ def plot_static_inputs(
         try:
             set_suptitle_with_box(
                 fig,
-                _format_title(name, plot_spec_base.hemisphere, when, style.units),
+                _format_title(name, plot_spec.hemisphere, when, style.units),
             )
         except (ValueError, AttributeError, RuntimeError) as err:
             logger.debug(
-                "Failed to draw raw-inputs title: %s; continuing without title.", err
+                "Failed to draw static inputs title: %s; continuing without title.", err
             )
 
         # Save to disk if requested (colons in variable names replaced)
         file_base = name.replace(":", "__")
         save_figure(fig, save_dir, file_base)
 
-        # Convert to PIL
         try:
-            pil_img = convert.image_from_figure(fig)
+            pil_img = image_from_figure(fig)
         finally:
             plt.close(fig)
 

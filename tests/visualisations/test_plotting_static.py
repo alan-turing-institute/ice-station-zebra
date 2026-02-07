@@ -163,7 +163,7 @@ class TestPlotStaticInputs:
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
-            plot_spec_base=base_plot_spec,
+            plot_spec=base_plot_spec,
             when=TEST_DATE,
         )
 
@@ -182,7 +182,7 @@ class TestPlotStaticInputs:
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
             land_mask=mock_land_mask,
-            plot_spec_base=base_plot_spec,
+            plot_spec=base_plot_spec,
             when=TEST_DATE,
         )
 
@@ -201,7 +201,7 @@ class TestPlotStaticInputs:
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
-            plot_spec_base=base_plot_spec,
+            plot_spec=base_plot_spec,
             styles=variable_styles,
             when=TEST_DATE,
         )
@@ -214,15 +214,13 @@ class TestPlotStaticInputs:
     def test_multiple_channels(
         self,
         multi_channel_hw: dict[str, np.ndarray],
-        variable_styles: dict[str, dict[str, Any]],
         base_plot_spec: PlotSpec,
     ) -> None:
         """Test plotting multiple channels at once."""
         results = plot_static_inputs(
             channels=multi_channel_hw,
             land_mask=LandMask(None, "north"),
-            plot_spec_base=base_plot_spec,
-            styles=variable_styles,
+            plot_spec=base_plot_spec,
             when=TEST_DATE,
         )
 
@@ -246,12 +244,12 @@ class TestPlotStaticInputs:
                 "use_scientific_notation": True,
             },
         }
+        plot_spec = replace(base_plot_spec, per_variable_styles=styles_with_scientific)
 
         results = plot_static_inputs(
             channels={"era5:q_10": era5_humidity_2d},
             land_mask=LandMask(None, "north"),
-            plot_spec_base=base_plot_spec,
-            styles=styles_with_scientific,
+            plot_spec=plot_spec,
             when=TEST_DATE,
         )
 
@@ -276,7 +274,7 @@ class TestPlotStaticInputs:
         results = plot_static_inputs(
             channels={"era5:2t": era5_temperature_2d},
             land_mask=LandMask(None, "north"),
-            plot_spec_base=plot_spec,
+            plot_spec=plot_spec,
             when=TEST_DATE,
         )
 
@@ -304,7 +302,7 @@ class TestPlotStaticInputs:
         results = plot_static_inputs(
             channels={var_name: data},
             land_mask=LandMask(None, "north"),
-            plot_spec_base=base_plot_spec,
+            plot_spec=base_plot_spec,
             when=TEST_DATE,
         )
 
@@ -325,7 +323,7 @@ class TestPlotStaticInputs:
             plot_static_inputs(
                 channels={"era5:2t": wrong_dim_array},
                 land_mask=LandMask(None, "north"),
-                plot_spec_base=base_plot_spec,
+                plot_spec=base_plot_spec,
                 when=TEST_DATE,
             )
 

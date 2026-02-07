@@ -13,6 +13,7 @@ class LandMask:
     ) -> None:
         """A helper class to apply land masks to data arrays."""
         self._cache: dict[tuple[int, int], np.ndarray] = {}
+        self._ignored: set[tuple[int, int]] = set()
         if base_path:
             search = f"data/preprocessing/*/IceNetSIC/data/masks/{hemisphere}/masks/land_mask.npy"
             for mask_path in base_path.glob(search):
@@ -28,7 +29,11 @@ class LandMask:
     def apply_to(self, data_array: np.ndarray) -> np.ndarray:
         """Apply a land mask to an array."""
         hw = data_array.shape[-2:]
+        # If there is no mask in the cache, return the array unchanged
         if hw not in self._cache:
-            logger.warning("No land mask available for shape %s.", hw)
-            self._cache[hw] = np.empty(hw, dtype=bool)
+            if hw not in self._ignored:
+                logger.warning("No land mask available for shape %s.", hw)
+                self._ignored.add(hw)
+            return data_array
+        # Otherwise, apply the mask (mask out land to NaN)
         return np.where(self._cache[hw], np.nan, data_array)

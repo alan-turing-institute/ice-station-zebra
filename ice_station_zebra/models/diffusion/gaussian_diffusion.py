@@ -131,7 +131,7 @@ class GaussianDiffusion:
         posterior_variance_t = self._extract(self.posterior_variance, t, x.shape)
 
         # Add noise scaled by the posterior variance (except at t=0)
-        noise = torch.randn_like(x, device=x.device)
+        noise = torch.randn_like(x)
         nonzero_mask = (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
 
         return model_mean + nonzero_mask * torch.sqrt(posterior_variance_t) * noise
@@ -199,7 +199,7 @@ class GaussianDiffusion:
 
         """
         if noise is None:
-            noise = torch.randn_like(x_start, device=x_start.device)
+            noise = torch.randn_like(x_start)
 
         sqrt_alphas_cumprod_t = self._extract(
             self.sqrt_alphas_cumprod, t, x_start.shape

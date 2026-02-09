@@ -1,0 +1,8 @@
+# PyTorch Lightning scheduler settings
+defaults:
+  - default
+  - _self_
+
+scheduler_parameters:
+  eta_min: 5e-6
+  T_max: 100

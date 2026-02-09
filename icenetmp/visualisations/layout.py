@@ -462,16 +462,6 @@ def build_layout(
     _set_titles(axs, plot_spec)
     _style_axes(axs)
 
-    # Store layout parameters on the figure for potential future use
-    fig._zebra_layout = {  # type: ignore[attr-defined]
-        "outer_margin": outer_margin,
-        "gutter": gutter,
-        "cbar_width": cbar_width,
-        "title_space": title_space,
-        "footer_space": footer_space,
-        "cbar_height": cbar_height,
-        "cbar_pad": cbar_pad,
-    }
     return fig, axs, caxes
 
 

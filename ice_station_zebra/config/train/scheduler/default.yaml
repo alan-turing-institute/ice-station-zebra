@@ -9,5 +9,3 @@ interval: epoch
 scheduler_parameters:
   eta_min: 5e-6
   T_max: 100
-
-

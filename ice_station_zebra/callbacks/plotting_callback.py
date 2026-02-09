@@ -25,7 +25,7 @@ class PlottingCallback(Callback):
         self,
         *,
         frequency: int = 5,
-        make_input_plots: bool = True,
+        make_input_plots: bool = False,
         make_static_plots: bool = True,
         make_video_plots: bool = True,
         plot_spec: PlotSpec | None = None,

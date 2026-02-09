@@ -25,7 +25,14 @@ torch.set_default_dtype(torch.float32)
 
 
 class SimpleEncoder2D(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int) -> None:
+        """Simple 2D encoder block using Conv2d, GroupNorm, and SiLU activation.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+
+        """
         super().__init__()
         self.net = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels, out_channels, 3, padding=1),
@@ -33,7 +40,16 @@ class SimpleEncoder2D(torch.nn.Module):
             torch.nn.SiLU(),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the encoder block.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B, C, H, W).
+
+        Returns:
+            torch.Tensor: Output tensor after applying the block.
+
+        """
         return self.net(x)
 
 
@@ -185,7 +201,6 @@ class DDPM(ZebraModel):
             self.n_forecast_steps * self.base_output_channels,
             *x.shape[-2:],
         )
-        device = x.device
 
         # Start from pure noise
         y = torch.randn(shape, device=self.device)
@@ -233,8 +248,8 @@ class DDPM(ZebraModel):
         osisaf = osisaf.squeeze(2)  # [B, T, H, W]
 
         # Resize ERA5 spatially to match OSISAF resolution
-        B, T, C, H2, W2 = era5.shape
-        H, W = osisaf.shape[-2:]
+        B, T, C, H2, W2 = era5.shape  # noqa: N806
+        H, W = osisaf.shape[-2:]  # noqa: N806
 
         # Flatten batch and time dimensions for spatial interpolation
         # [B, T, C, H2, W2] -> [B*T, C, H2, W2]
@@ -259,10 +274,7 @@ class DDPM(ZebraModel):
         era5_features = era5_features.mean(dim=2)  # [B, cond//2, H, W]
 
         # Concatenate along channel dimension
-        conditioning = torch.cat(
-            [osisaf_features, era5_features], dim=1
-        )  # [B, cond, H, W]
-        return conditioning
+        return torch.cat([osisaf_features, era5_features], dim=1)
 
     def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
         """One training step using DDPM loss (predicted noise vs. true noise)."""

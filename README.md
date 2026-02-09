@@ -127,6 +127,18 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 uv run zebra train
 
 Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
 
+### Visualisations
+
+You can plot static images or animations of the raw data by adding the following option to your local config:
+```
+evaluate:
+  callbacks:
+    plotting:
+      make_input_plots: true
+```
+
+Settings (output directories, styling, animation parameters) are read from `config.evaluate.callbacks.raw_inputs` in your YAML config files. Command-line options can override config values if needed.
+
 ## Adding a new model
 
 ### Background

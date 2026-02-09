@@ -1,10 +1,11 @@
 import warnings
+from collections.abc import Iterator
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Protocol, cast
 
 import hydra
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
@@ -12,9 +13,9 @@ from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
 from ice_station_zebra.data_loaders import ZebraDataModule
+from ice_station_zebra.types import ArrayHW, ArrayTHW, PlotSpec
+from ice_station_zebra.visualisations.land_mask import LandMask
 from tests.conftest import make_varying_sic_stream
-
-mpl.use("Agg")
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep
 # long-lived references to animation objects beyond saving to buffer.
@@ -25,12 +26,22 @@ warnings.filterwarnings(
 )
 
 TEST_DATE = date(2020, 1, 15)
+TEST_HEIGHT = 48
+TEST_WIDTH = 48
+N_TIMESTEPS = 4
+
+
+@pytest.fixture(autouse=True)
+def close_all_figures() -> Iterator[None]:
+    """Automatically close all matplotlib figures after each test to prevent warnings."""
+    yield
+    plt.close("all")
 
 
 @pytest.fixture
 def sic_pair_2d(
-    sic_pair_3d_stream: tuple[np.ndarray, np.ndarray, list[date]],
-) -> tuple[np.ndarray, np.ndarray, date]:
+    sic_pair_3d_stream: tuple[ArrayTHW, ArrayTHW, list[date]],
+) -> tuple[ArrayHW, ArrayHW, date]:
     """Extract a single frame from the 3D stream for static plots.
 
     Returns the first timestep from the stream as 2D arrays.
@@ -40,7 +51,7 @@ def sic_pair_2d(
 
 
 @pytest.fixture
-def sic_pair_warning_2d() -> tuple[np.ndarray, np.ndarray, date]:
+def sic_pair_warning_2d() -> tuple[ArrayHW, ArrayHW, date]:
     """Construct arrays that should trigger range_check-report warnings.
 
     Ground truth stays in [0,1]. Prediction has a stripe with values > 1.5 to
@@ -69,7 +80,7 @@ class MakeCircularArctic(Protocol):
     ) -> np.ndarray: ...
 
 
-def make_central_distance_grid(height: int, width: int) -> np.ndarray:
+def make_central_distance_grid(height: int, width: int) -> ArrayHW:
     """Return per-pixel Euclidean distance from the image centre.
 
     The centre is defined as ((H-1)/2, (W-1)/2) so that distances are symmetric
@@ -83,14 +94,14 @@ def make_central_distance_grid(height: int, width: int) -> np.ndarray:
 @pytest.fixture
 def sic_pair_3d_stream(
     make_circular_arctic: MakeCircularArctic,
-) -> tuple[np.ndarray, np.ndarray, list[date]]:
+) -> tuple[ArrayTHW, ArrayTHW, list[date]]:
     """Short 3D streams (time, height, width) and dates for animations.
 
     Shape (4, 48, 48), values in [0, 1]. Frames drift slightly over time
     with a bit of noise to mimic day-to-day change.
     """
     rng = np.random.default_rng(100)
-    timesteps, height, width = 4, 48, 48
+    timesteps, height, width = N_TIMESTEPS, 48, 48
 
     dist = make_central_distance_grid(height, width)
 
@@ -122,7 +133,7 @@ def sic_pair_3d_stream(
 @pytest.fixture
 def checkpoint_data(
     *, use_checkpoint: bool, example_checkpoint_path: Path | None
-) -> tuple[np.ndarray, np.ndarray, date] | None:
+) -> tuple[ArrayHW, ArrayHW, date] | None:
     """Load data from a checkpoint for plotting tests.
 
     Returns (ground_truth, prediction, date) if checkpoint is available, else None.
@@ -194,9 +205,9 @@ def checkpoint_data(
 
 @pytest.fixture
 def plotting_data(
-    checkpoint_data: tuple[np.ndarray, np.ndarray, date] | None,
-    sic_pair_2d: tuple[np.ndarray, np.ndarray, date],
-) -> tuple[np.ndarray, np.ndarray, date]:
+    checkpoint_data: tuple[ArrayHW, ArrayHW, date] | None,
+    sic_pair_2d: tuple[ArrayHW, ArrayHW, date],
+) -> tuple[ArrayHW, ArrayHW, date]:
     """Choose between checkpoint data or fake data data for plotting tests.
 
     Returns checkpoint data if available and --use-checkpoint is set, otherwise fake data data.
@@ -259,3 +270,142 @@ def example_checkpoint_path(pytestconfig: pytest.Config) -> Path | None:
             return ckpt.resolve()
 
     return None
+
+
+# --- Raw Inputs Fixtures ---
+
+
+@pytest.fixture
+def base_plot_spec() -> PlotSpec:
+    """Base plotting specification for raw inputs."""
+    return PlotSpec(
+        colourbar_location="vertical",
+        colourmap="viridis",
+        hemisphere="south",
+        variable="raw_inputs",
+    )
+
+
+@pytest.fixture
+def test_dates_short() -> list[date]:
+    """Generate a short sequence of test dates for animations (4 days)."""
+    return [TEST_DATE + timedelta(days=i) for i in range(N_TIMESTEPS)]
+
+
+@pytest.fixture
+def mock_land_mask() -> LandMask:
+    """Create a simple circular land mask for testing [H, W]."""
+    land_mask = LandMask(None, "north")
+    dist = make_central_distance_grid(TEST_HEIGHT, TEST_WIDTH)
+    radius = min(TEST_HEIGHT, TEST_WIDTH) * 0.25
+    land_mask.add_mask((dist < radius).astype(bool))
+    return land_mask
+
+
+@pytest.fixture
+def era5_temperature_2d() -> ArrayHW:
+    """Generate synthetic ERA5 2m temperature data (K) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Temperature centreed around 273.15K (0°C) with realistic variation
+    base_temp = 273.15 + rng.normal(0, 10, size=(TEST_HEIGHT, TEST_WIDTH))
+    return base_temp.astype(np.float32)
+
+
+@pytest.fixture
+def era5_humidity_2d() -> ArrayHW:
+    """Generate synthetic ERA5 specific humidity data (kg/kg) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Humidity values are very small (0.001 to 0.01)
+    humidity = rng.uniform(0.0005, 0.015, size=(TEST_HEIGHT, TEST_WIDTH))
+    return humidity.astype(np.float32)
+
+
+@pytest.fixture
+def era5_wind_u_2d() -> ArrayHW:
+    """Generate synthetic ERA5 u-wind component (m/s) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Wind centreed around 0 with realistic variation
+    wind = rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH))
+    return wind.astype(np.float32)
+
+
+@pytest.fixture
+def osisaf_ice_conc_2d() -> ArrayHW:
+    """Generate synthetic OSISAF sea ice concentration data (fraction 0-1) [H, W]."""
+    rng = np.random.default_rng(100)
+    # Ice concentration between 0 and 1
+    ice_conc = rng.uniform(0.0, 1.0, size=(TEST_HEIGHT, TEST_WIDTH))
+    return ice_conc.astype(np.float32)
+
+
+@pytest.fixture
+def era5_temperature_thw(test_dates_short: list[date]) -> ArrayTHW:
+    """Generate synthetic 3D temperature stream [T, H, W]."""
+    rng = np.random.default_rng(100)
+    n_timesteps = len(test_dates_short)
+    # Temperature evolving over time
+    data = np.zeros((n_timesteps, TEST_HEIGHT, TEST_WIDTH), dtype=np.float32)
+    for t in range(n_timesteps):
+        data[t] = 273.15 + rng.normal(0, 10, size=(TEST_HEIGHT, TEST_WIDTH))
+    return data
+
+
+@pytest.fixture
+def multi_channel_hw() -> dict[str, ArrayHW]:
+    """Generate multiple channels of raw input data."""
+    rng = np.random.default_rng(100)
+    return {
+        # temperature
+        "era5:2t": rng.uniform(270, 280, size=(TEST_HEIGHT, TEST_WIDTH)).astype(
+            np.float32
+        ),
+        # u-wind
+        "era5:10u": rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),
+        # v-wind
+        "era5:10v": rng.normal(0, 5, size=(TEST_HEIGHT, TEST_WIDTH)).astype(np.float32),
+        # ice conc
+        "osisaf-south:ice_conc": rng.uniform(
+            0, 1, size=(TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+    }
+
+
+@pytest.fixture
+def multi_channel_thw() -> dict[str, ArrayTHW]:
+    """Generate multiple channels of raw input data."""
+    rng = np.random.default_rng(100)
+    return {
+        # temperature
+        "era5:2t": rng.uniform(
+            270, 280, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # u-wind
+        "era5:10u": rng.normal(
+            0, 5, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # v-wind
+        "era5:10v": rng.normal(
+            0, 5, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+        # ice conc
+        "osisaf-south:ice_conc": rng.uniform(
+            0, 1, size=(N_TIMESTEPS, TEST_HEIGHT, TEST_WIDTH)
+        ).astype(np.float32),
+    }
+
+
+@pytest.fixture
+def variable_styles() -> dict[str, dict[str, Any]]:
+    """Sample variable styling configuration for raw inputs."""
+    return {
+        "era5:2t": {
+            "cmap": "RdBu_r",
+            "two_slope_centre": 273.15,
+            "units": "K",
+            "decimals": 1,
+        },
+        "era5:10u": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+        "era5:10v": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+        "era5:q_10": {"cmap": "viridis", "decimals": 4, "units": "kg/kg"},
+        "osisaf-south:ice_conc": {"cmap": "Blues_r"},
+    }

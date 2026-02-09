@@ -3,6 +3,8 @@ from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING
 
 import hydra
+
+# Set matplotlib backend BEFORE any imports that might use it
 import torch
 from lightning.fabric.utilities import suggested_max_num_workers
 from omegaconf import DictConfig, OmegaConf
@@ -49,14 +51,12 @@ class ZebraEvaluator:
 
         # Add callbacks
         callbacks: list[Callback] = []
-        for cfg in config["evaluate"].get("callbacks", {}).values():
+        for cfg in config.get("evaluate", {}).get("callbacks", {}).values():
             callback = hydra.utils.instantiate(cfg)
-            # Pass config to PlottingCallback for land mask detection
-            if callback.__class__.__name__ == "PlottingCallback":
-                callback.config = OmegaConf.to_container(config, resolve=True)
-            callbacks.append(callback)
-        for callback in callbacks:
             logger.debug("Adding evaluation callback %s.", callback.__class__.__name__)
+            if hasattr(callback, "set_metadata"):
+                callback.set_metadata(config, model_cls.__name__)
+            callbacks.append(callback)
 
         # Construct lightning loggers
         lightning_loggers = [

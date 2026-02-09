@@ -81,6 +81,20 @@ addopts = [
     "--cov-report=term-missing",
     "-vvv",
 ]
+testpaths = ["tests"]
+norecursedirs = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    "node_modules",
+    ".idea",
+    ".vscode",
+    "data",
+    "raw_input_*",
+]
 
 [tool.ruff]
 line-length = 88

@@ -11,9 +11,7 @@ class TestCombinedDataset:
     dates_str = ("2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05")
     dates_np = tuple(np.datetime64(s) for s in dates_str)
 
-    def test_combined_dataset_no_valid_dates_non_overlapping_ranges(
-        self, mock_dataset: Path
-    ) -> None:
+    def test_no_valid_dates_non_overlapping_ranges(self, mock_dataset: Path) -> None:
         """Test that CombinedDataset raises ValueError when datasets have non-overlapping date ranges."""
         # Create and combine two datasets with non-overlapping date ranges
         dataset1 = ZebraDataset(
@@ -28,7 +26,8 @@ class TestCombinedDataset:
         )
         combined = CombinedDataset(
             datasets=[dataset1, dataset2],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=1,
             n_forecast_steps=1,
         )
@@ -37,7 +36,7 @@ class TestCombinedDataset:
         with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
             _ = combined.dates
 
-    def test_combined_dataset_no_valid_dates_insufficient_history_steps(
+    def test_no_valid_dates_insufficient_history_steps(
         self, mock_dataset: Path
     ) -> None:
         """Test that CombinedDataset raises ValueError when history steps exceed available dates."""
@@ -50,7 +49,8 @@ class TestCombinedDataset:
         # Create combined dataset with history steps larger than available dates
         combined = CombinedDataset(
             datasets=[dataset],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=10,  # Only 2 dates available
             n_forecast_steps=1,
         )
@@ -59,7 +59,7 @@ class TestCombinedDataset:
         with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
             _ = combined.dates
 
-    def test_combined_dataset_no_valid_dates_insufficient_forecast_steps(
+    def test_no_valid_dates_insufficient_forecast_steps(
         self, mock_dataset: Path
     ) -> None:
         """Test that CombinedDataset raises ValueError when forecast steps exceed available dates."""
@@ -72,7 +72,8 @@ class TestCombinedDataset:
         # Create combined dataset with forecast steps larger than available dates
         combined = CombinedDataset(
             datasets=[dataset],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=1,
             n_forecast_steps=10,  # Only 2 dates available
         )
@@ -81,7 +82,35 @@ class TestCombinedDataset:
         with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
             _ = combined.dates
 
-    def test_combined_dataset_valid_dates(self, mock_dataset: Path) -> None:
+    def test_no_valid_dates_incompatible_times(self, mock_dataset: Path) -> None:
+        """Test that CombinedDataset raises ValueError when datasets have incompatible times."""
+        dataset = ZebraDataset(
+            name="dataset",
+            input_files=[mock_dataset],
+        )
+        # Apply an offset of 12h to the dates in a second dataset
+        dataset_offset = ZebraDataset(
+            name="dataset_offset",
+            input_files=[mock_dataset],
+        )
+        dataset_offset.dates = [
+            date + np.timedelta64(720, "m") for date in self.dates_np
+        ]
+
+        # Create combined dataset
+        combined = CombinedDataset(
+            datasets=[dataset, dataset_offset],
+            target_group_name="dataset",
+            target_variables=["ice_conc"],
+            n_history_steps=1,
+            n_forecast_steps=1,
+        )
+
+        # Confirm that no valid dates are available
+        with pytest.raises(ValueError, match="CombinedDataset has no valid dates"):
+            _ = combined.dates
+
+    def test_valid_dates(self, mock_dataset: Path) -> None:
         """Test that CombinedDataset works correctly with valid overlapping dates."""
         # Create and combine two datasets with overlapping date ranges
         dataset1 = ZebraDataset(
@@ -94,7 +123,8 @@ class TestCombinedDataset:
         )
         combined = CombinedDataset(
             datasets=[dataset1, dataset2],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=2,
             n_forecast_steps=1,
         )
@@ -104,7 +134,7 @@ class TestCombinedDataset:
         assert len(dates) > 0
         assert all(isinstance(date, np.datetime64) for date in dates)
 
-    def test_combined_dataset_start_and_end_dates(self, mock_dataset: Path) -> None:
+    def test_start_and_end_dates(self, mock_dataset: Path) -> None:
         """Test that start_date and end_date are correctly calculated from available dates."""
         dataset1 = ZebraDataset(
             name="dataset1",
@@ -118,7 +148,8 @@ class TestCombinedDataset:
         )
         combined = CombinedDataset(
             datasets=[dataset1, dataset2],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=1,
             n_forecast_steps=1,
         )
@@ -126,7 +157,7 @@ class TestCombinedDataset:
         assert combined.start_date == combined.dates[0]
         assert combined.end_date == combined.dates[-1]
 
-    def test_combined_dataset_lazy_loading(self, mock_dataset: Path) -> None:
+    def test_lazy_loading(self, mock_dataset: Path) -> None:
         """Test that dates are lazy-loaded and cached."""
         dataset = ZebraDataset(
             name="dataset1",
@@ -135,7 +166,8 @@ class TestCombinedDataset:
 
         combined = CombinedDataset(
             datasets=[dataset],
-            target="dataset1",
+            target_group_name="dataset1",
+            target_variables=["ice_conc"],
             n_history_steps=1,
             n_forecast_steps=1,
         )

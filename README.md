@@ -117,11 +117,27 @@ Run `uv run zebra train` to train using the datasets specified in the config.
 
 :information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the base path to the data defined in your config file.
 
-If you run into a `NotImplementedError` that asks you to set your environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1`, adding `antialias_val: false` in your local configuration file will allow you to train to completion (see [issue 127](https://github.com/alan-turing-institute/ice-station-zebra/issues/127))
+:warning: If you are running on macOS, you may need to prepend your `uv` run command with `PYTORCH_ENABLE_MPS_FALLBACK=1`. For example:
+
+```
+PYTORCH_ENABLE_MPS_FALLBACK=1 uv run zebra train
+```
 
 ### Evaluate
 
 Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
+
+### Visualisations
+
+You can plot static images or animations of the raw data by adding the following option to your local config:
+```
+evaluate:
+  callbacks:
+    plotting:
+      make_input_plots: true
+```
+
+Settings (output directories, styling, animation parameters) are read from `config.evaluate.callbacks.raw_inputs` in your YAML config files. Command-line options can override config values if needed.
 
 ## Adding a new model
 

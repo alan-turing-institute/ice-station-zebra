@@ -6,40 +6,14 @@ and format them for display in plot titles.
 
 import contextlib
 import logging
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
-from ice_station_zebra.data_loaders import CombinedDataset
+from omegaconf import DictConfig, OmegaConf
+
+from ice_station_zebra.types import Metadata
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Metadata:
-    """Structured metadata extracted from training configuration.
-
-    Attributes:
-        model: Model name (if available).
-        epochs: Maximum number of training epochs (if available).
-        start: Training start date string (if available).
-        end: Training end date string (if available).
-        cadence: Training data cadence string (if available).
-        n_points: Number of training points calculated from date range and cadence.
-        vars_by_source: Dictionary mapping dataset source names to lists of variable names.
-        n_history_steps: Number of history steps used as model input window (days).
-
-    """
-
-    model: str | None = None
-    epochs: int | None = None
-    start: str | None = None
-    end: str | None = None
-    cadence: str | None = None
-    n_points: int | None = None
-    n_history_steps: int | None = None
-    vars_by_source: dict[str, list[str]] | None = None
 
 
 def extract_variables_by_source(config: dict[str, Any]) -> dict[str, list[str]]:  # noqa: C901
@@ -233,7 +207,7 @@ def extract_training_date_range(
 
 
 def build_metadata(
-    config: dict[str, Any],
+    config_: DictConfig,
     model_name: str | None = None,
 ) -> Metadata:
     """Build structured metadata from configuration.
@@ -243,13 +217,15 @@ def build_metadata(
     is not available in the config.
 
     Args:
-        config: Configuration dictionary containing training and dataset info.
+        config_: Configuration dictionary containing training and dataset info.
         model_name: Optional model name (if not provided, will not be included).
 
     Returns:
         Metadata dataclass instance with extracted information.
 
     """
+    config = cast("dict[str, Any]", OmegaConf.to_container(config_, resolve=True))
+
     # Extract training date range
     start_str, end_str = extract_training_date_range(config)
 
@@ -351,109 +327,6 @@ def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901, P
             lines.append(f"Training Data: {' '.join(source_parts)}")
 
     return "\n".join(lines) if lines else None
-
-
-def build_metadata_subtitle(
-    config: dict[str, Any],
-    model_name: str | None = None,
-) -> str | None:
-    """Build metadata subtitle for plot titles.
-
-    Convenience function that combines build_metadata and format_metadata_subtitle.
-    Maintains backward compatibility with existing code.
-
-    Args:
-        config: Configuration dictionary containing training and dataset info.
-        model_name: Optional model name (if not provided, will not be included).
-
-    Returns:
-        Formatted metadata string with newlines, or None if no metadata available.
-
-    """
-    metadata = build_metadata(config, model_name=model_name)
-    return format_metadata_subtitle(metadata)
-
-
-def infer_hemisphere(dataset: CombinedDataset) -> str | None:  # noqa: C901, PLR0912
-    """Infer hemisphere from dataset name or config as a fallback.
-
-    Priority:
-    1) CombinedDataset.target.name containing "north"/"south"
-    2) Any input dataset name containing "north"/"south"
-    3) Dataset-level name or config strings containing the keywords
-
-    Args:
-        dataset: CombinedDataset instance to infer hemisphere from.
-
-    Returns:
-        "north" or "south" (lowercase) when detected, otherwise None.
-
-    """
-    candidate_names: list[str] = []
-
-    # 1) Target dataset name
-    target = getattr(dataset, "target", None)
-    target_name = getattr(target, "name", None)
-    if isinstance(target_name, str) and target_name:
-        candidate_names.append(target_name)
-
-    # 2) Top-level dataset name
-    ds_name = getattr(dataset, "name", None)
-    if isinstance(ds_name, str) and ds_name:
-        candidate_names.append(ds_name)
-
-    # 3) Inputs: may be a Sequence of objects, mappings or plain strings
-    inputs = getattr(dataset, "inputs", None)
-    if isinstance(inputs, Sequence) and not isinstance(inputs, (str, bytes)):
-        for item in inputs:
-            # If the item is a mapping-like object (dict), try key access
-            if isinstance(item, Mapping):
-                name = item.get("name") or item.get("dataset_name") or None
-            else:
-                # Otherwise try attribute access, then try if item itself is a string
-                name = (
-                    getattr(item, "name", None) if not isinstance(item, str) else item
-                )
-
-            if isinstance(name, str) and name:
-                candidate_names.append(name)
-
-    # 4) Generic config-like hints: look for a config attribute (mapping) and make a string of a few keys
-    config_like = getattr(dataset, "config", None) or getattr(
-        dataset, "dataset_config", None
-    )
-    if isinstance(config_like, Mapping):
-        # Check a few plausible keys
-        for key in ("name", "dataset", "dataset_name", "target"):
-            val = config_like.get(key)
-            if isinstance(val, str) and val:
-                candidate_names.append(val)
-        # As a last resort, make the mapping (small) into a string and use as a candidate
-        try:
-            maybe_str = str(config_like)
-            if maybe_str:
-                candidate_names.append(maybe_str)
-        except TypeError as exc:
-            logger.debug(
-                "Failed to extract config hint for hemisphere inference: %s",
-                exc,
-                exc_info=True,
-            )
-
-    # Normalise and search for hemisphere keywords.
-    for cand in candidate_names:
-        low = cand.lower()
-        if "north" in low:
-            logger.debug("Inferred hemisphere 'north' from dataset hint: %s", cand)
-            return "north"
-        if "south" in low:
-            logger.debug("Inferred hemisphere 'south' from dataset hint: %s", cand)
-            return "south"
-
-    return None
-
-
-# --- Internal helpers to reduce complexity/branching ---
 
 
 def _clean_date_str(date_str: str) -> str:

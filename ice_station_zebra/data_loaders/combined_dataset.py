@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from typing import Literal
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -13,7 +13,8 @@ class CombinedDataset(Dataset):
     def __init__(
         self,
         datasets: Sequence[ZebraDataset],
-        target: str,
+        target_group_name: str,
+        target_variables: Sequence[str],
         *,
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
@@ -30,8 +31,10 @@ class CombinedDataset(Dataset):
         self.n_forecast_steps = n_forecast_steps
         self.n_history_steps = n_history_steps
 
-        # Define target and input datasets
-        self.target = next(ds for ds in datasets if ds.name == target)
+        # Create a new dataset for the target with only the selected variables
+        self.target = next(
+            ds for ds in datasets if ds.name == target_group_name
+        ).subset(variables=target_variables)
         self.inputs = list(datasets)
 
         # Require that all datasets have the same frequency
@@ -84,6 +87,17 @@ class CombinedDataset(Dataset):
         """Return the start date of the dataset."""
         return self.dates[0]
 
+    @property
+    def hemisphere(self) -> Literal["north", "south"]:
+        """Return the hemisphere of the dataset."""
+        hemisphere: set[Literal["north", "south"]] = {
+            ds.hemisphere for ds in self.inputs
+        }
+        if len(hemisphere) != 1:
+            msg = f"Found {len(hemisphere)} different hemisphere indicators across {len(self.inputs)} datasets."
+            raise ValueError(msg)
+        return hemisphere.pop()
+
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         return len(self.dates)
@@ -102,11 +116,6 @@ class CombinedDataset(Dataset):
             ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
             for ds in self.inputs
         } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
-
-    def date_from_index(self, idx: int) -> datetime:
-        """Return the date of the timestep."""
-        np_datetime = self.dates[idx]
-        return datetime.strptime(str(np_datetime), r"%Y-%m-%dT%H:%M:%S").astimezone(UTC)
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""

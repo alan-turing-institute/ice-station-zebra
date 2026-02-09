@@ -1,8 +1,14 @@
 from datetime import UTC, datetime
 
+import numpy as np
 import torch
 from lightning.pytorch.loggers import Logger, WandbLogger
 from wandb.sdk.lib.runid import generate_id
+
+
+def datetime_from_npdatetime(dt: np.datetime64) -> datetime:
+    """Convert numpy datetime64 to aware datetime in UTC."""
+    return dt.astype("datetime64[ms]").astype(datetime).astimezone(UTC)
 
 
 def generate_run_name() -> str:
@@ -45,15 +51,14 @@ def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
     return None
 
 
-def to_bool(v: object) -> bool:
-    """Convert a text string to a boolean."""
-    if isinstance(v, bool):
-        return v
-    if isinstance(v, str):
-        s = v.strip().lower()
-        if s in {"true"}:
-            return True
-        if s in {"false"}:
-            return False
-    msg = f"Cannot convert {v!r} to bool"
-    raise ValueError(msg)
+def normalise_date(np_datetime: np.datetime64) -> np.datetime64:
+    """Normalise a datetime to midnight."""
+    dt: datetime = np_datetime.astype("datetime64[ms]").astype(datetime)
+    return np.datetime64(dt.date())
+
+
+def to_list(value: str | list[str]) -> list[str]:
+    """Convert a string or list of strings to a list of strings."""
+    if isinstance(value, str):
+        return [value]
+    return value

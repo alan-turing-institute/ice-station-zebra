@@ -5,9 +5,8 @@ defaults:
   - loggers:
     - wandb
   - model: naive_unet_naive
-  - predict: osisaf-south
+  - predict: sic-icenet
   - train: default
   - _self_
 
-antialias_val: true # Global setting for antialiasing in encoders/decoders - fixing Mac bug
 base_path: ../zebra

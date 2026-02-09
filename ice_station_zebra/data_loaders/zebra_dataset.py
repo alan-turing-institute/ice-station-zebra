@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
@@ -8,6 +9,7 @@ from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from torch.utils.data import Dataset
 
 from ice_station_zebra.types import ArrayCHW, ArrayTCHW, DataSpace
+from ice_station_zebra.utils import normalise_date
 
 
 class ZebraDataset(Dataset):
@@ -17,6 +19,7 @@ class ZebraDataset(Dataset):
         input_files: list[Path],
         *,
         date_ranges: Sequence[dict[str, str | None]] = [{"start": None, "end": None}],
+        variables: Sequence[str] = (),
     ) -> None:
         """A dataset for use by Zebra.
 
@@ -28,8 +31,14 @@ class ZebraDataset(Dataset):
         self._date_ranges = sorted(
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
         )
+        self.hemisphere: Literal["north", "south"] = (
+            "north"
+            if any("north" in str(input_file).lower() for input_file in input_files)
+            else "south"
+        )
         self._input_files = input_files
         self._name = name
+        self._variables = set(variables)
 
     @cached_property
     def _date2idx(self) -> dict[np.datetime64, int]:
@@ -42,7 +51,7 @@ class ZebraDataset(Dataset):
         idx2anemoi = {}
         for idx_ds, dataset in enumerate(self.datasets):
             for idx_date, date in enumerate(dataset.dates):
-                idx_global = self._date2idx.get(date, None)
+                idx_global = self._date2idx.get(normalise_date(date), None)
                 if idx_global is not None:
                     idx2anemoi[idx_global] = (idx_ds, idx_date)
         return idx2anemoi
@@ -55,9 +64,15 @@ class ZebraDataset(Dataset):
         """
         if not self._datasets:
             for date_range in self._date_ranges:
-                _dataset = open_dataset(
-                    self._input_files, start=date_range["start"], end=date_range["end"]
-                )
+                # Set the time range for this dataset
+                ds_kwargs: dict[str, str | set[str] | None] = {
+                    "start": date_range["start"],
+                    "end": date_range["end"],
+                }
+                # Select a subset of variables if specified
+                if self._variables:
+                    ds_kwargs["select"] = self._variables
+                _dataset = open_dataset(self._input_files, **ds_kwargs)
                 _dataset._name = self._name
                 self._datasets.append(_dataset)
         return self._datasets
@@ -67,7 +82,7 @@ class ZebraDataset(Dataset):
         """Return all available dates in the dataset, removing any that are missing."""
         return sorted(
             {
-                date
+                normalise_date(date)
                 for ds in self.datasets
                 for date in np.delete(ds.dates, list(ds.missing))
             }
@@ -113,6 +128,19 @@ class ZebraDataset(Dataset):
         """Return the start date of the dataset."""
         return self.dates[0]
 
+    @cached_property
+    def variable_names(self) -> list[str]:
+        """Return the variable names for this dataset.
+
+        The variable names are extracted from the underlying Anemoi dataset.
+        All datasets must have the same variables.
+        """
+        variable_names = {tuple(sorted(ds.variables)) for ds in self.datasets}
+        if len(variable_names) != 1:
+            msg = f"Found {len(variable_names)} different sets of variables across {len(self.datasets)} datasets."
+            raise ValueError(msg)
+        return self.datasets[0].variables
+
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         return len(self.dates)
@@ -130,6 +158,14 @@ class ZebraDataset(Dataset):
         """Return the data for a series of timesteps in [T, C, H, W] format."""
         return np.stack(
             [self[self.to_index(target_date)] for target_date in dates], axis=0
+        )
+
+    def subset(self, variables: Sequence[str]) -> "ZebraDataset":
+        return ZebraDataset(
+            name=self.name,
+            input_files=self._input_files,
+            date_ranges=self._date_ranges,
+            variables=variables,
         )
 
     def to_index(self, date: np.datetime64) -> int:

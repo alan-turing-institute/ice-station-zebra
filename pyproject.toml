@@ -30,7 +30,7 @@ dependencies = [
     "pytorch-triton-xpu>=0.0; sys_platform == 'linux' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'", # only needed for XPU-enabled machines, but we don't have a simple way to determine that
     "pytorch-triton>=0.0; sys_platform == 'linux' and platform_version != '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025'",
     "torch-ema>=0.3",
-    "torch>=2.8.0",
+    "torch>=2.8.0,!=2.10.0", # uv will constantly reinstall torch 2.10.0 due to incorrect metadata https://github.com/astral-sh/uv/issues/17711
     "typer>=0.16.0",
     "wandb>=0.21.0",
     "xarray>=2025.3.0",
@@ -53,7 +53,7 @@ notebooks = [
 ]
 
 [project.scripts]
-zebra = "ice_station_zebra.cli:app"
+zebra = "ice_station_zebra.cli:main"
 
 [tool.coverage.paths]
 source = ["ice_station_zebra/"]
@@ -68,6 +68,7 @@ omit= [
 module = [
     "anemoi.datasets.*",
     "anemoi.transform.*",
+    "anemoi.utils.*",
     "earthkit.*",
     "icenet.data.sic.*",
     "zarr.*",
@@ -79,6 +80,20 @@ addopts = [
     "--cov=ice_station_zebra",
     "--cov-report=term-missing",
     "-vvv",
+]
+testpaths = ["tests"]
+norecursedirs = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    "node_modules",
+    ".idea",
+    ".vscode",
+    "data",
+    "raw_input_*",
 ]
 
 [tool.ruff]

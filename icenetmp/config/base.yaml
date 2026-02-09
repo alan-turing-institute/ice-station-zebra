@@ -9,4 +9,4 @@ defaults:
   - train: default
   - _self_
 
-base_path: ../zebra
+base_path: ../base

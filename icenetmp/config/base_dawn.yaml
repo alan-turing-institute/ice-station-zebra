@@ -3,4 +3,4 @@ defaults:
   - override /train/trainer: xpu
   - _self_
 
-base_path: /rds/project/rds-Ywd6zSg8gcc/zebra/
+base_path: /rds/project/rds-Ywd6zSg8gcc/base/

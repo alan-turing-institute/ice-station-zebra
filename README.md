@@ -27,13 +27,13 @@ You can then install the project as follows (for DAWN / Baskerville, you can ign
 
 ```bash
 git clone git@github.com:alan-turing-institute/ice-station-zebra.git
-cd ice-station-zebra
+cd icenetmp
 uv sync --managed-python
 ```
 
 ### Creating your own configuration file
 
-Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
+Create a file in the folder `icenetmp/config` that is called `<your chosen name here>.local.yaml`.
 You will typically want this to inherit from `base.yaml`, and then you can apply your own changes on top.
 For example, the following config will override the `base_path` option in `base.yaml`:
 
@@ -144,7 +144,7 @@ Settings (output directories, styling, animation parameters) are read from `conf
 
 ### Background
 
-An `ice-station-zebra` model needs to be able to run over multiple different datasets with different dimensions.
+An IceNetMP model needs to be able to run over multiple different datasets with different dimensions.
 These are structured in `NTCHW` format, where:
 - `N` is the batch size,
 - `T` is the number of history (forecast) steps for inputs (outputs)

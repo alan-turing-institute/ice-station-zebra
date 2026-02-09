@@ -94,9 +94,6 @@ class DDPM(ZebraModel):
         else:
             self.era5_space = era5_space.channels
 
-        # Downweight ERA5 conditioning 
-        self.era5_weight = 0.25 #0.1 #0.25
-
         # Get the base output channels from output_space
         if isinstance(self.output_space, dict):
             self.base_output_channels = self.output_space["channels"]
@@ -104,14 +101,6 @@ class DDPM(ZebraModel):
             self.base_output_channels = self.output_space.channels
         self.base_output_channels = self.output_space.channels
 
-        # # osisaf channels after squeezing: T_osisaf = self.n_history_steps
-        # osisaf_channels = self.n_history_steps  # keep T dimension as channels
-
-        # # era5 channels after merging time*channels
-        # era5_channels = self.n_history_steps * self.era5_space  # T * C2
-
-        # total channels for UNet
-        # self.input_channels = osisaf_channels + era5_channels
         self.output_channels = self.n_forecast_steps * self.base_output_channels
         self.timesteps = timesteps
         self.cond_channels = 64
@@ -127,7 +116,6 @@ class DDPM(ZebraModel):
             torch.nn.GroupNorm(4, self.cond_channels // 2),
             torch.nn.SiLU(),
         )
-
 
         self.model = UNetDiffusion(
             input_channels=self.input_channels,
@@ -229,20 +217,6 @@ class DDPM(ZebraModel):
         if sample_weight is None:
             sample_weight = torch.ones_like(prediction)
         return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
-
-    # def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNTCHW:
-    #     """
-    #     Prepare OSI-SAF-only inputs.
-    
-    #     Returns:
-    #         Tensor of shape [B, T, H, W]
-    #     """
-    #     osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
-    
-    #     # Squeeze singleton channel
-    #     osisaf_squeezed = osisaf.squeeze(2)  # [B, T, H, W]
-    
-    #     return osisaf_squeezed
 
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """

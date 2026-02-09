@@ -1,0 +1,14 @@
+_target_: icenetmp.models.EncodeProcessDecode
+
+name: naive-null-naive
+
+encoder:
+  _target_: icenetmp.models.encoders.NaiveLinearEncoder
+  latent_space: [128, 128] # Shape of the latent space
+
+processor:
+  _target_: icenetmp.models.processors.NullProcessor
+
+decoder:
+  _target_: icenetmp.models.decoders.NaiveLinearDecoder
+  bounded: false # Whether to bound the output between 0 and 1

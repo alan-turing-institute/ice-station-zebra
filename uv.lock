@@ -1628,7 +1628,44 @@ wheels = [
 ]
 
 [[package]]
-name = "ice-station-zebra"
+name = "icenet"
+version = "0.2.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-storage-blob" },
+    { name = "cartopy" },
+    { name = "cdsapi" },
+    { name = "cfgrib" },
+    { name = "dask" },
+    { name = "distributed" },
+    { name = "eccodes" },
+    { name = "ecmwf-api-client" },
+    { name = "h5py" },
+    { name = "ibicus" },
+    { name = "matplotlib" },
+    { name = "motuclient" },
+    { name = "netcdf4" },
+    { name = "pip" },
+    { name = "plotly" },
+    { name = "pydap" },
+    { name = "rioxarray", version = "0.19.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "rioxarray", version = "0.20.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "scitools-iris" },
+    { name = "seaborn" },
+    { name = "setuptools" },
+    { name = "tensorboard" },
+    { name = "tensorflow" },
+    { name = "tensorflow-probability" },
+    { name = "wheel" },
+    { name = "xarray", extra = ["io"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/ea/3b856e4f57443b118efdfc38339d8cd8da68cd7ec762708b5cd5e9877333/icenet-0.2.7.tar.gz", hash = "sha256:df1407eee187a52ba949dd4a8918a7e02a9f23a553a385dc282d937eb77f25fd", size = 114923, upload-time = "2024-01-20T12:48:46.715Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/51/64fe609320b1ba0e5f0ace9b6cef05fe7e1587a85cf15c6b9cfabe080750/icenet-0.2.7-py2.py3-none-any.whl", hash = "sha256:cc29f4c26f3aed90ef12d079d8ee9de5b0df67e5391c5da8010e89d3375f57d7", size = 128279, upload-time = "2024-01-20T12:48:43.671Z" },
+]
+
+[[package]]
+name = "icenetmp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -1717,43 +1754,6 @@ notebooks = [
     { name = "cmocean", specifier = ">=4.0.3" },
     { name = "download-toolbox", specifier = ">=0.0.6" },
     { name = "jupyter", specifier = ">=1.1.1" },
-]
-
-[[package]]
-name = "icenet"
-version = "0.2.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "azure-storage-blob" },
-    { name = "cartopy" },
-    { name = "cdsapi" },
-    { name = "cfgrib" },
-    { name = "dask" },
-    { name = "distributed" },
-    { name = "eccodes" },
-    { name = "ecmwf-api-client" },
-    { name = "h5py" },
-    { name = "ibicus" },
-    { name = "matplotlib" },
-    { name = "motuclient" },
-    { name = "netcdf4" },
-    { name = "pip" },
-    { name = "plotly" },
-    { name = "pydap" },
-    { name = "rioxarray", version = "0.19.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "rioxarray", version = "0.20.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "scitools-iris" },
-    { name = "seaborn" },
-    { name = "setuptools" },
-    { name = "tensorboard" },
-    { name = "tensorflow" },
-    { name = "tensorflow-probability" },
-    { name = "wheel" },
-    { name = "xarray", extra = ["io"] },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/63/ea/3b856e4f57443b118efdfc38339d8cd8da68cd7ec762708b5cd5e9877333/icenet-0.2.7.tar.gz", hash = "sha256:df1407eee187a52ba949dd4a8918a7e02a9f23a553a385dc282d937eb77f25fd", size = 114923, upload-time = "2024-01-20T12:48:46.715Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/51/64fe609320b1ba0e5f0ace9b6cef05fe7e1587a85cf15c6b9cfabe080750/icenet-0.2.7-py2.py3-none-any.whl", hash = "sha256:cc29f4c26f3aed90ef12d079d8ee9de5b0df67e5391c5da8010e89d3375f57d7", size = 128279, upload-time = "2024-01-20T12:48:43.671Z" },
 ]
 
 [[package]]

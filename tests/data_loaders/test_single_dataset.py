@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ice_station_zebra.data_loaders.single_dataset import SingleDataset
-from ice_station_zebra.types import DataSpace
+from icenetmp.data_loaders.single_dataset import SingleDataset
+from icenetmp.types import DataSpace
 
 
 class MockAnemoiDataset:

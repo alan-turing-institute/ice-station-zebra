@@ -1,6 +1,3 @@
-# tests/plotting/test_layout.py
-from __future__ import annotations
-
 from dataclasses import replace
 from itertools import combinations
 from typing import TYPE_CHECKING, Any
@@ -8,8 +5,8 @@ from typing import TYPE_CHECKING, Any
 import matplotlib.pyplot as plt
 import pytest
 
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
-from ice_station_zebra.visualisations.layout import (
+from icenetmp.visualisations import DEFAULT_SIC_SPEC
+from icenetmp.visualisations.layout import (
     _set_axes_limits,
     build_layout,
     build_single_panel_figure,

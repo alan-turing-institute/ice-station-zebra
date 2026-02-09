@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ice_station_zebra.models import Persistence
+from icenetmp.models import Persistence
 
 
 class TestPersistence:

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any
 
 from omegaconf import DictConfig
@@ -9,9 +7,9 @@ if TYPE_CHECKING:  # TC003: only used for typing
 
 import pytest
 
-from ice_station_zebra.callbacks.plotting_callback import PlottingCallback
-from ice_station_zebra.types import Metadata
-from ice_station_zebra.visualisations.metadata import (
+from icenetmp.callbacks.plotting_callback import PlottingCallback
+from icenetmp.types import Metadata
+from icenetmp.visualisations.metadata import (
     build_metadata,
     calculate_training_points,
     extract_variables_by_source,

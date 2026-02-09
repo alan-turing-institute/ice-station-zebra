@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from ice_station_zebra.models.processors import (
+from icenetmp.models.processors import (
     BaseProcessor,
     NullProcessor,
     UNetProcessor,
 )
-from ice_station_zebra.types import DataSpace
+from icenetmp.types import DataSpace
 
 
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])

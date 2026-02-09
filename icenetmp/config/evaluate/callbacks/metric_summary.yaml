@@ -1,0 +1,3 @@
+metric_summary:
+  _target_: icenetmp.callbacks.MetricSummaryCallback
+  average_loss: true

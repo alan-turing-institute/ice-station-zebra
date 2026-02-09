@@ -3,9 +3,9 @@ requires = ["uv_build>=0.8.3,<0.9.0"]
 build-backend = "uv_build"
 
 [project]
-name = "ice-station-zebra"
+name = "icenetmp"
 version = "0.1.0"
-description = "A pipeline for predicting sea ice."
+description = "IceNet Multimodal Pipeline for predicting sea ice."
 readme = "README.md"
 authors = [
     { name = "James Robinson", email = "james.em.robinson@gmail.com" }
@@ -53,10 +53,10 @@ notebooks = [
 ]
 
 [project.scripts]
-imp = "ice_station_zebra.cli:main"
+imp = "icenetmp.cli:main"
 
 [tool.coverage.paths]
-source = ["ice_station_zebra/"]
+source = ["icenetmp/"]
 
 [tool.coverage.run]
 relative_files = true
@@ -77,7 +77,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = [
-    "--cov=ice_station_zebra",
+    "--cov=icenetmp",
     "--cov-report=term-missing",
     "-vvv",
 ]

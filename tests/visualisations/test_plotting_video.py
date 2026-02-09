@@ -14,11 +14,11 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from ice_station_zebra.exceptions import InvalidArrayError
-from ice_station_zebra.types import PlotSpec
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC, convert
-from ice_station_zebra.visualisations.land_mask import LandMask
-from ice_station_zebra.visualisations.plotting_video import (
+from icenetmp.exceptions import InvalidArrayError
+from icenetmp.types import PlotSpec
+from icenetmp.visualisations import DEFAULT_SIC_SPEC, convert
+from icenetmp.visualisations.land_mask import LandMask
+from icenetmp.visualisations.plotting_video import (
     plot_video_inputs,
     plot_video_prediction,
     plot_video_single_input,

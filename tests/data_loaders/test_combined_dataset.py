@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ice_station_zebra.data_loaders.combined_dataset import CombinedDataset
-from ice_station_zebra.data_loaders.single_dataset import SingleDataset
+from icenetmp.data_loaders.combined_dataset import CombinedDataset
+from icenetmp.data_loaders.single_dataset import SingleDataset
 
 
 class TestCombinedDataset:

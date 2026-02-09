@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import replace
 from typing import TYPE_CHECKING, Literal
 
@@ -10,12 +8,12 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from datetime import date
 
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
-from ice_station_zebra.visualisations.plotting_core import (
+from icenetmp.visualisations import DEFAULT_SIC_SPEC
+from icenetmp.visualisations.plotting_core import (
     compute_display_ranges,
     make_diff_colourmap,
 )
-from ice_station_zebra.visualisations.range_check import compute_range_check_report
+from icenetmp.visualisations.range_check import compute_range_check_report
 
 
 @pytest.mark.parametrize(

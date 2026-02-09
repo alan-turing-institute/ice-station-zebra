@@ -12,9 +12,9 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from omegaconf import errors as oc_errors
 
-from ice_station_zebra.data_loaders import CommonDataModule
-from ice_station_zebra.types import ArrayHW, ArrayTHW, PlotSpec
-from ice_station_zebra.visualisations.land_mask import LandMask
+from icenetmp.data_loaders import CommonDataModule
+from icenetmp.types import ArrayHW, ArrayTHW, PlotSpec
+from icenetmp.visualisations.land_mask import LandMask
 
 from tests.conftest import make_varying_sic_stream
 
@@ -151,7 +151,7 @@ def checkpoint_data(
         else:
             # Fallback to default config
             # Look for a file ending with local.yaml
-            config_dir = Path("ice_station_zebra/config/")
+            config_dir = Path("icenetmp/config/")
             yaml_iter = config_dir.glob("*.local.yaml")
             local_yaml = next(yaml_iter)
             config = OmegaConf.load(local_yaml)

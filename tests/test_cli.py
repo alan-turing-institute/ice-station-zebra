@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 from typer.testing import CliRunner
 
-from ice_station_zebra.cli.main import app
+from icenetmp.cli.main import app
 
 
 class EnhancedCliRunner(CliRunner):

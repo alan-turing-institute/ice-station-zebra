@@ -8,7 +8,7 @@ from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
 
-from ice_station_zebra.data_processors.sources import FTPSource, register_sources
+from icenetmp.data_processors.sources import FTPSource, register_sources
 
 
 class TestFTPSource:
@@ -28,7 +28,7 @@ class TestFTPSource:
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.source_registry",
+                "icenetmp.data_processors.sources.source_registry",
                 mock_registry,
             )
             assert "ftp" not in mock_registry.registered
@@ -50,10 +50,10 @@ class TestFTPSource:
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
             )
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
             )
 
             # Execute
@@ -86,10 +86,10 @@ class TestFTPSource:
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
             )
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
             )
 
             # Execute without providing user/passwd
@@ -123,13 +123,13 @@ class TestFTPSource:
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
             )
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
             )
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.MultiFieldList",
+                "icenetmp.data_processors.sources.ftp.MultiFieldList",
                 mock_multi_field_list,
             )
 
@@ -168,10 +168,10 @@ class TestFTPSource:
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.FTP", mock_ftp_class
+                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
             )
             mp.setattr(
-                "ice_station_zebra.data_processors.sources.ftp.load_one", mock_load_one
+                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
             )
 
             FTPSource._execute(

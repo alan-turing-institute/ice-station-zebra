@@ -129,16 +129,12 @@ Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using 
 
 ### Visualisations
 
-Plot raw input variables from the test dataset:
-
-```bash
-uv run zebra visualisations plot-raw-inputs --config-name <your local config>.yaml --sample-idx 0
+You can plot static images or animations of the raw data by adding the following option to your local config:
 ```
-
-Create animations of raw inputs over time:
-
-```bash
-uv run zebra visualisations animate-raw-inputs --config-name <your local config>.yaml
+evaluate:
+  callbacks:
+    plotting:
+      make_input_plots: true
 ```
 
 Settings (output directories, styling, animation parameters) are read from `config.evaluate.callbacks.raw_inputs` in your YAML config files. Command-line options can override config values if needed.

@@ -86,7 +86,9 @@ class Plotter:
             )
             for image_name, image_list in images.items():
                 for image_logger in image_loggers:
-                    image_logger.log_image(key=image_name, images=image_list)
+                    image_logger.log_image(
+                        key=f"outputs/{image_name}", images=image_list
+                    )
         except InvalidArrayError as err:
             logger.warning("Static plotting skipped due to invalid arrays: %s", err)
         except (IndexError, ValueError, MemoryError, OSError) as exc:
@@ -139,7 +141,7 @@ class Plotter:
                 for video_name, video_buffer in video_data.items():
                     video_buffer.seek(0)
                     video_logger.log_video(
-                        key=video_name,
+                        key=f"outputs/{video_name}",
                         videos=[video_buffer],
                         format=[self.plot_spec.video_format],
                     )

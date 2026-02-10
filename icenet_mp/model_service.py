@@ -8,13 +8,13 @@ from lightning import Callback, Trainer
 from lightning.fabric.utilities import suggested_max_num_workers
 from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
+from wandb.sdk.lib.runid import generate_id
 
 from icenet_mp.callbacks import UnconditionalCheckpoint
 from icenet_mp.data_loaders import CommonDataModule
 from icenet_mp.models.base_model import BaseModel
 from icenet_mp.types import SupportsMetadata
 from icenet_mp.utils import (
-    generate_run_name,
     get_device_name,
     get_timestamp,
     get_wandb_logger,
@@ -120,7 +120,7 @@ class ModelService:
 
     @property
     def run_directory(self) -> Path:
-        """Get run directory from wandb logger or generate a new one."""
+        """Get run directory from wandb logger or generate one in the same format."""
         if not self.run_directory_:
             logger.debug("Determining run directory.")
             if wandb_logger := get_wandb_logger(self.extra_loggers_):
@@ -130,7 +130,7 @@ class ModelService:
                     self.data_module.base_path
                     / "training"
                     / "local"
-                    / generate_run_name()
+                    / f"run-{get_timestamp()}-{generate_id()}"
                 )
             self.run_directory_.mkdir(parents=True, exist_ok=True)
         return self.run_directory_

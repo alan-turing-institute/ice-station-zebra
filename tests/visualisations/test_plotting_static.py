@@ -14,15 +14,15 @@ import numpy as np
 import pytest
 from PIL.ImageFile import ImageFile
 
-from ice_station_zebra.types import PlotSpec
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
-from ice_station_zebra.visualisations.land_mask import LandMask
-from ice_station_zebra.visualisations.plotting_core import style_for_variable
-from ice_station_zebra.visualisations.plotting_static import (
+from icenet_mp.types import PlotSpec
+from icenet_mp.visualisations import DEFAULT_SIC_SPEC
+from icenet_mp.visualisations.land_mask import LandMask
+from icenet_mp.visualisations.plotting_core import style_for_variable
+from icenet_mp.visualisations.plotting_static import (
     plot_static_inputs,
     plot_static_prediction,
 )
-from ice_station_zebra.visualisations.range_check import compute_range_check_report
+from icenet_mp.visualisations.range_check import compute_range_check_report
 
 from .conftest import TEST_DATE
 

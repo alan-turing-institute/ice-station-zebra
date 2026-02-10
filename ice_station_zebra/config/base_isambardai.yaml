@@ -1,5 +1,0 @@
-defaults:
-  - base
-  - _self_
-
-base_path: /projects/u5gf/seaice/zebra/

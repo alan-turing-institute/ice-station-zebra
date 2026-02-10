@@ -9,15 +9,13 @@ import xarray as xr
 from anemoi.datasets.commands.create import Create
 from omegaconf import DictConfig
 
-from ice_station_zebra.types import AnemoiCreateArgs
+from icenet_mp.types import AnemoiCreateArgs
 
 
 @pytest.fixture
 def cfg_decoder() -> DictConfig:
     """Test configuration for a decoder."""
-    return DictConfig(
-        {"_target_": "ice_station_zebra.models.decoders.NaiveLinearDecoder"}
-    )
+    return DictConfig({"_target_": "icenet_mp.models.decoders.NaiveLinearDecoder"})
 
 
 @pytest.fixture
@@ -25,7 +23,7 @@ def cfg_encoder() -> DictConfig:
     """Test configuration for an encoder."""
     return DictConfig(
         {
-            "_target_": "ice_station_zebra.models.encoders.NaiveLinearEncoder",
+            "_target_": "icenet_mp.models.encoders.NaiveLinearEncoder",
             "latent_space": (64, 64),
         }
     )
@@ -64,7 +62,7 @@ def cfg_output_space() -> DictConfig:
 @pytest.fixture
 def cfg_processor() -> DictConfig:
     """Test configuration for a processor."""
-    return DictConfig({"_target_": "ice_station_zebra.models.processors.NullProcessor"})
+    return DictConfig({"_target_": "icenet_mp.models.processors.NullProcessor"})
 
 
 @pytest.fixture

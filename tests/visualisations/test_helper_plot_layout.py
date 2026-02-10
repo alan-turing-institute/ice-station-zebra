@@ -1,10 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # Imports used only for type annotations
-    from matplotlib.axes import Axes
+from matplotlib.axes import Axes
 
 __test__ = False  # prevent pytest from collecting anything in this helper module
 

@@ -2,7 +2,7 @@ import pytest
 import torch
 from omegaconf import DictConfig
 
-from ice_station_zebra.models import EncodeProcessDecode
+from icenet_mp.models import EncodeProcessDecode
 
 
 @pytest.mark.parametrize("test_n_forecast_steps", [1, 2, 5])

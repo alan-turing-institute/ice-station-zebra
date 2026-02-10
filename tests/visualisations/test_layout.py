@@ -1,15 +1,14 @@
-# tests/plotting/test_layout.py
-from __future__ import annotations
-
 from dataclasses import replace
+from datetime import date
 from itertools import combinations
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
-from ice_station_zebra.visualisations import DEFAULT_SIC_SPEC
-from ice_station_zebra.visualisations.layout import (
+from icenet_mp.visualisations import DEFAULT_SIC_SPEC
+from icenet_mp.visualisations.layout import (
     _set_axes_limits,
     build_layout,
     build_single_panel_figure,
@@ -24,12 +23,6 @@ from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Animation was deleted without rendering anything:UserWarning:matplotlib.animation"
 )
-
-if TYPE_CHECKING:
-    # Imports used only for type annotations
-    from datetime import date
-
-    import numpy as np
 
 
 @pytest.mark.parametrize(

@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from ice_station_zebra.models.decoders import (
+from icenet_mp.models.decoders import (
     BaseDecoder,
     CNNDecoder,
     NaiveLinearDecoder,
 )
-from ice_station_zebra.types import DataSpace
+from icenet_mp.types import DataSpace
 
 
 class TestDecoders:

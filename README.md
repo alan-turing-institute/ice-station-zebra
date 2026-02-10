@@ -1,6 +1,6 @@
-# Ice Station Zebra
+# IceNet Multimodal Pipeline
 
-A pipeline for predicting sea ice.
+IceNet-MP is a multimodal pipeline for predicting sea ice.
 
 ## Setting up your environment
 
@@ -12,10 +12,11 @@ You will need to install the following tools if you want to develop this project
 
 On an HPC system, this will install to `~/.local/bin`, so make sure that your home directory has enough free space.
 
-### Installing Zebra
+### Installing IceNet-MP
 
 :warning: Isambard-AI uses ARM processors, and there is currently no `aarch64` wheel for `cf-units`.
 Before installing on Isambard-AI you will need to set the following environment variables:
+
 ```bash
 export UDUNITS2_XML_PATH=/projects/u5gf/seaice/udunits/share/udunits/udunits2.xml
 export UDUNITS2_INCDIR=/projects/u5gf/seaice/udunits/include/
@@ -25,14 +26,14 @@ export UDUNITS2_LIBDIR=/projects/u5gf/seaice/udunits/lib/
 You can then install the project as follows (for DAWN / Baskerville, you can ignore the previous step):
 
 ```bash
-git clone git@github.com:alan-turing-institute/ice-station-zebra.git
-cd ice-station-zebra
+git clone git@github.com:alan-turing-institute/icenet-mp.git
+cd icenet_mp
 uv sync --managed-python
 ```
 
 ### Creating your own configuration file
 
-Create a file in the folder `ice-station-zebra/config` that is called `<your chosen name here>.local.yaml`.
+Create a file in the folder `icenet_mp/config` that is called `<your chosen name here>.local.yaml`.
 You will typically want this to inherit from `base.yaml`, and then you can apply your own changes on top.
 For example, the following config will override the `base_path` option in `base.yaml`:
 
@@ -47,7 +48,7 @@ base_path: /local/path/to/my/data
 You can then run this with, e.g.:
 
 ```bash
-uv run zebra <command> --config-name <your local config>.yaml
+uv run imp <command> --config-name <your local config>.yaml
 ```
 You can also use this config to override other options in the `base.yaml` file, as shown below:
 
@@ -68,7 +69,7 @@ base_path: /local/path/to/my/data
 Alternatively, you can apply overrides to specific options at the command line like this:
 
 ```bash
-uv run zebra <command> ++base_path=/local/path/to/my/data
+uv run imp <command> ++base_path=/local/path/to/my/data
 ```
 
 See `config/demo_north.yaml` for an example of this.
@@ -87,7 +88,7 @@ defaults:
   - _self_
 ```
 
-## Running Zebra commands
+## Running IceNet-MP commands
 
 :information_source: Note that if you are running the below commands locally, specify the base path in your local config, then add the argument `--config-name <your local config>.yaml`.
 
@@ -95,13 +96,13 @@ defaults:
 
 You will need a [CDS account](https://cds.climate.copernicus.eu/how-to-api) to download data with `anemoi` (e.g. the ERA5 data).
 
-Run `uv run zebra datasets create` to download datasets.
+Run `uv run imp datasets create` to download datasets.
 
 N.b. For very large datasets, use `load_in_parts` instead (see [Downloading large datasets](#downloading-large-datasets) below).
 
 ### Inspect
 
-Run `uv run zebra datasets inspect` to inspect datasets (i.e. to get dataset properties and statistical summaries of the variables).
+Run `uv run imp datasets inspect` to inspect datasets (i.e. to get dataset properties and statistical summaries of the variables).
 
 ### Train
 
@@ -113,19 +114,19 @@ export WANDB_API_KEY=<your_api_key>
 wandb login
 ```
 
-Run `uv run zebra train` to train using the datasets specified in the config.
+Run `uv run imp train` to train using the datasets specified in the config.
 
 :information_source: This will save checkpoints to `${BASE_DIR}/training/wandb/run-${DATE}$-${RANDOM_STRING}/checkpoints/${CHECKPOINT_NAME}$.ckpt`. Where the `BASE_DIR` is the base path to the data defined in your config file.
 
 :warning: If you are running on macOS, you may need to prepend your `uv` run command with `PYTORCH_ENABLE_MPS_FALLBACK=1`. For example:
 
-```
-PYTORCH_ENABLE_MPS_FALLBACK=1 uv run zebra train
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 uv run imp train
 ```
 
 ### Evaluate
 
-Run `uv run zebra evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
+Run `uv run imp evaluate --checkpoint PATH_TO_A_CHECKPOINT` to evaluate using a checkpoint from a training run.
 
 ### Visualisations
 
@@ -143,7 +144,7 @@ Settings (output directories, styling, animation parameters) are read from `conf
 
 ### Background
 
-An `ice-station-zebra` model needs to be able to run over multiple different datasets with different dimensions.
+An IceNet-MP model needs to be able to run over multiple different datasets with different dimensions.
 These are structured in `NTCHW` format, where:
 - `N` is the batch size,
 - `T` is the number of history (forecast) steps for inputs (outputs)
@@ -207,7 +208,7 @@ For particularly large datasets, e.g. the full ERA5 dataset, it may be necessary
 The `load_in_parts` command automates the process of downloading datasets in parts, tracking progress, and allowing you to resume interrupted downloads:
 
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml
+uv run imp datasets load_in_parts --config-name <your config>.yaml
 ```
 
 This command will:
@@ -219,7 +220,7 @@ This command will:
 You will then need to finalise the dataset when done.
 
 ```bash
-uv run zebra datasets finalise --config-name <your config>.yaml
+uv run imp datasets finalise --config-name <your config>.yaml
 ```
 
 #### Options
@@ -234,21 +235,21 @@ uv run zebra datasets finalise --config-name <your config>.yaml
 
 Load all parts for all datasets, resuming from where you left off:
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml
+uv run imp datasets load_in_parts --config-name <your config>.yaml
 ```
 
 Load a specific dataset with a custom number of parts:
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
+uv run imp datasets load_in_parts --config-name <your config>.yaml --dataset my_dataset --total-parts 25
 ```
 
 Start fresh, clearing any previous progress (doesn't delete any data):
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --force-reset
+uv run imp datasets load_in_parts --config-name <your config>.yaml --force-reset
 ```
 Start and destroy any previously saved data (careful):
 ```bash
-uv run zebra datasets load_in_parts --config-name <your config>.yaml --overwrite
+uv run imp datasets load_in_parts --config-name <your config>.yaml --overwrite
 ```
 
 ### Manual approach (advanced)
@@ -257,15 +258,15 @@ If you need more control, you can manually manage the download process:
 
 1. First initialise the dataset:
 ```bash
-uv run zebra datasets init --config-name <your config>.yaml
+uv run imp datasets init --config-name <your config>.yaml
 ```
 
 2. Then load each part `i` of the total `n` in turn:
 ```bash
-uv run zebra datasets load --config-name <your config>.yaml --parts i/n
+uv run imp datasets load --config-name <your config>.yaml --parts i/n
 ```
 
 3. When all the parts are loaded, finalise the dataset:
 ```bash
-uv run zebra datasets finalise --config-name <your config>.yaml
+uv run imp datasets finalise --config-name <your config>.yaml
 ```

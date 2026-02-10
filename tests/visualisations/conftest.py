@@ -1,20 +1,14 @@
 import warnings
 from collections.abc import Iterator
 from datetime import date, timedelta
-from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
-import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import torch
-from omegaconf import DictConfig, OmegaConf
-from omegaconf import errors as oc_errors
 
-from ice_station_zebra.data_loaders import ZebraDataModule
-from ice_station_zebra.types import ArrayHW, ArrayTHW, PlotSpec
-from ice_station_zebra.visualisations.land_mask import LandMask
+from icenet_mp.types import ArrayHW, ArrayTHW, PlotSpec
+from icenet_mp.visualisations.land_mask import LandMask
 from tests.conftest import make_varying_sic_stream
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep
@@ -128,151 +122,6 @@ def sic_pair_3d_stream(
     prediction_stream = np.stack(prediction_frames, axis=0)
     dates = [TEST_DATE + timedelta(days=int(d)) for d in range(timesteps)]
     return ground_truth_stream, prediction_stream, dates
-
-
-@pytest.fixture
-def checkpoint_data(
-    *, use_checkpoint: bool, example_checkpoint_path: Path | None
-) -> tuple[ArrayHW, ArrayHW, date] | None:
-    """Load data from a checkpoint for plotting tests.
-
-    Returns (ground_truth, prediction, date) if checkpoint is available, else None.
-    """
-    if not use_checkpoint or example_checkpoint_path is None:
-        return None
-
-    try:
-        # Load config (try checkpoint dir first, fallback to default)
-        config_path = example_checkpoint_path.parent.parent / "model_config.yaml"
-        if config_path.exists():
-            config = OmegaConf.load(config_path)
-            assert isinstance(config, DictConfig)
-        else:
-            # Fallback to default config
-            # Look for a file ending with local.yaml
-            config_dir = Path("ice_station_zebra/config/")
-            yaml_iter = config_dir.glob("*.local.yaml")
-            local_yaml = next(yaml_iter)
-            config = OmegaConf.load(local_yaml)
-            assert isinstance(config, DictConfig)
-
-        # Load model from checkpoint
-        model_dict = cast(
-            "DictConfig", config["model"]
-        )  # ensure DictConfig for nested access
-        model_target = cast("str", model_dict["_target_"])
-        model_cls = cast("Any", hydra.utils.get_class(model_target))
-        model = model_cls.load_from_checkpoint(checkpoint_path=example_checkpoint_path)
-        model.eval()
-
-        # Load data module
-        # Ensure DictConfig type for constructor
-        dm_config = cast("DictConfig", config)
-        data_module = ZebraDataModule(dm_config)
-        data_module.setup("test")
-        test_dataloader = data_module.test_dataloader()
-
-        # Get a single batch
-        batch = next(iter(test_dataloader))
-
-        # Run model inference
-        with torch.no_grad():
-            target = batch.pop("target")
-            prediction = model(batch)
-
-        # Extract first sample, first timestep, first channel -> [H, W]
-        ground_truth = target[0, 0, 0].detach().cpu().numpy()
-        prediction_array = prediction[0, 0, 0].detach().cpu().numpy()
-
-        # Get date
-        current_date = TEST_DATE
-
-    except (
-        FileNotFoundError,
-        KeyError,
-        AttributeError,
-        RuntimeError,
-        ValueError,
-        StopIteration,
-        ImportError,
-        OSError,
-        oc_errors.OmegaConfBaseException,
-    ) as e:
-        pytest.skip(f"Could not load checkpoint data: {e}")
-    else:
-        return ground_truth, prediction_array, current_date
-
-
-@pytest.fixture
-def plotting_data(
-    checkpoint_data: tuple[ArrayHW, ArrayHW, date] | None,
-    sic_pair_2d: tuple[ArrayHW, ArrayHW, date],
-) -> tuple[ArrayHW, ArrayHW, date]:
-    """Choose between checkpoint data or fake data data for plotting tests.
-
-    Returns checkpoint data if available and --use-checkpoint is set, otherwise fake data data.
-    """
-    if checkpoint_data is not None:
-        return checkpoint_data
-    return sic_pair_2d
-
-
-def pytest_addoption(parser: pytest.Parser) -> None:
-    """Add command-line options for plotting tests.
-
-    --use-checkpoint: prefer loading a model checkpoint instead of fake data data
-    --checkpoint-path: explicit path to a checkpoint (.ckpt)
-    """
-    parser.addoption(
-        "--use-checkpoint",
-        action="store_true",
-        default=False,
-        help="Use a model checkpoint instead of fake data SIC arrays.",
-    )
-    parser.addoption(
-        "--checkpoint-path",
-        action="store",
-        default="",
-        help="Path to a .ckpt file to use in plotting tests.",
-    )
-
-
-@pytest.fixture
-def use_checkpoint(pytestconfig: pytest.Config) -> bool:
-    """Whether tests should use a checkpoint instead of fake data data."""
-    return bool(pytestconfig.getoption("--use-checkpoint"))
-
-
-@pytest.fixture
-def example_checkpoint_path(pytestconfig: pytest.Config) -> Path | None:
-    """Return a checkpoint path if available, else None.
-
-    Resolution order:
-    1) --checkpoint-path if provided and exists
-    2) tests/plotting/checkpoints/example.ckpt if present in repo
-    3) data/training/wandb/.../checkpoints/*.ckpt (first found) [optional scan]
-    """
-    # 1) explicit
-    arg_path = str(pytestconfig.getoption("--checkpoint-path") or "").strip()
-    if arg_path:
-        p = Path(arg_path).expanduser().resolve()
-        return p if p.exists() else None
-
-    # 2) bundled example (recommended to add to repo if you want deterministic tests)
-    bundled = Path(__file__).parent / "checkpoints" / "example.ckpt"
-    if bundled.exists():
-        return bundled.resolve()
-
-    # 3) optional: try a typical wandb path if present locally
-    default_wandb = Path(__file__).resolve().parents[2] / "data" / "training" / "wandb"
-    if default_wandb.exists():
-        for ckpt in default_wandb.rglob("*.ckpt"):
-            return ckpt.resolve()
-
-    return None
-
-
-# --- Raw Inputs Fixtures ---
 
 
 @pytest.fixture

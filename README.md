@@ -26,7 +26,7 @@ export UDUNITS2_LIBDIR=/projects/u5gf/seaice/udunits/lib/
 You can then install the project as follows (for DAWN / Baskerville, you can ignore the previous step):
 
 ```bash
-git clone git@github.com:alan-turing-institute/ice-station-zebra.git
+git clone git@github.com:alan-turing-institute/icenetmp.git
 cd icenetmp
 uv sync --managed-python
 ```

@@ -33,11 +33,6 @@ def get_device_name(accelerator_name: str) -> str:
     return "CPU"
 
 
-def get_device_threads() -> int:
-    """Get the number of threads available for the current device."""
-    return torch.get_num_threads()
-
-
 def get_timestamp() -> str:
     """Return the current time as a string."""
     return datetime.now(tz=UTC).strftime(r"%Y%m%d_%H%M%S")

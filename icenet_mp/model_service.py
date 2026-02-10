@@ -16,7 +16,6 @@ from icenet_mp.types import SupportsMetadata
 from icenet_mp.utils import (
     generate_run_name,
     get_device_name,
-    get_device_threads,
     get_timestamp,
     get_wandb_logger,
 )
@@ -224,7 +223,7 @@ class ModelService:
         # Log evaluation details
         logger.info(
             "Starting evaluation using %d threads across %d %s device(s).",
-            get_device_threads(),
+            torch.get_num_threads(),
             self.trainer.num_devices,
             get_device_name(self.trainer.accelerator.name()),
         )
@@ -248,7 +247,7 @@ class ModelService:
         logger.info(
             "Starting training for %d epochs using %d threads across %d %s device(s).",
             self.trainer.max_epochs,
-            get_device_threads(),
+            torch.get_num_threads(),
             self.trainer.num_devices,
             get_device_name(self.trainer.accelerator.name()),
         )

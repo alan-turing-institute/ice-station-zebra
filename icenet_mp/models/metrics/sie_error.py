@@ -1,10 +1,7 @@
-# mypy: ignore-errors
-"""SIEError metric adapted from the IceNet repository.
+"""SIEError metric.
 
-The repository is available at:
-https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb.
-
-Original implementation by the IceNet authors (icenet-ai). Edited by: Maria Carolina Novitasari.
+Adapted from the IceNet repository at:
+- https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb.
 """
 
 import torch

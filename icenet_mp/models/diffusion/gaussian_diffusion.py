@@ -1,7 +1,5 @@
 """GaussianDiffusion: Gaussian Diffusion Process Implementation.
 
-Author: Maria Carolina Novitasari
-
 Description:
     Implements the forward and reverse processes of a Denoising Diffusion Probabilistic Model (DDPM),
     with support for both cosine and linear beta schedules.

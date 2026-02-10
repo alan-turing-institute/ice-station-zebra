@@ -1,7 +1,5 @@
 """Vision Transformer implementation.
 
-Author: Erin Quan
-
 Description:
     Vision Transformer (ViT) model for sea ice forecasting that predicts future sea ice
     concentration from meteorological data. Takes multi-channel input images, converts

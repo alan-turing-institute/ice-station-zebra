@@ -1,7 +1,5 @@
 """UNetDiffusion: Conditional U-Net for DDPM-based Forecasting.
 
-Author: Maria Carolina Novitasari
-
 Description:
     U-Net architecture for use in conditional denoising diffusion probabilistic models (DDPM),
     designed for geophysical forecasting tasks such as sea ice concentration prediction.

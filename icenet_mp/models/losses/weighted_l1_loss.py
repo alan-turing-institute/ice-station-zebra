@@ -1,9 +1,7 @@
 # mypy: ignore-errors
-"""Weighted L1Loss adapted from the IceNet repository.
+"""Weighted L1Loss.
 
-https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
-
-Original implementation by the IceNet authors (icenet-ai). Edited by: Maria Carolina Novitasari.
+Adapted from the IceNet repository: https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
 """
 
 from typing import Any

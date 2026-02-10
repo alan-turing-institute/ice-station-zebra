@@ -1,6 +1,6 @@
 # IceNet Multimodal Pipeline
 
-IceNetMP is a multimodal pipeline for predicting sea ice.
+IceNet-MP is a multimodal pipeline for predicting sea ice.
 
 ## Setting up your environment
 
@@ -12,7 +12,7 @@ You will need to install the following tools if you want to develop this project
 
 On an HPC system, this will install to `~/.local/bin`, so make sure that your home directory has enough free space.
 
-### Installing IceNetMP
+### Installing IceNet-MP
 
 :warning: Isambard-AI uses ARM processors, and there is currently no `aarch64` wheel for `cf-units`.
 Before installing on Isambard-AI you will need to set the following environment variables:
@@ -88,7 +88,7 @@ defaults:
   - _self_
 ```
 
-## Running IceNetMP commands
+## Running IceNet-MP commands
 
 :information_source: Note that if you are running the below commands locally, specify the base path in your local config, then add the argument `--config-name <your local config>.yaml`.
 
@@ -144,7 +144,7 @@ Settings (output directories, styling, animation parameters) are read from `conf
 
 ### Background
 
-An IceNetMP model needs to be able to run over multiple different datasets with different dimensions.
+An IceNet-MP model needs to be able to run over multiple different datasets with different dimensions.
 These are structured in `NTCHW` format, where:
 - `N` is the batch size,
 - `T` is the number of history (forecast) steps for inputs (outputs)

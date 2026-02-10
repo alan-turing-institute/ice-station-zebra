@@ -8,7 +8,7 @@ from icenet_mp.cli.main import app
 
 class CustomCliRunner(CliRunner):
     def __init__(self) -> None:
-        """A custom CLI runner for IceNetMP tests."""
+        """A custom CLI runner for IceNet-MP tests."""
         super().__init__()
         self.colorstrip = re.compile(r"\x1b\[[0-9;]*m")
 

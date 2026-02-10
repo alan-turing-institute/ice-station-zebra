@@ -17,7 +17,7 @@ from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
 class BaseModel(LightningModule, ABC):
-    """A base class for all models used in the IceNetMP project."""
+    """A base class for all models used in the IceNet-MP project."""
 
     def __init__(  # noqa: PLR0913
         self,

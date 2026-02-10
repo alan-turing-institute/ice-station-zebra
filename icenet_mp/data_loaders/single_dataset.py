@@ -21,7 +21,7 @@ class SingleDataset(Dataset):
         date_ranges: Sequence[dict[str, str | None]] = [{"start": None, "end": None}],
         variables: Sequence[str] = (),
     ) -> None:
-        """A dataset for use by IceNetMP.
+        """A dataset for use by IceNet-MP.
 
         The underlying Anemoi dataset has shape [T; C; ensembles; position].
         We reshape this to CHW before returning.

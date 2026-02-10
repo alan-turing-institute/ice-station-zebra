@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path, PosixPath
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, cast
 
 import hydra
 import torch
@@ -12,6 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 from icenet_mp.callbacks import UnconditionalCheckpoint
 from icenet_mp.data_loaders import CommonDataModule
 from icenet_mp.models.base_model import BaseModel
+from icenet_mp.types import SupportsMetadata
 from icenet_mp.utils import (
     generate_run_name,
     get_device_name,
@@ -24,11 +25,6 @@ if TYPE_CHECKING:
     from lightning.pytorch.loggers import Logger as LightningLogger
 
 logger = logging.getLogger(__name__)
-
-
-@runtime_checkable
-class SupportsMetadata(Protocol):
-    def set_metadata(self, config: DictConfig, model_name: str) -> None: ...
 
 
 class ModelService:

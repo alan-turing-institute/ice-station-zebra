@@ -25,11 +25,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ZebraTrainer:
+class ModelTrainer:
     """A wrapper for PyTorch training."""
 
     def __init__(self, config: DictConfig) -> None:
-        """Initialize the Zebra trainer."""
+        """Initialize the model trainer."""
         # Load inputs into a data module
         self.data_module = CommonDataModule(config)
 

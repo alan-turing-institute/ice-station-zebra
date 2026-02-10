@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 
 from icenetmp.cli import hydra_adaptor
 
-from .trainer import ZebraTrainer
+from .trainer import ModelTrainer
 
 # Create the typer app
 training_cli = typer.Typer(help="Train models")
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model."""
-    trainer = ZebraTrainer(config)
+    trainer = ModelTrainer(config)
     trainer.train()
 
 

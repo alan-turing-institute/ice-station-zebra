@@ -5,13 +5,16 @@ from icenet_mp.models.decoders import (
     BaseDecoder,
     CNNDecoder,
     NaiveLinearDecoder,
+    PiecewiseDecoder,
 )
 from icenet_mp.types import DataSpace
 
 
 class TestDecoders:
     @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
-    @pytest.mark.parametrize("test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder"])
+    @pytest.mark.parametrize(
+        "test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder", "PiecewiseDecoder"]
+    )
     @pytest.mark.parametrize("test_latent_chw", [(128, 32, 32), (2, 200, 100)])
     @pytest.mark.parametrize("test_n_forecast_steps", [1, 3, 5])
     @pytest.mark.parametrize("test_output_chw", [(4, 256, 256), (1, 100, 200)])
@@ -37,6 +40,11 @@ class TestDecoders:
                 n_layers=1,
             ),
             "NaiveLinearDecoder": NaiveLinearDecoder(
+                data_space_in=latent_space,
+                data_space_out=output_space,
+                n_forecast_steps=test_n_forecast_steps,
+            ),
+            "PiecewiseDecoder": PiecewiseDecoder(
                 data_space_in=latent_space,
                 data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,

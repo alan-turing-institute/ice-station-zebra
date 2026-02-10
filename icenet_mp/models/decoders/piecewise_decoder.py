@@ -3,7 +3,7 @@ from typing import Any
 from torch import nn
 from torch.nn.functional import sigmoid
 
-from icenet_mp.models.common import Permute
+from icenet_mp.models.common import CommonConvBlock, Permute
 from icenet_mp.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -12,6 +12,10 @@ from .base_decoder import BaseDecoder
 class PiecewiseDecoder(BaseDecoder):
     """Piecewise decoder that combines data patches from a latent space to build the output space.
 
+    - 1 convolutional block to set the required number of channels
+    - n_blocks of constant-size convolutional blocks
+    - Combine patches into output of size output_height x output_width
+
     Latent space:
         TensorNTCHW with (batch_size, n_forecast_steps, latent_channels, latent_height, latent_width)
 
@@ -19,7 +23,9 @@ class PiecewiseDecoder(BaseDecoder):
         TensorNTCHW with (batch_size, n_forecast_steps, output_channels, output_height, output_width)
     """
 
-    def __init__(self, *, bounded: bool = False, **kwargs: Any) -> None:
+    def __init__(
+        self, *, bounded: bool = False, n_blocks: int = 0, **kwargs: Any
+    ) -> None:
         """Initialise a PiecewiseDecoder."""
         super().__init__(**kwargs)
 
@@ -51,11 +57,16 @@ class PiecewiseDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Add a convolutional layer to get the required number of channels if needed
-        if self.data_space_in.channels != input_channels_required:
-            layers.append(
-                nn.Conv2d(self.data_space_in.channels, input_channels_required, 1)
-            )
+        # Add a convolutional block to get the required number of channels
+        layers.append(
+            CommonConvBlock(
+                self.data_space_in.channels,
+                input_channels_required,
+                kernel_size=3,
+                activation="SiLU",
+                n_subblocks=n_blocks + 1,
+            ),
+        )
 
         # Unflatten the channel dimension to extract the patches: [N, n_patches, C, patch_h, patch_w]
         layers.append(nn.Unflatten(1, (n_patches, -1)))

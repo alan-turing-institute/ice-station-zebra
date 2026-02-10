@@ -5,13 +5,16 @@ from icenet_mp.models.encoders import (
     BaseEncoder,
     CNNEncoder,
     NaiveLinearEncoder,
+    PiecewiseEncoder,
 )
 from icenet_mp.types import DataSpace
 
 
 class TestEncoders:
     @pytest.mark.parametrize("test_batch_size", [1, 2, 5])
-    @pytest.mark.parametrize("test_encoder_cls", ["CNNEncoder", "NaiveLinearEncoder"])
+    @pytest.mark.parametrize(
+        "test_encoder_cls", ["CNNEncoder", "NaiveLinearEncoder", "PiecewiseEncoder"]
+    )
     @pytest.mark.parametrize("test_input_chw", [(4, 512, 512, 4), (1, 20, 200)])
     @pytest.mark.parametrize("test_latent_hw", [(32, 32), (40, 73)])
     @pytest.mark.parametrize("test_n_history_steps", [1, 3, 5])
@@ -33,6 +36,11 @@ class TestEncoders:
                 n_history_steps=test_n_history_steps,
             ),
             "NaiveLinearEncoder": NaiveLinearEncoder(
+                data_space_in=input_space,
+                latent_space=test_latent_hw,
+                n_history_steps=test_n_history_steps,
+            ),
+            "PiecewiseEncoder": PiecewiseEncoder(
                 data_space_in=input_space,
                 latent_space=test_latent_hw,
                 n_history_steps=test_n_history_steps,

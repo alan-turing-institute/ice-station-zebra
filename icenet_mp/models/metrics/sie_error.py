@@ -13,10 +13,6 @@ SEA_ICE_THRESHOLD = 0.15  # Threshold for defining sea ice extent
 class SIEError(Metric):
     """Sea Ice Extent error metric (in km^2) for use at multiple lead times."""
 
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = True
-
     def __init__(self, leadtimes_to_evaluate: list[int], pixel_size: int = 25) -> None:
         """Initialize the SIEError metric.
 
@@ -55,15 +51,9 @@ class SIEError(Metric):
         preds = (preds > SEA_ICE_THRESHOLD).long()
         target = (target > SEA_ICE_THRESHOLD).long()
 
-        self.pred_sie += (
-            preds[:, :, :, self.leadtimes_to_evaluate].sum().to(self.pred_sie.dtype)
-        )
-        self.true_sie += (
-            target[:, :, :, self.leadtimes_to_evaluate].sum().to(self.true_sie.dtype)
-        )
+        self.pred_sie += torch.sum(preds[:, :, :, self.leadtimes_to_evaluate])  # type: ignore[operator]
+        self.true_sie += torch.sum(target[:, :, :, self.leadtimes_to_evaluate])  # type: ignore[operator]
 
     def compute(self) -> torch.Tensor:
         """Compute the final Sea Ice Extent error in km²."""
-        return (
-            self.pred_sie - self.true_sie
-        ) * self.pixel_size**2  # each pixel is 25x25 km
+        return (self.pred_sie - self.true_sie) * self.pixel_size**2  # type: ignore[operator]

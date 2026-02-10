@@ -1,10 +1,9 @@
-# mypy: ignore-errors
 import os
 from typing import Any, NoReturn
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torchmetrics import MetricCollection
+from torchmetrics import Metric, MetricCollection
 
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
 from icenet_mp.types import ModelTestOutput, TensorNTCHW
@@ -147,7 +146,7 @@ class DDPM(BaseModel):
 
         self.learning_rate = learning_rate
 
-        metrics = {
+        metrics: dict[str, Metric | MetricCollection] = {
             "val_accuracy": IceNetAccuracy(
                 leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
@@ -160,7 +159,7 @@ class DDPM(BaseModel):
             metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.metrics = MetricCollection(metrics)
 
-        test_metrics = {
+        test_metrics: dict[str, Metric | MetricCollection] = {
             "test_accuracy": IceNetAccuracy(
                 leadtimes_to_evaluate=list(range(self.n_forecast_steps))
             ),
@@ -276,7 +275,9 @@ class DDPM(BaseModel):
         # Concatenate along channel dimension
         return torch.cat([osisaf_features, era5_features], dim=1)
 
-    def training_step(self, batch: dict[str, TensorNTCHW]) -> dict:
+    def training_step(
+        self, batch: dict[str, TensorNTCHW], _batch_idx: int
+    ) -> torch.Tensor:
         """One training step using DDPM loss (predicted noise vs. true noise)."""
         # Prepare input tensor by combining osisaf-south and era5
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
@@ -310,9 +311,11 @@ class DDPM(BaseModel):
             prog_bar=True,
             sync_dist=True,
         )
-        return {"loss": loss}
+        return loss
 
-    def validation_step(self, batch: dict[str, TensorNTCHW]) -> dict:
+    def validation_step(
+        self, batch: dict[str, TensorNTCHW], _batch_idx: int
+    ) -> torch.Tensor:
         """One validation step using the specified loss function defined in the criterion."""
         # Prepare input tensor
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
@@ -339,7 +342,7 @@ class DDPM(BaseModel):
 
         # Update metrics
         self.metrics.update(y_hat, y, sample_weight)
-        return {"val_loss": loss}
+        return loss
 
     def test_step(
         self,

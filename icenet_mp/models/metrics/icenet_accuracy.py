@@ -13,10 +13,6 @@ THRESHOLD = 0.15  # Threshold for binarizing predictions and targets
 class IceNetAccuracy(Metric):
     """Binary accuracy metric for use at multiple leadtimes."""
 
-    is_differentiable: bool = False
-    higher_is_better: bool = True
-    full_state_update: bool = True
-
     def __init__(self, leadtimes_to_evaluate: list) -> None:
         """Initialize the IceNetAccuracy metric."""
         super().__init__()
@@ -39,13 +35,13 @@ class IceNetAccuracy(Metric):
             preds[:, :, :, self.leadtimes_to_evaluate]
             == target[:, :, :, self.leadtimes_to_evaluate]
         )
-        self.weighted_score += torch.sum(
+        self.weighted_score += torch.sum(  # type: ignore[operator]
             base_score * sample_weight[:, :, :, self.leadtimes_to_evaluate]
         )
-        self.possible_score += torch.sum(
+        self.possible_score += torch.sum(  # type: ignore[operator]
             sample_weight[:, :, :, self.leadtimes_to_evaluate]
         )
 
     def compute(self) -> torch.Tensor:
         """Compute the final accuracy metric as a percentage."""
-        return self.weighted_score.float() / self.possible_score * 100.0
+        return self.weighted_score.float() / self.possible_score * 100.0  # type: ignore[arg-type, operator]

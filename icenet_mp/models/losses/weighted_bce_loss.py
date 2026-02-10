@@ -22,7 +22,7 @@ class WeightedBCEWithLogitsLoss(nn.BCEWithLogitsLoss):
         """
         super().__init__(*args, **kwargs)
 
-    def forward(
+    def forward(  # type: ignore[override]
         self,
         inputs: Tensor,
         targets: Tensor,

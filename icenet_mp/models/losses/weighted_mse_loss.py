@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Weighted MSELoss.
 
 Adapted from the IceNet repository at:
@@ -23,8 +22,7 @@ class WeightedMSELoss(nn.MSELoss):
         """
         super().__init__(*args, **kwargs)
 
-    # type: ignore[override]
-    def forward(
+    def forward(  # type: ignore[override]
         self,
         inputs: Tensor,
         targets: Tensor,

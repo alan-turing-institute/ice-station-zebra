@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Weighted L1Loss.
 
 Adapted from the IceNet repository: https://github.com/icenet-ai/icenet-notebooks/blob/main/pytorch/1_icenet_forecast_unet.ipynb
@@ -23,7 +22,7 @@ class WeightedL1Loss(nn.L1Loss):
         """
         super().__init__(*args, **kwargs)
 
-    def forward(
+    def forward(  # type: ignore[override]
         self,
         inputs: Tensor,
         targets: Tensor,

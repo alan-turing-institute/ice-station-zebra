@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from icenetmp.models.decoders import (
+from icenet_mp.models.decoders import (
     BaseDecoder,
     CNNDecoder,
     NaiveLinearDecoder,
 )
-from icenetmp.types import DataSpace
+from icenet_mp.types import DataSpace
 
 
 class TestDecoders:

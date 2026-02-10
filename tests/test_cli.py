@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 from typer.testing import CliRunner
 
-from icenetmp.cli.main import app
+from icenet_mp.cli.main import app
 
 
 class EnhancedCliRunner(CliRunner):

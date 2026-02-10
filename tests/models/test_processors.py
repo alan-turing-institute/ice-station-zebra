@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from icenetmp.models.processors import (
+from icenet_mp.models.processors import (
     BaseProcessor,
     NullProcessor,
     UNetProcessor,
 )
-from icenetmp.types import DataSpace
+from icenet_mp.types import DataSpace
 
 
 @pytest.mark.parametrize("test_batch_size", [1, 2, 5])

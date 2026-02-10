@@ -4,9 +4,9 @@ from typing import Any
 import pytest
 from omegaconf import DictConfig
 
-from icenetmp.callbacks.plotting_callback import PlottingCallback
-from icenetmp.types import Metadata
-from icenetmp.visualisations.metadata import (
+from icenet_mp.callbacks.plotting_callback import PlottingCallback
+from icenet_mp.types import Metadata
+from icenet_mp.visualisations.metadata import (
     build_metadata,
     calculate_training_points,
     extract_variables_by_source,

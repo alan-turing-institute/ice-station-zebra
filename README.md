@@ -26,14 +26,14 @@ export UDUNITS2_LIBDIR=/projects/u5gf/seaice/udunits/lib/
 You can then install the project as follows (for DAWN / Baskerville, you can ignore the previous step):
 
 ```bash
-git clone git@github.com:alan-turing-institute/icenetmp.git
-cd icenetmp
+git clone git@github.com:alan-turing-institute/icenet-mp.git
+cd icenet_mp
 uv sync --managed-python
 ```
 
 ### Creating your own configuration file
 
-Create a file in the folder `icenetmp/config` that is called `<your chosen name here>.local.yaml`.
+Create a file in the folder `icenet_mp/config` that is called `<your chosen name here>.local.yaml`.
 You will typically want this to inherit from `base.yaml`, and then you can apply your own changes on top.
 For example, the following config will override the `base_path` option in `base.yaml`:
 

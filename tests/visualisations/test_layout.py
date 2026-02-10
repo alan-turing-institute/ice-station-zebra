@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from icenetmp.visualisations import DEFAULT_SIC_SPEC
-from icenetmp.visualisations.layout import (
+from icenet_mp.visualisations import DEFAULT_SIC_SPEC
+from icenet_mp.visualisations.layout import (
     _set_axes_limits,
     build_layout,
     build_single_panel_figure,

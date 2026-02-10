@@ -3,8 +3,8 @@ requires = ["uv_build>=0.8.3,<0.9.0"]
 build-backend = "uv_build"
 
 [project]
-name = "icenetmp"
-version = "0.1.0"
+name = "icenet-mp"
+version = "0.2.0"
 description = "IceNet Multimodal Pipeline for predicting sea ice."
 readme = "README.md"
 authors = [
@@ -53,10 +53,10 @@ notebooks = [
 ]
 
 [project.scripts]
-imp = "icenetmp.cli:main"
+imp = "icenet_mp.cli:main"
 
 [tool.coverage.paths]
-source = ["icenetmp/"]
+source = ["icenet_mp/"]
 
 [tool.coverage.run]
 relative_files = true
@@ -77,7 +77,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = [
-    "--cov=icenetmp",
+    "--cov=icenet_mp",
     "--cov-report=term-missing",
     "-vvv",
 ]

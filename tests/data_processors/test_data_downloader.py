@@ -8,8 +8,8 @@ import pytest
 from filelock import Timeout
 from omegaconf import DictConfig, OmegaConf
 
-from icenetmp.data_processors.data_downloader import DataDownloader
-from icenetmp.data_processors.preprocessors.ipreprocessor import IPreprocessor
+from icenet_mp.data_processors.data_downloader import DataDownloader
+from icenet_mp.data_processors.preprocessors.ipreprocessor import IPreprocessor
 
 
 class DummyPreprocessor(IPreprocessor):
@@ -351,7 +351,7 @@ def test_lock_timeout_skips_part(
         ) -> Literal[False]:
             return False
 
-    monkeypatch.setattr("icenetmp.data_processors.data_downloader.FileLock", BadLock)
+    monkeypatch.setattr("icenet_mp.data_processors.data_downloader.FileLock", BadLock)
 
     calls = []
 

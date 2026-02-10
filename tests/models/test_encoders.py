@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from icenetmp.models.encoders import (
+from icenet_mp.models.encoders import (
     BaseEncoder,
     CNNEncoder,
     NaiveLinearEncoder,
 )
-from icenetmp.types import DataSpace
+from icenet_mp.types import DataSpace
 
 
 class TestEncoders:

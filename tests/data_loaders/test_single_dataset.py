@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from icenetmp.data_loaders.single_dataset import SingleDataset
-from icenetmp.types import DataSpace
+from icenet_mp.data_loaders.single_dataset import SingleDataset
+from icenet_mp.types import DataSpace
 
 
 class MockAnemoiDataset:

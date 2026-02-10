@@ -6,12 +6,12 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from icenetmp.visualisations import DEFAULT_SIC_SPEC
-from icenetmp.visualisations.plotting_core import (
+from icenet_mp.visualisations import DEFAULT_SIC_SPEC
+from icenet_mp.visualisations.plotting_core import (
     compute_display_ranges,
     make_diff_colourmap,
 )
-from icenetmp.visualisations.range_check import compute_range_check_report
+from icenet_mp.visualisations.range_check import compute_range_check_report
 
 
 @pytest.mark.parametrize(

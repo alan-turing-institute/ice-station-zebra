@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from icenetmp.models import Persistence
+from icenet_mp.models import Persistence
 
 
 class TestPersistence:

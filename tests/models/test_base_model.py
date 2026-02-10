@@ -4,8 +4,8 @@ import pytest
 import torch
 from omegaconf import DictConfig
 
-from icenetmp.models import BaseModel
-from icenetmp.types import ModelTestOutput, TensorNTCHW
+from icenet_mp.models import BaseModel
+from icenet_mp.types import ModelTestOutput, TensorNTCHW
 
 
 class FakeDataModel(BaseModel):

@@ -14,11 +14,11 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from icenetmp.exceptions import InvalidArrayError
-from icenetmp.types import PlotSpec
-from icenetmp.visualisations import DEFAULT_SIC_SPEC, convert
-from icenetmp.visualisations.land_mask import LandMask
-from icenetmp.visualisations.plotting_video import (
+from icenet_mp.exceptions import InvalidArrayError
+from icenet_mp.types import PlotSpec
+from icenet_mp.visualisations import DEFAULT_SIC_SPEC, convert
+from icenet_mp.visualisations.land_mask import LandMask
+from icenet_mp.visualisations.plotting_video import (
     plot_video_inputs,
     plot_video_prediction,
     plot_video_single_input,

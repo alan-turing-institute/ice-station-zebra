@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from icenetmp.types import ArrayHW, ArrayTHW, PlotSpec
-from icenetmp.visualisations.land_mask import LandMask
+from icenet_mp.types import ArrayHW, ArrayTHW, PlotSpec
+from icenet_mp.visualisations.land_mask import LandMask
 from tests.conftest import make_varying_sic_stream
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep

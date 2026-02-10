@@ -1,21 +1,14 @@
 import warnings
 from collections.abc import Iterator
 from datetime import date, timedelta
-from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
-import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import torch
-from omegaconf import DictConfig, OmegaConf
-from omegaconf import errors as oc_errors
 
-from icenetmp.data_loaders import CommonDataModule
 from icenetmp.types import ArrayHW, ArrayTHW, PlotSpec
 from icenetmp.visualisations.land_mask import LandMask
-
 from tests.conftest import make_varying_sic_stream
 
 # Suppress Matplotlib animation warning during tests; we intentionally do not keep

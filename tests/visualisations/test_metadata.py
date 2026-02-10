@@ -1,11 +1,8 @@
-from typing import TYPE_CHECKING, Any
-
-from omegaconf import DictConfig
-
-if TYPE_CHECKING:  # TC003: only used for typing
-    from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import pytest
+from omegaconf import DictConfig
 
 from icenetmp.callbacks.plotting_callback import PlottingCallback
 from icenetmp.types import Metadata

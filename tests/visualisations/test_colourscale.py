@@ -1,12 +1,10 @@
+from collections.abc import Callable
 from dataclasses import replace
-from typing import TYPE_CHECKING, Literal
+from datetime import date
+from typing import Literal
 
 import numpy as np
 import pytest
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from datetime import date
 
 from icenetmp.visualisations import DEFAULT_SIC_SPEC
 from icenetmp.visualisations.plotting_core import (

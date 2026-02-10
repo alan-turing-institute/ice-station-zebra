@@ -351,9 +351,7 @@ def test_lock_timeout_skips_part(
         ) -> Literal[False]:
             return False
 
-    monkeypatch.setattr(
-        "icenetmp.data_processors.data_downloader.FileLock", BadLock
-    )
+    monkeypatch.setattr("icenetmp.data_processors.data_downloader.FileLock", BadLock)
 
     calls = []
 

@@ -1,8 +1,10 @@
 from dataclasses import replace
+from datetime import date
 from itertools import combinations
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from icenetmp.visualisations import DEFAULT_SIC_SPEC
@@ -21,12 +23,6 @@ from .test_helper_plot_layout import axis_rectangle, rectangles_overlap
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Animation was deleted without rendering anything:UserWarning:matplotlib.animation"
 )
-
-if TYPE_CHECKING:
-    # Imports used only for type annotations
-    from datetime import date
-
-    import numpy as np
 
 
 @pytest.mark.parametrize(

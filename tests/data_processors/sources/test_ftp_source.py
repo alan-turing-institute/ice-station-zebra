@@ -49,12 +49,8 @@ class TestFTPSource:
         mock_load_one.return_value = MagicMock()
 
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
-            )
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
-            )
+            mp.setattr("icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class)
+            mp.setattr("icenetmp.data_processors.sources.ftp.load_one", mock_load_one)
 
             # Execute
             FTPSource._execute(
@@ -85,12 +81,8 @@ class TestFTPSource:
         mock_load_one.return_value = MagicMock()
 
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
-            )
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
-            )
+            mp.setattr("icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class)
+            mp.setattr("icenetmp.data_processors.sources.ftp.load_one", mock_load_one)
 
             # Execute without providing user/passwd
             FTPSource._execute(
@@ -122,12 +114,8 @@ class TestFTPSource:
         mock_multi_field_list = MagicMock()
 
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
-            )
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
-            )
+            mp.setattr("icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class)
+            mp.setattr("icenetmp.data_processors.sources.ftp.load_one", mock_load_one)
             mp.setattr(
                 "icenetmp.data_processors.sources.ftp.MultiFieldList",
                 mock_multi_field_list,
@@ -167,12 +155,8 @@ class TestFTPSource:
         mock_load_one.return_value = MagicMock()
 
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class
-            )
-            mp.setattr(
-                "icenetmp.data_processors.sources.ftp.load_one", mock_load_one
-            )
+            mp.setattr("icenetmp.data_processors.sources.ftp.FTP", mock_ftp_class)
+            mp.setattr("icenetmp.data_processors.sources.ftp.load_one", mock_load_one)
 
             FTPSource._execute(
                 context={},

@@ -15,9 +15,7 @@ from icenetmp.types import AnemoiCreateArgs
 @pytest.fixture
 def cfg_decoder() -> DictConfig:
     """Test configuration for a decoder."""
-    return DictConfig(
-        {"_target_": "icenetmp.models.decoders.NaiveLinearDecoder"}
-    )
+    return DictConfig({"_target_": "icenetmp.models.decoders.NaiveLinearDecoder"})
 
 
 @pytest.fixture

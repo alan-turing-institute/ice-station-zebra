@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 
 from icenetmp.cli import hydra_adaptor
 
-from .evaluator import ZebraEvaluator
+from .evaluator import ModelEvaluator
 
 # Create the typer app
 evaluation_cli = typer.Typer(help="Evaluate models")
@@ -24,7 +24,7 @@ def evaluate(
     ],
 ) -> None:
     """Evaluate a model."""
-    evaluator = ZebraEvaluator(config, Path(checkpoint).resolve())
+    evaluator = ModelEvaluator(config, Path(checkpoint).resolve())
     evaluator.evaluate()
 
 

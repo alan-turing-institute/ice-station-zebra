@@ -20,11 +20,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ZebraEvaluator:
+class ModelEvaluator:
     """A wrapper for PyTorch evaluation."""
 
     def __init__(self, config: DictConfig, checkpoint_path: Path) -> None:
-        """Initialize the Zebra evaluator from a config and checkpoint."""
+        """Initialize the model evaluator from a config and checkpoint."""
         # Verify the checkpoint path
         if checkpoint_path.exists():
             logger.debug("Loaded checkpoint from %s.", checkpoint_path)

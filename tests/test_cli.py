@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 from icenet_mp.cli.main import app
 
 
-class EnhancedCliRunner(CliRunner):
+class CustomCliRunner(CliRunner):
     def __init__(self) -> None:
         """A custom CLI runner for IceNetMP tests."""
         super().__init__()
@@ -45,14 +45,14 @@ class TestBaseCLI:
     )
 
     def test_help(self) -> None:
-        runner = EnhancedCliRunner()
+        runner = CustomCliRunner()
         runner.check_output(
             ["--help"],
             expected_patterns=self.expected_patterns_help,
         )
 
     def test_short_help(self) -> None:
-        runner = EnhancedCliRunner()
+        runner = CustomCliRunner()
         runner.check_output(
             ["-h"],
             expected_patterns=self.expected_patterns_help,
@@ -61,7 +61,7 @@ class TestBaseCLI:
 
 class TestDatasetsCLI:
     def test_help(self) -> None:
-        runner = EnhancedCliRunner()
+        runner = CustomCliRunner()
         runner.check_output(
             ["datasets", "--help"],
             expected_patterns=[
@@ -79,7 +79,7 @@ class TestDatasetsCLI:
 
 class TestEvaluateCLI:
     def test_help(self) -> None:
-        runner = EnhancedCliRunner()
+        runner = CustomCliRunner()
         runner.check_output(
             ["evaluate", "--help"],
             expected_patterns=[
@@ -95,7 +95,7 @@ class TestEvaluateCLI:
 
 class TestTrainCLI:
     def test_help(self) -> None:
-        runner = EnhancedCliRunner()
+        runner = CustomCliRunner()
         runner.check_output(
             ["train", "--help"],
             expected_patterns=[

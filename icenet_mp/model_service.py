@@ -7,18 +7,16 @@ import torch
 from lightning import Callback, Trainer
 from lightning.fabric.utilities import suggested_max_num_workers
 from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from wandb.sdk.lib.runid import generate_id
+from wandb.wandb_run import Run
 
 from icenet_mp.callbacks import UnconditionalCheckpoint
 from icenet_mp.data_loaders import CommonDataModule
 from icenet_mp.models.base_model import BaseModel
 from icenet_mp.types import SupportsMetadata
-from icenet_mp.utils import (
-    get_device_name,
-    get_timestamp,
-    get_wandb_logger,
-)
+from icenet_mp.utils import get_device_name, get_timestamp
 
 if TYPE_CHECKING:
     from lightning.pytorch.loggers import Logger as LightningLogger
@@ -122,16 +120,26 @@ class ModelService:
     def run_directory(self) -> Path:
         """Get run directory from wandb logger or generate one in the same format."""
         if not self.run_directory_:
-            logger.debug("Determining run directory.")
-            if wandb_logger := get_wandb_logger(self.extra_loggers_):
-                self.run_directory_ = Path(wandb_logger.experiment._settings.sync_dir)
-            else:
+            # Get the run directory from the WandbLogger if it exists
+            for lightning_logger in self.trainer.loggers:
+                if not isinstance(lightning_logger, WandbLogger):
+                    continue
+                if not isinstance(experiment := lightning_logger.experiment, Run):
+                    continue
+                self.run_directory_ = Path(experiment._settings.sync_dir)
+                break
+
+            # Otherwise generate a new run directory
+            if not self.run_directory_:
                 self.run_directory_ = (
                     self.data_module.base_path
                     / "training"
                     / "local"
                     / f"run-{get_timestamp()}-{generate_id()}"
                 )
+
+            # Ensure the run directory exists
+            logger.debug("Set run directory to %s.", self.run_directory_)
             self.run_directory_.mkdir(parents=True, exist_ok=True)
         return self.run_directory_
 

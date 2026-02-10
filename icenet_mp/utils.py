@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 
 import numpy as np
 import torch
-from lightning.pytorch.loggers import Logger, WandbLogger
 
 
 def datetime_from_npdatetime(dt: np.datetime64) -> datetime:
@@ -30,14 +29,6 @@ def get_device_name(accelerator_name: str) -> str:
 def get_timestamp() -> str:
     """Return the current time as a string."""
     return datetime.now(tz=UTC).strftime(r"%Y%m%d_%H%M%S")
-
-
-def get_wandb_logger(lightning_loggers: list[Logger]) -> WandbLogger | None:
-    """Get the WandbLogger from a list of Lightning loggers."""
-    for logger in lightning_loggers:
-        if isinstance(logger, WandbLogger):
-            return logger
-    return None
 
 
 def normalise_date(np_datetime: np.datetime64) -> np.datetime64:

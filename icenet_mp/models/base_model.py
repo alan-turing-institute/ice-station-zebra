@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import hydra
+from sqlalchemy import values
 import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import (
@@ -13,6 +14,7 @@ from lightning.pytorch.utilities.types import (
 )
 from omegaconf import DictConfig
 
+from icenet_mp.models.metrics.sie_error_new import SIEErrorNew
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -60,6 +62,10 @@ class BaseModel(LightningModule, ABC):
         # Store the optimizer and scheduler configs
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
+        
+        self.sieerror = SIEErrorNew(forecast_step=0)
+        print("device:", self.sieerror.device) 
+        print("metric state:",self.sieerror.metric_state)
 
         # Save all of the arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
@@ -139,6 +145,16 @@ class BaseModel(LightningModule, ABC):
         target = batch.pop("target")
         prediction = self(batch)
         loss = self.loss(prediction, target)
+        self.sieerror(prediction, target)
+        self.log("SIEError", self.sieerror, on_step=False, on_epoch=True, prog_bar=True)
+        
+        for i in range(5):
+            values = {"test": i * 1.5}
+            self.log_dict(values, on_epoch=True, prog_bar=True)
+        
+        print("test device:", self.sieerror.device) 
+        print("test metric state:",self.sieerror.metric_state)
+
         return ModelTestOutput(prediction, target, loss)
 
     def training_step(

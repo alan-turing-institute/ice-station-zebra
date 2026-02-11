@@ -87,7 +87,7 @@ class MetricSummaryCallback(Callback):
         if mae_rows:
             mae_rows.sort(key=lambda r: r[0])
             table = wandb.Table(data=mae_rows, columns=["day", "mae"])
-            print(table.    data)
+            print(table.data)
             # wandb.log({"mae_by_day": table})
             plot_name = "MAE per day"
             wandb.log({plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)})

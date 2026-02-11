@@ -63,6 +63,7 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each test batch."""
+        print("each batch_idx:", batch_idx, "frequency:", self.frequency)
         # Only run plotting every `frequency` batches
         if batch_idx % self.frequency:
             return
@@ -87,11 +88,24 @@ class PlottingCallback(Callback):
         # Get sequence dates for static and video plots
         batch_size = int(outputs.target.shape[0])
         n_timesteps = int(outputs.target.shape[1])
-        dates = [
-            datetime_from_npdatetime(dataset.dates[batch_size * batch_idx + tt])
-            for tt in range(n_timesteps)
-        ]
-
+        print(f"batch_size={batch_size}, n_timesteps={n_timesteps}")
+        print("time range:", range(n_timesteps))
+        print("dataset.dates length:", len(dataset.dates))
+        print("dates:", dataset.dates)
+        # for tt in range(n_timesteps):
+        #     print(f"index {tt}:", batch_size * batch_idx + tt)
+        #     print(f"date for timestep {tt}:", dataset.dates[batch_size * batch_idx + tt])
+        
+        start_date = dataset.dates[batch_size * batch_idx]
+        print(f"start_date: {start_date}")
+        
+        # dates = [
+        #     datetime_from_npdatetime(dataset.dates[batch_size * batch_idx + tt])
+        #     for tt in range(n_timesteps)
+        # ]
+        
+        dates = list(map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date)))
+        print("dates:", dates)
         # Set hemisphere for plotting based on dataset
         self.plotter.set_hemisphere(dataset.hemisphere)
 

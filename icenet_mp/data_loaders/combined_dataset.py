@@ -75,6 +75,11 @@ class CombinedDataset(Dataset):
                     "when the input datasets do not have overlapping time ranges."
                 )
                 raise ValueError(msg)
+            for start_date in self._available_dates:
+                print(
+                    f"start_date: {start_date}, history_steps: {self.get_history_steps(start_date)}, "
+                    f"forecast_steps: {self.get_forecast_steps(start_date)}"
+                )
         return self._available_dates
 
     @property

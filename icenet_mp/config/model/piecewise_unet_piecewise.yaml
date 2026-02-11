@@ -5,7 +5,7 @@ name: piecewise-unet-piecewise
 encoder:
   _target_: icenet_mp.models.encoders.PiecewiseEncoder
   latent_space: [128, 128] # Shape of the latent space
-  n_blocks: 1 # Number of convolutional blocks to add after encoding
+  n_blocks: 2 # Number of convolutional blocks to add after encoding
 
 processor:
   _target_: icenet_mp.models.processors.UNetProcessor
@@ -15,4 +15,4 @@ processor:
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder
   bounded: false # Whether to bound the output between 0 and 1
-  n_blocks: 6 # Number of convolutional blocks to add before decoding
+  n_blocks: 4 # Number of convolutional blocks to add before decoding

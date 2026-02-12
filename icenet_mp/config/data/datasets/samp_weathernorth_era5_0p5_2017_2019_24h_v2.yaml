@@ -46,5 +46,6 @@ samp-weathernorth-era5-0p5-2017-2019-24h-v2:
     - forcings:
         param:
         - cos_julian_day
+        - insolation
         - sin_julian_day
         template: \${input.join.0.mars}

@@ -46,5 +46,6 @@ full-weathersouth-era5-0p5-1979-2024-24h-v2:
     - forcings:
         param:
         - cos_julian_day
+        - insolation
         - sin_julian_day
         template: \${input.join.0.mars}

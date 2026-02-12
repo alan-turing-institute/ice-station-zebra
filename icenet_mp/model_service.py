@@ -65,7 +65,9 @@ class ModelService:
         return builder
 
     @classmethod
-    def from_checkpoint(cls, checkpoint_path: Path) -> "ModelService":
+    def from_checkpoint(
+        cls, config: DictConfig, checkpoint_path: Path
+    ) -> "ModelService":
         """Build a new ModelService by loading a model from a checkpoint."""
         # Verify the checkpoint path
         if checkpoint_path.is_file():
@@ -74,16 +76,27 @@ class ModelService:
             msg = f"Checkpoint file {checkpoint_path} does not exist."
             raise FileNotFoundError(msg)
 
-        # Load the model configuration
+        # Build a combined model configuration where the command line config takes
+        # precedence except for the "model", "predict" and "train" keys which are
+        # related to training the model.
         config_path = checkpoint_path.parent.parent / "model_config.yaml"
         try:
-            builder = cls(DictConfig(OmegaConf.load(config_path)))
+            # Load the model configuration from the checkpoint directory
+            ckpt_config = DictConfig(OmegaConf.load(config_path))
             logger.debug("Loaded checkpoint configuration from %s.", config_path)
-        except (NotADirectoryError, FileNotFoundError) as exc:
-            msg = f"Could not load checkpoint configuration from {config_path}."
-            raise FileNotFoundError(msg) from exc
+            combined_cfg = DictConfig(OmegaConf.merge(ckpt_config, config))
+            for key in ("model", "predict", "train"):
+                combined_cfg[key] = OmegaConf.merge(
+                    combined_cfg.get(key, {}), ckpt_config.get(key, {})
+                )
+        except (NotADirectoryError, FileNotFoundError):
+            combined_cfg = config
+            logger.debug(
+                "Could not load checkpoint configuration from %s.", config_path
+            )
 
         # Load the model from checkpoint
+        builder = cls(combined_cfg)
         model_cls: type[BaseModel] = hydra.utils.get_class(
             builder.config["model"]["_target_"]
         )

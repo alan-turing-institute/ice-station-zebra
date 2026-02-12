@@ -70,6 +70,38 @@ class TestModelService:
                 "icenet_mp.model_service.hydra.utils.get_class",
                 lambda _target: MockModel,
             )
-            service = ModelService.from_checkpoint(checkpoint_path)
+            service = ModelService.from_checkpoint(DictConfig({}), checkpoint_path)
             assert isinstance(service.model, MockModel)
             assert service.config == cfg_model_service
+
+    def test_from_checkpoint_config_overloads(
+        self, cfg_model_service: DictConfig, tmp_path: Path
+    ) -> None:
+        # Generate a checkpoint file and corresponding model_config.yaml
+        checkpoints_dir = tmp_path / "checkpoints"
+        checkpoints_dir.mkdir(parents=True)
+        checkpoint_path = checkpoints_dir / "model.ckpt"
+        checkpoint_path.write_text("checkpoint")
+
+        OmegaConf.save(cfg_model_service, tmp_path / "model_config.yaml")
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "icenet_mp.model_service.hydra.utils.get_class",
+                lambda _target: MockModel,
+            )
+            service = ModelService.from_checkpoint(
+                DictConfig(
+                    {
+                        "loggers": "will_overwrite",
+                        "model": {"name": "will_not_overwrite"},
+                    }
+                ),
+                checkpoint_path,
+            )
+            assert isinstance(service.model, MockModel)
+
+            expected_config = cfg_model_service.copy()
+            expected_config["loggers"] = "will_overwrite"
+            assert service.config == expected_config
+            assert service.config["model"]["name"] != "will_not_overwrite"

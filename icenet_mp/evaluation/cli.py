@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from omegaconf import DictConfig
 
+from icenet_mp.cli import hydra_adaptor
 from icenet_mp.model_service import ModelService
 
 # Create the typer app
@@ -13,13 +15,15 @@ log = logging.getLogger(__name__)
 
 
 @evaluation_cli.command()
+@hydra_adaptor
 def evaluate(
+    config: DictConfig,
     checkpoint: Annotated[
         str, typer.Option(help="Specify the path to a trained model checkpoint")
     ],
 ) -> None:
     """Evaluate a pre-trained model."""
-    model = ModelService.from_checkpoint(Path(checkpoint).resolve())
+    model = ModelService.from_checkpoint(config, Path(checkpoint).resolve())
     model.evaluate()
 
 

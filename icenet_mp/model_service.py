@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, cast
 
@@ -167,7 +168,7 @@ class ModelService:
             )
         return self.trainer_
 
-    def add_callbacks(self, callback_configs: list[DictConfig]) -> None:
+    def add_callbacks(self, callback_configs: Iterable[DictConfig]) -> None:
         """Add extra lightning callbacks."""
         self.extra_callbacks_ = [
             hydra.utils.instantiate(callback_config)
@@ -182,7 +183,7 @@ class ModelService:
         ]
 
     def configure_trainer(
-        self, *, callback_configs: list[DictConfig], logger_overrides: dict[str, str]
+        self, *, callback_configs: Iterable[DictConfig], logger_overrides: dict[str, str]
     ) -> None:
         """Configure the trainer with callbacks and loggers."""
         # Setup callbacks first
@@ -196,7 +197,7 @@ class ModelService:
             logger.warning("No loggers have been set for the trainer.")
 
         # Additional configuration for callbacks
-        for callback in cast("list[Callback]", self.trainer.callbacks):  # type: ignore[attr-defined]
+        for callback in cast(list[Callback], self.trainer.callbacks):  # type: ignore[attr-defined]
             logger.debug("Configuring callback %s.", callback.__class__.__name__)
             # Set metadata for supported callbacks
             if isinstance(callback, SupportsMetadata):

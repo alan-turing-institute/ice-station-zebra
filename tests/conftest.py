@@ -42,6 +42,54 @@ def cfg_input_space() -> DictConfig:
 
 
 @pytest.fixture
+def cfg_model_service() -> DictConfig:
+    """Test configuration for a ModelService."""
+    return DictConfig(
+        {
+            "data": {
+                "datasets": {
+                    "mock-dataset-1": {
+                        "name": "mock_dataset",
+                        "group_as": "mock-dataset-group-1",
+                    },
+                    "mock-dataset-2": {
+                        "name": "mock_dataset",
+                        "group_as": "mock-dataset-group-2",
+                    },
+                },
+                "split": {
+                    "batch_size": 2,
+                    "predict": [{"start": None, "end": None}],
+                    "test": [{"start": "2019-01-01", "end": "2019-01-31"}],
+                    "train": [
+                        {"start": "2017-01-01", "end": "2017-12-31"},
+                        {"start": "2018-02-01", "end": "2018-12-31"},
+                    ],
+                    "validate": [{"start": "2018-01-01", "end": "2018-01-31"}],
+                },
+            },
+            "evaluate": {"callbacks": {}},
+            "loggers": {},
+            "model": {
+                "_target_": "MockModel",
+                "name": "mock-model",
+            },
+            "predict": {
+                "target": {"group_name": "mock-dataset-group-1"},
+                "n_forecast_steps": 2,
+                "n_history_steps": 3,
+            },
+            "train": {
+                "callbacks": {},
+                "optimizer": {},
+                "scheduler": {},
+                "trainer": {},
+            },
+        }
+    )
+
+
+@pytest.fixture
 def cfg_optimizer() -> DictConfig:
     """Test configuration for an optimizer."""
     return DictConfig({"_target_": "torch.optim.AdamW", "lr": 5e-4})

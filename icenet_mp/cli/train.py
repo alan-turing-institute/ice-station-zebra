@@ -3,8 +3,9 @@ import logging
 import typer
 from omegaconf import DictConfig
 
-from icenet_mp.cli import hydra_adaptor
 from icenet_mp.model_service import ModelService
+
+from .hydra import hydra_adaptor
 
 # Create the typer app
 training_cli = typer.Typer(help="Train models")

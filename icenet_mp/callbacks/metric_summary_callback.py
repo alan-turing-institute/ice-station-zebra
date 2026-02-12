@@ -3,11 +3,11 @@ import statistics
 from collections.abc import Mapping
 from typing import Any
 
+import torch
+import wandb
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
-import wandb
-import torch
 
 from icenet_mp.types import ModelTestOutput
 
@@ -56,8 +56,7 @@ class MetricSummaryCallback(Callback):
             if key not in self.metrics:
                 self.metrics[key] = []
             self.metrics[key].append(mae.detach().cpu().item())
-            
-        
+
     def on_test_epoch_end(
         self,
         trainer: Trainer,
@@ -69,14 +68,14 @@ class MetricSummaryCallback(Callback):
         for name, values in self.metrics.items():
             if name.startswith("average_") or name.startswith("mae_day_"):
                 metrics_[name] = statistics.mean(values)
-   
+
         print(self.metrics)
         print(metrics_)
-            
+
         # Log metrics to each logger
         for logger in trainer.loggers:
             logger.log_metrics(metrics_)
-            
+
         # Build W&B table for per-day MAE and plot results
         mae_rows: list[list[float]] = []
         for name, value in metrics_.items():
@@ -90,5 +89,6 @@ class MetricSummaryCallback(Callback):
             print(table.data)
             # wandb.log({"mae_by_day": table})
             plot_name = "MAE per day"
-            wandb.log({plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)})
-            
+            wandb.log(
+                {plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)}
+            )

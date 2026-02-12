@@ -170,14 +170,14 @@ class ModelService:
 
     def add_callbacks(self, callback_configs: Iterable[DictConfig]) -> None:
         """Add extra lightning callbacks."""
-        self.extra_callbacks_ = [
+        self.extra_callbacks_ += [
             hydra.utils.instantiate(callback_config)
             for callback_config in callback_configs
         ]
 
     def add_loggers(self, overrides: dict[str, str]) -> None:
         """Add extra lightning loggers."""
-        self.extra_loggers_ = [
+        self.extra_loggers_ += [
             hydra.utils.instantiate(dict(**logger_config) | overrides)
             for logger_config in self.config.get("loggers", {}).values()
         ]

@@ -1,7 +1,7 @@
 demo-weathernorth-era5-0p5-2017-2019-24h-v1:
   name: demo-weathernorth-era5-0p5-2017-2019-24h-v1
   group_as: era5
-  description: Small ERA5 dataset for testing (0.5 deg, north)
+  description: Weather from ERA5 for entire northern hemisphere
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 

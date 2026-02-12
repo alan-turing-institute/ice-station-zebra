@@ -52,12 +52,18 @@ class SIEErrorNew(Metric):
         print("preds shape:", preds.shape)
         print("target shape:", target.shape)
 
-        pred_sie = torch.sum(preds[:, self.forecast_step])  # type: ignore[operator]
+        # Calculate the SIE for each day of the forecast
+        pred_sie = torch.sum(preds, dim=(0, 2, 3, 4))  # type: ignore[operator]
         print("pred_sie:", pred_sie)
-        true_sie = torch.sum(target[:, self.forecast_step])  # type: ignore[operator]
+        true_sie = torch.sum(target, dim=(0, 2, 3, 4))  # type: ignore[operator]
         print("true_sie:", true_sie)
-        error = torch.Tensor([pred_sie - true_sie]).to(self.device)
-        self.sie_error = torch.cat((self.sie_error, error)) 
+        error = (pred_sie - true_sie).float().to(self.device)
+        print("SIE error for each day:", error)
+        # Reshape to (T, 1) to stack horizontally across epochs/batches
+        if self.sie_error.numel() == 0:
+            self.sie_error = error.unsqueeze(1)  # Shape: (T, 1)
+        else:
+            self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
         print("sie_error:", self.sie_error)
 
     def compute(self) -> torch.Tensor:
@@ -65,4 +71,4 @@ class SIEErrorNew(Metric):
         print("Computing SIEError metric...")
         print("compute:", self.sie_error)
         print("type of sie_error:", type(self.sie_error))
-        return torch.mean(torch.abs(self.sie_error)) * self.pixel_size**2  # type: ignore[operator]
+        return torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]

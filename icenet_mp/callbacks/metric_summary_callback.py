@@ -92,3 +92,22 @@ class MetricSummaryCallback(Callback):
             wandb.log(
                 {plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)}
             )
+
+        # Build W&B table for per-day SIEError_t and plot results
+        SIEError_t_rows: list[list[float]] = []
+        for name, value in metrics_.items():
+            print("name:", name, "value:", value)
+            if name.startswith("SIEError_t"):
+                day = int(name.split("_")[-1][1:])
+                SIEError_t_rows.append([day, value])
+
+        if SIEError_t_rows:
+            SIEError_t_rows.sort(key=lambda r: r[0])
+            table = wandb.Table(data=SIEError_t_rows, columns=["day", "SIEError"])
+            print(table.data)
+            # wandb.log({"SIEError_t_by_day": table})
+            plot_name = "SIEError per day"
+            wandb.log(
+                {plot_name: wandb.plot.line(table, "day", "SIEError", title=plot_name)}
+            )
+

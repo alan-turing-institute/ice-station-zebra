@@ -83,8 +83,10 @@ class TestEvaluateCLI:
         runner.check_output(
             ["evaluate", "--help"],
             expected_patterns=[
-                r"Usage: imp evaluate \[OPTIONS\]",
+                r"Usage: imp evaluate \[OPTIONS\] \[OVERRIDES\]...",
                 r"Evaluate a pre-trained model",
+                r"overrides\s+\[OVERRIDES\]...\s+Apply space-separated Hydra config",
+                r"--config-name\s+TEXT\s+Specify the name of a file to load from the",
                 r"--checkpoint\s+TEXT\s+Specify the path to a trained model",
                 r"--help\s+-h\s+Show this message and exit.",
             ],

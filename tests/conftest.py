@@ -203,12 +203,17 @@ def mock_data_non_normalized_times(
 
 
 @pytest.fixture(scope="session")
+def mock_data_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return tmp_path_factory.mktemp("data", numbered=False)
+
+
+@pytest.fixture(scope="session")
 def mock_dataset(
-    tmpdir_factory: pytest.TempdirFactory, mock_data: dict[str, dict[str, Any]]
+    mock_data_path: Path, mock_data: dict[str, dict[str, Any]]
 ) -> Path:
     """Fixture to create a mock file for testing."""
     # Use the mock data to create a NetCDF file
-    netcdf_path = tmpdir_factory.mktemp("data").join("mock_dataset.nc")
+    netcdf_path = mock_data_path / "mock_dataset.nc"
     xr.Dataset.from_dict(mock_data).to_netcdf(netcdf_path)
     # Create an Anemoi dataset from the NetCDF file
     config = DictConfig(
@@ -225,7 +230,7 @@ def mock_dataset(
             },
         }
     )
-    zarr_path = tmpdir_factory.mktemp("data").join("mock_dataset.zarr")
+    zarr_path = mock_data_path / "anemoi" / "mock_dataset.zarr"
     Create().run(
         AnemoiCreateArgs(
             path=str(zarr_path),
@@ -238,12 +243,12 @@ def mock_dataset(
 
 @pytest.fixture(scope="session")
 def mock_dataset_missing_dates(
-    tmpdir_factory: pytest.TempdirFactory,
+    mock_data_path: Path,
     mock_data_missing_dates: dict[str, dict[str, Any]],
 ) -> Path:
     """Fixture to create a mock file with missing dates for testing."""
     # Use the mock data to create a NetCDF file
-    netcdf_path = tmpdir_factory.mktemp("data").join("mock_dataset_missing_dates.nc")
+    netcdf_path = mock_data_path / "mock_dataset_missing_dates.nc"
     xr.Dataset.from_dict(mock_data_missing_dates).to_netcdf(netcdf_path)
     # Create an Anemoi dataset from the NetCDF file
     config = DictConfig(
@@ -261,7 +266,7 @@ def mock_dataset_missing_dates(
             },
         }
     )
-    zarr_path = tmpdir_factory.mktemp("data").join("mock_dataset_missing_dates.zarr")
+    zarr_path = mock_data_path / "anemoi" / "mock_dataset_missing_dates.zarr"
     Create().run(
         AnemoiCreateArgs(
             path=str(zarr_path),
@@ -274,14 +279,12 @@ def mock_dataset_missing_dates(
 
 @pytest.fixture(scope="session")
 def mock_dataset_non_normalized_times(
-    tmpdir_factory: pytest.TempdirFactory,
+    mock_data_path: Path,
     mock_data_non_normalized_times: dict[str, dict[str, Any]],
 ) -> Path:
     """Fixture to create a mock file with non-normalized times for testing."""
     # Use the mock data to create a NetCDF file
-    netcdf_path = tmpdir_factory.mktemp("data").join(
-        "mock_dataset_non_normalized_times.nc"
-    )
+    netcdf_path = mock_data_path / "mock_dataset_non_normalized_times.nc"
     xr.Dataset.from_dict(mock_data_non_normalized_times).to_netcdf(netcdf_path)
     # Create an Anemoi dataset from the NetCDF file
     config = DictConfig(
@@ -298,9 +301,7 @@ def mock_dataset_non_normalized_times(
             },
         }
     )
-    zarr_path = tmpdir_factory.mktemp("data").join(
-        "mock_dataset_non_normalized_times.zarr"
-    )
+    zarr_path = mock_data_path / "anemoi" / "mock_dataset_non_normalized_times.zarr"
     Create().run(
         AnemoiCreateArgs(
             path=str(zarr_path),

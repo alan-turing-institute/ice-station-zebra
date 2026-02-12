@@ -39,7 +39,7 @@ class ModelService:
     def from_config(cls, config: DictConfig) -> "ModelService":
         """Build a new ModelService by loading a model from a configuration file."""
         # Load the model configuration
-        builder = ModelService(config)
+        builder = cls(config)
 
         # Construct the model
         builder.model_ = hydra.utils.instantiate(
@@ -76,7 +76,7 @@ class ModelService:
         # Load the model configuration
         config_path = checkpoint_path.parent.parent / "model_config.yaml"
         try:
-            builder = ModelService(DictConfig(OmegaConf.load(config_path)))
+            builder = cls(DictConfig(OmegaConf.load(config_path)))
             logger.debug("Loaded checkpoint configuration from %s.", builder.config_)
         except (NotADirectoryError, FileNotFoundError) as exc:
             msg = f"Could not load checkpoint configuration from {config_path}."

@@ -9,23 +9,19 @@ SEA_ICE_THRESHOLD = 0.15  # Threshold for defining sea ice extent
 class SIEErrorNew(Metric):
     """Sea Ice Extent error metric (in km^2) for use at multiple lead times."""
 
-    def __init__(self, forecast_step: int, pixel_size: int = 25) -> None:
+    def __init__(self, pixel_size: int = 25) -> None:
         """Initialize the SIEError metric.
 
         Parameters
         ----------
-        forecast_step: int
-            Index of the forecast step at which SIE should be evaluated.
         pixel_size: int, optional
             Physical size of one pixel in kilometers (default is 25 km -> OSISAF).
 
         """
         super().__init__()
-        print("Initializing SIEError metric with forecast_step:", forecast_step)
         self.sie_error: torch.Tensor
         self.add_state("sie_error", default=torch.tensor([]), dist_reduce_fx="cat")
 
-        self.forecast_step = forecast_step
         self.pixel_size = pixel_size
         
     def update(
@@ -61,7 +57,7 @@ class SIEErrorNew(Metric):
         print("SIE error for each day:", error)
         # Reshape to (T, 1) to stack horizontally across epochs/batches
         if self.sie_error.numel() == 0:
-            self.sie_error = error.unsqueeze(1)  # Shape: (T, 1)
+            self.sie_error = error.unsqueeze(1)  # Shape: (T,)
         else:
             self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
         print("sie_error:", self.sie_error)
@@ -70,5 +66,7 @@ class SIEErrorNew(Metric):
         """Compute the final Sea Ice Extent error in km²."""
         print("Computing SIEError metric...")
         print("compute:", self.sie_error)
-        print("type of sie_error:", type(self.sie_error))
+        print("shape of sie_error:", self.sie_error.shape)
+        print("abs value:"  , torch.abs(self.sie_error))
+        print("mean abs value across batches:", torch.mean(torch.abs(self.sie_error), dim=1))
         return torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]

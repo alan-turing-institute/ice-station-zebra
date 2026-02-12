@@ -147,12 +147,12 @@ class BaseModel(LightningModule, ABC):
         self.sieerror(prediction, target)
         sie_result = self.sieerror.compute()
         for t, sie_val in enumerate(sie_result):
-            self.log(f"SIEError_t{t}", sie_val, on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"SIEError_t{t}", sie_val, on_step=True, on_epoch=False, prog_bar=False)
         # metrics_dict = {f"test/SIEError_t{t}": sie_val for t, sie_val in enumerate(sie_result)}
         # metrics_dict["test/SIEError_mean"] = sie_result.mean()
         # self.log_dict(metrics_dict, on_step=False, on_epoch=True, prog_bar=False)
 
-        self.log("SIEError_mean", sie_result.mean(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("SIEError_mean", sie_result.mean(), on_step=True, on_epoch=False, prog_bar=True)
         # self.log("SIEError", self.sieerror, on_step=False, on_epoch=True, prog_bar=True)
 
         # for i in range(5):

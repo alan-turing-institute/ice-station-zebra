@@ -68,7 +68,7 @@ class ModelService:
     def from_checkpoint(cls, checkpoint_path: Path) -> "ModelService":
         """Build a new ModelService by loading a model from a checkpoint."""
         # Verify the checkpoint path
-        if checkpoint_path.exists():
+        if checkpoint_path.is_file():
             logger.debug("Found checkpoint at %s.", checkpoint_path)
         else:
             msg = f"Checkpoint file {checkpoint_path} does not exist."

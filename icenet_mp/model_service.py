@@ -77,7 +77,7 @@ class ModelService:
         config_path = checkpoint_path.parent.parent / "model_config.yaml"
         try:
             builder = cls(DictConfig(OmegaConf.load(config_path)))
-            logger.debug("Loaded checkpoint configuration from %s.", builder.config_)
+            logger.debug("Loaded checkpoint configuration from %s.", config_path)
         except (NotADirectoryError, FileNotFoundError) as exc:
             msg = f"Could not load checkpoint configuration from {config_path}."
             raise FileNotFoundError(msg) from exc

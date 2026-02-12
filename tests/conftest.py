@@ -252,13 +252,12 @@ def mock_data_non_normalized_times(
 
 @pytest.fixture(scope="session")
 def mock_data_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Fixture to create a temporary directory for mock data files."""
     return tmp_path_factory.mktemp("data", numbered=False)
 
 
 @pytest.fixture(scope="session")
-def mock_dataset(
-    mock_data_path: Path, mock_data: dict[str, dict[str, Any]]
-) -> Path:
+def mock_dataset(mock_data_path: Path, mock_data: dict[str, dict[str, Any]]) -> Path:
     """Fixture to create a mock file for testing."""
     # Use the mock data to create a NetCDF file
     netcdf_path = mock_data_path / "mock_dataset.nc"

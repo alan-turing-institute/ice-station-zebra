@@ -6,7 +6,7 @@ full-weathersouth-era5-0p5-1979-2024-24h-v2:
   licence: CC-BY-4.0
 
   dates:
-    start: '1979-01-01T00:00:00'
+    start: '1979-01-01T12:00:00'
     end: '2024-12-31T23:00:00'
     frequency: 24h
 

@@ -1,13 +1,13 @@
-full-weathernorth-era5-0p5-1979-2024-24h-v2:
-  name: full-weathernorth-era5-0p5-1979-2024-24h-v2
+full-weathersouth-era5-0p5-1979-2025-24h-v2:
+  name: full-weathersouth-era5-0p5-1979-2025-24h-v2
   group_as: era5
-  description: Weather from ERA5 for partial northern hemisphere
+  description: Weather from ERA5 for partial southern hemisphere
   attribution: ECMWF/C3S
   licence: CC-BY-4.0
 
   dates:
     start: '1979-01-01T12:00:00'
-    end: '2024-12-31T23:00:00'
+    end: '2025-12-31T23:00:00'
     frequency: 24h
 
   input:
@@ -17,7 +17,7 @@ full-weathernorth-era5-0p5-1979-2024-24h-v2:
         class: ea
         expver: "0001"
         grid: "0.25 / 0.25"
-        area: "90/-180/20/180"  # northern hemisphere
+        area: "20/-180/-90/180"  # southern hemisphere
         levtype: sfc
         param:
         - 2t # 2-metre air temperature
@@ -30,7 +30,7 @@ full-weathernorth-era5-0p5-1979-2024-24h-v2:
         class: ea
         expver: "0001"
         grid: "0.25 / 0.25"
-        area: "90/-180/20/180"  # northern hemisphere
+        area: "20/-180/-90/180"  # southern hemisphere
         level:
         - 10 # hPa
         - 250 # hPa

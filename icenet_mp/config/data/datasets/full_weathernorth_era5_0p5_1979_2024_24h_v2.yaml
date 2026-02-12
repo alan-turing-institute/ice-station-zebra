@@ -16,7 +16,7 @@ full-weathernorth-era5-0p5-1979-2024-24h-v2:
         use_cdsapi_dataset: "reanalysis-era5-complete"
         class: ea
         expver: "0001"
-        grid: "0.5 / 0.5"
+        grid: "0.25 / 0.25"
         area: "90/-180/20/180"  # northern hemisphere
         levtype: sfc
         param:
@@ -29,7 +29,7 @@ full-weathernorth-era5-0p5-1979-2024-24h-v2:
         use_cdsapi_dataset: "reanalysis-era5-complete"
         class: ea
         expver: "0001"
-        grid: "0.5 / 0.5"
+        grid: "0.25 / 0.25"
         area: "90/-180/20/180"  # northern hemisphere
         level:
         - 10 # hPa

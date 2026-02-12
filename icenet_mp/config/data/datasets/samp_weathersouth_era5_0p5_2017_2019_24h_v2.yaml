@@ -16,7 +16,7 @@ samp-weathersouth-era5-0p5-2017-2019-24h-v2:
         use_cdsapi_dataset: "reanalysis-era5-complete"
         class: ea
         expver: "0001"
-        grid: "0.5 / 0.5"
+        grid: "0.25 / 0.25"
         area: "20/-180/-90/180"  # southern hemisphere
         levtype: sfc
         param:
@@ -29,7 +29,7 @@ samp-weathersouth-era5-0p5-2017-2019-24h-v2:
         use_cdsapi_dataset: "reanalysis-era5-complete"
         class: ea
         expver: "0001"
-        grid: "0.5 / 0.5"
+        grid: "0.25 / 0.25"
         area: "20/-180/-90/180"  # southern hemisphere
         level:
         - 10 # hPa

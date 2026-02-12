@@ -175,7 +175,7 @@ class ZebraDataModule(LightningDataModule):
             dataset.start_date,
             dataset.end_date,
         )
-        return DataLoader(dataset, shuffle=True, **self._common_dataloader_kwargs)
+        return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 
     def val_dataloader(
         self,

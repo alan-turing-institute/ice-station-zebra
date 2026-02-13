@@ -112,20 +112,37 @@ class DDPM(BaseModel):
             self.base_output_channels = self.output_space["channels"]
         else:
             self.base_output_channels = self.output_space.channels
-        self.base_output_channels = self.output_space.channels
 
         self.output_channels = self.n_forecast_steps * self.base_output_channels
         self.timesteps = timesteps
         self.cond_channels = 64
         self.input_channels = self.cond_channels
 
+        # "InstanceNorm" calculates the mean/std per batch, removing the need for offline preprocessing
+        self.era5_norm = torch.nn.InstanceNorm3d(self.era5_space, affine=True)
+
+        # Reduces the many ERA5 channels down to 32 important ones using 1x1 Conv
+        self.era5_compressed_channels = 32
+        self.era5_projector = torch.nn.Sequential(
+            torch.nn.Conv3d(
+                self.era5_space, self.era5_compressed_channels, kernel_size=1
+            ),
+            torch.nn.SiLU(),
+        )
+
         self.osisaf_encoder = SimpleEncoder2D(
             in_channels=self.n_history_steps,
             out_channels=self.cond_channels // 2,
         )
 
+        # (Compressed_Channels * Time_Steps), preserving time history
         self.era5_encoder = torch.nn.Sequential(
-            torch.nn.Conv3d(self.era5_space, self.cond_channels // 2, 3, padding=1),
+            torch.nn.Conv2d(
+                in_channels=self.era5_compressed_channels * self.n_history_steps,
+                out_channels=self.cond_channels // 2,
+                kernel_size=3,
+                padding=1,
+            ),
             torch.nn.GroupNorm(4, self.cond_channels // 2),
             torch.nn.SiLU(),
         )
@@ -231,6 +248,8 @@ class DDPM(BaseModel):
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """Encode OSISAF and ERA5 separately, then concatenate.
 
+        ERA5 -> Norm -> Project -> Resize -> Flatten Time -> Encode
+
         Args:
             batch: Dictionary with
                 'osisaf-south' [B, T, 1, H, W]
@@ -243,37 +262,44 @@ class DDPM(BaseModel):
         osisaf = batch[self.osisaf_key]  # [B, T, 1, H, W]
         era5 = batch["era5"]  # [B, T, C, H2, W2]
 
-        # Squeeze OSISAF singleton channel
+        # Handle OSISAF
         osisaf = osisaf.squeeze(2)  # [B, T, H, W]
-
-        # Resize ERA5 spatially to match OSISAF resolution
-        B, T, C, H2, W2 = era5.shape  # noqa: N806
         H, W = osisaf.shape[-2:]  # noqa: N806
 
-        # Flatten batch and time dimensions for spatial interpolation
-        # [B, T, C, H2, W2] -> [B*T, C, H2, W2]
-        era5_flat = era5.reshape(B * T, C, H2, W2)
+        # Handle ERA5
+        # Permute to [B, C, T, H2, W2] for 3D operations
+        era5 = era5.permute(0, 2, 1, 3, 4)
+
+        # Normalize (On-the-fly standardization)
+        era5 = self.era5_norm(era5)
+
+        # Project (Learnable Feature Selection)
+        # [B, C, T, H2, W2] -> [B, 32, T, H2, W2]
+        era5 = self.era5_projector(era5)
+
+        # Resize Spatially
+        B, C_new, T, H2, W2 = era5.shape  # noqa: N806
+        # Flatten batch/channel/time for interpolation
+        era5_flat = era5.reshape(B * C_new * T, 1, H2, W2)
+
         era5_resized = F.interpolate(
             era5_flat,
             size=(H, W),
             mode="bilinear",
             align_corners=False,
         )
-        # Reshape back to [B, T, C, H, W]
-        era5 = era5_resized.reshape(B, T, C, H, W)
 
-        # Permute to [B, C, T, H, W] for Conv3d
-        era5 = era5.permute(0, 2, 1, 3, 4)  # [B, C, T, H, W]
+        # Flatten Time into Channels
+        # Reshape back to [B, C_new, T, H, W] then flatten T into C
+        era5_features = era5_resized.reshape(B, C_new * T, H, W)
 
-        # Encode both inputs
+        # Encode Both
         osisaf_features = self.osisaf_encoder(osisaf)  # [B, cond//2, H, W]
-        era5_features = self.era5_encoder(era5)  # [B, cond//2, T, H, W]
 
-        # Pool over time dimension for ERA5
-        era5_features = era5_features.mean(dim=2)  # [B, cond//2, H, W]
+        # era5_features enters the encoder as a 2D tensor with many channels
+        era5_features = self.era5_encoder(era5_features)  # [B, cond//2, H, W]
 
-        # Concatenate along channel dimension
-        return torch.cat([osisaf_features, era5_features], dim=1)
+        return torch.cat([osisaf_features, era5_features], dim=1)  # [B, cond, H, W]
 
     def training_step(
         self, batch: dict[str, TensorNTCHW], _batch_idx: int
@@ -290,14 +316,14 @@ class DDPM(BaseModel):
             0, self.timesteps, (x.shape[0],), device=self.device
         ).long()  # look into this
 
-        # Create noisy version using scaled target
+        # Create noisy version
         noise = torch.randn_like(y)
         noisy_y = self.diffusion.q_sample(y, t, noise)
 
         # Predict v
         pred_v = self.model(noisy_y, t, x)
 
-        # Compute target v using scaled data
+        # Compute target v
         target_v = self.diffusion.calculate_v(y, noise, t)
 
         # Compute loss

@@ -3,6 +3,8 @@ import statistics
 from collections.abc import Mapping
 from typing import Any
 
+import torch
+import wandb
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
@@ -44,6 +46,17 @@ class MetricSummaryCallback(Callback):
         if "average_loss" in self.metrics:
             self.metrics["average_loss"].append(outputs.loss.item())
 
+        prediction = outputs.prediction
+        target = outputs.target
+        print(f"shapes: prediction={prediction.shape}, target={target.shape}")
+        # Per-day MAE over forecast horizon (shape: [B, T, C, H, W])
+        per_day_mae = torch.mean(torch.abs(prediction - target), dim=(0, 2, 3, 4))
+        for t, mae in enumerate(per_day_mae, start=1):
+            key = f"mae_day_{t}"
+            if key not in self.metrics:
+                self.metrics[key] = []
+            self.metrics[key].append(mae.detach().cpu().item())
+
     def on_test_epoch_end(
         self,
         trainer: Trainer,
@@ -53,9 +66,57 @@ class MetricSummaryCallback(Callback):
         # Post-process accumulated metrics into a single value
         metrics_: dict[str, float] = {}
         for name, values in self.metrics.items():
-            if name.startswith("average_"):
+            if name.startswith("average_") or name.startswith("mae_day_"):
                 metrics_[name] = statistics.mean(values)
+
+        print(self.metrics)
+        print(metrics_)
 
         # Log metrics to each logger
         for logger in trainer.loggers:
             logger.log_metrics(metrics_)
+
+        # Build W&B table for per-day MAE and plot results
+        mae_rows: list[list[float]] = []
+        for name, value in metrics_.items():
+            if name.startswith("mae_day_"):
+                day = int(name.split("_")[-1])
+                mae_rows.append([day, value])
+
+        if mae_rows:
+            mae_rows.sort(key=lambda r: r[0])
+            table = wandb.Table(data=mae_rows, columns=["day", "mae"])
+            print(table.data)
+            # wandb.log({"mae_by_day": table})
+            plot_name = "MAE per day"
+            wandb.log(
+                {plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)}
+            )
+
+        
+
+    def on_test_end(
+        self, trainer: Trainer, pl_module: LightningModule ) -> None: 
+        """Called at the end of testing.""" 
+        pl_module.sieerror
+        print("Final SIEError metric state:", pl_module.sieerror.metric_state)
+        print("SIE", pl_module.sieerror.compute())
+        
+        sieerror = pl_module.sieerror.compute()
+        
+        # Build W&B table for per-day SIEError_t and plot results
+        # SIEError_t_rows: list[list[float]] = []
+        # for name, value in metrics_.items():
+        #     print("name:", name, "value:", value)
+        #     if name.startswith("SIEError_t"):
+        #         day = int(name.split("_")[-1][1:])
+        #         SIEError_t_rows.append([day, value])
+
+        # SIEError_t_rows.sort(key=lambda r: r[0])
+        table = wandb.Table(data=list(enumerate(sieerror, start=1)), columns=["day", "SIEError"])
+        print(table.data)
+        # wandb.log({"SIEError_t_by_day": table})
+        plot_name = "SIEError per day"
+        wandb.log(
+            {plot_name: wandb.plot.line(table, "day", "SIEError", title=plot_name)}
+        )

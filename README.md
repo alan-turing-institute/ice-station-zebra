@@ -1,6 +1,6 @@
 # Repository Coverage
 
-[Full report](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/ice-station-zebra/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[Full report](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/icenet-mp/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 | Name                                                       |    Stmts |     Miss |   Cover |   Missing |
 |----------------------------------------------------------- | -------: | -------: | ------: | --------: |
@@ -12,16 +12,18 @@
 | icenet\_mp/callbacks/unconditional\_checkpoint.py          |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
 | icenet\_mp/callbacks/wandb\_metric\_callback.py            |        8 |        3 |     62% |     11-13 |
 | icenet\_mp/callbacks/weight\_averaging.py                  |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
-| icenet\_mp/cli/\_\_init\_\_.py                             |        3 |        0 |    100% |           |
+| icenet\_mp/cli/\_\_init\_\_.py                             |        2 |        0 |    100% |           |
+| icenet\_mp/cli/datasets.py                                 |       55 |       28 |     49% |27-30, 37-40, 53-56, 66-69, 98-104, 118-121, 125 |
+| icenet\_mp/cli/evaluate.py                                 |       16 |        3 |     81% | 27-28, 32 |
 | icenet\_mp/cli/hydra.py                                    |       29 |        3 |     90% |     39-41 |
-| icenet\_mp/cli/main.py                                     |       24 |        8 |     67% | 34-46, 50 |
+| icenet\_mp/cli/main.py                                     |       24 |        8 |     67% | 35-47, 51 |
+| icenet\_mp/cli/train.py                                    |       14 |        3 |     79% | 20-21, 25 |
 | icenet\_mp/config/\_\_init\_\_.py                          |        0 |        0 |    100% |           |
 | icenet\_mp/data\_loaders/\_\_init\_\_.py                   |        4 |        0 |    100% |           |
 | icenet\_mp/data\_loaders/combined\_dataset.py              |       50 |        9 |     82% |43-44, 93-99, 103, 115 |
 | icenet\_mp/data\_loaders/common\_data\_module.py           |       60 |       38 |     37% |25-75, 88, 96, 104-106, 112-132, 138-158, 164-184, 190-210 |
 | icenet\_mp/data\_loaders/single\_dataset.py                |       94 |        5 |     95% |   138-142 |
-| icenet\_mp/data\_processors/\_\_init\_\_.py                |        1 |        0 |    100% |           |
-| icenet\_mp/data\_processors/cli.py                         |       55 |       28 |     49% |27-30, 37-40, 53-56, 66-69, 98-104, 118-121, 125 |
+| icenet\_mp/data\_processors/\_\_init\_\_.py                |        2 |        0 |    100% |           |
 | icenet\_mp/data\_processors/data\_downloader.py            |      198 |       72 |     64% |52-78, 82-84, 93-94, 106-136, 163-168, 181-182, 199-200, 206-212, 274-296, 300, 306-312, 325-336, 351-355, 367-368, 440 |
 | icenet\_mp/data\_processors/data\_downloader\_factory.py   |       11 |        4 |     64% |     19-26 |
 | icenet\_mp/data\_processors/filters/\_\_init\_\_.py        |        9 |        0 |    100% |           |
@@ -32,10 +34,8 @@
 | icenet\_mp/data\_processors/preprocessors/null.py          |        5 |        1 |     80% |         9 |
 | icenet\_mp/data\_processors/sources/\_\_init\_\_.py        |        9 |        0 |    100% |           |
 | icenet\_mp/data\_processors/sources/ftp.py                 |       31 |        0 |    100% |           |
-| icenet\_mp/evaluation/\_\_init\_\_.py                      |        1 |        0 |    100% |           |
-| icenet\_mp/evaluation/cli.py                               |       16 |        3 |     81% | 27-28, 32 |
-| icenet\_mp/evaluation/evaluator.py                         |       40 |       27 |     32% |29-86, 91-97 |
 | icenet\_mp/exceptions.py                                   |        3 |        0 |    100% |           |
+| icenet\_mp/model\_service.py                               |      123 |       52 |     58% |76-77, 92-94, 114-115, 129-130, 136-158, 163-182, 186, 193, 206-232, 237-257, 265-281 |
 | icenet\_mp/models/\_\_init\_\_.py                          |        5 |        0 |    100% |           |
 | icenet\_mp/models/base\_model.py                           |       54 |        0 |    100% |           |
 | icenet\_mp/models/common/\_\_init\_\_.py                   |        9 |        0 |    100% |           |
@@ -76,15 +76,13 @@
 | icenet\_mp/models/processors/unet.py                       |       53 |        0 |    100% |           |
 | icenet\_mp/models/processors/vit.py                        |       36 |       27 |     25% |34-67, 81-106 |
 | icenet\_mp/plugins.py                                      |       10 |        0 |    100% |           |
-| icenet\_mp/training/\_\_init\_\_.py                        |        1 |        0 |    100% |           |
-| icenet\_mp/training/cli.py                                 |       14 |        3 |     79% | 20-21, 25 |
-| icenet\_mp/training/trainer.py                             |       31 |       17 |     45% |34-107, 110-117 |
-| icenet\_mp/types/\_\_init\_\_.py                           |        5 |        0 |    100% |           |
-| icenet\_mp/types/complex\_datatypes.py                     |       36 |       13 |     64% |37, 52-59, 63-65, 69 |
+| icenet\_mp/types/\_\_init\_\_.py                           |        6 |        0 |    100% |           |
+| icenet\_mp/types/complex\_datatypes.py                     |       36 |       12 |     67% |52-59, 63-65, 69 |
 | icenet\_mp/types/enums.py                                  |        7 |        0 |    100% |           |
+| icenet\_mp/types/protocols.py                              |        4 |        0 |    100% |           |
 | icenet\_mp/types/simple\_datatypes.py                      |       59 |        0 |    100% |           |
 | icenet\_mp/types/typedefs.py                               |       13 |        0 |    100% |           |
-| icenet\_mp/utils.py                                        |       39 |       22 |     44% |11, 16, 21-33, 38, 43, 48-51, 64 |
+| icenet\_mp/utils.py                                        |       28 |       16 |     43% |9, 14-26, 31, 44 |
 | icenet\_mp/visualisations/\_\_init\_\_.py                  |        3 |        0 |    100% |           |
 | icenet\_mp/visualisations/convert.py                       |       47 |        5 |     89% |82-84, 88-89 |
 | icenet\_mp/visualisations/helpers.py                       |      151 |       27 |     82% |57, 59, 62-63, 79-80, 113, 133, 140, 145-146, 206-221, 332-333, 356-364, 387-393, 455, 488 |
@@ -98,7 +96,7 @@
 | icenet\_mp/visualisations/range\_check.py                  |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                             |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                              |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                  | **3333** |  **983** | **71%** |           |
+| **TOTAL**                                                  | **3377** |  **984** | **71%** |           |
 
 
 ## Setup coverage badge
@@ -107,20 +105,20 @@ Below are examples of the badges you can use in your main branch `README` file.
 
 ### Direct image
 
-[![Coverage badge](https://raw.githubusercontent.com/alan-turing-institute/ice-station-zebra/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/ice-station-zebra/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[![Coverage badge](https://raw.githubusercontent.com/alan-turing-institute/icenet-mp/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/icenet-mp/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 This is the one to use if your repository is private or if you don't want to customize anything.
 
 ### [Shields.io](https://shields.io) Json Endpoint
 
-[![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/alan-turing-institute/ice-station-zebra/python-coverage-comment-action-data/endpoint.json)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/ice-station-zebra/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/alan-turing-institute/icenet-mp/python-coverage-comment-action-data/endpoint.json)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/icenet-mp/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 Using this one will allow you to [customize](https://shields.io/endpoint) the look of your badge.
 It won't work with private repositories. It won't be refreshed more than once per five minutes.
 
 ### [Shields.io](https://shields.io) Dynamic Badge
 
-[![Coverage badge](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=coverage&query=%24.message&url=https%3A%2F%2Fraw.githubusercontent.com%2Falan-turing-institute%2Fice-station-zebra%2Fpython-coverage-comment-action-data%2Fendpoint.json)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/ice-station-zebra/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[![Coverage badge](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=coverage&query=%24.message&url=https%3A%2F%2Fraw.githubusercontent.com%2Falan-turing-institute%2Ficenet-mp%2Fpython-coverage-comment-action-data%2Fendpoint.json)](https://htmlpreview.github.io/?https://github.com/alan-turing-institute/icenet-mp/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 This one will always be the same color. It won't work for private repos. I'm not even sure why we included it.
 

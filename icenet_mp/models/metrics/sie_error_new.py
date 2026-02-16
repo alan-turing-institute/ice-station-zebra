@@ -71,5 +71,7 @@ class SIEErrorNew(Metric):
         print("mean abs value across batches:", torch.mean(torch.abs(self.sie_error), dim=1))
         values = torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]
         print("SIE dict:", {"data":list(enumerate(values, start=1)), "columns":["day", "SIEError"]})
-        return {"data":list(enumerate(values, start=1)), "columns":["day", "test_sieerror"]}
+        # return {"data":list(enumerate(values, start=1)), "columns":["day", "test_sieerror"]}
         # return {"SIEError": values.mean().item()}
+        return values
+        

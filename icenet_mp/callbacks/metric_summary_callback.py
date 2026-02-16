@@ -99,28 +99,16 @@ class MetricSummaryCallback(Callback):
         self, trainer: Trainer, pl_module: LightningModule ) -> None: 
         """Called at the end of testing.""" 
         for name, metric in pl_module.test_metrics.items():
-            if not isinstance(metric, torch.Tensor):
-                print("metric: ", metric)
-                # print("Final SIEError metric state:", pl_module.sieerror.metric_state)
-                # print("SIE", pl_module.sieerror.compute())
-                
-                values = metric.compute()
+            print("name: ", name)
+            print("metric: ", metric)
             
-                # Build W&B table for per-day SIEError_t and plot results
-                # SIEError_t_rows: list[list[float]] = []
-                # for name, value in metrics_.items():
-                #     print("name:", name, "value:", value)
-                #     if name.startswith("SIEError_t"):
-                #         day = int(name.split("_")[-1][1:])
-                #         SIEError_t_rows.append([day, value])
-
-                # SIEError_t_rows.sort(key=lambda r: r[0])
-                print("test end values:", values)
-                if isinstance(values, dict):
-                    table = wandb.Table(**values)
-                    print(table.data)
-                    # wandb.log({"SIEError_t_by_day": table})
-                    plot_name = name + " per day"
-                    wandb.log(
-                        {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
-                    )
+            values = metric.compute()
+        
+            print("test end values:", values)
+            if values.numel() > 1:
+                table = wandb.Table(data=list(enumerate(values.tolist(), start=1)), columns=["day", name])
+                print(table.data)
+                plot_name = name + " per day"
+                wandb.log(
+                    {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
+                )

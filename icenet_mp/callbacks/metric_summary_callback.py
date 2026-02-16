@@ -98,25 +98,29 @@ class MetricSummaryCallback(Callback):
     def on_test_end(
         self, trainer: Trainer, pl_module: LightningModule ) -> None: 
         """Called at the end of testing.""" 
-        pl_module.sieerror
-        print("Final SIEError metric state:", pl_module.sieerror.metric_state)
-        print("SIE", pl_module.sieerror.compute())
-        
-        sieerror = pl_module.sieerror.compute()
-        
-        # Build W&B table for per-day SIEError_t and plot results
-        # SIEError_t_rows: list[list[float]] = []
-        # for name, value in metrics_.items():
-        #     print("name:", name, "value:", value)
-        #     if name.startswith("SIEError_t"):
-        #         day = int(name.split("_")[-1][1:])
-        #         SIEError_t_rows.append([day, value])
+        for name, metric in pl_module.test_metrics.items():
+            if not isinstance(metric, torch.Tensor):
+                print("metric: ", metric)
+                # print("Final SIEError metric state:", pl_module.sieerror.metric_state)
+                # print("SIE", pl_module.sieerror.compute())
+                
+                values = metric.compute()
+            
+                # Build W&B table for per-day SIEError_t and plot results
+                # SIEError_t_rows: list[list[float]] = []
+                # for name, value in metrics_.items():
+                #     print("name:", name, "value:", value)
+                #     if name.startswith("SIEError_t"):
+                #         day = int(name.split("_")[-1][1:])
+                #         SIEError_t_rows.append([day, value])
 
-        # SIEError_t_rows.sort(key=lambda r: r[0])
-        table = wandb.Table(data=list(enumerate(sieerror, start=1)), columns=["day", "SIEError"])
-        print(table.data)
-        # wandb.log({"SIEError_t_by_day": table})
-        plot_name = "SIEError per day"
-        wandb.log(
-            {plot_name: wandb.plot.line(table, "day", "SIEError", title=plot_name)}
-        )
+                # SIEError_t_rows.sort(key=lambda r: r[0])
+                print("test end values:", values)
+                if isinstance(values, dict):
+                    table = wandb.Table(**values)
+                    print(table.data)
+                    # wandb.log({"SIEError_t_by_day": table})
+                    plot_name = name + " per day"
+                    wandb.log(
+                        {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
+                    )

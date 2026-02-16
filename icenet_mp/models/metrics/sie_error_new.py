@@ -62,11 +62,14 @@ class SIEErrorNew(Metric):
             self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
         print("sie_error:", self.sie_error)
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> dict[str, list[str] | list[float]]:
         """Compute the final Sea Ice Extent error in km²."""
         print("Computing SIEError metric...")
         print("compute:", self.sie_error)
         print("shape of sie_error:", self.sie_error.shape)
         print("abs value:"  , torch.abs(self.sie_error))
         print("mean abs value across batches:", torch.mean(torch.abs(self.sie_error), dim=1))
-        return torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]
+        values = torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]
+        print("SIE dict:", {"data":list(enumerate(values, start=1)), "columns":["day", "SIEError"]})
+        return {"data":list(enumerate(values, start=1)), "columns":["day", "test_sieerror"]}
+        # return {"SIEError": values.mean().item()}

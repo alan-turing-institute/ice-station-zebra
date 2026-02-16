@@ -3,7 +3,7 @@ from typing import Any
 from torch import nn
 from torch.nn.functional import sigmoid
 
-from icenet_mp.models.common import CommonConvBlock, Permute
+from icenet_mp.models.common import CommonConvBlock, Permute, Shift
 from icenet_mp.types import TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -86,6 +86,10 @@ class PiecewiseDecoder(BaseDecoder):
                 padding=self.data_space_in.shape,
             )
         )
+
+        # Apply a scale and offset shift to reduce the large values caused by folding
+        # multiple pixels into a single output pixel.
+        layers.append(Shift(scale=True, offset=True))
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

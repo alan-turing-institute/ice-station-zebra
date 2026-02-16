@@ -5,6 +5,7 @@ from .conv_block_upsample_naive import ConvBlockUpsampleNaive
 from .patchembed import PatchEmbedding
 from .permute import Permute
 from .resizing_interpolation import ResizingInterpolation
+from .shift import Shift
 from .time_embed import TimeEmbed
 from .transformerblock import TransformerEncoderBlock
 
@@ -16,6 +17,7 @@ __all__ = [
     "PatchEmbedding",
     "Permute",
     "ResizingInterpolation",
+    "Shift",
     "TimeEmbed",
     "TransformerEncoderBlock",
 ]

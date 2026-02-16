@@ -8,11 +8,17 @@ class Shift(nn.Module):
     def __init__(self, *, scale: bool, offset: bool) -> None:
         """Apply a scale and offset to the input tensor."""
         super().__init__()
-        self.scale = nn.Parameter(torch.Tensor(1), requires_grad=True) if scale else 1.0
+        self.scale = (
+            nn.Parameter(torch.tensor([1.0]), requires_grad=True) if scale else None
+        )
         self.offset = (
-            nn.Parameter(torch.Tensor(0), requires_grad=True) if offset else 0.0
+            nn.Parameter(torch.tensor([0.0]), requires_grad=True) if offset else None
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Apply a scale and offset to the input tensor."""
-        return x * self.scale + self.offset
+        if self.scale is not None:
+            x = x * self.scale
+        if self.offset is not None:
+            x += torch.ones_like(x) * self.offset
+        return x

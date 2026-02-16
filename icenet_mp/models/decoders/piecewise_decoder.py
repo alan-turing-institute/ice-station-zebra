@@ -1,7 +1,6 @@
 from typing import Any
 
 from torch import nn
-from torch.nn.functional import sigmoid
 
 from icenet_mp.models.common import CommonConvBlock, Permute, Shift
 from icenet_mp.types import TensorNCHW
@@ -28,9 +27,6 @@ class PiecewiseDecoder(BaseDecoder):
     ) -> None:
         """Initialise a PiecewiseDecoder."""
         super().__init__(**kwargs)
-
-        # specify whether the output is bounded between 0 and 1
-        self.bounded = bounded
 
         # Calculate the number of patches required to cover the output space and the corresponding number of channels
         n_patches = (
@@ -91,6 +87,10 @@ class PiecewiseDecoder(BaseDecoder):
         # multiple pixels into a single output pixel.
         layers.append(Shift(scale=True, offset=True))
 
+        # Specify whether the output is bounded between 0 and 1
+        if bounded:
+            layers.append(nn.Sigmoid())
+
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)
 
@@ -104,6 +104,4 @@ class PiecewiseDecoder(BaseDecoder):
             TensorNCHW with (batch_size, output_channels, output_height, output_width)
 
         """
-        if self.bounded:
-            return sigmoid(self.model(x))
         return self.model(x)

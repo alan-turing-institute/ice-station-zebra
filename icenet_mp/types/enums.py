@@ -8,6 +8,15 @@ class BetaSchedule(StrEnum):
     COSINE = "cosine"
 
 
+class BoundedOutputs(StrEnum):
+    """Enum for bounded output types."""
+
+    CLAMP = "clamp"
+    NONE = "none"
+    SIGMOID = "sigmoid"
+    TANH = "tanh"
+
+
 class TensorDimensions(IntEnum):
     """Enum for tensor dimensions."""
 

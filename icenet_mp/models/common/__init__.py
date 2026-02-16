@@ -1,3 +1,4 @@
+from .clamp import Clamp
 from .conv_block_common import CommonConvBlock
 from .conv_block_downsample import ConvBlockDownsample
 from .conv_block_upsample import ConvBlockUpsample
@@ -10,6 +11,7 @@ from .time_embed import TimeEmbed
 from .transformerblock import TransformerEncoderBlock
 
 __all__ = [
+    "Clamp",
     "CommonConvBlock",
     "ConvBlockDownsample",
     "ConvBlockUpsample",

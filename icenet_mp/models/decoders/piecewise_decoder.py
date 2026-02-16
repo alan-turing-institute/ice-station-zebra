@@ -2,8 +2,8 @@ from typing import Any
 
 from torch import nn
 
-from icenet_mp.models.common import CommonConvBlock, Permute, Shift
-from icenet_mp.types import TensorNCHW
+from icenet_mp.models.common import Clamp, CommonConvBlock, Permute, Shift
+from icenet_mp.types import BoundedOutputs, TensorNCHW
 
 from .base_decoder import BaseDecoder
 
@@ -23,7 +23,11 @@ class PiecewiseDecoder(BaseDecoder):
     """
 
     def __init__(
-        self, *, bounded: bool = False, n_blocks: int = 0, **kwargs: Any
+        self,
+        *,
+        bounded: BoundedOutputs = BoundedOutputs.NONE,
+        n_blocks: int = 0,
+        **kwargs: Any,
     ) -> None:
         """Initialise a PiecewiseDecoder."""
         super().__init__(**kwargs)
@@ -87,9 +91,13 @@ class PiecewiseDecoder(BaseDecoder):
         # multiple pixels into a single output pixel.
         layers.append(Shift(scale=True, offset=True))
 
-        # Specify whether the output is bounded between 0 and 1
-        if bounded:
+        # Specify how/whether the output is bounded between 0 and 1
+        if bounded == BoundedOutputs.CLAMP:
+            layers.append(Clamp())
+        elif bounded == BoundedOutputs.SIGMOID:
             layers.append(nn.Sigmoid())
+        elif bounded == BoundedOutputs.TANH:
+            layers.append(nn.Tanh())
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

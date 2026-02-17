@@ -25,24 +25,27 @@ class PiecewiseEncoder(BaseEncoder):
         """Initialise a PiecewiseEncoder."""
         super().__init__(**kwargs)
 
-        # Calculate the number of patches
+        # Calculate the number of patches required
+        # We set the stride to be half the patch size to ensure overlap, which will
+        # capture more of the spatial structure of the data.
+        strides = tuple(patch_size // 2 for patch_size in self.data_space_out.shape)
         n_patches = (
             (
                 self.data_space_in.shape[0]
-                + 2 * self.data_space_out.shape[0]
+                + 2 * strides[0]
                 - 1 * (self.data_space_out.shape[0] - 1)
                 - 1
             )
-            // self.data_space_out.shape[0]
+            // strides[0]
             + 1
         ) * (
             (
                 self.data_space_in.shape[1]
-                + 2 * self.data_space_out.shape[1]
+                + 2 * strides[1]
                 - 1 * (self.data_space_out.shape[1] - 1)
                 - 1
             )
-            // self.data_space_out.shape[1]
+            // strides[1]
             + 1
         )
 
@@ -54,8 +57,8 @@ class PiecewiseEncoder(BaseEncoder):
             # Unfold into patches of size data_space_out.shape: [N, C * patch_area, n_patches]
             nn.Unfold(
                 self.data_space_out.shape,
-                stride=self.data_space_out.shape,
-                padding=self.data_space_out.shape,
+                stride=strides,
+                padding=strides,
             ),
             # Permute dimensions: [N, n_patches, C * patch_area]
             Permute((0, 2, 1)),

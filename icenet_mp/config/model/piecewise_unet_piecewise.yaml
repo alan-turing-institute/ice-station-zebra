@@ -14,5 +14,5 @@ processor:
 
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder
-  bounded: none # Method for bounding outputs (e.g., clamp, sigmoid, tanh)
-  n_blocks: 4 # Number of convolutional blocks to add before decoding
+  bounded: clamp # Method for bounding outputs (e.g., clamp, sigmoid, tanh)
+  n_blocks: 3 # Number of convolutional blocks to add before decoding

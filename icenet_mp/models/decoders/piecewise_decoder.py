@@ -32,24 +32,27 @@ class PiecewiseDecoder(BaseDecoder):
         """Initialise a PiecewiseDecoder."""
         super().__init__(**kwargs)
 
-        # Calculate the number of patches required to cover the output space and the corresponding number of channels
+        # Calculate the number of patches required
+        # We set the stride to be half the patch size to ensure overlap, which will
+        # capture more of the spatial structure of the data.
+        strides = tuple(patch_size // 2 for patch_size in self.data_space_in.shape)
         n_patches = (
             (
                 self.data_space_out.shape[0]
-                + 2 * self.data_space_in.shape[0]
+                + 2 * strides[0]
                 - 1 * (self.data_space_in.shape[0] - 1)
                 - 1
             )
-            // self.data_space_in.shape[0]
+            // strides[0]
             + 1
         ) * (
             (
                 self.data_space_out.shape[1]
-                + 2 * self.data_space_in.shape[1]
+                + 2 * strides[1]
                 - 1 * (self.data_space_in.shape[1] - 1)
                 - 1
             )
-            // self.data_space_in.shape[1]
+            // strides[1]
             + 1
         )
         input_channels_required = self.data_space_out.channels * n_patches
@@ -82,8 +85,8 @@ class PiecewiseDecoder(BaseDecoder):
             nn.Fold(
                 output_size=self.data_space_out.shape,
                 kernel_size=self.data_space_in.shape,
-                stride=self.data_space_in.shape,
-                padding=self.data_space_in.shape,
+                stride=strides,
+                padding=strides,
             )
         )
 

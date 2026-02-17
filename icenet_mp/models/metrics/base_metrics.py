@@ -44,13 +44,7 @@ class RMSE_daily(Metric):
         else:
             self.rmse_daily = torch.cat((self.rmse_daily, rmse.unsqueeze(1)), dim=1)  # Shape: (T, N)
         print("rmse_daily:", self.rmse_daily)
-        # # Reshape to (T, 1) to stack horizontally across epochs/batches
-        # if self.sie_error.numel() == 0:
-        #     self.sie_error = error.unsqueeze(1)  # Shape: (T,)
-        # else:
-        #     self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
-        # print("sie_error:", self.sie_error)
-
+       
     def compute(self) -> dict[str, list[str] | list[float]]:
         """Compute the final RMSE_daily values."""
         print("Computing RMSE_daily metric...")
@@ -101,13 +95,7 @@ class MAE_daily(Metric):
         else:
             self.mae_daily = torch.cat((self.mae_daily, mae.unsqueeze(1)), dim=1)  # Shape: (T, N)
         print("mae_daily:", self.mae_daily)
-        # # Reshape to (T, 1) to stack horizontally across epochs/batches
-        # if self.sie_error.numel() == 0:
-        #     self.sie_error = error.unsqueeze(1)  # Shape: (T,)
-        # else:
-        #     self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
-        # print("sie_error:", self.sie_error)
-
+        
     def compute(self) -> dict[str, list[str] | list[float]]:
         """Compute the final MAE_daily values."""
         print("Computing MAE_daily metric...")

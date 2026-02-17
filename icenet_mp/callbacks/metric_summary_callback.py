@@ -49,14 +49,7 @@ class MetricSummaryCallback(Callback):
         prediction = outputs.prediction
         target = outputs.target
         print(f"shapes: prediction={prediction.shape}, target={target.shape}")
-        # Per-day MAE over forecast horizon (shape: [B, T, C, H, W])
-        per_day_mae = torch.mean(torch.abs(prediction - target), dim=(0, 2, 3, 4))
-        for t, mae in enumerate(per_day_mae, start=1):
-            key = f"mae_day_{t}"
-            if key not in self.metrics:
-                self.metrics[key] = []
-            self.metrics[key].append(mae.detach().cpu().item())
-
+        
     def on_test_epoch_end(
         self,
         trainer: Trainer,
@@ -66,7 +59,7 @@ class MetricSummaryCallback(Callback):
         # Post-process accumulated metrics into a single value
         metrics_: dict[str, float] = {}
         for name, values in self.metrics.items():
-            if name.startswith("average_") or name.startswith("mae_day_"):
+            if name.startswith("average_"): 
                 metrics_[name] = statistics.mean(values)
 
         print(self.metrics)
@@ -77,25 +70,7 @@ class MetricSummaryCallback(Callback):
             print("Logging metrics to logger: ", logger)
             logger.log_metrics(metrics_)
 
-        # Build W&B table for per-day MAE and plot results
-        mae_rows: list[list[float]] = []
-        for name, value in metrics_.items():
-            if name.startswith("mae_day_"):
-                day = int(name.split("_")[-1])
-                mae_rows.append([day, value])
-
-        if mae_rows:
-            mae_rows.sort(key=lambda r: r[0])
-            table = wandb.Table(data=mae_rows, columns=["day", "mae"])
-            print(table.data)
-            # wandb.log({"mae_by_day": table})
-            plot_name = "MAE per day"
-            wandb.log(
-                {plot_name: wandb.plot.line(table, "day", "mae", title=plot_name)}
-            )
-
-        
-
+         
     def on_test_end(
         self, trainer: Trainer, pl_module: LightningModule ) -> None: 
         """Called at the end of testing.""" 

@@ -74,7 +74,7 @@ class MetricSummaryCallback(Callback):
     def on_test_end(
         self, trainer: Trainer, pl_module: LightningModule ) -> None: 
         """Called at the end of testing.""" 
-        test_metrics_: dict[str, float] = {}
+        test_end_metrics_: dict[str, float] = {}
         for name, metric in pl_module.test_metrics.items():
             print("name: ", name)
             print("metric: ", metric)
@@ -92,11 +92,11 @@ class MetricSummaryCallback(Callback):
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
                 
-                test_metrics_[name] = torch.mean(values).item()  # Log the mean value across days
+            #     test_end_metrics_[name] = torch.mean(values).item()  # Log the mean value across days
 
-                print("test_metrics_:", test_metrics_)
+            #     print("test_end_metrics_:", test_end_metrics_)
 
         # Log metrics to each logger
-        for logger in trainer.loggers:
-            print("Logging metrics to logger: ", logger)
-            logger.log_metrics(test_metrics_)
+        # for logger in trainer.loggers:
+        #     print("Logging metrics to logger: ", logger)
+        #     logger.log_metrics(test_end_metrics_)

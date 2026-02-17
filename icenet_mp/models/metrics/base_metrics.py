@@ -39,6 +39,7 @@ class RMSE_daily(Metric):
         print("Updating RMSE_daily metric...")
         rmse = torch.sqrt(torch.mean((preds - target)**2, dim=(0, 2, 3, 4)))
         print("rmse shape:", rmse.shape)
+        print("number of elements in rmse_daily before update:", self.rmse_daily.numel())
         if self.rmse_daily.numel() == 0:
             self.rmse_daily = rmse.unsqueeze(1)  # Shape: (T,)
         else:

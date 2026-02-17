@@ -92,11 +92,6 @@ class MetricSummaryCallback(Callback):
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
                 
-            #     test_end_metrics_[name] = torch.mean(values).item()  # Log the mean value across days
-
-            #     print("test_end_metrics_:", test_end_metrics_)
-
-        # Log metrics to each logger
-        # for logger in trainer.loggers:
-        #     print("Logging metrics to logger: ", logger)
-        #     logger.log_metrics(test_end_metrics_)
+            # Log the mean value of the metric across all days
+            wandb.log({f"{name} (mean)": torch.mean(values).item()})
+            

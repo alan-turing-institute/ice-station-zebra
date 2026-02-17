@@ -16,6 +16,7 @@ from omegaconf import DictConfig
 import torchmetrics
 
 from icenet_mp.models.metrics.sie_error_new import SIEErrorNew
+from icenet_mp.models.metrics.base_metrics import RMSE_daily, MAE_daily
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -64,7 +65,7 @@ class BaseModel(LightningModule, ABC):
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
 
-        self.test_metrics = MetricCollection({"sieerror": SIEErrorNew(), "mae": torchmetrics.MeanAbsoluteError()}, prefix="test_")
+        self.test_metrics = MetricCollection({"sieerror": SIEErrorNew(), "mae": torchmetrics.MeanAbsoluteError(), "rmse_daily": RMSE_daily(), "mae_daily": MAE_daily()}, prefix="test_")
         
         # self.sieerror = SIEErrorNew(forecast_step=0)
         # print("device:", self.sieerror.device)

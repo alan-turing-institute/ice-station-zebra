@@ -74,6 +74,7 @@ class MetricSummaryCallback(Callback):
 
         # Log metrics to each logger
         for logger in trainer.loggers:
+            print("Logging metrics to logger: ", logger)
             logger.log_metrics(metrics_)
 
         # Build W&B table for per-day MAE and plot results
@@ -98,13 +99,16 @@ class MetricSummaryCallback(Callback):
     def on_test_end(
         self, trainer: Trainer, pl_module: LightningModule ) -> None: 
         """Called at the end of testing.""" 
+        test_metrics_: dict[str, float] = {}
         for name, metric in pl_module.test_metrics.items():
             print("name: ", name)
             print("metric: ", metric)
             
+            # Compute the metric value (e.g., SIEError) across all batches and log it
             values = metric.compute()
         
             print("test end values:", values)
+            # If the metric returns a value for each day, log it as a W&B table and plot it
             if values.numel() > 1:
                 table = wandb.Table(data=list(enumerate(values.tolist(), start=1)), columns=["day", name])
                 print(table.data)
@@ -112,3 +116,12 @@ class MetricSummaryCallback(Callback):
                 wandb.log(
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
+                
+                test_metrics_[name] = torch.mean(values).item()  # Log the mean value across days
+
+                print("test_metrics_:", test_metrics_)
+
+        # Log metrics to each logger
+        for logger in trainer.loggers:
+            print("Logging metrics to logger: ", logger)
+            logger.log_metrics(test_metrics_)

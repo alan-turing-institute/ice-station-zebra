@@ -26,8 +26,9 @@
 | icenet\_mp/data\_processors/\_\_init\_\_.py                |        2 |        0 |    100% |           |
 | icenet\_mp/data\_processors/data\_downloader.py            |      200 |       74 |     63% |52-78, 82-84, 93-105, 109-139, 166-171, 184-185, 202-203, 209-215, 277-299, 303, 309-315, 328-339, 354-358, 370-371, 443 |
 | icenet\_mp/data\_processors/data\_downloader\_factory.py   |       11 |        4 |     64% |     19-26 |
-| icenet\_mp/data\_processors/filters/\_\_init\_\_.py        |        9 |        0 |    100% |           |
-| icenet\_mp/data\_processors/filters/doubling\_filter.py    |       11 |        4 |     64% |16-17, 21-22 |
+| icenet\_mp/data\_processors/filters/\_\_init\_\_.py        |       12 |        0 |    100% |           |
+| icenet\_mp/data\_processors/filters/doubling\_filter.py    |       12 |        5 |     58% |16-17, 21-23 |
+| icenet\_mp/data\_processors/filters/nan\_to\_num.py        |        9 |        2 |     78% |    13, 17 |
 | icenet\_mp/data\_processors/preprocessors/\_\_init\_\_.py  |        4 |        0 |    100% |           |
 | icenet\_mp/data\_processors/preprocessors/icenet\_sic.py   |       63 |       46 |     27% |20-26, 30, 35-66, 74-131 |
 | icenet\_mp/data\_processors/preprocessors/ipreprocessor.py |        9 |        0 |    100% |           |
@@ -96,7 +97,7 @@
 | icenet\_mp/visualisations/range\_check.py                  |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                             |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                              |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                  | **3379** |  **986** | **71%** |           |
+| **TOTAL**                                                  | **3392** |  **989** | **71%** |           |
 
 
 ## Setup coverage badge

@@ -25,7 +25,7 @@ class PiecewiseDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        bounded: BoundedOutputs = BoundedOutputs.NONE,
+        bounded: BoundedOutputs | str = BoundedOutputs.NONE,
         n_blocks: int = 0,
         **kwargs: Any,
     ) -> None:
@@ -97,6 +97,7 @@ class PiecewiseDecoder(BaseDecoder):
         layers.append(Shift(scale=True, offset=True))
 
         # Specify how/whether the output is bounded between 0 and 1
+        bounded = BoundedOutputs(bounded)
         if bounded == BoundedOutputs.CLAMP:
             layers.append(Clamp())
         elif bounded == BoundedOutputs.SIGMOID:

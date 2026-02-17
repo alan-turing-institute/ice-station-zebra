@@ -28,7 +28,9 @@ class PiecewiseEncoder(BaseEncoder):
         # Calculate the number of patches required
         # We set the stride to be half the patch size to ensure overlap, which will
         # capture more of the spatial structure of the data.
-        strides = tuple(patch_size // 2 for patch_size in self.data_space_out.shape)
+        strides = tuple(
+            max(1, patch_size // 2) for patch_size in self.data_space_out.shape
+        )
         n_patches = (
             (
                 self.data_space_in.shape[0]

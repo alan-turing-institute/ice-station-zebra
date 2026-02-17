@@ -20,5 +20,5 @@ class Shift(nn.Module):
         if self.scale is not None:
             x = x * self.scale
         if self.offset is not None:
-            x += torch.ones_like(x) * self.offset
+            x += self.offset
         return x

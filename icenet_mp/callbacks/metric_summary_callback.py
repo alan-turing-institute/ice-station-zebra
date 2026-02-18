@@ -1,13 +1,15 @@
 import logging
 import statistics
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import torch
 import wandb
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from torch import Tensor
+
+if TYPE_CHECKING:
+    from torchmetrics import MetricCollection
 
 from icenet_mp.types import ModelTestOutput
 
@@ -59,12 +61,19 @@ class MetricSummaryCallback(Callback):
                 metrics_[name] = statistics.mean(values)
 
         # Log metrics to each logger
-        for logger in trainer.loggers:
-            logger.log_metrics(metrics_)
+        for logger_ in trainer.loggers:
+            logger_.log_metrics(metrics_)
 
     def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of testing."""
-        for name, metric in pl_module.test_metrics.items():
+        test_metrics: MetricCollection = pl_module.test_metrics  # type: ignore[assignment]
+        if not hasattr(test_metrics, "items"):
+            logger.warning(
+                "test_metrics does not have an items() method, skipping metric summary."
+            )
+            return
+
+        for name, metric in test_metrics.items():
             # Compute the metric value (e.g., SIEError) across all batches and log it
             values = metric.compute()
 
@@ -79,5 +88,6 @@ class MetricSummaryCallback(Callback):
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
 
-            # Log the mean value of the metric across all days
-            wandb.log({f"{name} (mean)": torch.mean(values).item()})
+            for logger_ in trainer.loggers:
+                # Log the mean value of the metric across all days
+                logger_.log_metrics({f"{name} (mean)": values.mean().item()})

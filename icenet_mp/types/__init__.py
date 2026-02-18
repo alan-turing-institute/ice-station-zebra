@@ -1,5 +1,6 @@
 from .complex_datatypes import DataSpace, ModelTestOutput
 from .enums import BetaSchedule, TensorDimensions
+from .protocols import SupportsMetadata
 from .simple_datatypes import (
     AnemoiCreateArgs,
     AnemoiFinaliseArgs,
@@ -41,6 +42,7 @@ __all__ = [
     "Metadata",
     "ModelTestOutput",
     "PlotSpec",
+    "SupportsMetadata",
     "TensorDimensions",
     "TensorNCHW",
     "TensorNTCHW",

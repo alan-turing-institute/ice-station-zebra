@@ -5,10 +5,11 @@ import logging
 import typer
 from hydra.core.utils import simple_stdout_log_config
 
-from icenet_mp.data_processors.cli import datasets_cli
-from icenet_mp.evaluation.cli import evaluation_cli
 from icenet_mp.plugins import register_plugins
-from icenet_mp.training.cli import training_cli
+
+from .datasets import datasets_cli
+from .evaluate import evaluation_cli
+from .train import training_cli
 
 # Configure logging
 simple_stdout_log_config()

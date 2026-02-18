@@ -65,12 +65,8 @@ class BaseModel(LightningModule, ABC):
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
 
-        self.test_metrics = MetricCollection({"sieerror": SIEErrorNew(), "mae": torchmetrics.MeanAbsoluteError(), "rmse_daily": RMSE_daily(), "mae_daily": MAE_daily()}, prefix="test_")
+        self.test_metrics = MetricCollection({"sieerror": SIEErrorNew(), "rmse": RMSE_daily(), "mae": MAE_daily()})
         
-        # self.sieerror = SIEErrorNew(forecast_step=0)
-        # print("device:", self.sieerror.device)
-        # print("metric state:", self.sieerror.metric_state)
-
         # Save all of the arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
         # Note that W&B will log all hyperparameters

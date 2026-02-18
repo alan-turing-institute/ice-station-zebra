@@ -46,10 +46,6 @@ class MetricSummaryCallback(Callback):
         if "average_loss" in self.metrics:
             self.metrics["average_loss"].append(outputs.loss.item())
 
-        prediction = outputs.prediction
-        target = outputs.target
-        print(f"shapes: prediction={prediction.shape}, target={target.shape}")
-        
     def on_test_epoch_end(
         self,
         trainer: Trainer,
@@ -59,39 +55,29 @@ class MetricSummaryCallback(Callback):
         # Post-process accumulated metrics into a single value
         metrics_: dict[str, float] = {}
         for name, values in self.metrics.items():
-            if name.startswith("average_"): 
+            if name.startswith("average_"):
                 metrics_[name] = statistics.mean(values)
-
-        print(self.metrics)
-        print(metrics_)
 
         # Log metrics to each logger
         for logger in trainer.loggers:
-            print("Logging metrics to logger: ", logger)
             logger.log_metrics(metrics_)
 
-         
-    def on_test_end(
-        self, trainer: Trainer, pl_module: LightningModule ) -> None: 
-        """Called at the end of testing.""" 
-        test_end_metrics_: dict[str, float] = {}
+    def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of testing."""
         for name, metric in pl_module.test_metrics.items():
-            print("name: ", name)
-            print("metric: ", metric)
-            
             # Compute the metric value (e.g., SIEError) across all batches and log it
             values = metric.compute()
-        
-            print("test end values:", values)
+
             # If the metric returns a value for each day, log it as a W&B table and plot it
             if values.numel() > 1:
-                table = wandb.Table(data=list(enumerate(values.tolist(), start=1)), columns=["day", name])
-                print(table.data)
+                table = wandb.Table(
+                    data=list(enumerate(values.tolist(), start=1)),
+                    columns=["day", name],
+                )
                 plot_name = name + " per day"
                 wandb.log(
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
-                
+
             # Log the mean value of the metric across all days
             wandb.log({f"{name} (mean)": torch.mean(values).item()})
-            

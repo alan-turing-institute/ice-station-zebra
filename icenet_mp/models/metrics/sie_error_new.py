@@ -23,7 +23,7 @@ class SIEErrorNew(Metric):
         self.add_state("sie_error", default=torch.tensor([]), dist_reduce_fx="cat")
 
         self.pixel_size = pixel_size
-        
+
     def update(
         self,
         preds: torch.Tensor,
@@ -42,36 +42,21 @@ class SIEErrorNew(Metric):
             Ignored (present for API compatibility).
 
         """
-        print("Updating SIEError metric...")
         preds = preds > SEA_ICE_THRESHOLD
         target = target > SEA_ICE_THRESHOLD
-        print("preds shape:", preds.shape)
-        print("target shape:", target.shape)
 
         # Calculate the SIE for each day of the forecast
         pred_sie = torch.sum(preds, dim=(0, 2, 3, 4))  # type: ignore[operator]
-        print("pred_sie:", pred_sie)
         true_sie = torch.sum(target, dim=(0, 2, 3, 4))  # type: ignore[operator]
-        print("true_sie:", true_sie)
         error = (pred_sie - true_sie).float().to(self.device)
-        print("SIE error for each day:", error)
         # Reshape to (T, 1) to stack horizontally across epochs/batches
         if self.sie_error.numel() == 0:
             self.sie_error = error.unsqueeze(1)  # Shape: (T,)
         else:
-            self.sie_error = torch.cat((self.sie_error, error.unsqueeze(1)), dim=1)  # Shape: (T, N)
-        print("sie_error:", self.sie_error)
+            self.sie_error = torch.cat(
+                (self.sie_error, error.unsqueeze(1)), dim=1
+            )  # Shape: (T, N)
 
-    def compute(self) -> dict[str, list[str] | list[float]]:
+    def compute(self) -> torch.Tensor:
         """Compute the final Sea Ice Extent error in km²."""
-        print("Computing SIEError metric...")
-        print("compute:", self.sie_error)
-        print("shape of sie_error:", self.sie_error.shape)
-        print("abs value:"  , torch.abs(self.sie_error))
-        print("mean abs value across batches:", torch.mean(torch.abs(self.sie_error), dim=1))
-        values = torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]
-        print("SIE dict:", {"data":list(enumerate(values, start=1)), "columns":["day", "SIEError"]})
-        # return {"data":list(enumerate(values, start=1)), "columns":["day", "test_sieerror"]}
-        # return {"SIEError": values.mean().item()}
-        return values
-        
+        return torch.mean(torch.abs(self.sie_error), dim=1) * self.pixel_size**2  # type: ignore[operator]

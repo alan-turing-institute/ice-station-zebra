@@ -4,7 +4,6 @@ from typing import Any
 
 import hydra
 import torch
-from torchmetrics import MetricCollection
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import (
     LRSchedulerConfigType,
@@ -13,10 +12,10 @@ from lightning.pytorch.utilities.types import (
     OptimizerLRSchedulerConfig,
 )
 from omegaconf import DictConfig
-import torchmetrics
+from torchmetrics import MetricCollection
 
+from icenet_mp.models.metrics.base_metrics import MAEDaily, RMSEDaily
 from icenet_mp.models.metrics.sie_error_new import SIEErrorNew
-from icenet_mp.models.metrics.base_metrics import RMSE_daily, MAE_daily
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -65,8 +64,10 @@ class BaseModel(LightningModule, ABC):
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
 
-        self.test_metrics = MetricCollection({"sieerror": SIEErrorNew(), "rmse": RMSE_daily(), "mae": MAE_daily()})
-        
+        self.test_metrics = MetricCollection(
+            {"sieerror": SIEErrorNew(), "rmse": RMSEDaily(), "mae": MAEDaily()}
+        )
+
         # Save all of the arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
         # Note that W&B will log all hyperparameters
@@ -146,23 +147,13 @@ class BaseModel(LightningModule, ABC):
         prediction = self(batch)
         loss = self.loss(prediction, target)
         test_metrics = self.test_metrics(prediction, target)
-        print("test_metrics: ", test_metrics)
-        print("type_test_metrics: ", type(test_metrics)) 
-        
+
         # for each of the test metrics, calculate the mean value across the batch and log it
         for name, value in test_metrics.items():
             if isinstance(value, torch.Tensor):
-                self.log(name, value.mean(), on_step=True, on_epoch=False, prog_bar=False)     
-            # else:
-            #     self.log(name, value, on_step=True, on_epoch=False, prog_bar=False)
-        
-        # self.log_dict(test_metrics, on_step=True, on_epoch=False, prog_bar=False)
-        # self.sieerror(prediction, target)
-        # sie_result = self.sieerror.compute()
-        # for t, sie_val in enumerate(sie_result):
-        #     self.log(f"SIEError_t{t}", sie_val, on_step=True, on_epoch=False, prog_bar=False)
-
-        # self.log("SIEError_mean", sie_result.mean(), on_step=True, on_epoch=False, prog_bar=True)
+                self.log(
+                    name, value.mean(), on_step=True, on_epoch=False, prog_bar=False
+                )
 
         return ModelTestOutput(prediction, target, loss)
 

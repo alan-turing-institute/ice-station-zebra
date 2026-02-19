@@ -57,7 +57,7 @@ class MetricSummaryCallback(Callback):
         # Post-process accumulated metrics into a single value
         metrics_: dict[str, float] = {}
         for name, values in self.metrics.items():
-            if name.startswith("average_"):
+            if name.startswith("average_") and values:
                 metrics_[name] = statistics.mean(values)
 
         # Log metrics to each logger

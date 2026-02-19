@@ -6,14 +6,7 @@ from torchmetrics import Metric
 
 class RMSEDaily(Metric):
     def __init__(self) -> None:
-        """Initialize the RMSEDaily metric.
-
-        Parameters
-        ----------
-        pixel_size: int, optional
-            Physical size of one pixel in kilometers (default is 25 km -> OSISAF).
-
-        """
+        """Initialize the RMSEDaily metric."""
         super().__init__()
         self.rmse_daily: torch.Tensor
         self.add_state("rmse_daily", default=torch.tensor([]), dist_reduce_fx="cat")

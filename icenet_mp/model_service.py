@@ -100,10 +100,14 @@ class ModelService:
         model_cls: type[BaseModel] = hydra.utils.get_class(
             builder.config["model"]["_target_"]
         )
-        with torch.serialization.safe_globals([PosixPath]):
-            builder.model_ = model_cls.load_from_checkpoint(
-                checkpoint_path=checkpoint_path
-            )
+        # with torch.serialization.safe_globals([PosixPath]):
+        #     builder.model_ = model_cls.load_from_checkpoint(
+        #         checkpoint_path=checkpoint_path
+        #     )
+        _load = torch.load
+        torch.load = lambda *args, **kwargs: _load(*args, **dict(kwargs, weights_only=False))
+        builder.model_ = model_cls.load_from_checkpoint(checkpoint_path=checkpoint_path)
+        torch.load = _load
 
         return builder
 

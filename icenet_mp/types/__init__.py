@@ -1,5 +1,5 @@
 from .complex_datatypes import DataSpace, ModelTestOutput
-from .enums import BetaSchedule, BoundedOutputs, TensorDimensions
+from .enums import BetaSchedule, RangeRestriction, TensorDimensions
 from .protocols import SupportsMetadata
 from .simple_datatypes import (
     AnemoiCreateArgs,
@@ -34,7 +34,6 @@ __all__ = [
     "ArrayTCHW",
     "ArrayTHW",
     "BetaSchedule",
-    "BoundedOutputs",
     "DataSpace",
     "DataloaderArgs",
     "DiffColourmapSpec",
@@ -43,6 +42,7 @@ __all__ = [
     "Metadata",
     "ModelTestOutput",
     "PlotSpec",
+    "RangeRestriction",
     "SupportsMetadata",
     "TensorDimensions",
     "TensorNCHW",

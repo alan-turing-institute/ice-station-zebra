@@ -8,7 +8,7 @@ class BetaSchedule(StrEnum):
     COSINE = "cosine"
 
 
-class BoundedOutputs(StrEnum):
+class RangeRestriction(StrEnum):
     """Enum for bounded output types."""
 
     CLAMP = "clamp"

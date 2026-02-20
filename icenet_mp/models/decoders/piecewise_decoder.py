@@ -2,7 +2,7 @@ from typing import Any
 
 from torch import nn
 
-from icenet_mp.models.common import Clamp, CommonConvBlock, Permute, Shift
+from icenet_mp.models.common import Clamp, CommonConvBlock, Permute, Shift, Tanh
 from icenet_mp.types import RangeRestriction, TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -103,7 +103,7 @@ class PiecewiseDecoder(BaseDecoder):
         elif restrict_range == RangeRestriction.SIGMOID:
             layers.append(nn.Sigmoid())
         elif restrict_range == RangeRestriction.TANH:
-            layers.append(nn.Tanh())
+            layers.append(Tanh())
 
         # Combine the layers sequentially
         self.model = nn.Sequential(*layers)

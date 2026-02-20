@@ -7,6 +7,7 @@ from .patchembed import PatchEmbedding
 from .permute import Permute
 from .resizing_interpolation import ResizingInterpolation
 from .shift import Shift
+from .tanh import Tanh
 from .time_embed import TimeEmbed
 from .transformerblock import TransformerEncoderBlock
 
@@ -20,6 +21,7 @@ __all__ = [
     "Permute",
     "ResizingInterpolation",
     "Shift",
+    "Tanh",
     "TimeEmbed",
     "TransformerEncoderBlock",
 ]

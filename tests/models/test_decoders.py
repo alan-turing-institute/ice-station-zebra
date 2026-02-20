@@ -94,7 +94,9 @@ class TestDecoderBounded:
         reason="Bounded output for random input is not always between 0 and 1.",
         strict=False,
     )
-    @pytest.mark.parametrize("test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder"])
+    @pytest.mark.parametrize(
+        "test_decoder_cls", ["CNNDecoder", "NaiveLinearDecoder", "PiecewiseDecoder"]
+    )
     def test_bounded_fixes_values_between_0_and_1(self, test_decoder_cls: str) -> None:
         test_batch_size = 1
         test_n_forecast_steps = 1
@@ -115,6 +117,12 @@ class TestDecoderBounded:
                 data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,
                 bounded=bounded,
+            ),
+            "PiecewiseDecoder": lambda bounded: PiecewiseDecoder(
+                data_space_in=latent_space,
+                data_space_out=output_space,
+                n_forecast_steps=test_n_forecast_steps,
+                restrict_range="clamp" if bounded else "none",
             ),
         }
 

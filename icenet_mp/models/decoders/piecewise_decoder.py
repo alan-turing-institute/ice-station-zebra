@@ -2,7 +2,13 @@ from typing import Any
 
 from torch import nn
 
-from icenet_mp.models.common import CommonConvBlock, Permute, RestrictRange, Shift
+from icenet_mp.models.common import (
+    CommonConvBlock,
+    NormalisedFold,
+    Permute,
+    RestrictRange,
+    Shift,
+)
 from icenet_mp.types import RangeRestriction, TensorNCHW
 
 from .base_decoder import BaseDecoder
@@ -84,7 +90,7 @@ class PiecewiseDecoder(BaseDecoder):
 
         # Fold patches into the output shape: [N, C, output_h, output_w]
         layers.append(
-            nn.Fold(
+            NormalisedFold(
                 output_size=self.data_space_out.shape,
                 kernel_size=self.data_space_in.shape,
                 stride=strides,

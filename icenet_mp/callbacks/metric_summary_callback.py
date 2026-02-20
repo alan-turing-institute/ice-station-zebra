@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 import wandb
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
+from lightning.pytorch.loggers import WandbLogger
 from torch import Tensor
 
 if TYPE_CHECKING:
@@ -77,17 +78,23 @@ class MetricSummaryCallback(Callback):
             # Compute the metric value (e.g., SIEError) across all batches and log it
             values = metric.compute()
 
-            # If the metric returns a value for each day, log it as a W&B table and plot it
-            if values.numel() > 1:
-                table = wandb.Table(
-                    data=list(enumerate(values.tolist(), start=1)),
-                    columns=["day", name],
-                )
-                plot_name = name + " per day"
-                wandb.log(
-                    {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
-                )
-
             for logger_ in trainer.loggers:
+                # check if WandB is being used as a logger, and if so, log the metric values as a table and plot
+                if isinstance(logger_, WandbLogger):
+                    # If the metric returns a value for each day, log it as a W&B table and plot it
+                    if values.numel() > 1:
+                        table = wandb.Table(
+                            data=list(enumerate(values.tolist(), start=1)),
+                            columns=["day", name],
+                        )
+                    plot_name = name + " per day"
+                    wandb.log(
+                        {
+                            plot_name: wandb.plot.line(
+                                table, "day", name, title=plot_name
+                            )
+                        }
+                    )
+
                 # Log the mean value of the metric across all days
                 logger_.log_metrics({f"{name} (mean)": values.mean().item()})

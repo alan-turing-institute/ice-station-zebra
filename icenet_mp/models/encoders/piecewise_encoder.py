@@ -66,7 +66,7 @@ class PiecewiseEncoder(BaseEncoder):
             Permute((0, 2, 1)),
             # Unflatten the patches: [N, n_patches, C, patch_h, patch_w]
             nn.Unflatten(2, (-1, *self.data_space_out.shape)),
-            # Combine into a single channel dimesion: [N, C * n_patches, patch_h, patch_w]
+            # Combine into a single channel dimension: [N, C * n_patches, patch_h, patch_w]
             nn.Flatten(1, 2),
         ]
 

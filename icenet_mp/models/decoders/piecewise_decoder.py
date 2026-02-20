@@ -71,7 +71,9 @@ class PiecewiseDecoder(BaseDecoder):
         layers: list[nn.Module] = []
 
         # If necessary, add a convolutional block to get the required number of channels
-        if self.data_space_in.channels != input_channels_required:
+        if (n_conv_blocks != 0) or (
+            self.data_space_in.channels != input_channels_required
+        ):
             layers.append(
                 CommonConvBlock(
                     self.data_space_in.channels,

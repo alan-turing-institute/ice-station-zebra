@@ -25,7 +25,7 @@ class PiecewiseDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        bounded: RangeRestriction | str = RangeRestriction.NONE,
+        restrict_range: RangeRestriction | str = RangeRestriction.NONE,
         n_blocks: int = 0,
         **kwargs: Any,
     ) -> None:
@@ -96,13 +96,13 @@ class PiecewiseDecoder(BaseDecoder):
         # multiple pixels into a single output pixel.
         layers.append(Shift(scale=True, offset=True))
 
-        # Specify how/whether the output is bounded between 0 and 1
-        bounded = RangeRestriction(bounded)
-        if bounded == RangeRestriction.CLAMP:
+        # Specify how/whether the output is restrict_range between 0 and 1
+        restrict_range = RangeRestriction(restrict_range)
+        if restrict_range == RangeRestriction.CLAMP:
             layers.append(Clamp())
-        elif bounded == RangeRestriction.SIGMOID:
+        elif restrict_range == RangeRestriction.SIGMOID:
             layers.append(nn.Sigmoid())
-        elif bounded == RangeRestriction.TANH:
+        elif restrict_range == RangeRestriction.TANH:
             layers.append(nn.Tanh())
 
         # Combine the layers sequentially

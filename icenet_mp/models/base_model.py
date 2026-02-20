@@ -15,7 +15,7 @@ from omegaconf import DictConfig
 from torchmetrics import MetricCollection
 
 from icenet_mp.models.metrics.base_metrics import MAEDaily, RMSEDaily
-from icenet_mp.models.metrics.sie_error_new import SIEErrorNew
+from icenet_mp.models.metrics.sie_error_new import SIEErrorDaily
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -65,7 +65,7 @@ class BaseModel(LightningModule, ABC):
         self.scheduler_cfg = scheduler
 
         self.test_metrics = MetricCollection(
-            {"sieerror": SIEErrorNew(), "rmse": RMSEDaily(), "mae": MAEDaily()}
+            {"sieerror": SIEErrorDaily(), "rmse": RMSEDaily(), "mae": MAEDaily()}
         )
 
         # Save all of the arguments to __init__ as hyperparameters

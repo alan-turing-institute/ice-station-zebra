@@ -8,7 +8,7 @@ from torchmetrics import MeanAbsoluteError, MetricCollection
 
 from icenet_mp.callbacks.metric_summary_callback import MetricSummaryCallback
 from icenet_mp.models.metrics.base_metrics import MAEDaily, RMSEDaily
-from icenet_mp.models.metrics.sie_error_new import SIEErrorNew
+from icenet_mp.models.metrics.sie_error_new import SIEErrorDaily
 from icenet_mp.types import ModelTestOutput
 
 
@@ -183,21 +183,6 @@ class TestOnTestEnd:
 class TestMetricCalculations:
     """Tests for on_test_end method."""
 
-    def test_calculates_mean_mae_correctly(self) -> None:
-        """Test that MAE is calculated correctly."""
-        # Create predictable test data
-        preds = torch.tensor([[1.0], [2.0], [3.0], [4.0]])
-        targets = torch.tensor([[1.5], [2.5], [2.5], [4.5]])
-        computed_mae = MeanAbsoluteError()
-        computed_mae.update(preds, targets)
-
-        # Expected MAE: (|1.0-1.5| + |2.0-2.5| + |3.0-2.5| + |4.0-4.5|) / 4
-        # = (0.5 + 0.5 + 0.5 + 0.5) / 4 = 0.5
-        expected_mae = 0.5
-
-        # check expected_mae matches computed_mae.compute()
-        assert computed_mae.compute().item() == pytest.approx(expected_mae, abs=1e-5)
-
     def test_calculates_mean_mae_daily_correctly(self) -> None:
         """Test that MAE daily is calculated correctly."""
         # Convert 2D tensor to 5D tensor: (batch, channels, height, width, time)
@@ -223,17 +208,7 @@ class TestMetricCalculations:
 
         assert torch.allclose(daily_result, expected_mae, atol=1e-5)
 
-    def test_calculates_mean_rmse_correctly(self) -> None:
-        """Test that RMSE is calculated correctly."""
-        preds = torch.tensor([[1.0], [2.0], [3.0], [4.0]])
-        targets = torch.tensor([[1.5], [2.5], [2.5], [4.5]])
-
-        # Expected RMSE:
-        # Errors: [0.5, 0.5, 0.5, 0.5] -> MSE = 0.25 -> RMSE = 0.5
-        expected_rmse = 0.5
-        computed_rmse = torch.sqrt(torch.mean((preds - targets) ** 2)).item()
-
-        assert computed_rmse == pytest.approx(expected_rmse, abs=1e-5)
+        assert daily_result.mean().item() == pytest.approx(0.375, abs=1e-5)
 
     def test_calculates_mean_rmse_daily_correctly(self) -> None:
         """Test that RMSE daily is calculated correctly."""
@@ -260,67 +235,58 @@ class TestMetricCalculations:
 
         assert torch.allclose(daily_result, expected_rmse, atol=1e-5)
 
-    def test_calculates_sieerror_new_daily_correctly(self) -> None:
-        """Test that SIEErrorNew is calculated correctly per day."""
-        metric = SIEErrorNew(pixel_size=1)
+        assert daily_result.mean().item() == pytest.approx(0.40786, abs=1e-5)
 
-        # Shape: (batch=1, time=3, channels=1, height=1, width=2)
-        preds = torch.tensor(
-            [
-                [
-                    [[[0.2, 0.2]]],  # day 1 -> 2 ice
-                    [[[0.0, 0.2]]],  # day 2 -> 1 ice
-                    [[[0.0, 0.2]]],  # day 3 -> 1 ice
-                ]
-            ]
+    def test_calculates_mean_sieerror_daily_correctly(self) -> None:
+        """Test that SIEError daily is calculated correctly."""
+        preds_2d = torch.tensor(
+            [[0.0, 0.1, 0.8], [0.1, 0.2, 0.3], [0.3, 0.4, 0.5], [0.0, 0.1, 0.0]]
+        )
+        targets_2d = torch.tensor(
+            [[0.3, 0.5, 0.1], [0.6, 0.1, 0.0], [0.9, 0.9, 0.9], [0.0, 0.0, 1.0]]
         )
 
-        targets = torch.tensor(
-            [
-                [
-                    [[[0.2, 0.0]]],  # day 1 -> 1 ice
-                    [[[0.2, 0.2]]],  # day 2 -> 2 ice
-                    [[[0.0, 0.0]]],  # day 3 -> 0 ice
-                ]
-            ]
+        # Reshape to 5D: (batch=1, time=3, channels=1, height=2, width=2)
+        preds = preds_2d.view(2, 2, 3).permute(2, 0, 1).unsqueeze(0).unsqueeze(2)
+        targets = targets_2d.view(2, 2, 3).permute(2, 0, 1).unsqueeze(0).unsqueeze(2)
+
+        computed_sie = SIEErrorDaily(pixel_size=1)
+        computed_sie.update(preds, targets)
+        daily_result = computed_sie.compute()
+
+        # Expected SIEError per day:
+        # Day 1: sie error = |0-1 + 0-1 + 1-1 + 0-0| * 1^2 = 2.0
+        # Day 2: sie error = |0-1 + 1-0 + 1-1 + 0-0| * 1^2 = 0.0
+        # Day 3: sie error = |1-0 + 1-0 + 1-1 + 0-1| * 1^2 = 1.0
+        expected_sie = torch.tensor([2.0, 0.0, 1.0])  # pixel_size=1 -> no scaling
+
+        assert torch.allclose(daily_result, expected_sie, atol=1e-5)
+
+        assert daily_result.mean().item() == pytest.approx(1.0, abs=1e-5)
+
+    def test_calculates_mean_sieerror_daily_pixel_size(self) -> None:
+        """Test that SIEError daily is calculated correctly."""
+        preds_2d = torch.tensor(
+            [[0.0, 0.1, 0.8], [0.1, 0.2, 0.3], [0.3, 0.4, 0.5], [0.0, 0.1, 0.0]]
+        )
+        targets_2d = torch.tensor(
+            [[0.3, 0.5, 0.1], [0.6, 0.1, 0.0], [0.9, 0.9, 0.9], [0.0, 0.0, 1.0]]
         )
 
-        metric.update(preds, targets)
-        result = metric.compute()
+        # Reshape to 5D: (batch=1, time=3, channels=1, height=2, width=2)
+        preds = preds_2d.view(2, 2, 3).permute(2, 0, 1).unsqueeze(0).unsqueeze(2)
+        targets = targets_2d.view(2, 2, 3).permute(2, 0, 1).unsqueeze(0).unsqueeze(2)
 
-        # Errors per day: [2-1, 1-2, 1-0] -> abs: [1, 1, 1]
-        expected = torch.tensor([1.0, 1.0, 1.0])
+        computed_sie = SIEErrorDaily()
+        computed_sie.update(preds, targets)
+        daily_result = computed_sie.compute()
 
-        assert torch.allclose(result, expected, atol=1e-5)
+        # Expected SIEError per day:
+        # Day 1: sie error = |0-1 + 0-1 + 1-1 + 0-0| * 1^2 = 2.0
+        # Day 2: sie error = |0-1 + 1-0 + 1-1 + 0-0| * 1^2 = 0.0
+        # Day 3: sie error = |1-0 + 1-0 + 1-1 + 0-1| * 1^2 = 1.0
+        expected_sie = torch.tensor([1250.0, 0.0, 625.0])  # pixel_size=1 -> no scaling
 
-    def test_calculates_sieerror_new_scaled_by_pixel_size(self) -> None:
-        """Test that SIEErrorNew scales by pixel_size^2."""
-        metric = SIEErrorNew(pixel_size=5)
+        assert torch.allclose(daily_result, expected_sie, atol=1e-5)
 
-        preds = torch.tensor(
-            [
-                [
-                    [[[0.2, 0.2]]],  # day 1 -> 2 ice
-                    [[[0.0, 0.2]]],  # day 2 -> 1 ice
-                    [[[0.0, 0.2]]],  # day 3 -> 1 ice
-                ]
-            ]
-        )
-
-        targets = torch.tensor(
-            [
-                [
-                    [[[0.2, 0.0]]],  # day 1 -> 1 ice
-                    [[[0.2, 0.2]]],  # day 2 -> 2 ice
-                    [[[0.0, 0.0]]],  # day 3 -> 0 ice
-                ]
-            ]
-        )
-
-        metric.update(preds, targets)
-        result = metric.compute()
-
-        # Base abs errors: [1, 1, 1], scaled by pixel_size^2 = 25
-        expected = torch.tensor([25.0, 25.0, 25.0])
-
-        assert torch.allclose(result, expected, atol=1e-5)
+        assert daily_result.mean().item() == pytest.approx(625.0, abs=1e-5)

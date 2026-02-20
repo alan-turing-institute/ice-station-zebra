@@ -15,7 +15,7 @@ from omegaconf import DictConfig
 from torchmetrics import MetricCollection
 
 from icenet_mp.models.metrics.base_metrics import MAEDaily, RMSEDaily
-from icenet_mp.models.metrics.sie_error_new import SIEErrorDaily
+from icenet_mp.models.metrics.sie_error_abs import SIEErrorDaily
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 

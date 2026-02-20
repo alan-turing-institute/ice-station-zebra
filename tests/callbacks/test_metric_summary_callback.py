@@ -281,11 +281,11 @@ class TestMetricCalculations:
         computed_sie.update(preds, targets)
         daily_result = computed_sie.compute()
 
-        # Expected SIEError per day:
+        # Expected SIEError per day (before pixel-size scaling):
         # Day 1: sie error = |0-1 + 0-1 + 1-1 + 0-0| * 1^2 = 2.0
         # Day 2: sie error = |0-1 + 1-0 + 1-1 + 0-0| * 1^2 = 0.0
         # Day 3: sie error = |1-0 + 1-0 + 1-1 + 0-1| * 1^2 = 1.0
-        expected_sie = torch.tensor([1250.0, 0.0, 625.0])  # pixel_size=1 -> no scaling
+        expected_sie = torch.tensor([1250.0, 0.0, 625.0])  # default pixel_size=25 -> scaled by 25^2
 
         assert torch.allclose(daily_result, expected_sie, atol=1e-5)
 

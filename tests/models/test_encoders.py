@@ -76,7 +76,7 @@ class TestPiecewiseEncoder:
         encoder = PiecewiseEncoder(
             data_space_in=input_space,
             latent_space=test_latent_hw,
-            n_blocks=0,
+            n_conv_blocks=0,
             n_history_steps=1,
         )
 
@@ -116,7 +116,7 @@ class TestPiecewiseEncoder:
         encoder = PiecewiseEncoder(
             data_space_in=input_space,
             latent_space=patch_shape,
-            n_blocks=0,
+            n_conv_blocks=0,
             n_history_steps=1,
         )
         latent_ntchw = encoder.rollout(input_ntchw)

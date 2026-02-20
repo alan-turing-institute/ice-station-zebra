@@ -18,7 +18,7 @@ class PiecewiseDecoder(BaseDecoder):
     """Piecewise decoder that combines data patches from a latent space to build the output space.
 
     - 1 convolutional block to set the required number of channels
-    - n_blocks of constant-size convolutional blocks
+    - n_conv_blocks of constant-size convolutional blocks
     - Combine patches into output of size output_height x output_width
 
     Latent space:
@@ -31,8 +31,10 @@ class PiecewiseDecoder(BaseDecoder):
     def __init__(
         self,
         *,
-        restrict_range: RangeRestriction | str = RangeRestriction.NONE,
-        n_blocks: int = 0,
+        conv_activation: str = "SiLU",
+        conv_kernel_size: int = 3,
+        n_conv_blocks: int = 0,
+        restrict_range: str = "none",
         **kwargs: Any,
     ) -> None:
         """Initialise a PiecewiseDecoder."""
@@ -73,9 +75,9 @@ class PiecewiseDecoder(BaseDecoder):
             CommonConvBlock(
                 self.data_space_in.channels,
                 input_channels_required,
-                kernel_size=3,
-                activation="SiLU",
-                n_subblocks=n_blocks + 1,
+                kernel_size=conv_kernel_size,
+                activation=conv_activation,
+                n_subblocks=n_conv_blocks + 1,
             ),
         )
 

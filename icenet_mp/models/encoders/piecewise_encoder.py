@@ -12,7 +12,7 @@ class PiecewiseEncoder(BaseEncoder):
     """Piecewise encoder that splits data from an input space into smaller patches in a latent space.
 
     - Split into patches of size latent_height x latent_width
-    - n_blocks of constant-size convolutional blocks
+    - n_conv_blocks of constant-size convolutional blocks
 
     Input space:
         TensorNTCHW with (batch_size, n_history_steps, input_channels, input_height, input_width)
@@ -21,7 +21,13 @@ class PiecewiseEncoder(BaseEncoder):
         TensorNTCHW with (batch_size, n_history_steps, latent_channels, latent_height, latent_width)
     """
 
-    def __init__(self, n_blocks: int = 0, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        conv_activation: str = "SiLU",
+        conv_kernel_size: int = 3,
+        n_conv_blocks: int = 0,
+        **kwargs: Any,
+    ) -> None:
         """Initialise a PiecewiseEncoder."""
         super().__init__(**kwargs)
 
@@ -71,14 +77,14 @@ class PiecewiseEncoder(BaseEncoder):
         ]
 
         # Optionally add non-linearity with convolutional blocks
-        if n_blocks > 0:
+        if n_conv_blocks > 0:
             layers.append(
                 CommonConvBlock(
                     self.data_space_out.channels,
                     self.data_space_out.channels,
-                    kernel_size=3,
-                    activation="SiLU",
-                    n_subblocks=n_blocks,
+                    kernel_size=conv_kernel_size,
+                    activation=conv_activation,
+                    n_subblocks=n_conv_blocks,
                 ),
             )
 

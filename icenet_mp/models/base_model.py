@@ -12,7 +12,10 @@ from lightning.pytorch.utilities.types import (
     OptimizerLRSchedulerConfig,
 )
 from omegaconf import DictConfig
+from torchmetrics import MetricCollection
 
+from icenet_mp.models.metrics.base_metrics import MAEDaily, RMSEDaily
+from icenet_mp.models.metrics.sie_error_abs import SIEErrorDaily
 from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
 
 
@@ -60,6 +63,10 @@ class BaseModel(LightningModule, ABC):
         # Store the optimizer and scheduler configs
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
+
+        self.test_metrics = MetricCollection(
+            {"sieerror": SIEErrorDaily(), "rmse": RMSEDaily(), "mae": MAEDaily()}
+        )
 
         # Save all of the arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
@@ -139,6 +146,15 @@ class BaseModel(LightningModule, ABC):
         target = batch.pop("target")
         prediction = self(batch)
         loss = self.loss(prediction, target)
+        test_metrics = self.test_metrics(prediction, target)
+
+        # for each of the test metrics, calculate the mean value across the batch and log it
+        for name, value in test_metrics.items():
+            if isinstance(value, torch.Tensor):
+                self.log(
+                    name, value.mean(), on_step=True, on_epoch=False, prog_bar=False
+                )
+
         return ModelTestOutput(prediction, target, loss)
 
     def training_step(

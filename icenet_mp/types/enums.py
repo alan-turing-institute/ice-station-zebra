@@ -1,4 +1,5 @@
 from enum import IntEnum, StrEnum
+from typing import Any
 
 
 class BetaSchedule(StrEnum):
@@ -15,6 +16,11 @@ class RangeRestriction(StrEnum):
     NONE = "none"
     SIGMOID = "sigmoid"
     TANH = "tanh"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> "RangeRestriction":  # noqa: ARG003,ANN401
+        """Handle missing values by returning NONE."""
+        return cls.NONE
 
 
 class TensorDimensions(IntEnum):

@@ -122,7 +122,7 @@ class TestDecoderBounded:
                 data_space_in=latent_space,
                 data_space_out=output_space,
                 n_forecast_steps=test_n_forecast_steps,
-                restrict_range="clamp" if bounded else "none",
+                restrict_range="tanh" if bounded else "none",
             ),
         }
 

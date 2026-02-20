@@ -1,6 +1,4 @@
-from torch import nn
-
-from icenet_mp.types import TensorNCHW
+from torch import Tensor, nn
 
 
 class Permute(nn.Module):
@@ -9,7 +7,7 @@ class Permute(nn.Module):
         super().__init__()
         self.permutation = permutation
 
-    def forward(self, x: TensorNCHW) -> TensorNCHW:
+    def forward(self, x: Tensor) -> Tensor:
         """Permute the dimensions of the input tensor.
 
         To avoid https://github.com/pytorch/pytorch/issues/142344 we reorder the output

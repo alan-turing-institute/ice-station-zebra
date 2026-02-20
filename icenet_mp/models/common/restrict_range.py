@@ -1,6 +1,11 @@
-from torch import nn, sigmoid, tanh
+from typing import TYPE_CHECKING
+
+from torch import nn
 
 from icenet_mp.types import RangeRestriction, TensorNCHW
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class RestrictRange(nn.Module):
@@ -12,15 +17,16 @@ class RestrictRange(nn.Module):
         This can use torch.clamp, torch.sigmoid, or torch.tanh.
         """
         super().__init__()
-        self.method = method
-        if method == RangeRestriction.CLAMP:
-            self.restrict_fn = lambda x: x.clamp(min=min_val, max=max_val)
-        elif method == RangeRestriction.SIGMOID:
-            self.restrict_fn = lambda x: min_val + (max_val - min_val) * sigmoid(x)
-        elif method == RangeRestriction.TANH:
-            self.restrict_fn = (
-                lambda x: min_val + (max_val - min_val) * (tanh(x) + 1) / 2
-            )
+        self.restrict_fn: Callable[[TensorNCHW], TensorNCHW]
+        try:
+            diff = max_val - min_val
+            self.restrict_fn = {
+                RangeRestriction.CLAMP: lambda x: x.clamp_(min=min_val, max=max_val),
+                RangeRestriction.SIGMOID: lambda x: min_val + diff * x.sigmoid_(),
+                RangeRestriction.TANH: lambda x: min_val + diff * (x.tanh_() + 1) / 2,
+            }[method]
+        except KeyError:
+            self.restrict_fn = lambda x: x
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Apply the restriction function to the input tensor."""

@@ -63,7 +63,7 @@ class TestEncoders:
 
 
 class TestPiecewiseEncoder:
-    @pytest.mark.parametrize("test_input_chw", [(4, 512, 512, 4), (1, 20, 200)])
+    @pytest.mark.parametrize("test_input_chw", [(4, 512, 512), (1, 20, 200)])
     @pytest.mark.parametrize("test_latent_hw", [(32, 32), (40, 73)])
     def test_ones_are_encoded_to_zero_or_one(
         self,

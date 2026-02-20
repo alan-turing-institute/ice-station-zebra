@@ -70,16 +70,17 @@ class PiecewiseDecoder(BaseDecoder):
         # Construct list of layers
         layers: list[nn.Module] = []
 
-        # Add a convolutional block to get the required number of channels
-        layers.append(
-            CommonConvBlock(
-                self.data_space_in.channels,
-                input_channels_required,
-                kernel_size=conv_kernel_size,
-                activation=conv_activation,
-                n_subblocks=n_conv_blocks + 1,
-            ),
-        )
+        # If necessary, add a convolutional block to get the required number of channels
+        if self.data_space_in.channels != input_channels_required:
+            layers.append(
+                CommonConvBlock(
+                    self.data_space_in.channels,
+                    input_channels_required,
+                    kernel_size=conv_kernel_size,
+                    activation=conv_activation,
+                    n_subblocks=n_conv_blocks + 1,
+                ),
+            )
 
         # Unflatten the channel dimension to extract the patches: [N, n_patches, C, patch_h, patch_w]
         layers.append(nn.Unflatten(1, (n_patches, -1)))

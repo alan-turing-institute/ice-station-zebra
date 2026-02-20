@@ -44,14 +44,7 @@ class RMSEDaily(Metric):
 
 class MAEDaily(Metric):
     def __init__(self) -> None:
-        """Initialize the MAEDaily metric.
-
-        Parameters
-        ----------
-        pixel_size: int, optional
-            Physical size of one pixel in kilometers (default is 25 km -> OSISAF).
-
-        """
+        """Initialize the MAEDaily metric."""
         super().__init__()
         self.mae_daily: torch.Tensor
         self.add_state("mae_daily", default=torch.tensor([]), dist_reduce_fx="cat")

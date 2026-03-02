@@ -10,12 +10,6 @@ encoder:
 
 processor:
   _target_: icenet_mp.models.processors.VitProcessor
-  patch_size: 16
-  emb_dim: 128
-  depth: 3
-  heads: 4
-  mlp_dim: 256
-  dropout: 0.3
 
 decoder:
   _target_: icenet_mp.models.decoders.CNNDecoder

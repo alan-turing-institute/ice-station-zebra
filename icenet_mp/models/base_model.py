@@ -182,10 +182,10 @@ class BaseModel(LightningModule, ABC):
         self.log(
             "train_loss",
             loss,
-            sync_dist=True,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            sync_dist=True,
         )
         return loss
 
@@ -218,9 +218,9 @@ class BaseModel(LightningModule, ABC):
         self.log(
             "validation_loss",
             loss,
-            sync_dist=True,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            sync_dist=True,
         )
         return loss

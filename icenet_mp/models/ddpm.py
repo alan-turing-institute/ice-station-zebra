@@ -348,7 +348,7 @@ class DDPM(BaseModel):
         self.log(
             "train_loss",
             loss,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             sync_dist=True,
@@ -392,7 +392,7 @@ class DDPM(BaseModel):
         # Calculate loss
         loss = self.loss(y_hat, y, sample_weight)
         self.log(
-            "val_loss",
+            "validation_loss",
             loss,
             on_step=False,
             on_epoch=True,

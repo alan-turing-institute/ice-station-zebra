@@ -8,7 +8,7 @@ encoder:
   n_conv_blocks: 3 # Number of convolutional blocks to add after encoding
 
 processor:
-  _target_: icenet_mp.models.processors.UNetProcessor
+  _target_: icenet_mp.models.processors.VitProcessor
 
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder

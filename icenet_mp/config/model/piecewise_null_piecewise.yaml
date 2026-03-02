@@ -1,6 +1,6 @@
 _target_: icenet_mp.models.EncodeProcessDecode
 
-name: piecewise-unet-piecewise
+name: piecewise-null-piecewise
 
 encoder:
   _target_: icenet_mp.models.encoders.PiecewiseEncoder
@@ -8,7 +8,7 @@ encoder:
   n_conv_blocks: 3 # Number of convolutional blocks to add after encoding
 
 processor:
-  _target_: icenet_mp.models.processors.UNetProcessor
+  _target_: icenet_mp.models.processors.NullProcessor
 
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder

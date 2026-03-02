@@ -37,8 +37,10 @@ class CommonDataModule(LightningDataModule):
                 ).resolve()
             )
         logger.info("Found %d dataset groups.", len(self.dataset_groups))
-        for dataset_group in self.dataset_groups:
-            logger.debug("... %s.", dataset_group)
+        for idx, (name, paths) in enumerate(self.dataset_groups.items(), start=1):
+            logger.info("%d) %s:", idx, name)
+            for path in paths:
+                logger.info("%s - %s", " " * (len(str(idx)) + 1), path)
 
         # Check prediction target
         self.target_group_name = config["predict"]["target"]["group_name"]

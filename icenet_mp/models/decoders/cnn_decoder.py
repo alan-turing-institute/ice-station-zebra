@@ -32,7 +32,7 @@ class CNNDecoder(BaseDecoder):
         *,
         activation: str = "ReLU",
         kernel_size: int = 3,
-        n_layers: int = 2,
+        n_layers: int = 3,
         bounded: bool = False,
         **kwargs: Any,
     ) -> None:

@@ -4,7 +4,7 @@ name: naive-vit-naive
 
 encoder:
   _target_: icenet_mp.models.encoders.NaiveLinearEncoder
-  latent_space: [192, 192] # Shape of the latent space
+  latent_space: [432, 432] # Shape of the latent space
 
 processor:
   _target_: icenet_mp.models.processors.VitProcessor

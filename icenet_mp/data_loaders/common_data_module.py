@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 from lightning import LightningDataModule
 from omegaconf import DictConfig
@@ -35,7 +36,7 @@ class CommonDataModule(LightningDataModule):
                     self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
                 ).resolve()
             )
-        logger.info("Found %d dataset_groups.", len(self.dataset_groups))
+        logger.info("Found %d dataset groups.", len(self.dataset_groups))
         for dataset_group in self.dataset_groups:
             logger.debug("... %s.", dataset_group)
 
@@ -81,6 +82,18 @@ class CommonDataModule(LightningDataModule):
             sampler=None,
             worker_init_fn=None,
         )
+
+    @property
+    def hemisphere(self) -> Literal["north", "south"]:
+        """Return the hemisphere of the dataset."""
+        hemisphere: set[Literal["north", "south"]] = {
+            SingleDataset(name, paths).hemisphere
+            for name, paths in self.dataset_groups.items()
+        }
+        if len(hemisphere) != 1:
+            msg = f"Found {len(hemisphere)} different hemisphere indicators across {len(self.dataset_groups)} dataset groups."
+            raise ValueError(msg)
+        return hemisphere.pop()
 
     @cached_property
     def input_spaces(self) -> list[DataSpace]:

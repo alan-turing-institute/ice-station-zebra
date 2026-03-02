@@ -7,7 +7,7 @@ from lightning.pytorch import Callback
 from omegaconf import DictConfig
 from torch import Tensor
 
-from icenet_mp.data_loaders import CombinedDataset
+from icenet_mp.data_loaders import CombinedDataset, CommonDataModule
 from icenet_mp.types import ModelTestOutput, PlotSpec
 from icenet_mp.utils import datetime_from_npdatetime
 from icenet_mp.visualisations import DEFAULT_SIC_SPEC, Plotter
@@ -56,7 +56,7 @@ class PlottingCallback(Callback):
     def on_test_batch_end(
         self,
         trainer: Trainer,
-        pl_module: LightningModule,  # noqa: ARG002
+        pl_module: LightningModule,
         outputs: Tensor | Mapping[str, Any] | None,
         batch: Any,  # noqa: ANN401, ARG002
         batch_idx: int,
@@ -93,7 +93,11 @@ class PlottingCallback(Callback):
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
         )
         # Set hemisphere for plotting based on dataset
-        self.plotter.set_hemisphere(dataset.hemisphere)
+        if not isinstance(pl_module, CommonDataModule):
+            msg = f"Lightning module is of type {type(pl_module)}, skipping plotting."
+            logger.warning(msg)
+            return
+        self.plotter.set_hemisphere(pl_module.hemisphere)
 
         # Get loggers that support image and video logging
         image_loggers = [ll for ll in trainer.loggers if hasattr(ll, "log_image")]

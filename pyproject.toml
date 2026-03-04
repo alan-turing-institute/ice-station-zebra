@@ -43,6 +43,7 @@ dependencies = [
     "wandb>=0.21.0",
     "xarray>=2025.3.0",
     "zarr<3.0.0", # v3 is not compatible with anemoi
+    "argopy>=1.4.0",
 ]
 
 [dependency-groups]

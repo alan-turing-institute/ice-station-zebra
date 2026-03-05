@@ -24,7 +24,7 @@
 | icenet\_mp/data\_loaders/common\_data\_module.py           |       60 |       38 |     37% |25-75, 88, 96, 104-106, 112-132, 138-158, 164-184, 190-210 |
 | icenet\_mp/data\_loaders/single\_dataset.py                |       94 |        5 |     95% |   138-142 |
 | icenet\_mp/data\_processors/\_\_init\_\_.py                |        2 |        0 |    100% |           |
-| icenet\_mp/data\_processors/data\_downloader.py            |       86 |       62 |     28% |35-41, 46-92, 96-107, 115-121, 125-144, 154-166, 170, 179-198 |
+| icenet\_mp/data\_processors/data\_downloader.py            |       93 |       69 |     26% |35-41, 46-92, 96-115, 119-125, 129-148, 158-177, 181, 190-209 |
 | icenet\_mp/data\_processors/data\_downloader\_factory.py   |       11 |        4 |     64% |     19-26 |
 | icenet\_mp/data\_processors/filters/\_\_init\_\_.py        |       12 |        0 |    100% |           |
 | icenet\_mp/data\_processors/filters/doubling\_filter.py    |       12 |        5 |     58% |16-17, 21-23 |
@@ -34,7 +34,7 @@
 | icenet\_mp/data\_processors/preprocessors/ipreprocessor.py |        9 |        2 |     78% |     10-11 |
 | icenet\_mp/data\_processors/preprocessors/null.py          |        5 |        1 |     80% |         9 |
 | icenet\_mp/data\_processors/sources/\_\_init\_\_.py        |        9 |        0 |    100% |           |
-| icenet\_mp/data\_processors/sources/ftp.py                 |       31 |        0 |    100% |           |
+| icenet\_mp/data\_processors/sources/ftp.py                 |       38 |        3 |     92% |     62-64 |
 | icenet\_mp/exceptions.py                                   |        3 |        0 |    100% |           |
 | icenet\_mp/losses/\_\_init\_\_.py                          |        4 |        0 |    100% |           |
 | icenet\_mp/losses/weighted\_bce\_loss.py                   |        8 |        3 |     62% | 23, 37-42 |
@@ -105,7 +105,7 @@
 | icenet\_mp/visualisations/range\_check.py                  |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                             |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                              |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                  | **3431** |  **964** | **72%** |           |
+| **TOTAL**                                                  | **3445** |  **974** | **72%** |           |
 
 
 ## Setup coverage badge

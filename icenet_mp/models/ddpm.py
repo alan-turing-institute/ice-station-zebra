@@ -5,7 +5,6 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torchmetrics import Metric, MetricCollection
 
-from icenet_mp.losses import WeightedMSELoss
 from icenet_mp.metrics import IceNetAccuracy, SIEError
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
 from icenet_mp.types import ModelTestOutput, TensorNTCHW
@@ -230,16 +229,6 @@ class DDPM(BaseModel):
 
         return y
 
-    def loss(
-        self,
-        prediction: TensorNTCHW,
-        target: TensorNTCHW,
-        sample_weight: TensorNTCHW | None = None,
-    ) -> torch.Tensor:
-        if sample_weight is None:
-            sample_weight = torch.ones_like(prediction)
-        return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
-
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """Encode OSISAF and ERA5 separately, then concatenate.
 
@@ -338,7 +327,7 @@ class DDPM(BaseModel):
         target_v = self.diffusion.calculate_v(y, noise, t)
 
         # Compute loss
-        loss = F.mse_loss(pred_v, target_v)
+        loss = self.loss(pred_v, target_v)
 
         self.log(
             "train_loss",
@@ -385,7 +374,7 @@ class DDPM(BaseModel):
         y_hat = torch.clamp(outputs, 0, 1)
 
         # Calculate loss
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y)
         self.log(
             "validation_loss",
             loss,
@@ -437,7 +426,7 @@ class DDPM(BaseModel):
         y = y.unsqueeze(2)
         sample_weight = sample_weight.unsqueeze(2)
 
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y)
         self.log(
             "test_loss",
             loss,

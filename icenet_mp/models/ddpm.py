@@ -175,21 +175,6 @@ class DDPM(BaseModel):
             metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.metrics = MetricCollection(metrics)
 
-        test_metrics: dict[str, Metric | MetricCollection] = {
-            "test_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-            "test_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-        }
-        for i in range(self.n_forecast_steps):
-            test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(
-                leadtimes_to_evaluate=[i]
-            )
-            test_metrics[f"test_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
-        self.test_metrics = MetricCollection(test_metrics)
-
         self.save_hyperparameters()
 
     def forward(self, *args: Any, **kwargs: Any) -> NoReturn:
@@ -436,6 +421,7 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        self.test_metrics.update(y_hat, y, sample_weight)
+        # Use BaseModel test metrics
+        self.test_metrics.update(y_hat, y)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)

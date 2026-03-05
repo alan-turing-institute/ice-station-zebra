@@ -212,7 +212,7 @@ class DDPM(BaseModel):
             )
             y = self.diffusion.p_sample(y, t_batch, pred_v)
 
-        return y
+        return torch.clamp(y, 0, 1)
 
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """Encode OSISAF and ERA5 separately, then concatenate.
@@ -354,9 +354,7 @@ class DDPM(BaseModel):
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
         # Generate samples
-        outputs = self.sample(x)
-
-        y_hat = torch.clamp(outputs, 0, 1)
+        y_hat = self.sample(x)
 
         # Calculate loss
         loss = self.loss(y_hat, y)
@@ -402,7 +400,7 @@ class DDPM(BaseModel):
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"]
-        y_hat = torch.clamp(self.sample(x), 0, 1).unsqueeze(2)
+        y_hat = self.sample(x).unsqueeze(2)
 
         loss = self.loss(y_hat, y)
         self.log(

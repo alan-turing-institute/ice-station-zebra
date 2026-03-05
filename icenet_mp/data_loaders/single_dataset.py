@@ -8,7 +8,7 @@ from anemoi.datasets.data import open_dataset
 from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from torch.utils.data import Dataset
 
-from icenet_mp.types import ArrayCHW, ArrayTCHW, DataSpace
+from icenet_mp.types import ArrayCHW, ArrayTCHW, DataSpace, Hemisphere
 from icenet_mp.utils import normalise_date
 
 
@@ -31,7 +31,7 @@ class SingleDataset(Dataset):
         self._date_ranges = sorted(
             date_ranges, key=lambda dr: "" if dr["start"] is None else dr["start"]
         )
-        self.hemisphere: Literal["north", "south"] = (
+        self.hemisphere: Hemisphere = (
             "north"
             if any("north" in str(input_file).lower() for input_file in input_files)
             else "south"

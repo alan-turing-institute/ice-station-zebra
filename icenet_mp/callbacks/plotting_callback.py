@@ -7,7 +7,8 @@ from lightning.pytorch import Callback
 from omegaconf import DictConfig
 from torch import Tensor
 
-from icenet_mp.data_loaders import CombinedDataset, CommonDataModule
+from icenet_mp.data_loaders import CombinedDataset
+from icenet_mp.models import BaseModel
 from icenet_mp.types import ModelTestOutput, PlotSpec
 from icenet_mp.utils import datetime_from_npdatetime
 from icenet_mp.visualisations import DEFAULT_SIC_SPEC, Plotter
@@ -93,7 +94,7 @@ class PlottingCallback(Callback):
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
         )
         # Set hemisphere for plotting based on dataset
-        if not isinstance(pl_module, CommonDataModule):
+        if not isinstance(pl_module, BaseModel):
             msg = f"Lightning module is of type {type(pl_module)}, skipping plotting."
             logger.warning(msg)
             return

@@ -8,7 +8,7 @@ from lightning import LightningDataModule
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from icenet_mp.types import ArrayTCHW, DataloaderArgs, DataSpace
+from icenet_mp.types import ArrayTCHW, DataloaderArgs, DataSpace, Hemisphere
 
 from .combined_dataset import CombinedDataset
 from .single_dataset import SingleDataset
@@ -86,9 +86,9 @@ class CommonDataModule(LightningDataModule):
         )
 
     @property
-    def hemisphere(self) -> Literal["north", "south"]:
+    def hemisphere(self) -> Hemisphere:
         """Return the hemisphere of the dataset."""
-        hemisphere: set[Literal["north", "south"]] = {
+        hemisphere: set[Hemisphere] = {
             SingleDataset(name, paths).hemisphere
             for name, paths in self.dataset_groups.items()
         }

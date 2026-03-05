@@ -401,15 +401,8 @@ class DDPM(BaseModel):
 
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
-        y = batch["target"].squeeze(2)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
-
-        outputs = self.sample(x)
-
-        y_hat = torch.clamp(outputs, 0, 1).unsqueeze(2)
-
-        y = y.unsqueeze(2)
-        sample_weight = sample_weight.unsqueeze(2)
+        y = batch["target"]
+        y_hat = torch.clamp(self.sample(x), 0, 1).unsqueeze(2)
 
         loss = self.loss(y_hat, y)
         self.log(

@@ -197,16 +197,11 @@ class DDPM(BaseModel):
         msg = "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
         raise NotImplementedError(msg)
 
-    def sample(
-        self,
-        x: torch.Tensor,
-        sample_weight: torch.Tensor | None,  # noqa: ARG002
-    ) -> torch.Tensor:
+    def sample(self, x: torch.Tensor) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
             x (torch.Tensor): Conditioning input [B, C, H, W].
-            sample_weight (torch.Tensor or None): Optional weights.
 
         Returns:
             torch.Tensor: Denoised output of shape [B, C, H, W].
@@ -385,7 +380,7 @@ class DDPM(BaseModel):
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
         # Generate samples
-        outputs = self.sample(x, sample_weight)
+        outputs = self.sample(x)
 
         y_hat = torch.clamp(outputs, 0, 1)
 
@@ -435,7 +430,7 @@ class DDPM(BaseModel):
         y = batch["target"].squeeze(2)
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
-        outputs = self.sample(x, sample_weight)
+        outputs = self.sample(x)
 
         y_hat = torch.clamp(outputs, 0, 1).unsqueeze(2)
 

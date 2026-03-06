@@ -11,16 +11,6 @@ from icenet_mp.types import ModelTestOutput, TensorNCHW, TensorNTCHW
 
 from .base_model import BaseModel
 
-# Unset SLURM_NTASKS if it's causing issues
-if "SLURM_NTASKS" in os.environ:
-    del os.environ["SLURM_NTASKS"]
-
-# Optionally, set SLURM_NTASKS_PER_NODE if needed
-os.environ["SLURM_NTASKS_PER_NODE"] = "1"
-
-# Force all new tensors to be float32 by default
-torch.set_default_dtype(torch.float32)
-
 
 class SimpleEncoder2D(torch.nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:

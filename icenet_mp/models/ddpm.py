@@ -7,7 +7,7 @@ from torchmetrics import Metric, MetricCollection
 
 from icenet_mp.metrics import IceNetAccuracy, SIEError
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
-from icenet_mp.types import ModelTestOutput, TensorNTCHW
+from icenet_mp.types import ModelTestOutput, TensorNCHW, TensorNTCHW
 
 from .base_model import BaseModel
 
@@ -38,14 +38,14 @@ class SimpleEncoder2D(torch.nn.Module):
             torch.nn.SiLU(),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the encoder block.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W).
+            x (TensorNCHW): Input tensor of shape (B, C, H, W).
 
         Returns:
-            torch.Tensor: Output tensor after applying the block.
+            TensorNCHW: Output tensor after applying the block.
 
         """
         return self.net(x)
@@ -181,14 +181,14 @@ class DDPM(BaseModel):
         msg = "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
         raise NotImplementedError(msg)
 
-    def sample(self, x: torch.Tensor) -> torch.Tensor:
+    def sample(self, x: TensorNCHW) -> TensorNCHW:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
-            x (torch.Tensor): Conditioning input [B, C, H, W].
+            x (TensorNCHW): Conditioning input [B, C, H, W].
 
         Returns:
-            torch.Tensor: Denoised output of shape [B, C, H, W].
+            TensorNCHW: Denoised output of shape [B, C, H, W].
 
         """
         shape = (
@@ -206,7 +206,7 @@ class DDPM(BaseModel):
             t_batch = torch.full_like(
                 x[:, 0, 0, 0], t, dtype=torch.long, device=self.device
             )
-            pred_v: torch.Tensor = self.model(y, t_batch, x)
+            pred_v: TensorNCHW = self.model(y, t_batch, x)
             pred_v = (
                 pred_v.squeeze(3) if pred_v.dim() > dim_threshold else pred_v.squeeze()
             )
@@ -214,7 +214,7 @@ class DDPM(BaseModel):
 
         return torch.clamp(y, 0, 1)
 
-    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
+    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNCHW:
         """Encode OSISAF and ERA5 separately, then concatenate.
 
         ERA5 -> Norm -> Project -> Resize -> Flatten Time -> Encode
@@ -400,7 +400,7 @@ class DDPM(BaseModel):
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"]
-        y_hat = self.sample(x).unsqueeze(2)
+        y_hat = self.sample(x).unsqueeze(2) # note that this assumes C=1
 
         loss = self.loss(y_hat, y)
         self.log(

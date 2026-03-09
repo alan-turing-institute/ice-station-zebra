@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Literal
 
 import numpy as np
 from anemoi.datasets.data import open_dataset

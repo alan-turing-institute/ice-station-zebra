@@ -2,7 +2,6 @@ import logging
 from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
-from typing import Literal
 
 from lightning import LightningDataModule
 from omegaconf import DictConfig

@@ -1,4 +1,3 @@
-import os
 from typing import Any, NoReturn
 
 import torch
@@ -390,7 +389,7 @@ class DDPM(BaseModel):
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"]
-        y_hat = self.sample(x).unsqueeze(2) # note that this assumes C=1
+        y_hat = self.sample(x).unsqueeze(2)  # note that this assumes C=1
 
         loss = self.loss(y_hat, y)
         self.log(

@@ -30,6 +30,7 @@ class TestPersistence:
         }
         model = Persistence(
             name="persistence",
+            hemisphere="north",
             input_spaces=[input_space],
             n_forecast_steps=test_n_forecast_steps,
             n_history_steps=test_n_history_steps,
@@ -59,6 +60,7 @@ class TestPersistence:
     def test_optimizer(self) -> None:
         model = Persistence(
             name="persistence",
+            hemisphere="north",
             input_spaces=[
                 {
                     "channels": 1,

@@ -4,7 +4,7 @@ name: cnn-unet-cnn
 
 encoder:
   _target_: icenet_mp.models.encoders.CNNEncoder
-  latent_space: [192, 192] # Shape of the latent space
+  latent_space: [144, 144] # Shape of the latent space
 
 processor:
   _target_: icenet_mp.models.processors.UNetProcessor

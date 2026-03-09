@@ -11,5 +11,3 @@ processor:
 
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder
-  restrict_range: clamp # Method for restricting output range (e.g., clamp, sigmoid, tanh)
-  n_conv_blocks: 3 # Number of convolutional blocks to add before decoding

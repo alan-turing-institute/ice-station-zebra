@@ -1,6 +1,6 @@
 _target_: icenet_mp.models.EncodeProcessDecode
 
-name: piecewise-unet-piecewise
+name: piecewise-vit-piecewise
 
 encoder:
   _target_: icenet_mp.models.encoders.PiecewiseEncoder

@@ -25,8 +25,8 @@ class UNetProcessor(BaseProcessor):
     def __init__(
         self,
         *,
-        kernel_size: int,
-        start_out_channels: int,
+        kernel_size: int = 3,
+        start_out_channels: int = 128,
         **kwargs: Any,
     ) -> None:
         """Initialise a UNetProcessor.

@@ -1,26 +1,14 @@
-import os
 from typing import Any, NoReturn
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torchmetrics import Metric, MetricCollection
 
-from icenet_mp.losses import WeightedMSELoss
 from icenet_mp.metrics import IceNetAccuracy, SIEError
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
-from icenet_mp.types import ModelTestOutput, TensorNTCHW
+from icenet_mp.types import ModelTestOutput, TensorNCHW, TensorNTCHW
 
 from .base_model import BaseModel
-
-# Unset SLURM_NTASKS if it's causing issues
-if "SLURM_NTASKS" in os.environ:
-    del os.environ["SLURM_NTASKS"]
-
-# Optionally, set SLURM_NTASKS_PER_NODE if needed
-os.environ["SLURM_NTASKS_PER_NODE"] = "1"
-
-# Force all new tensors to be float32 by default
-torch.set_default_dtype(torch.float32)
 
 
 class SimpleEncoder2D(torch.nn.Module):
@@ -39,14 +27,14 @@ class SimpleEncoder2D(torch.nn.Module):
             torch.nn.SiLU(),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the encoder block.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W).
+            x (TensorNCHW): Input tensor of shape (B, C, H, W).
 
         Returns:
-            torch.Tensor: Output tensor after applying the block.
+            TensorNCHW: Output tensor after applying the block.
 
         """
         return self.net(x)
@@ -176,40 +164,20 @@ class DDPM(BaseModel):
             metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.metrics = MetricCollection(metrics)
 
-        test_metrics: dict[str, Metric | MetricCollection] = {
-            "test_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-            "test_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-        }
-        for i in range(self.n_forecast_steps):
-            test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(
-                leadtimes_to_evaluate=[i]
-            )
-            test_metrics[f"test_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
-        self.test_metrics = MetricCollection(test_metrics)
-
         self.save_hyperparameters()
 
     def forward(self, *args: Any, **kwargs: Any) -> NoReturn:
         msg = "This model uses `training_step`, `validation_step`, and `test_step` instead of `forward()`"
         raise NotImplementedError(msg)
 
-    def sample(
-        self,
-        x: torch.Tensor,
-        sample_weight: torch.Tensor | None,  # noqa: ARG002
-    ) -> torch.Tensor:
+    def sample(self, x: TensorNCHW) -> TensorNCHW:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
-            x (torch.Tensor): Conditioning input [B, C, H, W].
-            sample_weight (torch.Tensor or None): Optional weights.
+            x (TensorNCHW): Conditioning input [B, C, H, W].
 
         Returns:
-            torch.Tensor: Denoised output of shape [B, C, H, W].
+            TensorNCHW: Denoised output of shape [B, C, H, W].
 
         """
         shape = (
@@ -227,25 +195,15 @@ class DDPM(BaseModel):
             t_batch = torch.full_like(
                 x[:, 0, 0, 0], t, dtype=torch.long, device=self.device
             )
-            pred_v: torch.Tensor = self.model(y, t_batch, x)
+            pred_v: TensorNCHW = self.model(y, t_batch, x)
             pred_v = (
                 pred_v.squeeze(3) if pred_v.dim() > dim_threshold else pred_v.squeeze()
             )
             y = self.diffusion.p_sample(y, t_batch, pred_v)
 
-        return y
+        return torch.clamp(y, 0, 1)
 
-    def loss(
-        self,
-        prediction: TensorNTCHW,
-        target: TensorNTCHW,
-        sample_weight: TensorNTCHW | None = None,
-    ) -> torch.Tensor:
-        if sample_weight is None:
-            sample_weight = torch.ones_like(prediction)
-        return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
-
-    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
+    def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> TensorNCHW:
         """Encode OSISAF and ERA5 separately, then concatenate.
 
         ERA5 -> Norm -> Project -> Resize -> Flatten Time -> Encode
@@ -343,12 +301,12 @@ class DDPM(BaseModel):
         target_v = self.diffusion.calculate_v(y, noise, t)
 
         # Compute loss
-        loss = F.mse_loss(pred_v, target_v)
+        loss = self.loss(pred_v, target_v)
 
         self.log(
             "train_loss",
             loss,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             sync_dist=True,
@@ -385,14 +343,12 @@ class DDPM(BaseModel):
         sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
         # Generate samples
-        outputs = self.sample(x, sample_weight)
-
-        y_hat = torch.clamp(outputs, 0, 1)
+        y_hat = self.sample(x)
 
         # Calculate loss
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y)
         self.log(
-            "val_loss",
+            "validation_loss",
             loss,
             on_step=False,
             on_epoch=True,
@@ -432,17 +388,10 @@ class DDPM(BaseModel):
 
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
-        y = batch["target"].squeeze(2)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
+        y = batch["target"]
+        y_hat = self.sample(x).unsqueeze(2)  # note that this assumes C=1
 
-        outputs = self.sample(x, sample_weight)
-
-        y_hat = torch.clamp(outputs, 0, 1).unsqueeze(2)
-
-        y = y.unsqueeze(2)
-        sample_weight = sample_weight.unsqueeze(2)
-
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y)
         self.log(
             "test_loss",
             loss,
@@ -452,6 +401,7 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        self.test_metrics.update(y_hat, y, sample_weight)
+        # Use BaseModel test metrics
+        self.test_metrics.update(y_hat, y)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)

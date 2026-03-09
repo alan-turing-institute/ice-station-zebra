@@ -29,7 +29,7 @@ class CNNEncoder(BaseEncoder):
         *,
         activation: str = "ReLU",
         kernel_size: int = 3,
-        n_layers: int = 2,
+        n_layers: int = 3,
         **kwargs: Any,
     ) -> None:
         """Initialise a CNNEncoder."""

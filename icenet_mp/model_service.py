@@ -204,7 +204,6 @@ class ModelService:
 
         # Setup lightning loggers
         logger_overrides = {
-            "group": self.data_module.hemisphere,
             "job_type": job_type,
             "project": job_type,
         }

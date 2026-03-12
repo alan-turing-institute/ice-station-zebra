@@ -37,52 +37,109 @@ class ArgoSource(LegacySource):
         # create gridded variable data
         lats = np.arange(south + 0.5, north + 0.5, 10)
         lons = np.arange(west + 0.5, east + 0.5, 10)
+        n_lat = len(lats)
+        n_lon = len(lons)
+        
+        lat_grid, lon_grid = np.meshgrid(lats, lons, indexing="ij")
+        grid_points = np.column_stack((lat_grid.ravel(), lon_grid.ravel()))
+        logging.info(f"Created grid with {n_lat} latitudes and {n_lon} longitudes, total {n_lat * n_lon} grid points")
+        logging.info(f"shape of lat_grid: {lat_grid.shape}, shape of lon_grid: {lon_grid.shape}, shape of grid_points: {grid_points.shape}")
+        
         times = date_group.dates  # unique time steps in the data
         temp_data = np.full((len(times), len(lats), len(lons)), np.nan, dtype=float)
         
         for t_idx, date in enumerate(times):
             logging.info(f"Processing date: {date}")
-            start_date = date.replace(hour=11, minute=55, second=0)
-            end_date = date.replace(hour=12, minute=5, second=59)
+            start_date = date.replace(hour=11, minute=0, second=0)
+            end_date = date.replace(hour=12, minute=59, second=59)
             
-            logging.info(f"Fetching Argo data for area {area} and dates from {date_group}")
-            logging.info(f"date_group.dates: {date_group.dates}")
+            logging.info(f"Fetching Argo data for area {area} and dates from {date}")
             logging.info(f"North: {north}, West: {west}, South: {south}, East: {east}")
             logging.info(f"Start date: {start_date}, End date: {end_date}")
             logging.info(f"type of dates: {type(start_date)}, {type(end_date)}")
                 
-            fetcher = DataFetcher().region([west, east, south, north, 0, 100, start_date, end_date]) # check depth of Mixed layer
+            fetcher = DataFetcher().region([west, east, south, north, 0, 50, start_date, end_date]) # check depth of Mixed layer
             df = fetcher.to_dataframe()
             
             # df['Date'] = df['TIME'].dt.date
             logging.info(f"Fetched {df} Argo profiles")
-            sigma = 100
+            sigma = 2000
         
             for lat_idx, lat in enumerate(lats):
                 for lon_idx, lon in enumerate(lons):
-                    logging.info(f"Processing grid cell at lat: {lat}, lon: {lon}")
+                    # logging.info(f"Processing grid cell at lat: {lat}, lon: {lon}")
                     t_weighted, sum_weights = 0, 0
                     for row in df.itertuples():
-                        distance2 = (row.LATITUDE - lat) ** 2 + (row.LONGITUDE - lon) ** 2
+                        
+                        from haversine import Unit, haversine
+
+                        obs_point = (row.LATITUDE, row.LONGITUDE)  # shape: (n_obs, 2)
+                        grid_point = (lat, lon)  # shape: (n_lat*n_lon, 2)
+                        
+                        # Pairwise distances in km: shape (n_obs, n_lat*n_lon)
+                        distance_km = haversine(
+                            obs_point,
+                            grid_point,
+                            unit=Unit.KILOMETERS,
+                            )
+                        distance2 = distance_km ** 2
                         # calculate the weighted distcance
                         weight = np.exp(-0.5 * distance2 / sigma**2)
                         t_weighted += weight * row.TEMP
                         sum_weights += weight
-                    logging.info(f"Sum of weights for lat: {lat}, lon: {lon} is {sum_weights}")
-                    logging.info(f"Weighted sum of TEMP for lat: {lat}, lon: {lon} is {t_weighted}")
-                    t_weighted /= sum_weights
-                    logging.info(f"Gridded value at lat: {lat}, lon: {lon} is {t_weighted}")
                     temp_data[t_idx, lat_idx, lon_idx] = t_weighted / sum_weights
+            
+            
+            # obs_lat = df["LATITUDE"].to_numpy(dtype=float)
+            # obs_lon = df["LONGITUDE"].to_numpy(dtype=float)
+            # obs_temp = df["TEMP"].to_numpy(dtype=float)
 
-        print(f"lat_range: {lats}")
-        print(f"lon_range: {lons}")
-        print(f"time_range: {times}")
-        
-        import xarray as xr
+            # from haversine import Unit, haversine_vector
 
-        times64 = np.asarray(times, dtype="datetime64[ns]")
-        # temp_data = np.ones((len(times), len(lats), len(lons)), dtype=float)
+            # obs_points = np.column_stack((obs_lat, obs_lon))  # shape: (n_obs, 2)
+            # logging.info(f"shape of obs_points: {obs_points.shape}")
+            
+            # # Pairwise distances in km: shape (n_obs, n_lat*n_lon)
+            # distance_km = haversine_vector(
+            #     obs_points,
+            #     grid_points,
+            #     unit=Unit.KILOMETERS,
+            #     comb=True,
+            #     check=False,   # faster if your lat/lon are already valid
+            # )
+            # logging.info(f"shape of distance_km: {distance_km.shape}")
 
+            # distance_km = distance_km.reshape(len(obs_lat), n_lat, n_lon)
+            # distance2 = distance_km ** 2
+            # logging.info(f"shape of distance_km after reshape: {distance_km.shape}")
+            # logging.info(f"shape of distance2: {distance2.shape}")
+            
+            # # Numerically stable Gaussian weights:
+            # # subtract min distance^2 per grid cell to avoid underflow far from observations
+            # min_d2 = np.min(distance2, axis=0, keepdims=True)
+            # weights = np.exp(-0.5 * (distance2 - min_d2) / (sigma**2))
+
+            # weighted_sum = np.sum(weights * obs_temp[:, None, None], axis=0)
+            # sum_weights = np.sum(weights, axis=0)
+            # logging.info(f"shape of weights: {weights.shape}, shape of weighted_sum: {weighted_sum.shape}, shape of sum_weights: {sum_weights.shape}")
+
+            # temp_data[t_idx] = np.divide(
+            #     weighted_sum,
+            #     sum_weights,
+            #     out=np.full((n_lat, n_lon), np.nan, dtype=float),
+            #     where=sum_weights > 0,
+            # )
+            # logging.info(f"temp_data is {temp_data} for date {date}")
+            
+
+            print(f"lat_range: {lats}")
+            print(f"lon_range: {lons}")
+            print(f"time_range: {times}")
+            
+            import xarray as xr
+
+            times64 = np.asarray(times, dtype="datetime64[ns]")
+            
         ds = xr.Dataset(
             data_vars={
                 "TEMP": (

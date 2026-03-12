@@ -15,8 +15,8 @@ from earthkit.data.core.fieldlist import FieldList, MultiFieldList
 from earthkit.data.utils.patterns import Pattern
 from argopy import DataFetcher
 import h5netcdf
-from networkx import sigma
 import numpy as np
+from datetime import datetime
 
 from icenet_mp.utils import to_list
 
@@ -39,7 +39,7 @@ class ArgoSource(LegacySource):
         lons = np.arange(west + 0.5, east + 0.5, 10)
         times = date_group.dates  # unique time steps in the data
         
-        for date in date_group.dates:
+        for date in times:
             logging.info(f"Processing date: {date}")
             start_date = date.replace(hour=11, minute=55, second=0)
             end_date = date.replace(hour=12, minute=5, second=59)
@@ -82,24 +82,36 @@ class ArgoSource(LegacySource):
         with h5netcdf.File("mydata.nc", "w") as f:
             # set dimensions with a dictionary
             # f.dimensions = {"lat": [-1, 0, 1], "lon": [2, 3, 4], "time": date_group.dates}  
-            f.dimensions = {"lat": len(lats), "lon": len(lons), "time": len(times)}  
+            f.dimensions = {"time": len(times), "lat": len(lats), "lon": len(lons)}  
             # and update them with a dict-like interface
             # f.dimensions['x'] = 5
             # f.dimensions.update({'x': 5})
 
+            times64 = np.asarray(times, dtype="datetime64[s]")
+            v_time = f.create_variable("time", ("time",), "i8")
+            v_time.attrs["standard_name"] = "time"
+            v_time.attrs["units"] = "seconds since 1970-01-01 00:00:00"
+            v_time.attrs["calendar"] = "standard"
+            v_time[:] = times64.astype("int64")
+
             v_lat = f.create_variable("lat", ("lat",), float)
+            v_lat.attrs["standard_name"] = "latitude"
+            v_lat.attrs["long_name"] = "latitude"
+            v_lat.attrs["units"] = "degrees_north"
             v_lat[:] = lats
 
             v_lon = f.create_variable("lon", ("lon",), float)
+            v_lon.attrs["standard_name"] = "longitude"
+            v_lon.attrs["long_name"] = "longitude"
+            v_lon.attrs["units"] = "degrees_east"
             v_lon[:] = lons
+                        
+            temp = f.create_variable("TEMP", ("time", "lat", "lon"), float)
+            temp.attrs["coordinates"] = "time lat lon"
+            temp[:] = np.ones((len(times), len(lats), len(lons)))
             
-            v_time = f.create_variable("time", ("time",), np.datetime64)
-            v_time[:] = times
-
-            v = f.create_variable("TEMP", ("lat", "lon", "time"), float)
-            v[:] = np.ones((len(lats), len(lons), len(times)))
-
-        nc = load_one("📂", context, date_group.dates, "mydata.nc")
+       
+        nc = load_one("📂", context, list(times), "mydata.nc")
         logging.info(f"Loaded dataset with {nc} fields")
         
         return MultiFieldList([nc])

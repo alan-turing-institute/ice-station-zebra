@@ -79,39 +79,82 @@ class ArgoSource(LegacySource):
         
         # make these into a temporary netcdf 
         
-        with h5netcdf.File("mydata.nc", "w") as f:
-            # set dimensions with a dictionary
-            # f.dimensions = {"lat": [-1, 0, 1], "lon": [2, 3, 4], "time": date_group.dates}  
-            f.dimensions = {"time": len(times), "lat": len(lats), "lon": len(lons)}  
-            # and update them with a dict-like interface
-            # f.dimensions['x'] = 5
-            # f.dimensions.update({'x': 5})
+        # with h5netcdf.File("mydata.nc", "w") as f:
+        #     # set dimensions with a dictionary
+        #     # f.dimensions = {"lat": [-1, 0, 1], "lon": [2, 3, 4], "time": date_group.dates}  
+        #     f.dimensions = {"time": len(times), "lat": len(lats), "lon": len(lons)}  
+        #     # and update them with a dict-like interface
+        #     # f.dimensions['x'] = 5
+        #     # f.dimensions.update({'x': 5})
 
-            times64 = np.asarray(times, dtype="datetime64[s]")
-            v_time = f.create_variable("time", ("time",), "i8")
-            v_time.attrs["standard_name"] = "time"
-            v_time.attrs["units"] = "seconds since 1970-01-01 00:00:00"
-            v_time.attrs["calendar"] = "standard"
-            v_time[:] = times64.astype("int64")
+        #     times64 = np.asarray(times, dtype="datetime64[s]")
+        #     v_time = f.create_variable("time", ("time",), "i8")
+        #     v_time.attrs["standard_name"] = "time"
+        #     v_time.attrs["units"] = "seconds since 1970-01-01 00:00:00"
+        #     v_time.attrs["calendar"] = "standard"
+        #     v_time[:] = times64.astype("int64")
 
-            v_lat = f.create_variable("lat", ("lat",), float)
-            v_lat.attrs["standard_name"] = "latitude"
-            v_lat.attrs["long_name"] = "latitude"
-            v_lat.attrs["units"] = "degrees_north"
-            v_lat[:] = lats
+        #     v_lat = f.create_variable("lat", ("lat",), float)
+        #     v_lat.attrs["standard_name"] = "latitude"
+        #     v_lat.attrs["long_name"] = "latitude"
+        #     v_lat.attrs["units"] = "degrees_north"
+        #     v_lat[:] = lats
 
-            v_lon = f.create_variable("lon", ("lon",), float)
-            v_lon.attrs["standard_name"] = "longitude"
-            v_lon.attrs["long_name"] = "longitude"
-            v_lon.attrs["units"] = "degrees_east"
-            v_lon[:] = lons
+        #     v_lon = f.create_variable("lon", ("lon",), float)
+        #     v_lon.attrs["standard_name"] = "longitude"
+        #     v_lon.attrs["long_name"] = "longitude"
+        #     v_lon.attrs["units"] = "degrees_east"
+        #     v_lon[:] = lons
                         
-            temp = f.create_variable("TEMP", ("time", "lat", "lon"), float)
-            temp.attrs["coordinates"] = "time lat lon"
-            temp[:] = np.ones((len(times), len(lats), len(lons)))
-            
-       
-        nc = load_one("📂", context, list(times), "mydata.nc")
+        #     temp = f.create_variable("TEMP", ("time", "lat", "lon"), float)
+        #     temp.attrs["coordinates"] = "time lat lon"
+        #     temp[:] = np.ones((len(times), len(lats), len(lons)))
+        import xarray as xr
+
+        times64 = np.asarray(times, dtype="datetime64[ns]")
+        temp_data = np.ones((len(times), len(lats), len(lons)), dtype=float)
+
+        ds = xr.Dataset(
+            data_vars={
+                "TEMP": (
+                    ("time", "lat", "lon"),
+                    temp_data,
+                    {"coordinates": "time lat lon"},
+                )
+            },
+            coords={
+                "time": (
+                    "time",
+                    times64,
+                    {
+                        "standard_name": "time",
+                        "units": "seconds since 1970-01-01 00:00:00",
+                        "calendar": "standard",
+                    },
+                ),
+                "lat": (
+                    "lat",
+                    lats,
+                    {
+                        "standard_name": "latitude",
+                        "long_name": "latitude",
+                        "units": "degrees_north",
+                    },
+                ),
+                "lon": (
+                    "lon",
+                    lons,
+                    {
+                        "standard_name": "longitude",
+                        "long_name": "longitude",
+                        "units": "degrees_east",
+                    },
+                ),
+            },
+        )
+
+        nc = load_one("📂", context, list(times), ds)
+        # nc = load_one("📂", context, list(times), "mydata.nc")
         logging.info(f"Loaded dataset with {nc} fields")
         
         return MultiFieldList([nc])

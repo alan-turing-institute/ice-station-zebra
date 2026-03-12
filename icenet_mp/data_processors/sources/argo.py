@@ -38,8 +38,9 @@ class ArgoSource(LegacySource):
         lats = np.arange(south + 0.5, north + 0.5, 10)
         lons = np.arange(west + 0.5, east + 0.5, 10)
         times = date_group.dates  # unique time steps in the data
+        temp_data = np.full((len(times), len(lats), len(lons)), np.nan, dtype=float)
         
-        for date in times:
+        for t_idx, date in enumerate(times):
             logging.info(f"Processing date: {date}")
             start_date = date.replace(hour=11, minute=55, second=0)
             end_date = date.replace(hour=12, minute=5, second=59)
@@ -57,8 +58,8 @@ class ArgoSource(LegacySource):
             logging.info(f"Fetched {df} Argo profiles")
             sigma = 100
         
-            for lat in lats:
-                for lon in lons:
+            for lat_idx, lat in enumerate(lats):
+                for lon_idx, lon in enumerate(lons):
                     logging.info(f"Processing grid cell at lat: {lat}, lon: {lon}")
                     t_weighted, sum_weights = 0, 0
                     for row in df.itertuples():
@@ -71,48 +72,16 @@ class ArgoSource(LegacySource):
                     logging.info(f"Weighted sum of TEMP for lat: {lat}, lon: {lon} is {t_weighted}")
                     t_weighted /= sum_weights
                     logging.info(f"Gridded value at lat: {lat}, lon: {lon} is {t_weighted}")
+                    temp_data[t_idx, lat_idx, lon_idx] = t_weighted / sum_weights
+
         print(f"lat_range: {lats}")
         print(f"lon_range: {lons}")
         print(f"time_range: {times}")
         
-        # put these into a dataframe of lat * long * time and save as netcdf
-        
-        # make these into a temporary netcdf 
-        
-        # with h5netcdf.File("mydata.nc", "w") as f:
-        #     # set dimensions with a dictionary
-        #     # f.dimensions = {"lat": [-1, 0, 1], "lon": [2, 3, 4], "time": date_group.dates}  
-        #     f.dimensions = {"time": len(times), "lat": len(lats), "lon": len(lons)}  
-        #     # and update them with a dict-like interface
-        #     # f.dimensions['x'] = 5
-        #     # f.dimensions.update({'x': 5})
-
-        #     times64 = np.asarray(times, dtype="datetime64[s]")
-        #     v_time = f.create_variable("time", ("time",), "i8")
-        #     v_time.attrs["standard_name"] = "time"
-        #     v_time.attrs["units"] = "seconds since 1970-01-01 00:00:00"
-        #     v_time.attrs["calendar"] = "standard"
-        #     v_time[:] = times64.astype("int64")
-
-        #     v_lat = f.create_variable("lat", ("lat",), float)
-        #     v_lat.attrs["standard_name"] = "latitude"
-        #     v_lat.attrs["long_name"] = "latitude"
-        #     v_lat.attrs["units"] = "degrees_north"
-        #     v_lat[:] = lats
-
-        #     v_lon = f.create_variable("lon", ("lon",), float)
-        #     v_lon.attrs["standard_name"] = "longitude"
-        #     v_lon.attrs["long_name"] = "longitude"
-        #     v_lon.attrs["units"] = "degrees_east"
-        #     v_lon[:] = lons
-                        
-        #     temp = f.create_variable("TEMP", ("time", "lat", "lon"), float)
-        #     temp.attrs["coordinates"] = "time lat lon"
-        #     temp[:] = np.ones((len(times), len(lats), len(lons)))
         import xarray as xr
 
         times64 = np.asarray(times, dtype="datetime64[ns]")
-        temp_data = np.ones((len(times), len(lats), len(lons)), dtype=float)
+        # temp_data = np.ones((len(times), len(lats), len(lons)), dtype=float)
 
         ds = xr.Dataset(
             data_vars={
@@ -137,7 +106,6 @@ class ArgoSource(LegacySource):
                     lats,
                     {
                         "standard_name": "latitude",
-                        "long_name": "latitude",
                         "units": "degrees_north",
                     },
                 ),
@@ -146,7 +114,6 @@ class ArgoSource(LegacySource):
                     lons,
                     {
                         "standard_name": "longitude",
-                        "long_name": "longitude",
                         "units": "degrees_east",
                     },
                 ),
@@ -154,8 +121,8 @@ class ArgoSource(LegacySource):
         )
 
         nc = load_one("📂", context, list(times), ds)
-        # nc = load_one("📂", context, list(times), "mydata.nc")
-        logging.info(f"Loaded dataset with {nc} fields")
+        if len(nc) != len(times):
+            raise ValueError(f"Expected {len(times)} dates, got {len(nc)} dates")
         
         return MultiFieldList([nc])
         
@@ -210,5 +177,38 @@ class ArgoSource(LegacySource):
 
         # # Combine all downloaded files into a MultiFieldList
         # return MultiFieldList(downloaded_files)
+
+# put these into a dataframe of lat * long * time and save as netcdf
         
-        sys.exit(0)
+        # make these into a temporary netcdf 
+        
+        # with h5netcdf.File("mydata.nc", "w") as f:
+        #     # set dimensions with a dictionary
+        #     # f.dimensions = {"lat": [-1, 0, 1], "lon": [2, 3, 4], "time": date_group.dates}  
+        #     f.dimensions = {"time": len(times), "lat": len(lats), "lon": len(lons)}  
+        #     # and update them with a dict-like interface
+        #     # f.dimensions['x'] = 5
+        #     # f.dimensions.update({'x': 5})
+
+        #     times64 = np.asarray(times, dtype="datetime64[s]")
+        #     v_time = f.create_variable("time", ("time",), "i8")
+        #     v_time.attrs["standard_name"] = "time"
+        #     v_time.attrs["units"] = "seconds since 1970-01-01 00:00:00"
+        #     v_time.attrs["calendar"] = "standard"
+        #     v_time[:] = times64.astype("int64")
+
+        #     v_lat = f.create_variable("lat", ("lat",), float)
+        #     v_lat.attrs["standard_name"] = "latitude"
+        #     v_lat.attrs["long_name"] = "latitude"
+        #     v_lat.attrs["units"] = "degrees_north"
+        #     v_lat[:] = lats
+
+        #     v_lon = f.create_variable("lon", ("lon",), float)
+        #     v_lon.attrs["standard_name"] = "longitude"
+        #     v_lon.attrs["long_name"] = "longitude"
+        #     v_lon.attrs["units"] = "degrees_east"
+        #     v_lon[:] = lons
+                        
+        #     temp = f.create_variable("TEMP", ("time", "lat", "lon"), float)
+        #     temp.attrs["coordinates"] = "time lat lon"
+        #     temp[:] = np.ones((len(times), len(lats), len(lons)))

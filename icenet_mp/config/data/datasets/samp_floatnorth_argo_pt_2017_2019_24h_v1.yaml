@@ -13,7 +13,7 @@ samp-floatnorth-argo-pt-2017-2019-24h-v1:
   input:
     argo:
       area: "90/-180/0/180"  # northern hemisphere
-      # param:
-      #  - TEMP # temperature
+      param:
+       - TEMP # temperature
+       - PSAL # salinity
       # - p # pressure
-      # - psal # salinity

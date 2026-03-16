@@ -22,6 +22,7 @@ class ArgoSource(LegacySource):
         context: dict[str, Any],
         date_group: GroupOfDates,
         area: str,
+        param: list[str],
         grid_resolution_degrees: float = 1,
     ) -> ekd.FieldList:
         """Download Argo float data within given parameters."""
@@ -60,7 +61,7 @@ class ArgoSource(LegacySource):
             variable: np.full(
                 (len(requested_dates), len(lats), len(lons)), np.nan, dtype=float
             )
-            for variable in ("TEMP", "PSAL")
+            for variable in param
         }
         logger.info(
             "Fetching Argo data inside [N: %s, W: %s, S: %s, E: %s] between %s and %s.",
@@ -77,7 +78,7 @@ class ArgoSource(LegacySource):
             start_time = date - timedelta(hours=1)
             end_time = date + timedelta(hours=1)
 
-            # Get all data up to the mixed layer
+            # Get all data within the mixed layer
             fetcher = DataFetcher().region(
                 [west, east, south, north, 0, 50, start_time, end_time]
             )
@@ -152,8 +153,8 @@ class ArgoSource(LegacySource):
             "📂", context, [date.isoformat() for date in requested_dates], ds_out
         )
 
-        if len(field_lists) != len(requested_dates):
-            msg = f"Expected {len(requested_dates)} dates, got {len(field_lists)} dates"
+        if len(field_lists) / len(param) != len(requested_dates):
+            msg = f"Expected {len(requested_dates)} dates, got {len(field_lists) / len(param)} dates"
             raise ValueError(msg)
 
         return field_lists

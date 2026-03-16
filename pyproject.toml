@@ -83,6 +83,8 @@ module = [
     "icenet.data.sic.*",
     "imageio_ffmpeg.*",
     "zarr.*",
+    "argopy.*",
+    "haversine.*",
 ]
 ignore_missing_imports = true
 

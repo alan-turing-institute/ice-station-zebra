@@ -1,5 +1,6 @@
 import logging
-from datetime import timedelta
+import time
+from datetime import datetime, timedelta
 from typing import Any
 
 import earthkit.data as ekd
@@ -11,6 +12,7 @@ from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
 from haversine import Unit, haversine_vector
+from pandas import DataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +80,9 @@ class ArgoSource(LegacySource):
             start_time = date - timedelta(hours=1)
             end_time = date + timedelta(hours=1)
 
-            # Get all data within the mixed layer
-            fetcher = DataFetcher().region(
-                [west, east, south, north, 0, 50, start_time, end_time]
-            )
-            df = fetcher.to_dataframe()
+            # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
+            region = [west, east, south, north, 0, 50, start_time, end_time]
+            df = _fetch_argo_dataframe_with_retry(region)
 
             # Get positions of observations
             obs_points = list(zip(df["LATITUDE"], df["LONGITUDE"]))
@@ -160,3 +160,50 @@ class ArgoSource(LegacySource):
             raise ValueError(msg)
 
         return field_lists
+
+
+def _fetch_argo_dataframe_with_retry(
+    region: list[float | datetime],
+    max_retries: int = 5,
+    initial_backoff_s: float = 0.5,
+) -> DataFrame:
+    """Fetch Argo data with exponential backoff and fallback to gdac source.
+
+    Args:
+        region: List of [west, east, south, north, depth_min, depth_max, start_time, end_time]
+        max_retries: Number of retry attempts for ERDDAP 503 responses.
+        initial_backoff_s: Initial backoff delay in seconds before retrying.
+
+    Returns:
+        DataFrame from Argo data
+
+    """
+    # Try erddap with exponential backoff
+    for attempt in range(1, max_retries + 1):
+        try:
+            fetcher = DataFetcher().region(region)
+            df = fetcher.to_dataframe()
+
+            msg = f"Successfully fetched data from erddap on attempt {attempt}"
+            logger.debug(msg)
+        except Exception as exc:
+            error_str = str(exc)
+            is_503 = "503" in error_str
+
+            if is_503 and attempt < max_retries:
+                backoff = initial_backoff_s * (2 ** (attempt - 1))
+
+                msg = (
+                    f"ERDDAP unavailable (503), retrying in {backoff:.1f}s "
+                    f"(attempt {attempt}/{max_retries})"
+                )
+                logger.warning(msg)
+                time.sleep(backoff)
+                continue
+            if is_503:
+                msg = f"ERDDAP failed with 503 after {max_retries} retries. Error: {error_str}"
+                raise RuntimeError(msg) from exc
+            # Non-503 error, don't retry
+            raise
+        else:
+            return df

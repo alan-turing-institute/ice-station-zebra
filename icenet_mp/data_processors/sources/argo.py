@@ -85,18 +85,20 @@ class ArgoSource(LegacySource):
             df = fetcher.to_dataframe()
 
             # Get positions of observations
-            obs_lat = df["LATITUDE"].to_numpy(dtype=float)
-            obs_lon = df["LONGITUDE"].to_numpy(dtype=float)
-            obs_points = np.column_stack((obs_lat, obs_lon))  # shape: (n_obs, 2)
+            obs_points = list(zip(df["LATITUDE"], df["LONGITUDE"]))
+            n_obs = len(obs_points)
+            grid_points_list = [(lat, lon) for lat in lats for lon in lons]
+            n_grid = len(grid_points_list)
 
             # Pairwise distances in km
-            distance_km: np.ndarray = haversine_vector(
-                obs_points,
-                grid_points,
-                unit=Unit.KILOMETERS,
-                comb=True,
-                check=False,  # faster if your lat/lon are already valid
-            )  # shape: (n_lat*n_lon, n_obs)
+            # Compute the distance from every obs station to every grid point (an (n_grid × n_obs) matrix) in one call.
+            # Compute all obs→grid distances: shape (n_obs * n_grid,)
+            # haversine_vector expects two equal-length lists
+            obs_repeated = obs_points * n_grid
+            grid_tiled = [gp for gp in grid_points_list for _ in range(n_obs)]
+            distance_km = haversine_vector(
+                obs_repeated, grid_tiled, unit=Unit.KILOMETERS,
+            ).reshape(n_grid, n_obs)  # shape: (n_grid, n_obs)
 
             # Construct exponential weights, with a minimum for numerical stability
             weights = np.exp(-0.5 * (distance_km / distance_scale_km) ** 2).clip(

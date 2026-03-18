@@ -76,8 +76,8 @@ class ArgoSource(LegacySource):
 
         for t_idx, date in enumerate(requested_dates):
             logger.info("Processing data from %s", date.date())
-            start_time = date - timedelta(hours=1)
-            end_time = date + timedelta(hours=1)
+            start_time = date - timedelta(hours=2)
+            end_time = date + timedelta(hours=2)
 
             # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
             region = [west, east, south, north, 0, 50, start_time, end_time]
@@ -185,13 +185,14 @@ def _fetch_argo_dataframe_with_retry(
             logger.debug(msg)
         except Exception as exc:
             error_str = str(exc)
+            is_500 = "500" in error_str
             is_503 = "503" in error_str
 
-            if is_503 and attempt < max_retries:
+            if (is_503 or is_500) and attempt < max_retries:
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
 
                 msg = (
-                    f"ERDDAP unavailable (503), retrying in {backoff:.1f}s "
+                    f"ERDDAP unavailable, retrying in {backoff:.1f}s "
                     f"(attempt {attempt}/{max_retries})"
                 )
                 logger.warning(msg)
@@ -200,7 +201,11 @@ def _fetch_argo_dataframe_with_retry(
             if is_503:
                 msg = f"ERDDAP failed with 503 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
-            # Non-503 error, don't retry
+            if is_500:
+                msg = f"ERDDAP failed with 500 after {max_retries} retries. Error: {error_str}"
+                raise RuntimeError(msg) from exc
+            
+            # Otherwise don't retry
             raise
         else:
             return df

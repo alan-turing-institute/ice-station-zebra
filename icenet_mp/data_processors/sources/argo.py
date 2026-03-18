@@ -108,7 +108,7 @@ class ArgoSource(LegacySource):
                 unweighted_data = df[variable].to_numpy(dtype=float)
                 weighted_array[t_idx] = (
                     np.matmul(weights, unweighted_data) / sum_weights
-                ).reshape(1, len(lats), len(lons))  # shape: (n_lat*n_lon,)
+                ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(

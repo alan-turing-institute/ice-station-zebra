@@ -26,6 +26,7 @@ class ArgoSource(LegacySource):
         area: str,
         param: list[str],
         grid_resolution_degrees: float = 1,
+        skip_interpolation: bool = False,
     ) -> ekd.FieldList:
         """Download Argo float data within given parameters."""
         north, west, south, east = map(float, area.split("/"))
@@ -89,6 +90,9 @@ class ArgoSource(LegacySource):
                 missing_dates.append(date)
                 continue
 
+            if skip_interpolation:
+                continue
+
             # Get positions of observations
             obs_lat = df["LATITUDE"].to_numpy(dtype=float)
             obs_lon = df["LONGITUDE"].to_numpy(dtype=float)
@@ -115,6 +119,14 @@ class ArgoSource(LegacySource):
                 weighted_array[t_idx] = (
                     np.matmul(weights, unweighted_data) / sum_weights
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
+
+        if skip_interpolation or missing_dates:
+            logger.info("Found %d missing dates:", len(missing_dates))
+            for missing_date in missing_dates:
+                logger.warning(missing_date)
+            raise ValueError(
+                f"Missing data for {len(missing_dates)} out of {len(requested_dates)}"
+            )
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(
@@ -154,6 +166,7 @@ class ArgoSource(LegacySource):
                 ),
             },
         )
+        
         field_lists = load_one(
             "📂", context, [date.isoformat() for date in requested_dates], ds_out
         )

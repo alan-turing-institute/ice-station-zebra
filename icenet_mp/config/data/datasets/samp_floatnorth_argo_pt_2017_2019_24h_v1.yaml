@@ -11,9 +11,13 @@ samp-floatnorth-argo-pt-2017-2019-24h-v1:
     frequency: 24h
 
   input:
-    argo:
-      area: "90/-180/0/180"  # northern hemisphere
-      param:
-       - TEMP # temperature
-       - PSAL # salinity
-      # - p # pressure
+    pipe:
+      - argo:
+          area: "90/-180/70/180"  # northern hemisphere
+          param:
+            - TEMP # temperature
+            - PSAL # salinity
+            # - p # pressure
+      - nan_to_num:
+          variables: [TEMP, PSAL]
+          replace_with: 99

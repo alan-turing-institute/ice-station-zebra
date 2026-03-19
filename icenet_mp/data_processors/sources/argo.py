@@ -195,17 +195,17 @@ def _fetch_argo_dataframe_with_retry(
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
 
                 msg = (
-                    f"ERDDAP unavailable, retrying in {backoff:.1f}s "
+                    f"ERDDAP data server unavailable, retrying in {backoff:.1f}s "
                     f"(attempt {attempt}/{max_retries})"
                 )
                 logger.warning(msg)
                 time.sleep(backoff)
                 continue
             if is_503:
-                msg = f"ERDDAP failed with 503 after {max_retries} retries. Error: {error_str}"
+                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
             if is_500:
-                msg = f"ERDDAP failed with 500 after {max_retries} retries. Error: {error_str}"
+                msg = f"ERDDAP data server failed with 500 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
 
             # Otherwise don't retry

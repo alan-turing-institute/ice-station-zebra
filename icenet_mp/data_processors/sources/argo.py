@@ -187,6 +187,7 @@ def _fetch_argo_dataframe_with_retry(
             fetcher = DataFetcher().region(region)
 
         except Exception as exc:
+            logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
             error_str = str(exc)
             is_500 = "500" in error_str
             is_503 = "503" in error_str
@@ -216,12 +217,10 @@ def _fetch_argo_dataframe_with_retry(
 
     try:
         df = fetcher.to_dataframe()
-    except Exception as exc:
-        if isinstance(exc, FileNotFoundError):
-            msg = f"Failed to load file for {region}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
-            logger.warning(msg)
-            return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
-        raise
+    except FileNotFoundError:
+        msg = f"Failed to load file for {region}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
+        logger.warning(msg)
+        return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
     else:
         msg = f"Successfully fetched data from erddap on attempt {attempt}"
         logger.debug(msg)

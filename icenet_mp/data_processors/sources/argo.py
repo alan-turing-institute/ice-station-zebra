@@ -171,8 +171,9 @@ class ArgoSource(LegacySource):
             "📂", context, [date.isoformat() for date in requested_dates], ds_out
         )
 
-        if len(field_lists) / len(param) != len(requested_dates):
-            msg = f"Expected {len(requested_dates)} dates, got {len(field_lists) / len(param)} dates"
+        n_dates = len(field_lists) // len(param)
+        if n_dates != len(requested_dates):
+            msg = f"Expected {len(requested_dates)} dates, got {n_dates} dates"
             raise ValueError(msg)
 
         return field_lists

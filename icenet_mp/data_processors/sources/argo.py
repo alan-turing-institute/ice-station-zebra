@@ -166,7 +166,7 @@ class ArgoSource(LegacySource):
 
 
 def _fetch_argo_dataframe_with_retry(
-    region: list[float | datetime],
+    region: list[float | int | datetime],
     max_retries: int = 5,
     initial_backoff_s: float = 0.5,
 ) -> DataFrame:

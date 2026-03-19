@@ -170,11 +170,11 @@ def _fetch_argo_dataframe_with_retry(
     max_retries: int = 5,
     initial_backoff_s: float = 0.5,
 ) -> DataFrame:
-    """Fetch Argo data with exponential backoff and fallback to gdac source.
+    """Fetch Argo data with exponential backoff.
 
     Args:
         region: List of [west, east, south, north, depth_min, depth_max, start_time, end_time]
-        max_retries: Number of retry attempts for ERDDAP 503 responses.
+        max_retries: Number of retry attempts for ERDDAP 503 or 500 responses.
         initial_backoff_s: Initial backoff delay in seconds before retrying.
 
     Returns:

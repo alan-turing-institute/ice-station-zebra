@@ -3,7 +3,7 @@ samp-floatnorth-argo-pt-2017-2019-24h-v1:
   group_as: float_argo
   description: ARGO float data for northern hemisphere
   attribution: ARGO
-  licence: unsure
+  licence: CC-BY-4.0
 
   dates:
     start: '2017-01-01T12:00:00'

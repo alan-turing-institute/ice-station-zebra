@@ -25,6 +25,7 @@ class ArgoSource(LegacySource):
         date_group: GroupOfDates,
         area: str,
         param: list[str],
+        *,
         grid_resolution_degrees: float = 1,
         skip_interpolation: bool = False,
     ) -> ekd.FieldList:
@@ -124,9 +125,8 @@ class ArgoSource(LegacySource):
             logger.info("Found %d missing dates:", len(missing_dates))
             for missing_date in missing_dates:
                 logger.warning(missing_date)
-            raise ValueError(
-                f"Missing data for {len(missing_dates)} out of {len(requested_dates)}"
-            )
+            msg = f"Missing data for {len(missing_dates)} out of {len(requested_dates)}"
+            raise ValueError(msg)
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(
@@ -166,7 +166,7 @@ class ArgoSource(LegacySource):
                 ),
             },
         )
-        
+
         field_lists = load_one(
             "📂", context, [date.isoformat() for date in requested_dates], ds_out
         )

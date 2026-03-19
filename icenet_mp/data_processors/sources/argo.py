@@ -73,6 +73,7 @@ class ArgoSource(LegacySource):
             min(requested_dates),
             max(requested_dates),
         )
+        missing_dates = []
 
         for t_idx, date in enumerate(requested_dates):
             logger.info("Processing data from %s", date.date())
@@ -82,6 +83,11 @@ class ArgoSource(LegacySource):
             # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
             region = [west, east, south, north, 0, 50, start_time, end_time]
             df = _fetch_argo_dataframe_with_retry(region)
+
+            if df.empty:
+                logger.info("No Argo observations for %s; returning NaNs", date)
+                missing_dates.append(date)
+                continue
 
             # Get positions of observations
             obs_lat = df["LATITUDE"].to_numpy(dtype=float)
@@ -179,10 +185,7 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             fetcher = DataFetcher().region(region)
-            df = fetcher.to_dataframe()
 
-            msg = f"Successfully fetched data from erddap on attempt {attempt}"
-            logger.debug(msg)
         except Exception as exc:
             error_str = str(exc)
             is_500 = "500" in error_str
@@ -204,11 +207,22 @@ def _fetch_argo_dataframe_with_retry(
             if is_500:
                 msg = f"ERDDAP failed with 500 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
-            
+
             # Otherwise don't retry
             raise
-        else:
-            return df
 
-    msg = f"Failed to fetch Argo data after {max_retries} retries. Last error: {error_str}"
-    raise RuntimeError(msg)
+        else:
+            break
+
+    try:
+        df = fetcher.to_dataframe()
+    except Exception as exc:
+        if isinstance(exc, FileNotFoundError):
+            msg = f"Failed to load file for {region}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
+            logger.warning(msg)
+            return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
+        raise
+    else:
+        msg = f"Successfully fetched data from erddap on attempt {attempt}"
+        logger.debug(msg)
+        return df

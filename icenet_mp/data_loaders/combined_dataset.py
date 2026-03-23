@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -6,7 +7,7 @@ from torch.utils.data import Dataset
 
 from icenet_mp.types import ArrayTCHW
 
-from .single_dataset import SingleDataset
+from .single_dataset import SingleDataset 
 
 
 class CombinedDataset(Dataset):
@@ -18,6 +19,7 @@ class CombinedDataset(Dataset):
         *,
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
+        land_mask_path: Path | None = None,
     ) -> None:
         """Initialise a combined dataset from a sequence of SingleDatasets.
 
@@ -46,6 +48,22 @@ class CombinedDataset(Dataset):
 
         # Lazy-load dates on first request
         self._available_dates: list[np.datetime64] | None = None
+
+        # Add land mask
+        if land_mask_path is not None:
+            raw = np.load(land_mask_path)   # expect bool or 0/1, shape (H, W)
+            # True/1 = land → we want 0 weight; True/1 = ocean → weight 1
+            # Handle both conventions: if >50% values are 1, assume 1=land
+            if raw.mean() > 0.5:
+                # majority is 1 → 1 means land → ocean = where mask is 0
+                ocean = (raw == 0).astype(np.float32)
+            else:
+                # majority is 0 → 0 means land → ocean = where mask is 1  
+                ocean = (raw > 0).astype(np.float32)
+            # shape: (1, 1, H, W) — broadcast over batch and forecast steps
+            self.sample_weights: np.ndarray | None = ocean[np.newaxis, np.newaxis]
+        else:
+            self.sample_weights = None
 
     @property
     def dates(self) -> list[np.datetime64]:
@@ -102,6 +120,21 @@ class CombinedDataset(Dataset):
         """Return the total length of the dataset."""
         return len(self.dates)
 
+    # def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
+    #     """Return the data for a single timestep as a dictionary.
+
+    #     Returns:
+    #         A dictionary with dataset names as keys and a numpy array as the value.
+    #         The shape of each array is:
+    #         - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
+    #         - target dataset: [n_forecast_steps, C_target, H_target, W_target]
+
+    #     """
+    #     return {
+    #         ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
+    #         for ds in self.inputs
+    #     } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
+
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary.
 
@@ -110,12 +143,24 @@ class CombinedDataset(Dataset):
             The shape of each array is:
             - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
             - target dataset: [n_forecast_steps, C_target, H_target, W_target]
-
+            - sample_weights: [n_forecast_steps, C_target, H_target, W_target],
+              1.0 for valid ocean pixels, 0.0 for land pixels
         """
+        target = self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))
+
+        weights = (
+            np.broadcast_to(self.sample_weights, target.shape).copy()
+            if self.sample_weights is not None
+            else np.ones_like(target, dtype=np.float32)
+        )
+
         return {
             ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
             for ds in self.inputs
-        } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
+        } | {
+            "target": target,
+            "sample_weights": weights,
+        }
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:
         """Return list of consecutive forecast dates for a given start date."""

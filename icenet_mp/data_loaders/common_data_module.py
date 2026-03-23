@@ -71,6 +71,13 @@ class CommonDataModule(LightningDataModule):
         self.n_forecast_steps = int(config["predict"].get("n_forecast_steps", 1))
         self.n_history_steps = int(config["predict"].get("n_history_steps", 1))
 
+        # Set land mask path
+        self.land_mask_path = (
+            Path(config["data"]["land_mask_path"])
+            if config["data"].get("land_mask_path")
+            else None
+        )
+
         # Set common arguments for the dataloader
         self._common_dataloader_kwargs = DataloaderArgs(
             batch_sampler=None,
@@ -122,6 +129,7 @@ class CommonDataModule(LightningDataModule):
             n_history_steps=self.n_history_steps,
             target_group_name=self.target_group_name,
             target_variables=self.target_variables,
+            land_mask_path=self.land_mask_path,
         )
         logger.info(
             "Loaded predict dataset with %d samples between %s and %s.",
@@ -148,6 +156,7 @@ class CommonDataModule(LightningDataModule):
             n_history_steps=self.n_history_steps,
             target_group_name=self.target_group_name,
             target_variables=self.target_variables,
+            land_mask_path=self.land_mask_path,
         )
         logger.info(
             "Loaded test dataset with %d samples between %s and %s.",
@@ -174,6 +183,7 @@ class CommonDataModule(LightningDataModule):
             n_history_steps=self.n_history_steps,
             target_group_name=self.target_group_name,
             target_variables=self.target_variables,
+            land_mask_path=self.land_mask_path,
         )
         logger.info(
             "Loaded training dataset with %d samples between %s and %s.",
@@ -200,6 +210,7 @@ class CommonDataModule(LightningDataModule):
             n_history_steps=self.n_history_steps,
             target_group_name=self.target_group_name,
             target_variables=self.target_variables,
+            land_mask_path=self.land_mask_path,
         )
         logger.info(
             "Loaded validation dataset with %d samples between %s and %s.",

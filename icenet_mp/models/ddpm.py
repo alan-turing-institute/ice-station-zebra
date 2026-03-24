@@ -200,13 +200,13 @@ class DDPM(BaseModel):
     def sample(
         self,
         x: torch.Tensor,
-        sample_weight: torch.Tensor | None,  # noqa: ARG002
+        sample_weights: torch.Tensor | None,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform reverse diffusion sampling starting from noise.
 
         Args:
             x (torch.Tensor): Conditioning input [B, C, H, W].
-            sample_weight (torch.Tensor or None): Optional weights.
+            sample_weights (torch.Tensor or None): Optional weights.
 
         Returns:
             torch.Tensor: Denoised output of shape [B, C, H, W].
@@ -239,11 +239,11 @@ class DDPM(BaseModel):
         self,
         prediction: TensorNTCHW,
         target: TensorNTCHW,
-        sample_weight: TensorNTCHW | None = None,
+        sample_weights: TensorNTCHW | None = None,
     ) -> torch.Tensor:
-        if sample_weight is None:
-            sample_weight = torch.ones_like(prediction)
-        return WeightedMSELoss(reduction="none")(prediction, target, sample_weight)
+        if sample_weights is None:
+            sample_weights = torch.ones_like(prediction)
+        return WeightedMSELoss(reduction="none")(prediction, target, sample_weights)
 
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """Encode OSISAF and ERA5 separately, then concatenate.
@@ -369,7 +369,7 @@ class DDPM(BaseModel):
                 Dictionary containing:
                     - input tensors (used to prepare conditioning inputs)
                     - "target": groundtruth SIC tensor
-                    - optional "sample_weight": weighting tensor
+                    - optional "sample_weights": weighting tensor
 
         Returns:
             torch.Tensor:
@@ -382,15 +382,15 @@ class DDPM(BaseModel):
 
         # Extract target and optional weights
         y = batch["target"].squeeze(2)  # [B, T, H, W]
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
+        sample_weights = batch.get("sample_weights", torch.ones_like(y))
 
         # Generate samples
-        outputs = self.sample(x, sample_weight)
+        outputs = self.sample(x, sample_weights)
 
         y_hat = torch.clamp(outputs, 0, 1)
 
         # Calculate loss
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y, sample_weights)
         self.log(
             "val_loss",
             loss,
@@ -401,7 +401,7 @@ class DDPM(BaseModel):
         )
 
         # Update metrics
-        self.metrics.update(y_hat, y, sample_weight)
+        self.metrics.update(y_hat, y, sample_weights)
         return loss
 
     def test_step(
@@ -421,7 +421,7 @@ class DDPM(BaseModel):
                 Dictionary containing:
                     - input tensors (used to prepare conditioning inputs)
                     - "target": groundtruth SIC tensor
-                    - optional "sample_weight": weighting tensor
+                    - optional "sample_weights": weighting tensor
 
         Returns:
             ModelTestOutput:
@@ -433,16 +433,16 @@ class DDPM(BaseModel):
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"].squeeze(2)
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
+        sample_weights = batch.get("sample_weights", torch.ones_like(y))
 
-        outputs = self.sample(x, sample_weight)
+        outputs = self.sample(x, sample_weights)
 
         y_hat = torch.clamp(outputs, 0, 1).unsqueeze(2)
 
         y = y.unsqueeze(2)
-        sample_weight = sample_weight.unsqueeze(2)
+        sample_weights = sample_weights.unsqueeze(2)
 
-        loss = self.loss(y_hat, y, sample_weight)
+        loss = self.loss(y_hat, y, sample_weights)
         self.log(
             "test_loss",
             loss,
@@ -452,6 +452,6 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        self.test_metrics.update(y_hat, y, sample_weight)
+        self.test_metrics.update(y_hat, y, sample_weights)
 
         return ModelTestOutput(prediction=y_hat, target=y, loss=loss)

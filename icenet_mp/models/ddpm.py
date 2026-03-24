@@ -382,7 +382,13 @@ class DDPM(BaseModel):
 
         # Extract target and optional weights
         y = batch["target"].squeeze(2)  # [B, T, H, W]
-        sample_weights = batch.get("sample_weights", torch.ones_like(y))
+
+        # sample_weights = batch.get("sample_weights", torch.ones_like(y))
+        sample_weights = batch.get("sample_weights", None)
+        if sample_weights is None:
+            sample_weights = torch.ones_like(y)
+        else:
+            sample_weights = sample_weights.squeeze(2)  # [B, T, H, W]
 
         # Generate samples
         outputs = self.sample(x, sample_weights)
@@ -433,7 +439,13 @@ class DDPM(BaseModel):
         """
         x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
         y = batch["target"].squeeze(2)
-        sample_weights = batch.get("sample_weights", torch.ones_like(y))
+
+        # sample_weights = batch.get("sample_weights", torch.ones_like(y))
+        sample_weights = batch.get("sample_weights", None)
+        if sample_weights is None:
+            sample_weights = torch.ones_like(y)
+        else:
+            sample_weights = sample_weights.squeeze(2)  # [B, T, H, W]
 
         outputs = self.sample(x, sample_weights)
 

@@ -327,6 +327,12 @@ class DDPM(BaseModel):
         # Extract target
         y = batch["target"].squeeze(2)
 
+        training_weights = batch.get("sample_weights", None)
+        if training_weights is None:
+            training_weights = torch.ones_like(y)
+        else:
+            training_weights = training_weights.squeeze(2)  # [B, T, H, ]
+
         # Sample random timesteps
         t = torch.randint(
             0, self.timesteps, (x.shape[0],), device=self.device
@@ -343,7 +349,8 @@ class DDPM(BaseModel):
         target_v = self.diffusion.calculate_v(y, noise, t)
 
         # Compute loss
-        loss = F.mse_loss(pred_v, target_v)
+        # loss = F.mse_loss(pred_v, target_v)
+        loss = (F.mse_loss(pred_v, target_v, reduction="none") * training_weights).sum() / training_weights.sum()
 
         self.log(
             "train_loss",

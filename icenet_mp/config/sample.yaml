@@ -1,0 +1,4 @@
+defaults:
+  - base
+  - override /model: quick_test
+  - _self_

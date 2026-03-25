@@ -80,6 +80,7 @@ def cfg_model_service() -> DictConfig:
                 },
             },
             "evaluate": {"callbacks": {}},
+            "hemisphere": "north",
             "loggers": {},
             "model": {
                 "_target_": "MockModel",

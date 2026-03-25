@@ -1,5 +1,5 @@
 defaults:
   - base
   - override /data: demo
-  - override /predict: osisaf-north
+  - override /predict: sic-icenet-2d
   - _self_

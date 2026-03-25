@@ -18,6 +18,7 @@ from .typedefs import (
     ArrayTHW,
     DiffMode,
     DiffStrategy,
+    Hemisphere,
     TensorNCHW,
     TensorNTCHW,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "DiffColourmapSpec",
     "DiffMode",
     "DiffStrategy",
+    "Hemisphere",
     "Metadata",
     "ModelTestOutput",
     "PlotSpec",

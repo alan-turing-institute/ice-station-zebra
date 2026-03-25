@@ -37,6 +37,7 @@ class ArgoSource(LegacySource):
 
         # Set constants
         distance_scale_km = 2000
+        min_weight = 1e-10
 
         # Construct the grid that we want to project onto
         lats = np.arange(
@@ -109,8 +110,8 @@ class ArgoSource(LegacySource):
             )  # shape: (n_lat*n_lon, n_obs)
 
             # Construct exponential weights, with a minimum for numerical stability
-            weights = np.exp(
-                -0.5 * (distance_km / distance_scale_km) ** 2
+            weights = np.exp(-0.5 * (distance_km / distance_scale_km) ** 2).clip(
+                min=min_weight
             )  # shape: (n_lat*n_lon, n_obs)
             sum_weights = np.sum(weights, axis=1)  # shape: (n_lat*n_lon,)
 

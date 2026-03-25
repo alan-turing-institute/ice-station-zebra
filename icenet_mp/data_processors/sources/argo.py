@@ -6,8 +6,8 @@ from typing import Any
 import earthkit.data as ekd
 import numpy as np
 import xarray as xr
+from anemoi.datasets.create.source import Source
 from anemoi.datasets.create.sources import source_registry
-from anemoi.datasets.create.sources.legacy import LegacySource
 from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
@@ -18,37 +18,49 @@ logger = logging.getLogger(__name__)
 
 
 @source_registry.register("argo")
-class ArgoSource(LegacySource):
-    @staticmethod
-    def _execute(
+# class ArgoSource(LegacySource):
+class ArgoSource(Source):
+    def __init__(  # noqa: PLR0913
+        self,
         context: dict[str, Any],
-        date_group: GroupOfDates,
         area: str,
         param: list[str],
         *,
-        grid_resolution_degrees: float = 1,
         skip_interpolation: bool = False,
-    ) -> ekd.FieldList:
-        """Download Argo float data within given parameters."""
-        north, west, south, east = map(float, area.split("/"))
-        if (north < south) or (east < west):
+        grid_resolution_degrees: float = 1,
+        distance_scale_km: float = 2000,
+        min_weight: float = 1e-10,
+        time_half_window_hrs: int = 2,
+    ) -> None:
+        """Initialise the source."""
+        self.context = context
+        self.param = param
+        self.skip_interpolation = skip_interpolation
+        self.grid_resolution_degrees = grid_resolution_degrees
+        self.distance_scale_km = distance_scale_km
+        self.min_weight = min_weight
+        self.time_half_window_hrs = time_half_window_hrs
+        self.north, self.west, self.south, self.east = map(float, area.split("/"))
+        if (self.north < self.south) or (self.east < self.west):
             msg = f"Invalid area: {area}. Expected format: 'N/W/S/E'"
             raise ValueError(msg)
 
+    def execute(
+        self,
+        date_group: GroupOfDates,
+    ) -> ekd.FieldList:
+        """Download Argo float data within given parameters."""
         # Set constants
-        distance_scale_km = 2000
-        min_weight = 1e-10
-
         # Construct the grid that we want to project onto
         lats = np.arange(
-            south + 0.5 * grid_resolution_degrees,
-            north + 0.5 * grid_resolution_degrees,
-            grid_resolution_degrees,
+            self.south + 0.5 * self.grid_resolution_degrees,
+            self.north + 0.5 * self.grid_resolution_degrees,
+            self.grid_resolution_degrees,
         )
         lons = np.arange(
-            west + 0.5 * grid_resolution_degrees,
-            east + 0.5 * grid_resolution_degrees,
-            grid_resolution_degrees,
+            self.west + 0.5 * self.grid_resolution_degrees,
+            self.east + 0.5 * self.grid_resolution_degrees,
+            self.grid_resolution_degrees,
         )
 
         lat_grid, lon_grid = np.meshgrid(lats, lons, indexing="ij")
@@ -65,14 +77,14 @@ class ArgoSource(LegacySource):
             variable: np.full(
                 (len(requested_dates), len(lats), len(lons)), np.nan, dtype=float
             )
-            for variable in param
+            for variable in self.param
         }
         logger.info(
             "Fetching Argo data inside [N: %s, W: %s, S: %s, E: %s] between %s and %s.",
-            north,
-            west,
-            south,
-            east,
+            self.north,
+            self.west,
+            self.south,
+            self.east,
             min(requested_dates),
             max(requested_dates),
         )
@@ -80,11 +92,20 @@ class ArgoSource(LegacySource):
 
         for t_idx, date in enumerate(requested_dates):
             logger.info("Processing data from %s", date.date())
-            start_time = date - timedelta(hours=2)
-            end_time = date + timedelta(hours=2)
+            start_time = date - timedelta(hours=self.time_half_window_hrs)
+            end_time = date + timedelta(hours=self.time_half_window_hrs)
 
             # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
-            region = [west, east, south, north, 0, 50, start_time, end_time]
+            region = [
+                self.west,
+                self.east,
+                self.south,
+                self.north,
+                0,
+                50,
+                start_time,
+                end_time,
+            ]
             df = _fetch_argo_dataframe_with_retry(region)
 
             if df.empty:
@@ -92,7 +113,7 @@ class ArgoSource(LegacySource):
                 missing_dates.append(date)
                 continue
 
-            if skip_interpolation:
+            if self.skip_interpolation:
                 continue
 
             # Get positions of observations
@@ -110,8 +131,8 @@ class ArgoSource(LegacySource):
             )  # shape: (n_lat*n_lon, n_obs)
 
             # Construct exponential weights, with a minimum for numerical stability
-            weights = np.exp(-0.5 * (distance_km / distance_scale_km) ** 2).clip(
-                min=min_weight
+            weights = np.exp(-0.5 * (distance_km / self.distance_scale_km) ** 2).clip(
+                min=self.min_weight
             )  # shape: (n_lat*n_lon, n_obs)
             sum_weights = np.sum(weights, axis=1)  # shape: (n_lat*n_lon,)
 
@@ -122,7 +143,7 @@ class ArgoSource(LegacySource):
                     np.matmul(weights, unweighted_data) / sum_weights
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
 
-        if skip_interpolation or missing_dates:
+        if self.skip_interpolation or missing_dates:
             logger.info("Found %d missing dates:", len(missing_dates))
             for missing_date in missing_dates:
                 logger.warning(missing_date)
@@ -169,10 +190,10 @@ class ArgoSource(LegacySource):
         )
 
         field_lists = load_one(
-            "📂", context, [date.isoformat() for date in requested_dates], ds_out
+            "📂", self.context, [date.isoformat() for date in requested_dates], ds_out
         )
 
-        n_dates = len(field_lists) // len(param)
+        n_dates = len(field_lists) // len(self.param)
         if n_dates != len(requested_dates):
             msg = f"Expected {len(requested_dates)} dates, got {n_dates} dates"
             raise ValueError(msg)

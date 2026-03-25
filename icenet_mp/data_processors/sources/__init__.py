@@ -17,9 +17,7 @@ def register_sources() -> None:
     for name, source in sources.items():
         if name not in source_registry.registered:
             source_registry.register(name, source)
-            logger.debug(
-                "Registered %s with anemoi-datasets.", source.__name__
-            )
+            logger.debug("Registered %s with anemoi-datasets.", source.__name__)
 
 
 __all__ = [

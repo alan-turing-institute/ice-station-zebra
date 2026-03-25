@@ -17,7 +17,6 @@ samp-floatnorth-argo-pt-2017-2019-24h-v1:
           param:
             - TEMP # temperature
             - PSAL # salinity
-            # - p # pressure
       - nan_to_num:
           variables: [TEMP, PSAL]
           replace_with: 99

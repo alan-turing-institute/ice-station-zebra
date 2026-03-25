@@ -50,6 +50,9 @@ You can then run this with, e.g.:
 ```bash
 uv run imp <command> --config-name <your local config>.yaml
 ```
+
+This will run using the default model setup (rescaling encoder, small UNet, rescaling decoder) that is sufficient for quick tests, but not appropriate for larger training runs.
+
 You can also use this config to override other options in the `base.yaml` file, as shown below:
 
 ```yaml
@@ -74,7 +77,7 @@ uv run imp <command> ++base_path=/local/path/to/my/data
 
 See `config/demo_north.yaml` for an example of this.
 
-Note that `base_persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
+:warning: Note that `base_persistence.yaml` overrides the specific options in `base.yaml` needed to run the `Persistence` model.
 
 ### HPC-specific configurations
 

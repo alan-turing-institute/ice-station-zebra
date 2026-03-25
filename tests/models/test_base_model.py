@@ -11,7 +11,7 @@ from icenet_mp.types import ModelTestOutput, TensorNTCHW
 class FakeDataModel(BaseModel):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialise a fake data model for testing purposes."""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, hemisphere="north", **kwargs)
         self.t = kwargs["n_forecast_steps"]
         self.c = kwargs["output_space"]["channels"]
         self.h = kwargs["output_space"]["shape"][0]

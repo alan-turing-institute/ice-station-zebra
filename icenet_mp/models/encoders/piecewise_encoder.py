@@ -25,7 +25,7 @@ class PiecewiseEncoder(BaseEncoder):
         self,
         conv_activation: str = "SiLU",
         conv_kernel_size: int = 3,
-        n_conv_blocks: int = 0,
+        n_conv_blocks: int = 2,
         **kwargs: Any,
     ) -> None:
         """Initialise a PiecewiseEncoder."""

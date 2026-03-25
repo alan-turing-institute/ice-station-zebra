@@ -1,13 +1,13 @@
 _target_: icenet_mp.models.EncodeProcessDecode
 
-name: piecewise-unet-piecewise
+name: piecewise-vit-piecewise
 
 encoder:
   _target_: icenet_mp.models.encoders.PiecewiseEncoder
   latent_space: [192, 192] # Shape of the latent space
 
 processor:
-  _target_: icenet_mp.models.processors.UNetProcessor
+  _target_: icenet_mp.models.processors.VitProcessor
 
 decoder:
   _target_: icenet_mp.models.decoders.PiecewiseDecoder

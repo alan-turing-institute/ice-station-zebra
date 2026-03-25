@@ -7,7 +7,7 @@ from lightning import LightningDataModule
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from icenet_mp.types import ArrayTCHW, DataloaderArgs, DataSpace
+from icenet_mp.types import ArrayTCHW, DataloaderArgs, DataSpace, Hemisphere
 
 from .combined_dataset import CombinedDataset
 from .single_dataset import SingleDataset
@@ -35,9 +35,11 @@ class CommonDataModule(LightningDataModule):
                     self.base_path / "data" / "anemoi" / f"{dataset['name']}.zarr"
                 ).resolve()
             )
-        logger.info("Found %d dataset_groups.", len(self.dataset_groups))
-        for dataset_group in self.dataset_groups:
-            logger.debug("... %s.", dataset_group)
+        logger.info("Found %d dataset groups.", len(self.dataset_groups))
+        for idx, (name, paths) in enumerate(self.dataset_groups.items(), start=1):
+            logger.info("%d) %s:", idx, name)
+            for path in paths:
+                logger.info("%s - %s", " " * (len(str(idx)) + 1), path)
 
         # Check prediction target
         self.target_group_name = config["predict"]["target"]["group_name"]
@@ -81,6 +83,18 @@ class CommonDataModule(LightningDataModule):
             sampler=None,
             worker_init_fn=None,
         )
+
+    @property
+    def hemisphere(self) -> Hemisphere:
+        """Return the hemisphere of the dataset."""
+        hemisphere: set[Hemisphere] = {
+            SingleDataset(name, paths).hemisphere
+            for name, paths in self.dataset_groups.items()
+        }
+        if len(hemisphere) != 1:
+            msg = f"Found {len(hemisphere)} different hemisphere indicators across {len(self.dataset_groups)} dataset groups."
+            raise ValueError(msg)
+        return hemisphere.pop()
 
     @cached_property
     def input_spaces(self) -> list[DataSpace]:

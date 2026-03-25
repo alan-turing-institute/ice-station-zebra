@@ -12,6 +12,7 @@ class MockCommonDataModule:
     def __init__(self, config: DictConfig) -> None:
         """Mock CommonDataModule."""
         self.config = config
+        self.hemisphere = "north"
         self.input_spaces = [DataSpace(5, "input", (20, 20))]
         self.n_forecast_steps = 2
         self.n_history_steps = 3

@@ -148,8 +148,9 @@ class BaseModel(LightningModule, ABC):
 
         """
         target = batch.pop("target")
+        sample_weights = batch.get("sample_weights", None)
         prediction = self(batch)
-        loss = self.loss(prediction, target)
+        loss = self.loss(prediction, target, sample_weights)
         # update test metrics with the current batch; computation will be done at epoch end
         self.test_metrics.update(prediction, target)
 
@@ -176,8 +177,9 @@ class BaseModel(LightningModule, ABC):
 
         """
         target = batch["target"].clone().detach()
+        sample_weights = batch.get("sample_weights", None)
         prediction = self(batch)
-        loss = self.loss(prediction, target)
+        loss = self.loss(prediction, target, sample_weights)
 
         self.log(
             "train_loss",
@@ -213,8 +215,9 @@ class BaseModel(LightningModule, ABC):
 
         """
         target = batch["target"].clone().detach()
+        sample_weights = batch.get("sample_weights", None)
         prediction = self(batch)
-        loss = self.loss(prediction, target)
+        loss = self.loss(prediction, target, sample_weights)
         self.log(
             "validation_loss",
             loss,

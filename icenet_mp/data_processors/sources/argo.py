@@ -96,17 +96,12 @@ class ArgoSource(Source):
             end_time = date + timedelta(hours=self.time_half_window_hrs)
 
             # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
-            region = [
-                self.west,
-                self.east,
-                self.south,
-                self.north,
-                0,
-                50,
+            region = [self.west, self.east, self.south, self.north, 0, 50]
+            time_window = [
                 start_time,
                 end_time,
             ]
-            df = _fetch_argo_dataframe_with_retry(region)
+            df = _fetch_argo_dataframe_with_retry(region, time_window)
 
             if df.empty:
                 logger.info("No Argo observations for %s; returning NaNs", date)
@@ -202,14 +197,16 @@ class ArgoSource(Source):
 
 
 def _fetch_argo_dataframe_with_retry(
-    region: list[float | int | datetime],
+    region: list[float],
+    time_window: list[datetime],
     max_retries: int = 5,
     initial_backoff_s: float = 0.5,
 ) -> DataFrame:
     """Fetch Argo data with exponential backoff.
 
     Args:
-        region: List of [west, east, south, north, depth_min, depth_max, start_time, end_time]
+        region: List of [west, east, south, north, depth_min, depth_max]
+        time_window: List of [start_time, end_time]
         max_retries: Number of retry attempts for ERDDAP 503 or 500 responses.
         initial_backoff_s: Initial backoff delay in seconds before retrying.
 
@@ -220,8 +217,7 @@ def _fetch_argo_dataframe_with_retry(
     # Try erddap with exponential backoff
     for attempt in range(1, max_retries + 1):
         try:
-            fetcher = DataFetcher().region(region)
-
+            fetcher = DataFetcher().region(region + time_window)
         except Exception as exc:
             logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
             error_str = str(exc)
@@ -254,7 +250,7 @@ def _fetch_argo_dataframe_with_retry(
     try:
         df = fetcher.to_dataframe()
     except FileNotFoundError:
-        msg = f"Failed to load file for {region}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
+        msg = f"Failed to load file for {region + time_window}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
         logger.warning(msg)
         return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
     else:

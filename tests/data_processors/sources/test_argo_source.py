@@ -2,8 +2,8 @@
 
 from datetime import datetime
 from unittest.mock import MagicMock
-import pandas as pd
 
+import pandas as pd
 import pytest
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
@@ -87,9 +87,8 @@ class TestArgoSource:
         assert len(result) == n_dates * n_params
 
     def test_fetch_argo_dataframe_with_retry_retries_then_succeeds(self) -> None:
-        
-        region = [20., 30., 0., 40., 0., 50.]
-        
+        region = [20.0, 30.0, 0.0, 40.0, 0.0, 50.0]
+
         # First call raises 503, second succeeds
         first_fetcher = MagicMock()
         first_fetcher.region.side_effect = Exception("503 Service Unavailable")
@@ -104,7 +103,9 @@ class TestArgoSource:
         datafetcher_cls = MagicMock(side_effect=[first_fetcher, second_fetcher])
 
         with pytest.MonkeyPatch.context() as mp:
-            mp.setattr("icenet_mp.data_processors.sources.argo.DataFetcher", datafetcher_cls)
+            mp.setattr(
+                "icenet_mp.data_processors.sources.argo.DataFetcher", datafetcher_cls
+            )
             mp.setattr("icenet_mp.data_processors.sources.argo.time.sleep", MagicMock())
 
             df = _fetch_argo_dataframe_with_retry(

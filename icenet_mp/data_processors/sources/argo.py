@@ -18,14 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 @source_registry.register("argo")
-# class ArgoSource(LegacySource):
 class ArgoSource(Source):
     def __init__(  # noqa: PLR0913
         self,
         context: dict[str, Any],
+        *,
         area: str,
         param: list[str],
-        *,
         skip_interpolation: bool = False,
         grid_resolution_degrees: float = 1,
         distance_scale_km: float = 2000,

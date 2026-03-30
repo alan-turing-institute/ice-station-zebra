@@ -23,3 +23,5 @@ DiffMode = Literal["signed", "absolute", "smape"]
 # - "two-pass": scan once to figure the scale, compute per-frame (balanced)
 # - "per-frame": compute per-frame (low RAM, more CPU)
 DiffStrategy = Literal["precompute", "two-pass", "per-frame"]
+
+Hemisphere = Literal["north", "south"]

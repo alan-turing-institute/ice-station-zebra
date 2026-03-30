@@ -22,12 +22,12 @@ class VitProcessor(BaseProcessor):
     def __init__(
         self,
         *,
-        depth: int,
-        dropout: float,
-        emb_dim: int,
-        heads: int,
-        mlp_dim: int,
-        patch_size: int,
+        depth: int = 3,
+        dropout: float = 0.3,
+        emb_dim: int = 128,
+        heads: int = 4,
+        mlp_dim: int = 256,
+        patch_size: int = 16,
         **kwargs: Any,
     ) -> None:
         """Initialize Vision Transformer model for sea ice forecasting."""

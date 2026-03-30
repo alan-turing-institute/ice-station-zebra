@@ -33,8 +33,8 @@ class PiecewiseDecoder(BaseDecoder):
         *,
         conv_activation: str = "SiLU",
         conv_kernel_size: int = 3,
-        n_conv_blocks: int = 0,
-        restrict_range: str = "none",
+        n_conv_blocks: int = 3,
+        restrict_range: str = "clamp",
         **kwargs: Any,
     ) -> None:
         """Initialise a PiecewiseDecoder."""

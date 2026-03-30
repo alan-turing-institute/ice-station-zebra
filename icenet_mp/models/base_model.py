@@ -16,7 +16,7 @@ from torchmetrics import MetricCollection
 
 from icenet_mp.metrics.base_metrics import MAEPerForecastDay, RMSEPerForecastDay
 from icenet_mp.metrics.sie_error_abs import SeaIceExtentErrorPerForecastDay
-from icenet_mp.types import DataSpace, ModelTestOutput, TensorNTCHW
+from icenet_mp.types import DataSpace, Hemisphere, ModelTestOutput, TensorNTCHW
 
 
 class BaseModel(LightningModule, ABC):
@@ -25,12 +25,13 @@ class BaseModel(LightningModule, ABC):
     def __init__(  # noqa: PLR0913
         self,
         *,
-        name: str,
+        hemisphere: Hemisphere,
         input_spaces: list[DictConfig],
         n_forecast_steps: int,
         n_history_steps: int,
-        output_space: DictConfig,
+        name: str,
         optimizer: DictConfig,
+        output_space: DictConfig,
         scheduler: DictConfig,
         **_kwargs: Any,
     ) -> None:
@@ -43,8 +44,9 @@ class BaseModel(LightningModule, ABC):
         """
         super().__init__()
 
-        # Save model name
+        # Save model name and hemisphere
         self.name = name
+        self.hemisphere = hemisphere
 
         # Save history and forecast steps
         if n_forecast_steps <= 0:
@@ -184,10 +186,10 @@ class BaseModel(LightningModule, ABC):
         self.log(
             "train_loss",
             loss,
-            sync_dist=True,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            sync_dist=True,
         )
         return loss
 
@@ -221,9 +223,9 @@ class BaseModel(LightningModule, ABC):
         self.log(
             "validation_loss",
             loss,
-            sync_dist=True,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            sync_dist=True,
         )
         return loss

@@ -1,26 +1,14 @@
-import os
 from typing import Any, NoReturn
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torchmetrics import Metric, MetricCollection
 
-from icenet_mp.losses import WeightedMSELoss
 from icenet_mp.metrics import IceNetAccuracy, SIEError
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
-from icenet_mp.types import ModelTestOutput, TensorNTCHW
+from icenet_mp.types import ModelTestOutput, TensorNCHW, TensorNTCHW
 
 from .base_model import BaseModel
-
-# Unset SLURM_NTASKS if it's causing issues
-if "SLURM_NTASKS" in os.environ:
-    del os.environ["SLURM_NTASKS"]
-
-# Optionally, set SLURM_NTASKS_PER_NODE if needed
-os.environ["SLURM_NTASKS_PER_NODE"] = "1"
-
-# Force all new tensors to be float32 by default
-torch.set_default_dtype(torch.float32)
 
 
 class SimpleEncoder2D(torch.nn.Module):
@@ -39,14 +27,14 @@ class SimpleEncoder2D(torch.nn.Module):
             torch.nn.SiLU(),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward pass through the encoder block.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W).
+            x (TensorNCHW): Input tensor of shape (B, C, H, W).
 
         Returns:
-            torch.Tensor: Output tensor after applying the block.
+            TensorNCHW: Output tensor after applying the block.
 
         """
         return self.net(x)
@@ -176,21 +164,6 @@ class DDPM(BaseModel):
             metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
         self.metrics = MetricCollection(metrics)
 
-        test_metrics: dict[str, Metric | MetricCollection] = {
-            "test_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-            "test_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-        }
-        for i in range(self.n_forecast_steps):
-            test_metrics[f"test_accuracy_{i}"] = IceNetAccuracy(
-                leadtimes_to_evaluate=[i]
-            )
-            test_metrics[f"test_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
-        self.test_metrics = MetricCollection(test_metrics)
-
         self.save_hyperparameters()
 
     def forward(self, *args: Any, **kwargs: Any) -> NoReturn:
@@ -209,7 +182,7 @@ class DDPM(BaseModel):
             sample_weights (torch.Tensor or None): Optional weights.
 
         Returns:
-            torch.Tensor: Denoised output of shape [B, C, H, W].
+            TensorNCHW: Denoised output of shape [B, C, H, W].
 
         """
         shape = (
@@ -227,13 +200,13 @@ class DDPM(BaseModel):
             t_batch = torch.full_like(
                 x[:, 0, 0, 0], t, dtype=torch.long, device=self.device
             )
-            pred_v: torch.Tensor = self.model(y, t_batch, x)
+            pred_v: TensorNCHW = self.model(y, t_batch, x)
             pred_v = (
                 pred_v.squeeze(3) if pred_v.dim() > dim_threshold else pred_v.squeeze()
             )
             y = self.diffusion.p_sample(y, t_batch, pred_v)
 
-        return y
+        return torch.clamp(y, 0, 1)
 
     def loss(
         self,
@@ -355,7 +328,7 @@ class DDPM(BaseModel):
         self.log(
             "train_loss",
             loss,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             sync_dist=True,
@@ -405,7 +378,7 @@ class DDPM(BaseModel):
         # Calculate loss
         loss = self.loss(y_hat, y, sample_weights)
         self.log(
-            "val_loss",
+            "validation_loss",
             loss,
             on_step=False,
             on_epoch=True,

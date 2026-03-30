@@ -65,6 +65,7 @@ class TestPiecewiseEncodeDecode:
             data_space_out=input_space,
             n_conv_blocks=n_conv_blocks,
             n_forecast_steps=n_forecast_steps,
+            restrict_range="none",
         )
         output_ntchw = decoder.rollout(latent_ntchw)
         assert torch.equal(input_ntchw, output_ntchw)

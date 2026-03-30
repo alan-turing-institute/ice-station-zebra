@@ -4,12 +4,11 @@ name: naive-unet-naive
 
 encoder:
   _target_: icenet_mp.models.encoders.NaiveLinearEncoder
-  latent_space: [128, 128] # Shape of the latent space
+  latent_space: [432, 432] # Shape of the latent space
 
 processor:
   _target_: icenet_mp.models.processors.UNetProcessor
-  kernel_size: 3 # Size of the kernel for convolutional layers
-  start_out_channels: 64 # Initial number of channels for the first convolutional layer
+  start_out_channels: 100 # Reduce number of channels to support 21 day forecasts
 
 decoder:
   _target_: icenet_mp.models.decoders.NaiveLinearDecoder

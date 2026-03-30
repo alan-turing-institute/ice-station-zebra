@@ -105,17 +105,6 @@ class CombinedDataset(Dataset):
         """Return the start date of the dataset."""
         return self.dates[0]
 
-    @property
-    def hemisphere(self) -> Literal["north", "south"]:
-        """Return the hemisphere of the dataset."""
-        hemisphere: set[Literal["north", "south"]] = {
-            ds.hemisphere for ds in self.inputs
-        }
-        if len(hemisphere) != 1:
-            msg = f"Found {len(hemisphere)} different hemisphere indicators across {len(self.inputs)} datasets."
-            raise ValueError(msg)
-        return hemisphere.pop()
-
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         return len(self.dates)

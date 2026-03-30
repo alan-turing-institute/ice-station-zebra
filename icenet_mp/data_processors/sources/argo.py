@@ -1,11 +1,11 @@
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any
 
 import earthkit.data as ekd
 import numpy as np
 import xarray as xr
+from anemoi.datasets.create.input.context import Context
 from anemoi.datasets.create.source import Source
 from anemoi.datasets.create.sources import source_registry
 from anemoi.datasets.create.sources.xarray import load_one
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class ArgoSource(Source):
     def __init__(  # noqa: PLR0913
         self,
-        context: dict[str, Any],
+        context: Context,
         *,
         area: str,
         param: list[str],
@@ -31,7 +31,7 @@ class ArgoSource(Source):
         min_weight: float = 1e-10,
         time_half_window_hrs: int = 2,
     ) -> None:
-        """Initialise the source."""
+        """Set parameters for fetching and interpolating Argo float data."""
         self.context = context
         self.param = param
         self.skip_interpolation = skip_interpolation
@@ -44,11 +44,8 @@ class ArgoSource(Source):
             msg = f"Invalid area: {area}. Expected format: 'N/W/S/E'"
             raise ValueError(msg)
 
-    def execute(
-        self,
-        date_group: GroupOfDates,
-    ) -> ekd.FieldList:
-        """Download Argo float data within given parameters."""
+    def execute(self, dates: list[datetime] | GroupOfDates) -> ekd.FieldList:
+        """Download Argo float data within given date range."""
         # Set constants
         # Construct the grid that we want to project onto
         lats = np.arange(
@@ -71,7 +68,7 @@ class ArgoSource(Source):
             len(lats) * len(lons),
         )
 
-        requested_dates = sorted(date_group.dates)
+        requested_dates = sorted(date for date in dates)
         weighted_data: dict[str, np.ndarray] = {
             variable: np.full(
                 (len(requested_dates), len(lats), len(lons)), np.nan, dtype=float

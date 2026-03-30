@@ -220,6 +220,7 @@ def _fetch_argo_dataframe_with_retry(
             is_500 = "500" in error_str
             is_503 = "503" in error_str
 
+            # Retry on 503 or 500 errors, with exponential backoff
             if (is_503 or is_500) and attempt < max_retries:
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
 
@@ -230,26 +231,24 @@ def _fetch_argo_dataframe_with_retry(
                 logger.warning(msg)
                 time.sleep(backoff)
                 continue
-            if is_503:
-                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
-                raise RuntimeError(msg) from exc
+
+            # Otherwise raise an exception
             if is_500:
                 msg = f"ERDDAP data server failed with 500 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
-
-            # Otherwise don't retry
+            if is_503:
+                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
+                raise RuntimeError(msg) from exc
             raise
-
         else:
-            break
+            # If we successfully fetched the data, attempt to return it as a DataFrame
+            try:
+                msg = f"Successfully fetched data from erddap on attempt {attempt}"
+                logger.debug(msg)
+                return fetcher.to_dataframe()
+            except FileNotFoundError:
+                msg = f"Failed to load data for {region} and {time_window}. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
+                logger.warning(msg)
 
-    try:
-        df = fetcher.to_dataframe()
-    except FileNotFoundError:
-        msg = f"Failed to load file for {region + time_window}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
-        logger.warning(msg)
-        return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
-    else:
-        msg = f"Successfully fetched data from erddap on attempt {attempt}"
-        logger.debug(msg)
-        return df
+    # Return empty DataFrame if file not found (e.g., no data for that region/time)
+    return DataFrame()

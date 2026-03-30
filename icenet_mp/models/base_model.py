@@ -123,9 +123,9 @@ class BaseModel(LightningModule, ABC):
 
         """
 
-    def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
+    def loss(self, prediction: TensorNTCHW, target: TensorNTCHW, sample_weights) -> torch.Tensor:
         """Calculate the loss given a prediction and target."""
-        return torch.nn.functional.l1_loss(prediction, target)
+        return torch.nn.functional.l1_loss(prediction, target, reduction="none"))
 
     def test_step(
         self,

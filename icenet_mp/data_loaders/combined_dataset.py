@@ -109,21 +109,6 @@ class CombinedDataset(Dataset):
         """Return the total length of the dataset."""
         return len(self.dates)
 
-    # def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
-    #     """Return the data for a single timestep as a dictionary.
-
-    #     Returns:
-    #         A dictionary with dataset names as keys and a numpy array as the value.
-    #         The shape of each array is:
-    #         - input datasets: [n_history_steps, C_input_k, H_input_k, W_input_k]
-    #         - target dataset: [n_forecast_steps, C_target, H_target, W_target]
-
-    #     """
-    #     return {
-    #         ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
-    #         for ds in self.inputs
-    #     } | {"target": self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))}
-
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary.
 

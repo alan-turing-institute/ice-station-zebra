@@ -15,5 +15,6 @@ class NanToNum(SingleFieldFilter):
     def forward_transform(self, field: ekd.Field) -> ekd.Field:
         """A forward transform that replaces NaNs in the input field with 'replace_with'."""
         return self.new_field_from_numpy(
-            np.nan_to_num(field.to_numpy(), nan=self.replace_with), template=field
+            np.nan_to_num(field.to_numpy().reshape(field.shape), nan=self.replace_with),
+            template=field,
         )

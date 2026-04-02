@@ -49,19 +49,10 @@ class CombinedDataset(Dataset):
         # Lazy-load dates on first request
         self._available_dates: list[np.datetime64] | None = None
 
-        # Add land mask
+        # Add land mask as sample weights if provided, with 1.0 for ocean pixels and 0.0 for land pixels
         if land_mask_path is not None:
-            raw = np.load(land_mask_path)   # expect bool or 0/1, shape (H, W)
-            # True/1 = land → we want 0 weight; True/1 = ocean → weight 1
-            # Handle both conventions: if >50% values are 1, assume 1=land
-            if raw.mean() > 0.5:
-                # majority is 1 → 1 means land → ocean = where mask is 0
-                ocean = (raw == 0).astype(np.float32)
-            else:
-                # majority is 0 → 0 means land → ocean = where mask is 1  
-                ocean = (raw > 0).astype(np.float32)
-            # shape: (1, 1, H, W) — broadcast over batch and forecast steps
-            self.sample_weights: np.ndarray | None = ocean[np.newaxis, np.newaxis]
+            raw = np.load(land_mask_path)
+            self.sample_weights = (1 - raw).astype(np.float32)[np.newaxis, np.newaxis]
         else:
             self.sample_weights = None
 

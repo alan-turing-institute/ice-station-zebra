@@ -4,9 +4,8 @@ from ftplib import FTP
 from ftplib import Error as FtpError
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
 
-import earthkit.data as ekd
+from anemoi.datasets.create.input.context import Context
 from anemoi.datasets.create.source import Source
 from anemoi.datasets.create.sources import source_registry
 from anemoi.datasets.create.sources.xarray import load_one
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 class FTPSource(Source):
     def __init__(
         self,
-        context: dict[str, Any],
+        context: Context,
         *,
         url: str,
         passwd: str = "",
@@ -35,7 +34,7 @@ class FTPSource(Source):
         self.ftp_args = {"passwd": passwd, "user": user}
         self.server, self.path_pattern = url.replace("ftp://", "").split("/", 1)
 
-    def execute(self, dates: list[datetime] | GroupOfDates) -> ekd.FieldList:
+    def execute(self, dates: list[datetime] | GroupOfDates) -> FieldList:
         """Execute the data loading process from an FTP source."""
         # Get list of remote file paths
         remote_paths = {
@@ -46,7 +45,7 @@ class FTPSource(Source):
         }
 
         # Connect to the FTP server
-        downloaded_files: list[FieldList] = []
+        field_lists: list[FieldList] = []
         with TemporaryDirectory() as tmpdir, FTP(self.server) as session:  # noqa: S321
             base_path = Path(tmpdir)
             session.login(**self.ftp_args)
@@ -61,7 +60,7 @@ class FTPSource(Source):
                         session.cwd(("/" + directory).replace("//", "/"))
                         with local_path.open("wb") as local_file:
                             session.retrbinary(f"RETR {filename}", local_file.write)
-                        downloaded_files.append(
+                        field_lists.append(
                             load_one("📂", self.context, [iso_date], str(local_path))
                         )
                     except FtpError as exc:
@@ -69,4 +68,4 @@ class FTPSource(Source):
                         logger.warning(msg)
 
         # Combine all downloaded files into a MultiFieldList
-        return MultiFieldList(downloaded_files)
+        return MultiFieldList(field_lists)

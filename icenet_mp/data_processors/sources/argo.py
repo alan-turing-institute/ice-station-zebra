@@ -2,7 +2,6 @@ import logging
 import time
 from datetime import datetime, timedelta
 
-import earthkit.data as ekd
 import numpy as np
 import xarray as xr
 from anemoi.datasets.create.input.context import Context
@@ -11,6 +10,7 @@ from anemoi.datasets.create.sources import source_registry
 from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
+from earthkit.data import FieldList
 from haversine import Unit, haversine_vector
 from pandas import DataFrame
 
@@ -44,7 +44,7 @@ class ArgoSource(Source):
             msg = f"Invalid area: {area}. Expected format: 'N/W/S/E'"
             raise ValueError(msg)
 
-    def execute(self, dates: list[datetime] | GroupOfDates) -> ekd.FieldList:
+    def execute(self, dates: list[datetime] | GroupOfDates) -> FieldList:
         """Download Argo float data within given date range."""
         # Set constants
         # Construct the grid that we want to project onto
@@ -180,16 +180,15 @@ class ArgoSource(Source):
             },
         )
 
-        field_lists = load_one(
+        multi_field_list = load_one(
             "📂", self.context, [date.isoformat() for date in requested_dates], ds_out
         )
-
-        n_dates = len(field_lists) // len(self.param)
+        n_dates = len(multi_field_list) // len(self.param)
         if n_dates != len(requested_dates):
             msg = f"Expected {len(requested_dates)} dates, got {n_dates} dates"
             raise ValueError(msg)
 
-        return field_lists
+        return multi_field_list
 
 
 def _fetch_argo_dataframe_with_retry(

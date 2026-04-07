@@ -1,5 +1,6 @@
 from typing import Any, NoReturn
 
+from icenet_mp.losses.weighted_mse_loss import WeightedMSELoss
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torchmetrics import Metric, MetricCollection
@@ -216,8 +217,9 @@ class DDPM(BaseModel):
     ) -> torch.Tensor:
         if sample_weights is None:
             sample_weights = torch.ones_like(prediction)
-        return WeightedMSELoss(reduction="none")(prediction, target, sample_weights)
-
+        # return WeightedMSELoss(reduction="none")(prediction, target, sample_weights)
+        return WeightedMSELoss()(prediction, target, sample_weights)
+    
     def prepare_inputs(self, batch: dict[str, TensorNTCHW]) -> torch.Tensor:
         """Encode OSISAF and ERA5 separately, then concatenate.
 

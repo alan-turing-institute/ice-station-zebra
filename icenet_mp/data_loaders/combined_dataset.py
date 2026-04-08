@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
+from matplotlib.pyplot import step
 import numpy as np
 from torch.utils.data import Dataset
 
@@ -19,7 +20,8 @@ class CombinedDataset(Dataset):
         *,
         n_forecast_steps: int = 1,
         n_history_steps: int = 1,
-        land_mask_path: Path | None = None,
+        # land_mask_path: Path | None = None,
+        active_grid_cell_mask_dir: Path | None = None,
     ) -> None:
         """Initialise a combined dataset from a sequence of SingleDatasets.
 
@@ -49,11 +51,27 @@ class CombinedDataset(Dataset):
         # Lazy-load dates on first request
         self._available_dates: list[np.datetime64] | None = None
 
-        # Add land mask as sample weights if provided, with 1.0 for ocean pixels and 0.0 for land pixels
-        if land_mask_path is not None:
-            raw = np.load(land_mask_path)
-            self.sample_weights = (1 - raw).astype(np.float32)[np.newaxis, np.newaxis]
+        # # Add land mask as sample weights if provided, with 1.0 for ocean pixels and 0.0 for land pixels
+        # if land_mask_path is not None:
+        #     raw = np.load(land_mask_path)
+        #     self.sample_weights = (1 - raw).astype(np.float32)[np.newaxis, np.newaxis]
+        # else:
+        #     self.sample_weights = None
+
+        # Add land mask as sample weights 
+        if active_grid_cell_mask_dir is not None:
+            # Load all 12 monthly active grid cell masks (1-indexed filenames)
+            monthly_masks = np.stack([
+                np.load(active_grid_cell_mask_dir / f"active_grid_cell_mask_{m:02d}.npy")
+                for m in range(1, 13)
+            ])  # shape: [12, H, W]
+
+            # print(f"Loaded monthly active grid cell masks with shape {monthly_masks.shape} from {active_grid_cell_mask_dir}.")
+
+            # 1.0 for active cells, 0.0 for inactive
+            self.sample_weights = monthly_masks.astype(np.float32)
         else:
+            print("No land mask provided, using uniform sample weights.")
             self.sample_weights = None
 
     @property
@@ -113,11 +131,22 @@ class CombinedDataset(Dataset):
         """
         target = self.target.get_tchw(self.get_forecast_steps(self.dates[idx]))
 
-        weights = (
-            np.broadcast_to(self.sample_weights, target.shape).copy()
-            if self.sample_weights is not None
-            else np.ones_like(target, dtype=np.float32)
-        )
+        # weights = (
+        #     np.broadcast_to(self.sample_weights, target.shape).copy()
+        #     if self.sample_weights is not None
+        #     else np.ones_like(target, dtype=np.float32)
+        # )
+        if self.sample_weights is not None:
+            # Build per-timestep weights using each forecast step's month (0-indexed)
+            forecast_steps = self.get_forecast_steps(self.dates[idx])
+
+            monthly = np.stack([
+                self.sample_weights[step.astype("datetime64[M]").astype(int) % 12]
+                for step in forecast_steps
+            ])  # [n_forecast_steps, H, W]
+            weights = np.broadcast_to(monthly[:, np.newaxis, :, :], target.shape).copy()
+        else:
+            weights = np.ones_like(target, dtype=np.float32)
 
         return {
             ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))

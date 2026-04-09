@@ -25,8 +25,6 @@ class ModelService:
         self.config_ = config
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
-        self.trainer_: Trainer | None = None
-        self.run_directory_: Path | None = None
 
     @classmethod
     def from_config(cls, config: DictConfig) -> "ModelService":
@@ -123,52 +121,20 @@ class ModelService:
             raise AttributeError(msg)
         return self.model_
 
-    @property
-    def run_directory(self) -> Path:
+    def build_run_directory(self, trainer: Trainer) -> Path:
         """Get run directory from Wandb or generate one in the same format."""
-        if not self.run_directory_:
-            # Get the run directory from Wandb if it exists
-            wandb_run = get_wandb_run(self.trainer)
-            if wandb_run:
-                self.run_directory_ = Path(wandb_run._settings.sync_dir)
+        # Get the run directory from Wandb if it exists
+        wandb_run = get_wandb_run(trainer)
+        if wandb_run:
+            return Path(wandb_run._settings.sync_dir)
 
-            # Otherwise generate a new run directory
-            if not self.run_directory_:
-                self.run_directory_ = (
-                    self.data_module.base_path
-                    / "training"
-                    / "local"
-                    / f"run-{get_timestamp()}-{generate_id()}"
-                )
-
-            # Ensure the run directory exists
-            logger.debug("Set run directory to %s.", self.run_directory_)
-            self.run_directory_.mkdir(parents=True, exist_ok=True)
-        return self.run_directory_
-
-    @property
-    def trainer(self) -> Trainer:
-        """Create a new Trainer or return the existing one."""
-        if not self.trainer_:
-            # Create a new Trainer
-            logger.debug("Instantiating lightning trainer.")
-            self.trainer_ = cast(
-                "Trainer",
-                hydra.utils.instantiate(
-                    dict(
-                        {
-                            "callbacks": extra_callbacks,
-                            "logger": extra_loggers,
-                        },
-                        **self.config["train"]["trainer"],
-                    )
-                ),
-            )
-            # Assign workers for data loading
-            self.data_module.assign_workers(
-                suggested_max_num_workers(self.trainer_.num_devices)
-            )
-        return self.trainer_
+        # Otherwise generate a new run directory
+        return (
+            self.data_module.base_path
+            / "training"
+            / "local"
+            / f"run-{get_timestamp()}-{generate_id()}"
+        )
 
     def build_trainer(
         self,
@@ -214,6 +180,19 @@ class ModelService:
         # Assign workers for data loading
         self.data_module.assign_workers(suggested_max_num_workers(trainer.num_devices))
 
+        # Ensure the run directory exists
+        run_directory = self.build_run_directory(trainer)
+        logger.debug("Set run directory to %s.", run_directory)
+        run_directory.mkdir(parents=True, exist_ok=True)
+
+        # Save model config to the run directory
+        model_config_path = run_directory / "files" / "model_config.yaml"
+        if trainer.is_global_zero:
+            model_config_path.parent.mkdir(parents=True, exist_ok=True)
+            OmegaConf.save(self.config, model_config_path)
+            if wandb_run := get_wandb_run(trainer):
+                wandb_run.save(model_config_path, base_path=model_config_path.parent)
+
         # Additional configuration for callbacks
         for callback in cast("list[Callback]", trainer.callbacks):  # type: ignore[attr-defined]
             logger.debug("Configuring callback %s.", callback.__class__.__name__)
@@ -226,17 +205,9 @@ class ModelService:
                 logger.debug(
                     "Setting run_directory for %s to %s.",
                     callback.__class__.__name__,
-                    self.run_directory / "checkpoints",
+                    run_directory / "checkpoints",
                 )
-                callback.dirpath = self.run_directory / "checkpoints"
-
-        # Save model config to the run directory
-        model_config_path = self.run_directory / "files" / "model_config.yaml"
-        if trainer.is_global_zero:
-            model_config_path.parent.mkdir(parents=True, exist_ok=True)
-            OmegaConf.save(self.config, model_config_path)
-            if wandb_run := get_wandb_run(trainer):
-                wandb_run.save(model_config_path, base_path=model_config_path.parent)
+                callback.dirpath = run_directory / "checkpoints"
 
         return trainer
 

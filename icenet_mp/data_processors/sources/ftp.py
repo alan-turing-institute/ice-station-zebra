@@ -1,13 +1,13 @@
 import logging
+from datetime import datetime
 from ftplib import FTP
 from ftplib import Error as FtpError
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
 
-import earthkit.data as ekd
+from anemoi.datasets.create.input.context import Context
+from anemoi.datasets.create.source import Source
 from anemoi.datasets.create.sources import source_registry
-from anemoi.datasets.create.sources.legacy import LegacySource
 from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from earthkit.data.core.fieldlist import FieldList, MultiFieldList
@@ -19,32 +19,36 @@ logger = logging.getLogger(__name__)
 
 
 @source_registry.register("ftp")
-class FTPSource(LegacySource):
-    @staticmethod
-    def _execute(
-        context: dict[str, Any],
-        dates: GroupOfDates,
+class FTPSource(Source):
+    def __init__(
+        self,
+        context: Context,
+        *,
         url: str,
         passwd: str = "",
         user: str = "anonymous",
-    ) -> ekd.FieldList:
-        """Execute the data loading process from an FTP source."""
+    ) -> None:
+        """Initialise the source."""
+        self.context = context
         # Parse the FTP URL
-        server, path_pattern = url.replace("ftp://", "").split("/", 1)
+        self.ftp_args = {"passwd": passwd, "user": user}
+        self.server, self.path_pattern = url.replace("ftp://", "").split("/", 1)
 
+    def execute(self, dates: list[datetime] | GroupOfDates) -> FieldList:
+        """Execute the data loading process from an FTP source."""
         # Get list of remote file paths
         remote_paths = {
             date.isoformat(): to_list(
-                Pattern(path_pattern).substitute(date=date, allow_extra=True)
+                Pattern(self.path_pattern).substitute(date=date, allow_extra=True)
             )
             for date in dates
         }
 
         # Connect to the FTP server
-        downloaded_files: list[FieldList] = []
-        with TemporaryDirectory() as tmpdir, FTP(server) as session:  # noqa: S321
+        field_lists: list[FieldList] = []
+        with TemporaryDirectory() as tmpdir, FTP(self.server) as session:  # noqa: S321
             base_path = Path(tmpdir)
-            session.login(user=user, passwd=passwd)
+            session.login(**self.ftp_args)
 
             # Iterate over remote paths
             for iso_date, remote_path_list in remote_paths.items():
@@ -56,12 +60,12 @@ class FTPSource(LegacySource):
                         session.cwd(("/" + directory).replace("//", "/"))
                         with local_path.open("wb") as local_file:
                             session.retrbinary(f"RETR {filename}", local_file.write)
-                        downloaded_files.append(
-                            load_one("📂", context, [iso_date], str(local_path))
+                        field_lists.append(
+                            load_one("📂", self.context, [iso_date], str(local_path))
                         )
                     except FtpError as exc:
                         msg = f"Failed to download from '{remote_path}': {exc}"
                         logger.warning(msg)
 
         # Combine all downloaded files into a MultiFieldList
-        return MultiFieldList(downloaded_files)
+        return MultiFieldList(field_lists)

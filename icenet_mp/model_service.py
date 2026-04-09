@@ -1,7 +1,6 @@
 import logging
-from collections.abc import Iterable
 from pathlib import Path, PosixPath
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import hydra
 import torch
@@ -17,9 +16,6 @@ from icenet_mp.models.base_model import BaseModel
 from icenet_mp.types import SupportsMetadata
 from icenet_mp.utils import get_device_name, get_timestamp, get_wandb_run
 
-if TYPE_CHECKING:
-    from lightning.pytorch.loggers import Logger as LightningLogger
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,8 +26,6 @@ class ModelService:
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
         self.trainer_: Trainer | None = None
-        self.extra_callbacks_: list[Callback] = []
-        self.extra_loggers_: list[LightningLogger] = []
         self.run_directory_: Path | None = None
 
     @classmethod
@@ -163,8 +157,8 @@ class ModelService:
                 hydra.utils.instantiate(
                     dict(
                         {
-                            "callbacks": self.extra_callbacks_,
-                            "logger": self.extra_loggers_,
+                            "callbacks": extra_callbacks,
+                            "logger": extra_loggers,
                         },
                         **self.config["train"]["trainer"],
                     )
@@ -176,20 +170,6 @@ class ModelService:
             )
         return self.trainer_
 
-    def add_callbacks(self, callback_configs: Iterable[DictConfig]) -> None:
-        """Add extra lightning callbacks."""
-        self.extra_callbacks_ += [
-            hydra.utils.instantiate(callback_config)
-            for callback_config in callback_configs
-        ]
-
-    def add_loggers(self, overrides: dict[str, str]) -> None:
-        """Add extra lightning loggers."""
-        self.extra_loggers_ += [
-            hydra.utils.instantiate(dict(**logger_config) | overrides)
-            for logger_config in self.config.get("loggers", {}).values()
-        ]
-
     def build_trainer(
         self,
         *,
@@ -198,8 +178,11 @@ class ModelService:
         """Configure the trainer with callbacks and loggers."""
         # Setup callbacks first
         callback_configs = self.config.get(job_type, {}).get("callbacks", {}).values()
-        self.add_callbacks(callback_configs)
-        if not self.extra_callbacks_:
+        extra_callbacks = [
+            hydra.utils.instantiate(callback_config)
+            for callback_config in callback_configs
+        ]
+        if not extra_callbacks:
             logger.warning("No callbacks have been set for the trainer.")
 
         # Setup lightning loggers
@@ -207,8 +190,11 @@ class ModelService:
             "job_type": job_type,
             "project": job_type,
         }
-        self.add_loggers(logger_overrides)
-        if not self.extra_loggers_:
+        extra_loggers = [
+            hydra.utils.instantiate(dict(**logger_config) | logger_overrides)
+            for logger_config in self.config.get("loggers", {}).values()
+        ]
+        if not extra_loggers:
             logger.warning("No loggers have been set for the trainer.")
 
         # Create a new trainer
@@ -218,8 +204,8 @@ class ModelService:
             hydra.utils.instantiate(
                 dict(
                     {
-                        "callbacks": self.extra_callbacks_,
-                        "logger": self.extra_loggers_,
+                        "callbacks": extra_callbacks,
+                        "logger": extra_loggers,
                     },
                     **self.config["train"]["trainer"],
                 )

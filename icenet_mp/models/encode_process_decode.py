@@ -18,7 +18,7 @@ class EncodeProcessDecode(BaseModel):
     def __init__(
         self,
         *,
-        encoder: DictConfig,
+        encoders: DictConfig,
         processor: DictConfig,
         decoder: DictConfig,
         **kwargs: Any,
@@ -30,14 +30,23 @@ class EncodeProcessDecode(BaseModel):
         # We store this as a list to ensure consistent ordering
         self.encoders: list[BaseEncoder] = [
             hydra.utils.instantiate(
-                dict(**encoder)
+                dict(encoders[input_space.name])
                 | {
                     "data_space_in": input_space,
+                    "latent_space": encoders["latent_space"],
                     "n_history_steps": self.n_history_steps,
                 }
             )
             for input_space in self.input_spaces
         ]
+
+        # Check that all encoders have the same output shape
+        encoder_output_shapes = {
+            encoder.data_space_out.shape for encoder in self.encoders
+        }
+        if len(encoder_output_shapes) != 1:
+            msg = f"Expected all encoders to have the same output shape, but found {len(encoder_output_shapes)} different shapes: {encoder_output_shapes}"
+            raise ValueError(msg)
 
         # We have to explicitly register each encoder as list[Module] will not be
         # automatically picked up by PyTorch
@@ -49,10 +58,10 @@ class EncodeProcessDecode(BaseModel):
         combined_latent_space = DataSpace(
             name="combined_latent_space",
             channels=sum(encoder.data_space_out.channels for encoder in self.encoders),
-            shape=self.encoders[0].data_space_out.shape,
+            shape=encoder_output_shapes.pop(),
         )
         self.processor: BaseProcessor = hydra.utils.instantiate(
-            dict(**processor)
+            dict(processor)
             | {
                 "data_space": combined_latent_space,
                 "n_forecast_steps": self.n_forecast_steps,
@@ -62,7 +71,7 @@ class EncodeProcessDecode(BaseModel):
 
         # Add a decoder
         self.decoder: BaseDecoder = hydra.utils.instantiate(
-            dict(**decoder)
+            dict(decoder)
             | {
                 "data_space_in": combined_latent_space,
                 "data_space_out": self.output_space,

@@ -34,8 +34,8 @@
 | icenet\_mp/data\_processors/preprocessors/ipreprocessor.py |        9 |        2 |     78% |     10-11 |
 | icenet\_mp/data\_processors/preprocessors/null.py          |        5 |        1 |     80% |         9 |
 | icenet\_mp/data\_processors/sources/\_\_init\_\_.py        |       12 |        0 |    100% |           |
-| icenet\_mp/data\_processors/sources/argo.py                |      106 |       24 |     77% |45-46, 107-109, 112, 142-146, 193-194, 237-245, 252-255 |
-| icenet\_mp/data\_processors/sources/ftp.py                 |       38 |        3 |     92% |     62-64 |
+| icenet\_mp/data\_processors/sources/argo.py                |      104 |       24 |     77% |44-45, 103-105, 108, 138-142, 188-189, 235-241, 248-253 |
+| icenet\_mp/data\_processors/sources/ftp.py                 |       40 |        3 |     92% |     66-68 |
 | icenet\_mp/exceptions.py                                   |        3 |        0 |    100% |           |
 | icenet\_mp/losses/\_\_init\_\_.py                          |        4 |        4 |      0% |       1-5 |
 | icenet\_mp/losses/weighted\_bce\_loss.py                   |        8 |        8 |      0% |      7-42 |

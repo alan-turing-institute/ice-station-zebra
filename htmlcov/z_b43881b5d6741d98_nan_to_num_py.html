@@ -64,8 +64,8 @@
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="z_c489c0facd862a6f___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.13.1">coverage.py v7.13.1</a>,
-            created at 2026-03-26 16:18 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
+            created at 2026-04-09 14:39 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -97,8 +97,9 @@
     <p class="run"><span class="n"><a id="t15" href="#t15">15</a></span><span class="t">    <span class="key">def</span> <span class="nam">forward_transform</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">field</span><span class="op">:</span> <span class="nam">ekd</span><span class="op">.</span><span class="nam">Field</span><span class="op">)</span> <span class="op">-></span> <span class="nam">ekd</span><span class="op">.</span><span class="nam">Field</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t16" href="#t16">16</a></span><span class="t">        <span class="str">"""A forward transform that replaces NaNs in the input field with 'replace_with'."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">new_field_from_numpy</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t">            <span class="nam">np</span><span class="op">.</span><span class="nam">nan_to_num</span><span class="op">(</span><span class="nam">field</span><span class="op">.</span><span class="nam">to_numpy</span><span class="op">(</span><span class="op">)</span><span class="op">,</span> <span class="nam">nan</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">replace_with</span><span class="op">)</span><span class="op">,</span> <span class="nam">template</span><span class="op">=</span><span class="nam">field</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis mis2 show_mis"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t">            <span class="nam">np</span><span class="op">.</span><span class="nam">nan_to_num</span><span class="op">(</span><span class="nam">field</span><span class="op">.</span><span class="nam">to_numpy</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">reshape</span><span class="op">(</span><span class="nam">field</span><span class="op">.</span><span class="nam">shape</span><span class="op">)</span><span class="op">,</span> <span class="nam">nan</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">replace_with</span><span class="op">)</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis mis2 show_mis"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">            <span class="nam">template</span><span class="op">=</span><span class="nam">field</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis mis2 show_mis"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -107,8 +108,8 @@
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a class="nav" href="z_c489c0facd862a6f___init___py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.13.1">coverage.py v7.13.1</a>,
-            created at 2026-03-26 16:18 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
+            created at 2026-04-09 14:39 +0000
         </p>
     </div>
 </footer>

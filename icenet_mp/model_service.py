@@ -190,11 +190,11 @@ class ModelService:
             for logger_config in self.config.get("loggers", {}).values()
         ]
 
-    def configure_trainer(
+    def build_trainer(
         self,
         *,
         job_type: str,
-    ) -> None:
+    ) -> Trainer:
         """Configure the trainer with callbacks and loggers."""
         # Setup callbacks first
         callback_configs = self.config.get(job_type, {}).get("callbacks", {}).values()
@@ -211,8 +211,25 @@ class ModelService:
         if not self.extra_loggers_:
             logger.warning("No loggers have been set for the trainer.")
 
+        # Create a new trainer
+        logger.debug("Instantiating lightning trainer.")
+        trainer = cast(
+            "Trainer",
+            hydra.utils.instantiate(
+                dict(
+                    {
+                        "callbacks": self.extra_callbacks_,
+                        "logger": self.extra_loggers_,
+                    },
+                    **self.config["train"]["trainer"],
+                )
+            ),
+        )
+        # Assign workers for data loading
+        self.data_module.assign_workers(suggested_max_num_workers(trainer.num_devices))
+
         # Additional configuration for callbacks
-        for callback in cast("list[Callback]", self.trainer.callbacks):  # type: ignore[attr-defined]
+        for callback in cast("list[Callback]", trainer.callbacks):  # type: ignore[attr-defined]
             logger.debug("Configuring callback %s.", callback.__class__.__name__)
             # Set metadata for supported callbacks
             if isinstance(callback, SupportsMetadata):
@@ -229,27 +246,29 @@ class ModelService:
 
         # Save model config to the run directory
         model_config_path = self.run_directory / "files" / "model_config.yaml"
-        if self.trainer.is_global_zero:
+        if trainer.is_global_zero:
             model_config_path.parent.mkdir(parents=True, exist_ok=True)
             OmegaConf.save(self.config, model_config_path)
-            if wandb_run := get_wandb_run(self.trainer):
+            if wandb_run := get_wandb_run(trainer):
                 wandb_run.save(model_config_path, base_path=model_config_path.parent)
+
+        return trainer
 
     def evaluate(self) -> None:
         """Evaluate a trained model."""
         # Configure the trainer with evaluation callbacks and loggers
         logger.info("Configuring model for evaluation.")
-        self.configure_trainer(job_type="evaluate")
+        trainer = self.build_trainer(job_type="evaluate")
         # Log evaluation details
         logger.info(
             "Starting evaluation using %d threads across %d %s device(s).",
             torch.get_num_threads(),
-            self.trainer.num_devices,
-            get_device_name(self.trainer.accelerator.name()),
+            trainer.num_devices,
+            get_device_name(trainer.accelerator.name()),
         )
 
         # Evaluate the model
-        self.trainer.test(
+        trainer.test(
             model=self.model,
             datamodule=self.data_module,
         )
@@ -258,19 +277,19 @@ class ModelService:
         """Train a model."""
         # Configure the trainer with training callbacks and loggers
         logger.info("Configuring model for training.")
-        self.configure_trainer(job_type="train")
+        trainer = self.build_trainer(job_type="train")
 
         # Log training details
         logger.info(
             "Starting training for %d epochs using %d threads across %d %s device(s).",
-            self.trainer.max_epochs,
+            trainer.max_epochs,
             torch.get_num_threads(),
-            self.trainer.num_devices,
-            get_device_name(self.trainer.accelerator.name()),
+            trainer.num_devices,
+            get_device_name(trainer.accelerator.name()),
         )
 
         # Train the model
-        self.trainer.fit(
+        trainer.fit(
             model=self.model,
             datamodule=self.data_module,
         )

@@ -69,7 +69,9 @@ class ArgoSource(Source):
             len(lats) * len(lons),
         )
 
-        requested_dates = sorted(date for date in dates)
+        requested_dates: list[datetime] = sorted(date for date in dates)
+        missing_dates: list[datetime] = []
+
         weighted_data: dict[str, np.ndarray] = {
             variable: np.full(
                 (len(requested_dates), len(lats), len(lons)), np.nan, dtype=float
@@ -85,7 +87,6 @@ class ArgoSource(Source):
             min(requested_dates),
             max(requested_dates),
         )
-        missing_dates = []
 
         for t_idx, date in enumerate(requested_dates):
             logger.info("Processing data from %s", date.date())
@@ -135,12 +136,10 @@ class ArgoSource(Source):
                     np.matmul(weights, unweighted_data) / sum_weights
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
 
-        if self.skip_interpolation or missing_dates:
-            logger.info("Found %d missing dates:", len(missing_dates))
+        if missing_dates:
+            logger.info("%d of %d requested dates were missing:", len(missing_dates), len(requested_dates))
             for missing_date in missing_dates:
-                logger.warning(missing_date)
-            msg = f"Missing data for {len(missing_dates)} out of {len(requested_dates)}"
-            raise ValueError(msg)
+                logger.warning(missing_date.isoformat())
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(

@@ -10,6 +10,7 @@ from anemoi.datasets.create.sources import source_registry
 from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
+from argopy.errors import NoData
 from earthkit.data import FieldList
 from haversine import Unit, haversine_vector
 from pandas import DataFrame
@@ -236,12 +237,16 @@ def _fetch_argo_dataframe_with_retry(
         else:
             # If we successfully fetched the data, attempt to return it as a DataFrame
             try:
-                msg = f"Successfully fetched data from erddap on attempt {attempt}"
+                msg = f"Successfully fetched data from ERDDAP on attempt {attempt}"
                 logger.debug(msg)
                 return fetcher.to_dataframe()
-            except FileNotFoundError:
-                msg = f"Failed to load data for {region} and {time_window}. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
-                logger.warning(msg)
+            except (FileNotFoundError, NoData):
+                logger.warning(
+                    "Failed to load data for %s between %s and %s.",
+                    region,
+                    time_window[0].isoformat(),
+                    time_window[1].isoformat(),
+                )
 
     # Return empty DataFrame if file not found (e.g., no data for that region/time)
     return DataFrame()

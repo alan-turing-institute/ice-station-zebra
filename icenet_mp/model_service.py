@@ -13,7 +13,7 @@ from wandb.sdk.lib.runid import generate_id
 from icenet_mp.callbacks import UnconditionalCheckpoint
 from icenet_mp.data_loaders import CommonDataModule
 from icenet_mp.models.base_model import BaseModel
-from icenet_mp.types import SupportsMetadata
+from icenet_mp.types import SupportsLatLon, SupportsMetadata
 from icenet_mp.utils import get_device_name, get_timestamp, get_wandb_run
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,12 @@ class ModelService:
             _recursive_=False,
             _convert_="object",
         )
+
+        # Set latitudes and longitudes for models that that support them
+        if isinstance(builder.model, SupportsLatLon):
+            longitudes_dict = builder.data_module.longitudes
+            for name, latitudes in builder.data_module.latitudes.items():
+                builder.model.set_latlon(name, latitudes, longitudes_dict[name])
 
         # Return the builder
         return builder

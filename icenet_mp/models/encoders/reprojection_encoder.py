@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from typing import Any
 
 from icenet_mp.types import TensorNCHW
@@ -19,16 +18,19 @@ class ReprojectionEncoder(BaseEncoder):
         TensorNTCHW with (batch_size, n_history_steps, input_channels, latent_height, latent_width)
     """
 
-    def __init__(
-        self,
-        source_latitudes: Sequence[float],
-        source_longitudes: Sequence[float],
-        target_latitudes: Sequence[float],
-        target_longitudes: Sequence[float],
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, project_to: str, **kwargs: Any) -> None:
         """Initialise a ReprojectionEncoder."""
         super().__init__(**kwargs)
+
+        # Name of the output data space to project to
+        self.project_to = project_to
+
+        # In order to avoid input/output latitudes and longitudes being recorded as
+        # model parameters, we set them later on
+        self.input_latitudes: list[float] = []
+        self.input_longitudes: list[float] = []
+        self.output_latitudes: list[float] = []
+        self.output_longitudes: list[float] = []
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: encode input space into latent space by splitting into patches.
@@ -41,3 +43,13 @@ class ReprojectionEncoder(BaseEncoder):
 
         """
         return x
+
+    def set_latlon(
+        self, name: str, latitudes: list[float], longitudes: list[float]
+    ) -> None:
+        if name == self.name:
+            self.input_latitudes = latitudes
+            self.input_longitudes = longitudes
+        if name == self.project_to:
+            self.output_latitudes = latitudes
+            self.output_longitudes = longitudes

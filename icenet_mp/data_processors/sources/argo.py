@@ -180,15 +180,9 @@ class ArgoSource(Source):
             },
         )
 
-        multi_field_list = load_one(
+        return load_one(
             "📂", self.context, [date.isoformat() for date in requested_dates], ds_out
         )
-        n_dates = len(multi_field_list) // len(self.param)
-        if n_dates != len(requested_dates):
-            msg = f"Expected {len(requested_dates)} dates, got {n_dates} dates"
-            raise ValueError(msg)
-
-        return multi_field_list
 
 
 def _fetch_argo_dataframe_with_retry(

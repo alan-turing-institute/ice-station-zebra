@@ -1,6 +1,8 @@
+import os
 from typing import Any
+import numpy as np
 
-from torch import nn
+from torch import nn, from_numpy
 from torch.nn.functional import sigmoid
 
 from icenet_mp.models.common import ResizingInterpolation
@@ -25,6 +27,11 @@ class NaiveLinearDecoder(BaseDecoder):
 
         # specify whether the output is bounded between 0 and 1
         self.bounded = bounded
+        
+        # load in the land mask and save it as a tensor
+        mask_dir = "../zebra_anemoi/data/preprocessing/samp-sicsouth-osisaf-25k-2017-2019-24h-v1/IceNetSIC/data/masks/south/masks/active_grid_cell_mask_01.npy"
+        mask_np = np.load(os.path.join(mask_dir))
+        self.register_buffer("active_gridcell_mask", from_numpy(mask_np).float(), persistent=False)
 
         # List of layers
         layers: list[nn.Module] = []
@@ -51,6 +58,11 @@ class NaiveLinearDecoder(BaseDecoder):
             TensorNCHW with (batch_size, output_channels, output_height, output_width)
 
         """
+        output = self.model(x)
+        
+        # set all values in the active grid cell mask to be zero
+        output = output * self.active_gridcell_mask.to(dtype=output.dtype)
+        
         if self.bounded:
-            return sigmoid(self.model(x))
-        return self.model(x)
+            return sigmoid(output)
+        return output

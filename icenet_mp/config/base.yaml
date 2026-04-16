@@ -12,5 +12,5 @@ defaults:
 base_path: ../base
 
 data:
-  land_mask_path: ${base_path}/data/preprocessing/samp-sicsouth-osisaf-25k-2017-2019-24h-v1/IceNetSIC/data/masks/south/masks/land_mask.npy
-
+  # land_mask_path: ${base_path}/data/preprocessing/samp-sicsouth-osisaf-25k-2017-2019-24h-v1/IceNetSIC/data/masks/south/masks/land_mask.npy
+  active_grid_cell_mask_dir: ${base_path}/data/preprocessing/samp-sicsouth-osisaf-25k-2017-2019-24h-v1/IceNetSIC/data/masks/south/masks

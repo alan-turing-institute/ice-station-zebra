@@ -74,6 +74,15 @@ class GeographicGrid(Geography):
         )
 
     @override
+    def mars_grid(self) -> tuple[float, float]:
+        north, west, south, east = self.mars_area()
+        lat_steps, lon_steps = self.shape()
+        return (
+            (north - south) / lat_steps,
+            (east - west) / lon_steps,
+        )
+
+    @override
     def resolution(self) -> str:
         return self.resolution_
 
@@ -91,10 +100,6 @@ class GeographicGrid(Geography):
 
     @override
     def grid_spec(self) -> None:
-        raise NotImplementedError()
-
-    @override
-    def mars_grid(self) -> None:
         raise NotImplementedError()
 
     @override

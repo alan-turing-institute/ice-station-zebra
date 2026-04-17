@@ -17,7 +17,11 @@ from anemoi.transform.filter import Filter
 from earthkit.data import Field
 from haversine import haversine_vector
 
-from icenet_mp.data_processors.geographic import GeographicField, GeographicGrid
+from icenet_mp.data_processors.geographic import (
+    GeographicField,
+    GeographicGrid,
+    grid_factory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,34 +29,12 @@ logger = logging.getLogger(__name__)
 class Reproject(Filter):
     """A filter to reproject fields to a new grid."""
 
-    output_geography: GeographicGrid
-
     def __init__(self, *, crs: str, resolution: str, shape: tuple[int, int]) -> None:
-        # Generate output grid
-        if crs == "EPSG:6932":
-            self.output_geography = self.epsg_6932_grid(resolution, *shape)
-        else:
-            raise ValueError(f"Unsupported output CRS: {crs}")
+        self.output_geography: GeographicGrid = grid_factory.create(
+            crs, resolution=resolution, shape=shape
+        )
         self.mapped_indices_h: np.ndarray[tuple[int, int]] | None = None
         self.mapped_indices_w: np.ndarray[tuple[int, int]] | None = None
-
-    def epsg_6932_grid(
-        self, resolution: str, h_size: int, w_size: int
-    ) -> GeographicGrid:
-        # Normalise the resolution
-        if (match := re.match(r"^([0-9p]+)([^0-9]+)$", resolution)) is None:
-            msg = f"Invalid resolution format: {resolution}"
-            raise ValueError(msg)
-        scale = float(match.group(1).replace("p", "."))
-        unit = match.group(2)
-        scale_m = scale * (1000 if unit in ("k", "km") else 1)
-        normalised_resolution = str(scale_m / 1000).replace(".", "p") + "km"
-        # Get grid positions in EPSG:6932
-        h_lim = scale_m * ((h_size - 1) / 2 if h_size % 2 == 0 else h_size // 2)
-        w_lim = scale_m * ((w_size - 1) / 2 if w_size % 2 == 0 else w_size // 2)
-        h_points = np.linspace(-h_lim, h_lim, h_size)
-        w_points = np.linspace(w_lim, -w_lim, h_size)
-        return GeographicGrid("EPSG:6932", normalised_resolution, h_points, w_points)
 
     def build_projection(
         self, data: ekd.FieldList

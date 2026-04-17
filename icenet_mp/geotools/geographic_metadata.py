@@ -65,10 +65,24 @@ class GeographicMetadata(Metadata):
         return self.metadata_.dump(**kwargs)
 
     @method_override
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        return self.metadata_.get(
-            key, default, astype=astype, raise_on_missing=raise_on_missing
-        )
+    def get(
+        self,
+        key,
+        default=None,
+        *,
+        astype: type | None = None,
+        raise_on_missing: bool = False,
+    ):
+        if raise_on_missing and key not in self.keys():
+            raise KeyError(f"Invalid key '{key}'")
+        result = self.metadata_.get(key, default)
+        if astype is None:
+            return result
+        try:
+            return astype(result)
+        except Exception as exc:
+            msg = f"Failed to convert metadata key '{key}' to type {astype}: {exc}"
+            raise ValueError(msg) from exc
 
     @method_override
     def index_keys(self) -> list[str]:

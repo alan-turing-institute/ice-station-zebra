@@ -50,6 +50,7 @@ class ActivationHookManager(Callback):
         output_dir: Directory for per-batch `.pt` files and a `metadata.json`.
         save_inputs: If True, also save the raw batch tensors alongside the
             activations.
+
     """
 
     BATCH_FILE_TEMPLATE = "batch_{batch_idx:05d}.pt"
@@ -102,9 +103,7 @@ class ActivationHookManager(Callback):
             raise ValueError(msg)
 
         # Reset rollout counter at the start of every outer forward pass.
-        self._handles.append(
-            self.model.register_forward_pre_hook(self._root_pre_hook)
-        )
+        self._handles.append(self.model.register_forward_pre_hook(self._root_pre_hook))
 
         # Increment rollout counter each time `processor.forward` runs.
         processor = getattr(self.model, "processor", None)
@@ -223,7 +222,9 @@ class ActivationHookManager(Callback):
         if self.save_inputs:
             payload["inputs"] = self._current_inputs
 
-        out_path = self.output_dir / self.BATCH_FILE_TEMPLATE.format(batch_idx=batch_idx)
+        out_path = self.output_dir / self.BATCH_FILE_TEMPLATE.format(
+            batch_idx=batch_idx
+        )
         torch.save(payload, out_path)
         logger.debug(
             "Saved activations for batch %d to %s (%d layers).",

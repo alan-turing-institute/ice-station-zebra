@@ -70,7 +70,7 @@ def evaluate(
             raise typer.BadParameter(msg)
 
         hook_manager = ActivationHookManager(
-            model=model.model, #maybe slightly confusing naming bere
+            model=model.model,  # maybe slightly confusing naming bere
             layer_paths=layers,
             output_dir=activations_output,
         )

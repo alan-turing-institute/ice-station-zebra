@@ -6,7 +6,7 @@ from typing import override as method_override
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 
-from .grid import GeographicGrid
+from .geographic_grid import GeographicGrid
 
 
 class GeographicMetadata(Metadata):

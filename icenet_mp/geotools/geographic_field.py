@@ -3,8 +3,8 @@ from typing import Any, cast
 from earthkit.data import Field
 from earthkit.data.core.metadata import Metadata
 
-from .grid import GeographicGrid
-from .metadata import GeographicMetadata
+from .geographic_grid import GeographicGrid
+from .geographic_metadata import GeographicMetadata
 
 
 class GeographicField(Field):

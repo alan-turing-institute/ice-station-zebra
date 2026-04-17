@@ -4,12 +4,12 @@ from typing import Any
 
 import numpy as np
 
-from .grid import GeographicGrid
+from .geographic_grid import GeographicGrid
 
 
 class GridFactory:
     def __init__(self):
-        self.builders: dict[str, Callable[..., GeographicGrid]] = {}
+        self.builders: dict[str, Callable[..., GeographicGrid]] = {}  # type: ignore[annotation-unchecked]
 
     def create(self, crs: str, **kwargs: Any) -> GeographicGrid:
         if not (builder := self.builders.get(crs)):

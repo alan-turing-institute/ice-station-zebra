@@ -1,13 +1,11 @@
 import logging
-import time
 from functools import cache
-from itertools import product
 from typing import Any
 
 import numpy as np
 import torch
-from haversine import haversine_vector
 
+from icenet_mp.geotools import nearest_neighbour_indices
 from icenet_mp.types import TensorNCHW
 
 from .base_encoder import BaseEncoder
@@ -80,62 +78,22 @@ class ReprojectionEncoder(BaseEncoder):
             msg = f"Number of output longitudes {len(self.output_longitudes)} does not match expected size from data space {self.data_space_out.shape}"
             raise ValueError(msg)
 
-        # Get all indices for each cell in the input grid
-        input_indices = list(
-            product(
-                range(self.data_space_in.shape[0]), range(self.data_space_in.shape[1])
-            )
-        )
-
         # Get lat/lon values for each cell in the input and output grids
-        input_latlons = np.array(
-            list(zip(self.input_latitudes, self.input_longitudes, strict=False)),
-            dtype=np.float32,
-        )
-        output_latlons = np.array(
-            list(zip(self.output_latitudes, self.output_longitudes, strict=False)),
-            dtype=np.float32,
-        )
-
-        # We record the time taken in reprojection as this can be slow
-        start = time.perf_counter()
-        logger.warning(
-            "Calculating reprojection from %d input grid points to %d output grid points...",
-            len(input_latlons),
-            len(output_latlons),
+        nn_indices_h, nn_indices_w = nearest_neighbour_indices(
+            np.array(
+                list(zip(self.input_latitudes, self.input_longitudes, strict=False)),
+                dtype=np.float32,
+            ),
+            np.array(
+                list(zip(self.output_latitudes, self.output_longitudes, strict=False)),
+                dtype=np.float32,
+            ),
         )
 
-        # We want to find the closest input grid point for each output grid point. If we
-        # try to fully vectorise the call, generating a single array of shape
-        # [data_space_out.area, data_space_in.area], then we will run out of memory.
-        # Instead we loop over the output points, using argmin to reduce to the closest
-        # source point for each output point. We then look up the source grid indices
-        # for that source point and store each of the height and width indices in an
-        # array of [data_space_out_h, data_space_out_w]. This allows easy application of
-        # the index lookup during the forward pass.
-        closest_src_point_indices = np.array(
-            [
-                input_indices[
-                    np.argmin(haversine_vector(input_latlons, output_latlon, comb=True))
-                ]
-                for output_latlon in output_latlons
-            ]
-        )  # [output_h * output_w, 2]
-        nn_indices_h = torch.tensor(
-            closest_src_point_indices[:, 0].reshape(self.data_space_out.shape),
-            dtype=torch.int,
-            device=device,
-        )  # [output_h, output_w]
-        nn_indices_w = torch.tensor(
-            closest_src_point_indices[:, 1].reshape(self.data_space_out.shape),
-            dtype=torch.int,
-            device=device,
-        )  # [output_h, output_w]
-        logger.info(
-            "Reprojection calculation took %.2f seconds", time.perf_counter() - start
+        return (
+            torch.tensor(nn_indices_h, dtype=torch.int, device=device),
+            torch.tensor(nn_indices_w, dtype=torch.int, device=device),
         )
-
-        return (nn_indices_h, nn_indices_w)
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:
         """Forward step: encode input space into latent space by splitting into patches.

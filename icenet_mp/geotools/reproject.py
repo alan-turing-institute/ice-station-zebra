@@ -9,10 +9,16 @@ logger = logging.getLogger(__name__)
 
 
 def nearest_neighbour_indices(
-    input_latlons: np.ndarray,
-    output_latlons: np.ndarray,
+    input_latlons: np.ndarray[tuple[int, int, int]],
+    output_latlons: np.ndarray[tuple[int, int, int]],
 ) -> tuple[np.ndarray[tuple[int, int]], np.ndarray[tuple[int, int]]]:
     """Calculate the nearest neighbour input cell for each cell in the output grid.
+
+    Args:
+        input_latlons: Array of shape [input_h, input_w, 2] containing the latitudes and
+            longitudes of each cell in the input grid.
+        output_latlons: Array of shape [output_h, output_w, 2] containing the latitudes
+            and longitudes of each cell in the output grid.
 
     Returns:
         Tuple of (nn_indices_h, nn_indices_w) where each is a tensor of shape
@@ -24,16 +30,14 @@ def nearest_neighbour_indices(
     start = time.perf_counter()
 
     # Start by validating the shapes of the input and output lat/lon arrays
-    if input_latlons.ndim < 2:
-        raise ValueError(
-            f"Input lat/lons must have at least 2 dimensions, but got shape {input_latlons.shape}"
-        )
-    input_h, input_w = int(input_latlons.shape[-2]), int(input_latlons.shape[-1])
-    if output_latlons.ndim < 2:
-        raise ValueError(
-            f"Output lat/lons must have at least 2 dimensions, but got shape {output_latlons.shape}"
-        )
-    output_h, output_w = int(output_latlons.shape[-2]), int(output_latlons.shape[-1])
+    if input_latlons.ndim != 3 or input_latlons.shape[2] != 2:
+        msg = f"Input lat/lons must have shape [input_h, input_w, 2], but got shape {input_latlons.shape}"
+        raise ValueError(msg)
+    input_h, input_w = int(input_latlons.shape[0]), int(input_latlons.shape[1])
+    if output_latlons.ndim != 3 or output_latlons.shape[2] != 2:
+        msg = f"Output lat/lons must have shape [output_h, output_w, 2], but got shape {output_latlons.shape}"
+        raise ValueError(msg)
+    output_h, output_w = int(output_latlons.shape[0]), int(output_latlons.shape[1])
     logger.warning(
         "Calculating reprojection from input grid (%d x %d) to output grid (%d x %d)...",
         input_h,

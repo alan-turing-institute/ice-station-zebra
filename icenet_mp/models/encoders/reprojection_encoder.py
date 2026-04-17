@@ -83,11 +83,11 @@ class ReprojectionEncoder(BaseEncoder):
             np.array(
                 list(zip(self.input_latitudes, self.input_longitudes, strict=False)),
                 dtype=np.float32,
-            ),
+            ).reshape(*self.data_space_in.shape, 2),
             np.array(
                 list(zip(self.output_latitudes, self.output_longitudes, strict=False)),
                 dtype=np.float32,
-            ),
+            ).reshape(*self.data_space_out.shape, 2),
         )
 
         return (

@@ -23,7 +23,7 @@ from icenet_mp.geotools import (
 logger = logging.getLogger(__name__)
 
 
-class Reproject(Filter):
+class ReprojectFilter(Filter):
     """A filter to reproject fields to a new grid."""
 
     def __init__(self, *, crs: str, resolution: str, shape: tuple[int, int]) -> None:

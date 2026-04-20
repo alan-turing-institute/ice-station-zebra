@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+import numpy as np
 from earthkit.data import Field
 from earthkit.data.core.metadata import Metadata
 
@@ -26,9 +27,6 @@ class GeographicField(Field):
     def _values(self, dtype: Any | None = None) -> Any:  # noqa: ANN401
         return self._field._values(dtype)
 
-    def message(self) -> bytes:
-        return self._field.message()
-
     def clone(
         self,
         *,
@@ -40,3 +38,20 @@ class GeographicField(Field):
             self._field.clone(values=values, metadata=metadata, **kwargs),
             self.geo_metadata.geography,
         )
+
+    def grid_points(self) -> tuple[np.ndarray, np.ndarray]:
+        return self._field.grid_points()
+
+    def message(self) -> bytes:
+        return self._field.message()
+
+    def to_latlon(self, flatten: bool = True) -> dict[str, Any]:  # noqa: FBT001, FBT002
+        return self._field.to_latlon(flatten=flatten)
+
+    def to_numpy(
+        self,
+        flatten: bool = False,  # noqa: FBT001, FBT002
+        dtype: type | None = None,
+        index: int | None = None,
+    ) -> np.ndarray[Any]:
+        return self._field.to_numpy(flatten=flatten, dtype=dtype, index=index)

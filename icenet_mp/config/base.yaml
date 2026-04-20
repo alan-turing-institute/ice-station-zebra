@@ -11,8 +11,8 @@ defaults:
 
 base_path: ../base
 
-seed: 555        
+seed: 555
 
 train:
   trainer:
-    deterministic: true   
+    deterministic: true

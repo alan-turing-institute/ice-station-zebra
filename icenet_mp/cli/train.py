@@ -6,6 +6,7 @@ from omegaconf import DictConfig
 from icenet_mp.model_service import ModelService
 
 from .hydra import hydra_adaptor
+from lightning import seed_everything
 
 # Create the typer app
 training_cli = typer.Typer(help="Train models")
@@ -17,9 +18,15 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model."""
+    if seed := config.get("seed", None):
+        seed_everything(seed, workers=True)
+        print(f"Set random seed to {seed} for reproducibility.")
     model = ModelService.from_config(config)
     model.train()
 
 
 if __name__ == "__main__":
     training_cli()
+
+
+

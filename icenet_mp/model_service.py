@@ -28,7 +28,7 @@ class ModelService:
         """Initialize the model service."""
         self.config_ = config
         if seed := config.get("seed", None):
-            seed_everything(seed, workers=True)
+            seed_everything(int(seed), workers=True)
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
         self.trainer_: Trainer | None = None

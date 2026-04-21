@@ -19,6 +19,7 @@ from icenet_mp.geotools import (
     grid_factory,
     nearest_neighbour_indices,
 )
+from icenet_mp.types import ArrayHW, ArrayHWV
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +31,16 @@ class ReprojectFilter(Filter):
         self.output_geography: GeographicGrid = grid_factory.create(
             crs, resolution=resolution, shape=shape
         )
-        self.mapped_indices_h: np.ndarray[tuple[int, int]] | None = None
-        self.mapped_indices_w: np.ndarray[tuple[int, int]] | None = None
+        self.mapped_indices_h: ArrayHW | None = None
+        self.mapped_indices_w: ArrayHW | None = None
 
-    def build_projection(
-        self, data: ekd.FieldList
-    ) -> tuple[np.ndarray[tuple[int, int]], np.ndarray[tuple[int, int]]]:
+    def build_projection(self, data: ekd.FieldList) -> tuple[ArrayHW, ArrayHW]:
         """Build the reprojection mapping from the input data to the output geography."""
 
         # Get the input grid from the data
         if field := next(field for field in data if isinstance(field, Field)):
             lats, lons = field.grid_points()
-            input_latlons = np.stack(
+            input_latlons: ArrayHWV = np.stack(
                 (
                     np.clip(lats, -90, 90).reshape(field.shape),
                     np.clip(lons, -180, 180).reshape(field.shape),
@@ -52,7 +51,7 @@ class ReprojectFilter(Filter):
             raise ValueError("No latitudes/longitudes were found in the input data.")
 
         # Get the output grid from the output geography
-        output_latlons = np.stack(
+        output_latlons: ArrayHWV = np.stack(
             (self.output_geography.latitudes(), self.output_geography.longitudes()),
             axis=-1,
         )

@@ -5,13 +5,14 @@ from itertools import product
 import numpy as np
 from haversine import haversine_vector
 
+from icenet_mp.types.typedefs import ArrayHW, ArrayHWV
+
 logger = logging.getLogger(__name__)
 
 
 def nearest_neighbour_indices(
-    input_latlons: np.ndarray[tuple[int, int, int]],
-    output_latlons: np.ndarray[tuple[int, int, int]],
-) -> tuple[np.ndarray[tuple[int, int]], np.ndarray[tuple[int, int]]]:
+    input_latlons: ArrayHWV, output_latlons: ArrayHWV
+) -> tuple[ArrayHW, ArrayHW]:
     """Calculate the nearest neighbour input cell for each cell in the output grid.
 
     Args:

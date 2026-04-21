@@ -14,6 +14,7 @@ from .simple_datatypes import (
 from .typedefs import (
     ArrayCHW,
     ArrayHW,
+    ArrayHWV,
     ArrayTCHW,
     ArrayTHW,
     DiffMode,
@@ -30,6 +31,7 @@ __all__ = [
     "AnemoiLoadArgs",
     "ArrayCHW",
     "ArrayHW",
+    "ArrayHWV",
     "ArrayTCHW",
     "ArrayTHW",
     "BetaSchedule",

@@ -1,7 +1,6 @@
 import logging
 
 import typer
-from lightning import seed_everything
 from omegaconf import DictConfig
 
 from icenet_mp.model_service import ModelService
@@ -18,9 +17,6 @@ log = logging.getLogger(__name__)
 @hydra_adaptor
 def train(config: DictConfig) -> None:
     """Train a model."""
-    if seed := config.get("seed", None):
-        seed_everything(seed, workers=True)
-
     model = ModelService.from_config(config)
     model.train()
 

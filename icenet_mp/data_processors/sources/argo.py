@@ -12,6 +12,7 @@ from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
 from argopy.errors import NoData
 from earthkit.data import FieldList
+from fsspec import FSTimeoutError
 from haversine import Unit, haversine_vector
 from pandas import DataFrame
 
@@ -207,14 +208,13 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             fetcher = DataFetcher().region(region + time_window)
-        except Exception as exc:
+            msg = f"Successfully fetched data from ERDDAP on attempt {attempt}"
+            logger.debug(msg)
+            return fetcher.to_dataframe()
+        except FSTimeoutError as exc:
+            # Retry on timeout, with exponential backoff
             logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
-            error_str = str(exc)
-            is_500 = "500" in error_str
-            is_503 = "503" in error_str
-
-            # Retry on 503 or 500 errors, with exponential backoff
-            if (is_503 or is_500) and attempt < max_retries:
+            if attempt < max_retries:
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
 
                 msg = (
@@ -224,28 +224,23 @@ def _fetch_argo_dataframe_with_retry(
                 logger.warning(msg)
                 time.sleep(backoff)
                 continue
-
             # Otherwise raise an exception
-            if is_500:
-                msg = f"ERDDAP data server failed with 500 after {max_retries} retries. Error: {error_str}"
-                raise RuntimeError(msg) from exc
-            if is_503:
-                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
-                raise RuntimeError(msg) from exc
+            msg = f"ERDDAP data server failed after {attempt} retries. Error: {exc!s}"
+            raise RuntimeError(msg) from exc
+        except (FileNotFoundError, NoData):
+            logger.warning(
+                "Failed to load data for %s between %s and %s.",
+                region,
+                time_window[0].isoformat(),
+                time_window[1].isoformat(),
+            )
+        except Exception as exc:
+            logger.error(
+                "Unexpected error while fetching Argo data: %s: %s",
+                type(exc),
+                exc,
+            )
             raise
-        else:
-            # If we successfully fetched the data, attempt to return it as a DataFrame
-            try:
-                msg = f"Successfully fetched data from ERDDAP on attempt {attempt}"
-                logger.debug(msg)
-                return fetcher.to_dataframe()
-            except (FileNotFoundError, NoData):
-                logger.warning(
-                    "Failed to load data for %s between %s and %s.",
-                    region,
-                    time_window[0].isoformat(),
-                    time_window[1].isoformat(),
-                )
 
     # Return empty DataFrame if file not found (e.g., no data for that region/time)
     return DataFrame()

@@ -46,7 +46,7 @@
 | icenet\_mp/metrics/icenet\_accuracy.py                     |       18 |       11 |     39% |18-23, 31-41, 47 |
 | icenet\_mp/metrics/sie\_error.py                           |       17 |       10 |     41% |27-31, 51-55, 59 |
 | icenet\_mp/metrics/sie\_error\_abs.py                      |       26 |        2 |     92% |    70, 76 |
-| icenet\_mp/model\_service.py                               |      124 |       55 |     56% |75-76, 91-93, 113-114, 128-129, 135-153, 158-177, 181, 188, 200-236, 241-252, 260-273 |
+| icenet\_mp/model\_service.py                               |      126 |       56 |     56% |31, 77-78, 93-95, 115-116, 130-131, 137-155, 160-180, 184, 191, 203-239, 244-255, 263-276 |
 | icenet\_mp/models/\_\_init\_\_.py                          |        5 |        0 |    100% |           |
 | icenet\_mp/models/base\_model.py                           |       60 |        0 |    100% |           |
 | icenet\_mp/models/common/\_\_init\_\_.py                   |       13 |        0 |    100% |           |
@@ -106,7 +106,7 @@
 | icenet\_mp/visualisations/range\_check.py                  |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                             |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                              |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                  | **3541** | **1009** | **72%** |           |
+| **TOTAL**                                                  | **3543** | **1010** | **71%** |           |
 
 
 ## Setup coverage badge

@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from torch import nn
 
 from icenet_mp.geotools import nearest_neighbour_indices
 from icenet_mp.types import TensorNCHW
@@ -43,6 +44,9 @@ class ReprojectionEncoder(BaseEncoder):
         # Add a cached method for calculating nearest neighbours
         # Adding this as a decorator would lead to memory leaks
         self.cached_nearest_neighbours = cache(self.nearest_neighbours)
+
+        # Normalise the input across height and width separately for each channel
+        self.norm = nn.BatchNorm2d(self.data_space_in.channels)
 
     def nearest_neighbours(
         self, device: torch.device
@@ -105,7 +109,7 @@ class ReprojectionEncoder(BaseEncoder):
             TensorNCHW with (batch_size, latent_channels, latent_height, latent_width)
 
         """
-        return x[:, :, *self.cached_nearest_neighbours(x.device)]
+        return self.norm(x[:, :, *self.cached_nearest_neighbours(x.device)])
 
     def set_latlon(
         self, name: str, latitudes: list[float], longitudes: list[float]

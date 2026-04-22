@@ -231,7 +231,7 @@ class DataDownloader:
           
         # create land mask unless it already exists and overwrite is False
         if (self.path_masks / f"land_mask.npy").exists() and not overwrite:
-            logger.info("Land mask already exists, skipping mask creation.")
+            logger.info("Land mask already exists, skipping creation.")
         else:     
             if overwrite:
                 (self.path_masks / "land_mask.npy").unlink() 
@@ -240,10 +240,11 @@ class DataDownloader:
             land_mask = 1 - (land_mask > 0).astype(np.uint8)  # convert to binary mask
             land_mask = land_mask.reshape(ds_sf.field_shape[-2:]) # reshape to 2D grid
             np.save(self.path_masks / "land_mask.npy", land_mask)  # save the land mask for later use
+            logger.info("Land mask created and saved.")
         
         # create active mask unless it already exists and overwrite is False
         if (self.path_masks / f"active_mask.npy").exists() and not overwrite:
-            logger.info("Active mask already exists, skipping mask creation.")
+            logger.info("Active mask already exists, skipping creation.")
         else:
             if overwrite:
                 (self.path_masks / "active_mask.npy").unlink()
@@ -252,5 +253,6 @@ class DataDownloader:
             active_mask = active_mask.reshape(ds_sf.field_shape[-2:])  # reshape to 2D grid
             active_mask = active_mask + land_mask  # add land mask to active mask to see all non-active grid cells
             np.save(self.path_masks / "active_mask.npy", active_mask)  # save the active mask for later use
-            
+            logger.info("Active mask created and saved.")
+
         return

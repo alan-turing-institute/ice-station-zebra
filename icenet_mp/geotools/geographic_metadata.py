@@ -73,9 +73,10 @@ class GeographicMetadata(Metadata):
         astype: type | None = None,
         raise_on_missing: bool = False,
     ):
-        if raise_on_missing and key not in self.keys():
-            raise KeyError(f"Invalid key '{key}'")
-        result = self.metadata_.get(key, default)
+        kwargs = {}
+        if not raise_on_missing:
+            kwargs["default"] = default
+        result = self.metadata_.get(key, **kwargs)
         if astype is None:
             return result
         try:

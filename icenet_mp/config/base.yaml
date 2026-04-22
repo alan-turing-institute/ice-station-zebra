@@ -10,3 +10,5 @@ defaults:
   - _self_
 
 base_path: ../base
+
+seed: 555

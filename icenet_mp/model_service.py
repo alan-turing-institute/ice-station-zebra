@@ -4,7 +4,7 @@ from typing import cast
 
 import hydra
 import torch
-from lightning import Callback, Trainer
+from lightning import Callback, Trainer, seed_everything
 from lightning.fabric.utilities import suggested_max_num_workers
 from lightning.pytorch.callbacks import ModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
@@ -23,6 +23,8 @@ class ModelService:
     def __init__(self, config: DictConfig) -> None:
         """Initialize the model service."""
         self.config_ = config
+        if seed := config.get("seed", None):
+            seed_everything(int(seed), workers=True)
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
 
@@ -177,6 +179,7 @@ class ModelService:
                 dict(
                     {
                         "callbacks": extra_callbacks,
+                        "deterministic": self.config.get("seed", None) is not None,
                         "logger": extra_loggers,
                     },
                     **self.config["train"]["trainer"],

@@ -5,10 +5,11 @@ from pathlib import Path
 import typer
 from anemoi.datasets.commands.finalise import Finalise
 from anemoi.datasets.commands.init import Init
-from anemoi.datasets.commands.inspect import InspectZarr
+from anemoi.datasets.commands.inspect import InspectZarr, open_dataset
 from anemoi.datasets.commands.load import Load
 from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from omegaconf import DictConfig, OmegaConf
+from wandb.util import np
 from zarr.core import Array as ZarrArray
 from zarr.errors import PathNotFoundError
 
@@ -36,6 +37,7 @@ class DataDownloader:
         _data_path = Path(config["base_path"]).resolve() / "data"
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
         self.path_preprocessor = _data_path / "preprocessing"
+        self.path_masks = self.path_preprocessor / "masks" / name
         # Note that Anemoi 'forcings' need to be escaped with `\${}` to avoid being resolved here
         self.config: DictConfig = OmegaConf.to_object(config["data"]["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
@@ -123,6 +125,9 @@ class DataDownloader:
             )
         )
         logger.info("Finalised dataset %s at %s.", self.name, self.path_dataset)
+        
+        # create active grid cell and land masks for the SSMIS dataset
+        self.create_masks()
 
     def initialise(self) -> None:
         """Initialise an Anemoi dataset."""
@@ -207,3 +212,41 @@ class DataDownloader:
             )
             raise typer.Exit(1) from exc
         return (download_in_progress, download_complete, statistics_ready)
+    
+    def create_masks(self, *, overwrite: bool) -> None:
+        """Download the land and active grid cell masks for the SSMIS dataset."""
+        # if there is an SSMIS dataset, create the masks
+        ssmis = [d for d in self.config["data"]["datasets"] if d.rfind("ssmis") != -1]
+        if len(ssmis) == 0:
+            logger.info("No SSMIS dataset found, skipping mask creation.")
+            return
+
+        zarr_path = f"../../zebra_anemoi/data/anemoi/{ssmis}.zarr"
+
+        ds_sf = open_dataset(zarr_path, select="status_flag")
+        shape = ds_sf.shape
+        dates = ds_sf.dates
+        
+        status_flag = np.array(ds_sf).astype(np.uint8).reshape(*shape)
+          
+        # create land mask unless it already exists and overwrite is False
+        if (self.path_masks / f"land_mask.npy").exists() and not overwrite:
+            logger.info("Land mask already exists, skipping mask creation.")
+        else:     
+            binary = np.unpackbits(status_flag, axis=-1).reshape(*shape, 8)
+            land_mask = np.squeeze(binary[..., [7]]).sum(axis=0)
+            land_mask = 1 - (land_mask > 0).astype(np.uint8)  # convert to binary mask
+            land_mask = land_mask.reshape(ds_sf.field_shape[-2:]) # reshape to 2D grid
+            np.save(f"land_mask_{self.name}.npy", land_mask)  # save the land mask for later use
+        
+        # create active mask unless it already exists and overwrite is False
+        if (self.path_masks / f"active_mask.npy").exists() and not overwrite:
+            logger.info("Active mask already exists, skipping mask creation.")
+        else:
+            active_mask = np.squeeze(binary[..., [0]]).sum(axis=0) >= dates.shape[0]  # if any time step is active, consider the grid cell active
+            active_mask = 1 - (active_mask > 0).astype(np.uint8)  # convert to binary mask
+            active_mask = active_mask.reshape(ds_sf.field_shape[-2:])  # reshape to 2D grid
+            active_mask = active_mask + land_mask  # add land mask to active mask to see all non-active grid cells
+            np.save(f"active_mask_{self.name}.npy", active_mask)  # save the active mask for later use
+            
+        return

@@ -45,6 +45,20 @@ def inspect(
         logger.info("Working on %s.", downloader.name)
         downloader.inspect(statistics=statistics)
 
+@datasets_cli.command("masks")
+@hydra_adaptor
+def masks(
+    config: DictConfig,
+    *,
+    overwrite: Annotated[
+        bool, typer.Option(help="Specify whether to overwrite existing datasets")
+    ] = False,
+) -> None:
+    """Create land / active grid cell masks"""
+    factory = DataDownloaderFactory(config)
+    for downloader in factory.downloaders:
+        logger.info("Working on %s.", downloader.name)
+        downloader.create_masks(overwrite=overwrite)
 
 if __name__ == "__main__":
     datasets_cli()

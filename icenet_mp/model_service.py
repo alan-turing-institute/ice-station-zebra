@@ -104,6 +104,12 @@ class ModelService:
                 checkpoint_path=checkpoint_path
             )
 
+        # Set latitudes and longitudes for models that that support them
+        if isinstance(builder.model, SupportsLatLon):
+            longitudes_dict = builder.data_module.longitudes
+            for name, latitudes in builder.data_module.latitudes.items():
+                builder.model.set_latlon(name, latitudes, longitudes_dict[name])
+
         return builder
 
     @property

@@ -47,7 +47,7 @@ class ReprojectionEncoder(BaseEncoder):
     def nearest_neighbours(
         self, device: torch.device
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Calculate the nearest neighbour input cell for each cell in the output grid.
+        """Determine the nearest neighbour input cell for each cell in the output grid.
 
         Returns:
             Tuple of (nn_indices_h, nn_indices_w) where each is a tensor of shape

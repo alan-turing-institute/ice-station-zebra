@@ -1,4 +1,5 @@
 import logging
+import os
 from collections.abc import Iterable
 from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, cast
@@ -29,6 +30,9 @@ class ModelService:
         self.config_ = config
         if seed := config.get("seed", None):
             seed_everything(int(seed), workers=True)
+            torch.use_deterministic_algorithms(True, warn_only=True)
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+        
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
         self.trainer_: Trainer | None = None
@@ -168,6 +172,7 @@ class ModelService:
                             "callbacks": self.extra_callbacks_,
                             "logger": self.extra_loggers_,
                             "deterministic": "warn" if self.config.get("seed", None) is not None else False,
+                            # "deterministic": self.config.get("seed", None) is not None,
                         },
                         **self.config["train"]["trainer"],
                     )

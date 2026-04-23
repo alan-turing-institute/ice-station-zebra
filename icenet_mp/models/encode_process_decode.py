@@ -29,17 +29,21 @@ class EncodeProcessDecode(BaseModel):
 
         # Add one encoder per dataset
         # We store this as a list to ensure consistent ordering
-        self.encoders: list[BaseEncoder] = [
-            hydra.utils.instantiate(
-                dict(encoders[input_space.name])
-                | {
-                    "data_space_in": input_space,
-                    "latent_space": encoders["latent_space"],
-                    "n_history_steps": self.n_history_steps,
-                }
-            )
-            for input_space in self.input_spaces
-        ]
+        try:
+            self.encoders: list[BaseEncoder] = [
+                hydra.utils.instantiate(
+                    dict(encoders[input_space.name])
+                    | {
+                        "data_space_in": input_space,
+                        "latent_space": encoders["latent_space"],
+                        "n_history_steps": self.n_history_steps,
+                    }
+                )
+                for input_space in self.input_spaces
+            ]
+        except KeyError as exc:
+            msg = f"Error instantiating encoders: {exc}. Please ensure that encoders are specified for all input spaces: {self.input_spaces}"
+            raise ValueError(msg) from exc
 
         # Check that all encoders have the same output shape
         encoder_output_shapes = {

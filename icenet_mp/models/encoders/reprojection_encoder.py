@@ -95,8 +95,8 @@ class ReprojectionEncoder(BaseEncoder):
         )
 
         return (
-            torch.tensor(nn_indices_h, dtype=torch.int, device=device),
-            torch.tensor(nn_indices_w, dtype=torch.int, device=device),
+            torch.tensor(nn_indices_h, dtype=torch.long, device=device),
+            torch.tensor(nn_indices_w, dtype=torch.long, device=device),
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:

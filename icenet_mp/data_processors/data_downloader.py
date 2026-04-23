@@ -126,7 +126,7 @@ class DataDownloader:
             )
         )
         logger.info("Finalised dataset %s at %s.", self.name, self.path_dataset)
-        
+
         # create active grid cell and land masks for the SSMIS dataset
         self.create_masks(overwrite=self.overwrite)
 
@@ -213,46 +213,58 @@ class DataDownloader:
             )
             raise typer.Exit(1) from exc
         return (download_in_progress, download_complete, statistics_ready)
-    
+
     def create_masks(self, *, overwrite: bool) -> None:
         """Download the land and active grid cell masks for the SSMIS dataset."""
         # if there is an SSMIS dataset, create the masks
         if self.name.rfind("ssmis") == -1:
             logger.info("Not SSMIS dataset, skipping mask creation.")
             return
-        
+
         self.path_masks.mkdir(parents=True, exist_ok=True)
 
         ds_sf = open_dataset(self.path_dataset, select="status_flag")
         shape = ds_sf.shape
         dates = ds_sf.dates
-        
+
         status_flag = np.array(ds_sf).astype(np.uint8).reshape(*shape)
-          
+
         # create land mask unless it already exists and overwrite is False
-        if (self.path_masks / f"land_mask.npy").exists() and not overwrite:
+        if (self.path_masks / "land_mask.npy").exists() and not overwrite:
             logger.info("Land mask already exists, skipping creation.")
-        else:     
-            if overwrite and (self.path_masks / f"land_mask.npy").exists():
-                (self.path_masks / "land_mask.npy").unlink() 
+        else:
+            if overwrite and (self.path_masks / "land_mask.npy").exists():
+                (self.path_masks / "land_mask.npy").unlink()
             binary = np.unpackbits(status_flag, axis=-1).reshape(*shape, 8)
             land_mask = np.squeeze(binary[..., [7]]).sum(axis=0)
             land_mask = 1 - (land_mask > 0).astype(np.uint8)  # convert to binary mask
-            land_mask = land_mask.reshape(ds_sf.field_shape[-2:]) # reshape to 2D grid
-            np.save(self.path_masks / "land_mask.npy", land_mask)  # save the land mask for later use
+            land_mask = land_mask.reshape(ds_sf.field_shape[-2:])  # reshape to 2D grid
+            np.save(
+                self.path_masks / "land_mask.npy", land_mask
+            )  # save the land mask for later use
             logger.info("Land mask created and saved.")
-        
+
         # create active mask unless it already exists and overwrite is False
-        if (self.path_masks / f"active_mask.npy").exists() and not overwrite:
+        if (self.path_masks / "active_mask.npy").exists() and not overwrite:
             logger.info("Active mask already exists, skipping creation.")
         else:
-            if overwrite and (self.path_masks / f"active_mask.npy").exists():
+            if overwrite and (self.path_masks / "active_mask.npy").exists():
                 (self.path_masks / "active_mask.npy").unlink()
-            active_mask = np.squeeze(binary[..., [0]]).sum(axis=0) >= dates.shape[0]  # if any time step is active, consider the grid cell active
-            active_mask = 1 - (active_mask > 0).astype(np.uint8)  # convert to binary mask
-            active_mask = active_mask.reshape(ds_sf.field_shape[-2:])  # reshape to 2D grid
-            active_mask = active_mask + land_mask  # add land mask to active mask to see all non-active grid cells
-            np.save(self.path_masks / "active_mask.npy", active_mask)  # save the active mask for later use
+            active_mask = (
+                np.squeeze(binary[..., [0]]).sum(axis=0) >= dates.shape[0]
+            )  # if any time step is active, consider the grid cell active
+            active_mask = 1 - (active_mask > 0).astype(
+                np.uint8
+            )  # convert to binary mask
+            active_mask = active_mask.reshape(
+                ds_sf.field_shape[-2:]
+            )  # reshape to 2D grid
+            active_mask = (
+                active_mask + land_mask
+            )  # add land mask to active mask to see all non-active grid cells
+            np.save(
+                self.path_masks / "active_mask.npy", active_mask
+            )  # save the active mask for later use
             logger.info("Active mask created and saved.")
 
         return

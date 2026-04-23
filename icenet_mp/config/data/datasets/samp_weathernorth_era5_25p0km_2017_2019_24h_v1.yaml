@@ -49,7 +49,7 @@ samp-weathernorth-era5-25p0km-2017-2019-24h-v2:
             - cos_julian_day
             - insolation
             - sin_julian_day
-            template: \${input.join.0.mars}
+            template: \${input.pipe.0.join.0.mars}
       # Reproject to EASE2 25km grid
       - reproject:
           crs: "EPSG:6931"

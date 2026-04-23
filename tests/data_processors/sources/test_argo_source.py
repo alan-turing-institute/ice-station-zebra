@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+from anemoi.datasets.create.input import FieldContext
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
@@ -16,6 +17,13 @@ from icenet_mp.data_processors.sources.argo import _fetch_argo_dataframe_with_re
 class TestArgoSource:
     """Test suite for ArgoSource class."""
 
+    context = FieldContext(
+        argument=None,
+        order_by="none",
+        flatten_grid=False,
+        remapping={},
+        use_grib_paramid=False,
+    )
     dates = GroupOfDates(
         [datetime(2020, 1, day) for day in range(1, 4)],
         provider=DatesProvider.from_config(
@@ -70,12 +78,12 @@ class TestArgoSource:
             )
             mp.setattr("icenet_mp.data_processors.sources.argo.load_one", mock_load_one)
 
-            tmp_source = ArgoSource(
-                context={},
+            source = ArgoSource(
+                context=self.context,
                 area="20/30/0/40",
                 param=["TEMP"],
             )
-            result = tmp_source.execute(date_group=self.dates)
+            result = source.execute(dates=self.dates)
 
         # DataFetcher instantiated once per requested date (inside retry helper)
         assert mock_datafetcher_cls.call_count == n_dates

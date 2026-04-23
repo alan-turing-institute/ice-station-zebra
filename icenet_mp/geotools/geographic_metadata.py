@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from datetime import datetime
+from datetime import datetime as datetime_
 from typing import Any
 
 from earthkit.data.core.metadata import Metadata
@@ -49,7 +49,7 @@ class GeographicMetadata(Metadata):
         return self.metadata_.as_namespace(namespace)
 
     @override_
-    def base_datetime(self) -> datetime:
+    def base_datetime(self) -> datetime_:
         return self.metadata_.base_datetime()
 
     @override_
@@ -57,7 +57,7 @@ class GeographicMetadata(Metadata):
         return self.metadata_.data_format()
 
     @override_
-    def datetime(self) -> dict[str, datetime]:
+    def datetime(self) -> dict[str, datetime_]:
         return self.metadata_.datetime()
 
     @override_
@@ -117,5 +117,5 @@ class GeographicMetadata(Metadata):
         )
 
     @override_
-    def valid_datetime(self) -> datetime:
+    def valid_datetime(self) -> datetime_:
         return self.metadata_.valid_datetime()

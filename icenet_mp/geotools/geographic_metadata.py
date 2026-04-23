@@ -2,7 +2,6 @@ from collections.abc import Iterable, Iterator
 from datetime import datetime
 from typing import Any
 
-from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from typing_extensions import override as override_
 
@@ -17,7 +16,7 @@ class GeographicMetadata(Metadata):
 
     @property
     @override_
-    def geography(self) -> Geography:
+    def geography(self) -> GeographicGrid:
         """Return the geography of the field."""
         return self.geography_
 

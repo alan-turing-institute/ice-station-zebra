@@ -54,7 +54,7 @@ class ModelService:
             _convert_="object",
         )
 
-        # Set latitudes and longitudes for models that that support them
+        # Set latitudes and longitudes for models that support them
         if isinstance(builder.model, SupportsLatLon):
             longitudes_dict = builder.data_module.longitudes
             for name, latitudes in builder.data_module.latitudes.items():

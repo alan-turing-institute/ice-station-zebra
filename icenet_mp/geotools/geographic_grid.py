@@ -66,7 +66,7 @@ class GeographicGrid(Geography):
     @override
     def mars_area(self) -> tuple[float, float, float, float]:
         lats = self.latitudes()
-        lons = self.latitudes()
+        lons = self.longitudes()
         return (
             float(np.max(lats)),
             float(np.min(lons)),

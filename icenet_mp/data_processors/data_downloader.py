@@ -44,6 +44,7 @@ class DataDownloader:
 
     def create(self, *, overwrite: bool) -> None:
         """Ensure that a single Anemoi dataset exists."""
+        self.overwrite = overwrite
         # If we are overwriting we delete any existing dataset
         if overwrite:
             logger.info(
@@ -127,7 +128,7 @@ class DataDownloader:
         logger.info("Finalised dataset %s at %s.", self.name, self.path_dataset)
         
         # create active grid cell and land masks for the SSMIS dataset
-        self.create_masks()
+        self.create_masks(overwrite=self.overwrite)
 
     def initialise(self) -> None:
         """Initialise an Anemoi dataset."""
@@ -216,7 +217,6 @@ class DataDownloader:
     def create_masks(self, *, overwrite: bool) -> None:
         """Download the land and active grid cell masks for the SSMIS dataset."""
         # if there is an SSMIS dataset, create the masks
-        # ssmis = [d for d in self.config["data"]["datasets"] if d.rfind("ssmis") != -1]
         if self.name.rfind("ssmis") == -1:
             logger.info("Not SSMIS dataset, skipping mask creation.")
             return
@@ -233,7 +233,7 @@ class DataDownloader:
         if (self.path_masks / f"land_mask.npy").exists() and not overwrite:
             logger.info("Land mask already exists, skipping creation.")
         else:     
-            if overwrite:
+            if overwrite and (self.path_masks / f"land_mask.npy").exists():
                 (self.path_masks / "land_mask.npy").unlink() 
             binary = np.unpackbits(status_flag, axis=-1).reshape(*shape, 8)
             land_mask = np.squeeze(binary[..., [7]]).sum(axis=0)
@@ -246,7 +246,7 @@ class DataDownloader:
         if (self.path_masks / f"active_mask.npy").exists() and not overwrite:
             logger.info("Active mask already exists, skipping creation.")
         else:
-            if overwrite:
+            if overwrite and (self.path_masks / f"active_mask.npy").exists():
                 (self.path_masks / "active_mask.npy").unlink()
             active_mask = np.squeeze(binary[..., [0]]).sum(axis=0) >= dates.shape[0]  # if any time step is active, consider the grid cell active
             active_mask = 1 - (active_mask > 0).astype(np.uint8)  # convert to binary mask

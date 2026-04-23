@@ -97,7 +97,7 @@ class SingleDataset(Dataset):
         """Return the frequency of the dataset."""
         return np.timedelta64(self.datasets[0].frequency)
 
-    @property
+    @cached_property
     def latitudes(self) -> list[float]:
         """Return the latitudes of the dataset."""
         reference_latitudes = self.datasets[0].latitudes
@@ -110,7 +110,7 @@ class SingleDataset(Dataset):
             raise ValueError(msg)
         return reference_latitudes.tolist()
 
-    @property
+    @cached_property
     def longitudes(self) -> list[float]:
         """Return the longitudes of the dataset."""
         reference_longitudes = self.datasets[0].longitudes

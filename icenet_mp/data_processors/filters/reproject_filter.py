@@ -51,19 +51,22 @@ class ReprojectFilter(Filter):
             used as the source.
 
         """
-        # Get the input grid from the data
-        if field := next(field for field in data if isinstance(field, Field)):
-            lats, lons = field.grid_points()
-            input_latlons: ArrayHWV = np.stack(
-                (
-                    np.clip(lats, -90, 90).reshape(field.shape),
-                    np.clip(lons, -180, 180).reshape(field.shape),
-                ),
-                axis=-1,
-            )
-        else:
+        # Check that we can load a field from the
+        if (
+            field := next((field for field in data if isinstance(field, Field)), None)
+        ) is None:
             msg = "No latitudes/longitudes were found in the input data."
             raise ValueError(msg)
+
+        # Get the input grid from the data
+        lats, lons = field.grid_points()
+        input_latlons: ArrayHWV = np.stack(
+            (
+                np.clip(lats, -90, 90).reshape(field.shape),
+                np.clip(lons, -180, 180).reshape(field.shape),
+            ),
+            axis=-1,
+        )
 
         # Get the output grid from the output geography
         output_latlons: ArrayHWV = np.stack(

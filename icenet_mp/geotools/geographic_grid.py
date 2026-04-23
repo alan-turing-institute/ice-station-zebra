@@ -1,11 +1,11 @@
 import logging
-from typing import Any, override
 
 import numpy as np
 from earthkit.data.core.geography import Geography
 from earthkit.data.utils.bbox import BoundingBox
 from numpy.typing import NDArray
 from pyproj import Transformer
+from typing_extensions import override
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import earthkit.data as ekd
 import numpy as np
@@ -31,7 +31,9 @@ class ReprojectFilter(Filter):
 
     # We cache at class level because each GroupOfDates in a dataset creates a new
     # instance of the filter.
-    nn_indices_cached: tuple[ArrayHW, ArrayHW] | None = None
+    nn_indices_cached: ClassVar[
+        dict[tuple[int, int, int, int], tuple[ArrayHW, ArrayHW]]
+    ] = {}
 
     def __init__(self, *, crs: str, resolution: str, shape: tuple[int, int]) -> None:
         """Initialise the filter with the output grid parameters."""
@@ -49,33 +51,39 @@ class ReprojectFilter(Filter):
             used as the source.
 
         """
-        if ReprojectFilter.nn_indices_cached is None:
-            # Get the input grid from the data
-            if field := next(field for field in data if isinstance(field, Field)):
-                lats, lons = field.grid_points()
-                input_latlons: ArrayHWV = np.stack(
-                    (
-                        np.clip(lats, -90, 90).reshape(field.shape),
-                        np.clip(lons, -180, 180).reshape(field.shape),
-                    ),
-                    axis=-1,
-                )
-            else:
-                msg = "No latitudes/longitudes were found in the input data."
-                raise ValueError(msg)
-
-            # Get the output grid from the output geography
-            output_latlons: ArrayHWV = np.stack(
-                (self.output_geography.latitudes(), self.output_geography.longitudes()),
+        # Get the input grid from the data
+        if field := next(field for field in data if isinstance(field, Field)):
+            lats, lons = field.grid_points()
+            input_latlons: ArrayHWV = np.stack(
+                (
+                    np.clip(lats, -90, 90).reshape(field.shape),
+                    np.clip(lons, -180, 180).reshape(field.shape),
+                ),
                 axis=-1,
             )
+        else:
+            msg = "No latitudes/longitudes were found in the input data."
+            raise ValueError(msg)
 
-            # Calculate the nearest neighbour mapping and cache it at class level
-            ReprojectFilter.nn_indices_cached = nearest_neighbour_indices(
+        # Get the output grid from the output geography
+        output_latlons: ArrayHWV = np.stack(
+            (self.output_geography.latitudes(), self.output_geography.longitudes()),
+            axis=-1,
+        )
+
+        # Ensure that nearest neighbour mapping is in the class level cache
+        shape_key = (
+            int(input_latlons.shape[0]),
+            int(input_latlons.shape[1]),
+            int(output_latlons.shape[0]),
+            int(output_latlons.shape[1]),
+        )
+        if shape_key not in ReprojectFilter.nn_indices_cached:
+            ReprojectFilter.nn_indices_cached[shape_key] = nearest_neighbour_indices(
                 input_latlons, output_latlons
             )
 
-        return ReprojectFilter.nn_indices_cached
+        return ReprojectFilter.nn_indices_cached[shape_key]
 
     def forward(self, data: ekd.FieldList | pd.DataFrame) -> ekd.FieldList:
         """Apply the forward regridding transformation.

@@ -1,5 +1,5 @@
-full-weathernorth-era5-25p0km-1979-2025-24h-v1:
-  name: full-weathernorth-era5-25p0km-1979-2025-24h-v1
+full-weathernorth-era5-25p0km-1979-2025-24h-v3:
+  name: full-weathernorth-era5-25p0km-1979-2025-24h-v3
   group_as: era5
   description: Weather from ERA5 for partial northern hemisphere
   attribution: ECMWF/C3S

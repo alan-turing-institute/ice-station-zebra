@@ -52,7 +52,7 @@ def masks(
     config: DictConfig,
     *,
     overwrite: Annotated[
-        bool, typer.Option(help="Specify whether to overwrite existing datasets")
+        bool, typer.Option(help="Specify whether to overwrite existing masks")
     ] = False,
 ) -> None:
     """Create land / active grid cell masks."""

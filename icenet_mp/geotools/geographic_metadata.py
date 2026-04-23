@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from datetime import datetime as Datetime
+from collections.abc import Iterable, Iterator
+from datetime import datetime
 from typing import Any
 
 from earthkit.data.core.geography import Geography
@@ -11,29 +11,34 @@ from .geographic_grid import GeographicGrid
 
 class GeographicMetadata(Metadata):
     def __init__(self, metadata: Metadata, geography: GeographicGrid) -> None:
+        """Initialise a GeographicMetadata from an EarthKit Metadata and a GeographicGrid."""
         self.metadata_ = metadata
         self.geography_ = geography
 
     @property
     @override_
     def geography(self) -> Geography:
+        """Return the geography of the field."""
         return self.geography_
 
     @override_
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
+        """Return True if the key is in the metadata."""
         return key in self.metadata_
 
     @override_
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator[str]:
         """Return an iterator over the metadata keys."""
         return iter(self.metadata_)
 
     @override_
     def __len__(self) -> int:
+        """Return the number of metadata keys."""
         return len(self.metadata_)
 
     @override_
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the GeographicMetadata, including the underlying metadata and geography."""
         return f"{self.__class__.__name__}({self.metadata_!r},{self.geography_!r})"
 
     @override_
@@ -41,11 +46,11 @@ class GeographicMetadata(Metadata):
         return self.metadata_._hide_internal_keys()
 
     @override_
-    def as_namespace(self, namespace=None) -> dict[str, Any]:
+    def as_namespace(self, namespace: str | None = None) -> dict[str, Any]:
         return self.metadata_.as_namespace(namespace)
 
     @override_
-    def base_datetime(self) -> Datetime:
+    def base_datetime(self) -> datetime:
         return self.metadata_.base_datetime()
 
     @override_
@@ -53,7 +58,7 @@ class GeographicMetadata(Metadata):
         return self.metadata_.data_format()
 
     @override_
-    def datetime(self) -> dict[str, Datetime]:
+    def datetime(self) -> dict[str, datetime]:
         return self.metadata_.datetime()
 
     @override_
@@ -61,18 +66,18 @@ class GeographicMetadata(Metadata):
         return self.metadata_.describe_keys()
 
     @override_
-    def dump(self, **kwargs):
+    def dump(self, **kwargs: Any) -> Any:
         return self.metadata_.dump(**kwargs)
 
     @override_
     def get(
         self,
-        key,
-        default=None,
+        key: str,
+        default: Any | None = None,
         *,
         astype: type | None = None,
         raise_on_missing: bool = False,
-    ):
+    ) -> Any:
         kwargs = {}
         if not raise_on_missing:
             kwargs["default"] = default
@@ -90,11 +95,11 @@ class GeographicMetadata(Metadata):
         return self.metadata_.index_keys()
 
     @override_
-    def items(self):
+    def items(self) -> Iterable[tuple[str, Any]]:
         return self.metadata_.items()
 
     @override_
-    def keys(self):
+    def keys(self) -> Iterable[str]:
         return self.metadata_.keys()
 
     @override_
@@ -106,9 +111,12 @@ class GeographicMetadata(Metadata):
         return self.metadata_.namespaces()
 
     @override_
-    def override(self, *args, **kwargs):
-        return self.metadata_.override(*args, **kwargs)
+    def override(self, *args: Any, **kwargs: Any) -> "GeographicMetadata":
+        return GeographicMetadata(
+            self.metadata_.override(*args, **kwargs),
+            self.geography_,
+        )
 
     @override_
-    def valid_datetime(self) -> Datetime:
+    def valid_datetime(self) -> datetime:
         return self.metadata_.valid_datetime()

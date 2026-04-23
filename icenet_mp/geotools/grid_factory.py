@@ -8,7 +8,8 @@ from .geographic_grid import GeographicGrid
 
 
 class GridFactory:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Factory for creating GeographicGrid instances from CRS and resolution parameters."""
         self.builders: dict[str, Callable[..., GeographicGrid]] = {}  # type: ignore[annotation-unchecked]
 
     def create(self, crs: str, **kwargs: Any) -> GeographicGrid:
@@ -22,11 +23,13 @@ class GridFactory:
 
 
 def epsg_6931_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
+    """Builder function to create a GeographicGrid for the EASE2 northern polar grid (EPSG:6931)."""
     normalised_resolution, h_points, w_points = ease2_grid_helper(resolution, *shape)
     return GeographicGrid("EPSG:6931", normalised_resolution, h_points, w_points)
 
 
 def epsg_6932_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
+    """Builder function to create a GeographicGrid for the EASE2 southern polar grid (EPSG:6932)."""
     normalised_resolution, h_points, w_points = ease2_grid_helper(resolution, *shape)
     return GeographicGrid("EPSG:6932", normalised_resolution, h_points, w_points)
 
@@ -34,6 +37,7 @@ def epsg_6932_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid
 def ease2_grid_helper(
     resolution: str, h_size: int, w_size: int
 ) -> tuple[str, np.ndarray[tuple[int]], np.ndarray[tuple[int]]]:
+    """Helper function to generate the grid points for an EASE2 grid given the resolution and shape."""
     # Normalise the resolution
     if (match := re.match(r"^([0-9p]+)([^0-9]+)$", resolution)) is None:
         msg = f"Invalid resolution format: {resolution}"

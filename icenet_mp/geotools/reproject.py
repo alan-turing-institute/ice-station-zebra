@@ -26,16 +26,17 @@ def nearest_neighbour_indices(
         [output_height, output_width] containing, for each output cell, the index in
         the H and W dimensions of the nearest neighbour input cell that should be
         used as the source.
+
     """
     # We record the time taken in reprojection as this can be slow
     start = time.perf_counter()
 
     # Start by validating the shapes of the input and output lat/lon arrays
-    if input_latlons.ndim != 3 or input_latlons.shape[2] != 2:
+    if input_latlons.ndim != 3 or input_latlons.shape[2] != 2:  # noqa: PLR2004
         msg = f"Input lat/lons must have shape [input_h, input_w, 2], but got shape {input_latlons.shape}"
         raise ValueError(msg)
     input_h, input_w = int(input_latlons.shape[0]), int(input_latlons.shape[1])
-    if output_latlons.ndim != 3 or output_latlons.shape[2] != 2:
+    if output_latlons.ndim != 3 or output_latlons.shape[2] != 2:  # noqa: PLR2004
         msg = f"Output lat/lons must have shape [output_h, output_w, 2], but got shape {output_latlons.shape}"
         raise ValueError(msg)
     output_h, output_w = int(output_latlons.shape[0]), int(output_latlons.shape[1])

@@ -1,6 +1,5 @@
 import logging
-from collections.abc import Sequence
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import earthkit.data as ekd
 import numpy as np
@@ -21,6 +20,9 @@ from icenet_mp.geotools import (
 )
 from icenet_mp.types import ArrayHW, ArrayHWV
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,6 +34,7 @@ class ReprojectFilter(Filter):
     nn_indices_cached: tuple[ArrayHW, ArrayHW] | None = None
 
     def __init__(self, *, crs: str, resolution: str, shape: tuple[int, int]) -> None:
+        """Initialise the filter with the output grid parameters."""
         self.output_geography: GeographicGrid = grid_factory.create(
             crs, resolution=resolution, shape=shape
         )
@@ -44,6 +47,7 @@ class ReprojectFilter(Filter):
             [output_height, output_width] containing, for each output cell, the index in
             the H and W dimensions of the nearest neighbour input cell that should be
             used as the source.
+
         """
         if ReprojectFilter.nn_indices_cached is None:
             # Get the input grid from the data
@@ -57,9 +61,8 @@ class ReprojectFilter(Filter):
                     axis=-1,
                 )
             else:
-                raise ValueError(
-                    "No latitudes/longitudes were found in the input data."
-                )
+                msg = "No latitudes/longitudes were found in the input data."
+                raise ValueError(msg)
 
             # Get the output grid from the output geography
             output_latlons: ArrayHWV = np.stack(
@@ -86,9 +89,11 @@ class ReprojectFilter(Filter):
         -------
         ekd.FieldList
             The transformed data.
+
         """
         if not isinstance(data, ekd.FieldList):
-            raise TypeError(f"Expected data to be a FieldList, but got {type(data)}.")
+            msg = f"Expected data to be a FieldList, but got {type(data)}."
+            raise TypeError(msg)
 
         return new_fieldlist_from_list(
             [
@@ -98,6 +103,6 @@ class ReprojectFilter(Filter):
                         GeographicField(field, self.output_geography)
                     ),
                 )
-                for field in cast(Sequence[Field], data)
+                for field in cast("Sequence[Field]", data)
             ]
         )

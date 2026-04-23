@@ -18,6 +18,7 @@ class GeographicGrid(Geography):
         x: np.ndarray[tuple[int]],
         y: np.ndarray[tuple[int]],
     ) -> None:
+        """Initialise a GeographicGrid with the given native CRS, resolution, and x/y grid points."""
         self.x_, self.y_ = np.meshgrid(x, y)
         self.resolution_ = resolution
         self.native_crs = native_crs
@@ -58,7 +59,7 @@ class GeographicGrid(Geography):
         return self.y_
 
     @override
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         north, west, south, east = self.mars_area()
         return BoundingBox(north=north, west=west, south=south, east=east)
 
@@ -92,16 +93,16 @@ class GeographicGrid(Geography):
 
     @override
     def _unique_grid_id(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @override
     def gridspec(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @override
     def grid_spec(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @override
     def projection(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError

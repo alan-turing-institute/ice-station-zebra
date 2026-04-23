@@ -167,7 +167,7 @@ class ModelService:
                         {
                             "callbacks": self.extra_callbacks_,
                             "logger": self.extra_loggers_,
-                            "deterministic": self.config.get("seed", None) is not None,
+                            "deterministic": "warn" if self.config.get("seed", None) is not None else False,
                         },
                         **self.config["train"]["trainer"],
                     )

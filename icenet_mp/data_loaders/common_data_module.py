@@ -84,7 +84,7 @@ class CommonDataModule(LightningDataModule):
             worker_init_fn=None,
         )
 
-    @property
+    @cached_property
     def hemisphere(self) -> Hemisphere:
         """Return the hemisphere of the dataset."""
         hemisphere: set[Hemisphere] = {
@@ -104,7 +104,7 @@ class CommonDataModule(LightningDataModule):
             for name, paths in self.dataset_groups.items()
         ]
 
-    @property
+    @cached_property
     def latitudes(self) -> dict[str, list[float]]:
         """Return the latitudes of the dataset."""
         return {
@@ -112,7 +112,7 @@ class CommonDataModule(LightningDataModule):
             for name, paths in self.dataset_groups.items()
         }
 
-    @property
+    @cached_property
     def longitudes(self) -> dict[str, list[float]]:
         """Return the longitudes of the dataset."""
         return {

@@ -1,5 +1,5 @@
-samp-weathernorth-era5-25p0km-2017-2019-24h-v2:
-  name: samp-weathernorth-era5-25p0km-2017-2019-24h-v2
+samp-weathernorth-era5-25p0km-2017-2019-24h-v1:
+  name: samp-weathernorth-era5-25p0km-2017-2019-24h-v1
   group_as: era5
   description: Weather from ERA5 for partial northern hemisphere
   attribution: ECMWF/C3S

@@ -2,6 +2,7 @@ import logging
 import shutil
 from pathlib import Path
 
+import numpy as np
 import typer
 from anemoi.datasets.commands.finalise import Finalise
 from anemoi.datasets.commands.init import Init
@@ -10,7 +11,6 @@ from anemoi.datasets.commands.load import Load
 from anemoi.datasets.data import open_dataset
 from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from omegaconf import DictConfig, OmegaConf
-from wandb.util import np
 from zarr.core import Array as ZarrArray
 from zarr.errors import PathNotFoundError
 

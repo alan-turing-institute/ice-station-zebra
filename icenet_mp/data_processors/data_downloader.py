@@ -5,8 +5,9 @@ from pathlib import Path
 import typer
 from anemoi.datasets.commands.finalise import Finalise
 from anemoi.datasets.commands.init import Init
-from anemoi.datasets.commands.inspect import InspectZarr, open_dataset
+from anemoi.datasets.commands.inspect import InspectZarr
 from anemoi.datasets.commands.load import Load
+from anemoi.datasets.data import open_dataset
 from anemoi.datasets.data.dataset import Dataset as AnemoiDataset
 from omegaconf import DictConfig, OmegaConf
 from wandb.util import np

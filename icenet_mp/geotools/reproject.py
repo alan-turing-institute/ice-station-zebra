@@ -5,14 +5,14 @@ from itertools import product
 import numpy as np
 from haversine import haversine_vector
 
-from icenet_mp.types.typedefs import ArrayHW, ArrayHWV
+from icenet_mp.types.typedefs import ArrayHWV, ArrayIndices2D
 
 logger = logging.getLogger(__name__)
 
 
 def nearest_neighbour_indices(
     input_latlons: ArrayHWV, output_latlons: ArrayHWV
-) -> tuple[ArrayHW, ArrayHW]:
+) -> tuple[ArrayIndices2D, ArrayIndices2D]:
     """Calculate the nearest neighbour input cell for each cell in the output grid.
 
     Args:
@@ -22,7 +22,7 @@ def nearest_neighbour_indices(
             and longitudes of each cell in the output grid.
 
     Returns:
-        Tuple of (nn_indices_h, nn_indices_w) where each is a tensor of shape
+        Tuple of (nn_indices_h, nn_indices_w) where each is a numpy array of shape
         [output_height, output_width] containing, for each output cell, the index in
         the H and W dimensions of the nearest neighbour input cell that should be
         used as the source.

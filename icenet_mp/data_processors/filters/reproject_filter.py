@@ -18,7 +18,7 @@ from icenet_mp.geotools import (
     grid_factory,
     nearest_neighbour_indices,
 )
-from icenet_mp.types import ArrayHW, ArrayHWV
+from icenet_mp.types import ArrayHWV, ArrayIndices2D
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -32,7 +32,7 @@ class ReprojectFilter(Filter):
     # We cache at class level because each GroupOfDates in a dataset creates a new
     # instance of the filter.
     nn_indices_cached: ClassVar[
-        dict[tuple[int, int, int, int], tuple[ArrayHW, ArrayHW]]
+        dict[tuple[int, int, int, int], tuple[ArrayIndices2D, ArrayIndices2D]]
     ] = {}
 
     def __init__(self, *, crs: str, resolution: str, shape: tuple[int, int]) -> None:
@@ -41,7 +41,9 @@ class ReprojectFilter(Filter):
             crs, resolution=resolution, shape=shape
         )
 
-    def nearest_neighbours(self, data: ekd.FieldList) -> tuple[ArrayHW, ArrayHW]:
+    def nearest_neighbours(
+        self, data: ekd.FieldList
+    ) -> tuple[ArrayIndices2D, ArrayIndices2D]:
         """Determine the nearest neighbour input cell for each cell in the output grid.
 
         Returns:

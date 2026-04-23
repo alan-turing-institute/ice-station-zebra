@@ -15,17 +15,17 @@ class GeographicGrid(Geography):
         self,
         native_crs: str,
         resolution: str,
-        x: np.ndarray[tuple[int]],
-        y: np.ndarray[tuple[int]],
+        h_points: np.ndarray[tuple[int]],
+        w_points: np.ndarray[tuple[int]],
     ) -> None:
         """Initialise a GeographicGrid with the given native CRS, resolution, and x/y grid points."""
-        self.x_, self.y_ = np.meshgrid(x, y)
+        # Create x_ and y_ with shape [w_points, h_points]
+        self.x_, self.y_ = np.meshgrid(h_points, w_points)
         self.resolution_ = resolution
         self.native_crs = native_crs
         self.latitudes_: NDArray[np.float32] | None = None
         self.longitudes_: NDArray[np.float32] | None = None
 
-    # def _load_lat_lon(self) -> tuple[np.ndarray[tuple[int]], np.ndarray[tuple[int]]]:
     def _load_lat_lon(self) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         latlon_trf = Transformer.from_crs(self.native_crs, "EPSG:4326")
         return latlon_trf.transform(self.x(), self.y())

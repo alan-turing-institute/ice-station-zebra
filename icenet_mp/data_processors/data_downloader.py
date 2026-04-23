@@ -35,6 +35,7 @@ class DataDownloader:
         Register a preprocessor if appropriate.
         """
         self.name = name
+        self.overwrite = False
         _data_path = Path(config["base_path"]).resolve() / "data"
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
         self.path_preprocessor = _data_path / "preprocessing"

@@ -100,24 +100,28 @@ class SingleDataset(Dataset):
     @property
     def latitudes(self) -> list[float]:
         """Return the latitudes of the dataset."""
-        per_ds_latitudes = sorted(
-            {tuple(ds.latitudes.tolist()) for ds in self.datasets}
+        reference_latitudes = self.datasets[0].latitudes
+        n_different = sum(
+            not np.array_equal(ds.latitudes, reference_latitudes)
+            for ds in self.datasets
         )
-        if len(per_ds_latitudes) != 1:
-            msg = f"All datasets must have the same latitudes, found {len(per_ds_latitudes)} different values"
+        if n_different != 0:
+            msg = f"All datasets must have the same latitudes, found {n_different + 1} different values"
             raise ValueError(msg)
-        return list(per_ds_latitudes[0])
+        return reference_latitudes.tolist()
 
     @property
     def longitudes(self) -> list[float]:
         """Return the longitudes of the dataset."""
-        per_ds_longitudes = sorted(
-            {tuple(ds.longitudes.tolist()) for ds in self.datasets}
+        reference_longitudes = self.datasets[0].longitudes
+        n_different = sum(
+            not np.array_equal(ds.longitudes, reference_longitudes)
+            for ds in self.datasets
         )
-        if len(per_ds_longitudes) != 1:
-            msg = f"All datasets must have the same longitudes, found {len(per_ds_longitudes)} different values"
+        if n_different != 0:
+            msg = f"All datasets must have the same longitudes, found {n_different + 1} different values"
             raise ValueError(msg)
-        return list(per_ds_longitudes[0])
+        return reference_longitudes.tolist()
 
     @property
     def name(self) -> str:

@@ -42,6 +42,8 @@ class ModelService:
                     "input_spaces": [
                         s.to_dict() for s in builder.data_module.input_spaces
                     ],
+                    "latitudes": builder.data_module.latitudes,
+                    "longitudes": builder.data_module.longitudes,
                     "n_forecast_steps": builder.data_module.n_forecast_steps,
                     "n_history_steps": builder.data_module.n_history_steps,
                     "output_space": builder.data_module.output_space.to_dict(),

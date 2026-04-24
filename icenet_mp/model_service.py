@@ -103,7 +103,9 @@ class ModelService:
         )
         with torch.serialization.safe_globals([PosixPath]):
             builder.model_ = model_cls.load_from_checkpoint(
-                checkpoint_path=checkpoint_path
+                checkpoint_path,
+                latitudes=builder.data_module.latitudes,
+                longitudes=builder.data_module.longitudes,
             )
 
         # Set latitudes and longitudes for models that that support them

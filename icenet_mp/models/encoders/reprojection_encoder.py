@@ -7,7 +7,7 @@ import torch
 from torch import nn
 
 from icenet_mp.geotools import nearest_neighbour_indices
-from icenet_mp.types import TensorNCHW
+from icenet_mp.types import ArrayHWV, TensorNCHW
 
 from .base_encoder import BaseEncoder
 
@@ -31,15 +31,20 @@ class ReprojectionEncoder(BaseEncoder):
         """Initialise a ReprojectionEncoder."""
         super().__init__(**kwargs)
 
-        # Name of the output data space to project to
-        self.project_to = project_to
+        # Check details of the input data space
+        self.project_from = self.data_space_in.name
+        if len(self.longitudes[self.project_from]) != self.data_space_in.area:
+            msg = f"Input dataset '{self.project_from}' has {len(self.longitudes[self.project_from])} lat/lons but {self.data_space_in.area} are needed."
+            raise ValueError(msg)
 
-        # In order to avoid input/output latitudes and longitudes being recorded as
-        # model parameters, we set them later on
-        self.input_latitudes: list[float] = []
-        self.input_longitudes: list[float] = []
-        self.output_latitudes: list[float] = []
-        self.output_longitudes: list[float] = []
+        # Check details of the output data space to project to
+        self.project_to = project_to
+        if self.project_to not in self.latitudes:
+            msg = f"Cannot reproject to unknown dataset '{self.project_to}'."
+            raise ValueError(msg)
+        if len(self.longitudes[self.project_to]) != self.data_space_out.area:
+            msg = f"Output dataset '{self.project_to}' has {len(self.longitudes[self.project_to])} lat/lons but {self.data_space_out.area} are needed."
+            raise ValueError(msg)
 
         # Add a cached method for calculating nearest neighbours
         # Adding this as a decorator would lead to memory leaks
@@ -60,40 +65,20 @@ class ReprojectionEncoder(BaseEncoder):
             used as the source.
 
         """
-        # Validate that provided latitudes and longitudes are consistent with expected sizes from data spaces
-        if (
-            not self.input_latitudes
-            or not self.input_longitudes
-            or not self.output_latitudes
-            or not self.output_longitudes
-        ):
-            msg = "Input/output latitudes and longitudes must be set before calculating nearest neighbours."
-            raise ValueError(msg)
-        if len(self.input_latitudes) != self.data_space_in.area:
-            msg = f"Number of input latitudes {len(self.input_latitudes)} does not match expected size from data space {self.data_space_in.shape}"
-            raise ValueError(msg)
-        if len(self.input_longitudes) != self.data_space_in.area:
-            msg = f"Number of input longitudes {len(self.input_longitudes)} does not match expected size from data space {self.data_space_in.shape}"
-            raise ValueError(msg)
-        if len(self.output_latitudes) != self.data_space_out.area:
-            msg = f"Number of output latitudes {len(self.output_latitudes)} does not match expected size from data space {self.data_space_out.shape}"
-            raise ValueError(msg)
-        if len(self.output_longitudes) != self.data_space_out.area:
-            msg = f"Number of output longitudes {len(self.output_longitudes)} does not match expected size from data space {self.data_space_out.shape}"
-            raise ValueError(msg)
-
         # Get lat/lon values for each cell in the input and output grids
-        nn_indices_h, nn_indices_w = nearest_neighbour_indices(
-            np.array(
-                list(zip(self.input_latitudes, self.input_longitudes, strict=False)),
-                dtype=np.float32,
-            ).reshape(*self.data_space_in.shape, 2),
-            np.array(
-                list(zip(self.output_latitudes, self.output_longitudes, strict=False)),
-                dtype=np.float32,
-            ).reshape(*self.data_space_out.shape, 2),
-        )
+        input_latlons: ArrayHWV = np.stack(
+            (self.latitudes[self.project_from], self.longitudes[self.project_from]),
+            axis=-1,
+        ).reshape(*self.data_space_in.shape, 2)
+        output_latlons: ArrayHWV = np.stack(
+            (self.latitudes[self.project_to], self.longitudes[self.project_to]),
+            axis=-1,
+        ).reshape(*self.data_space_out.shape, 2)
 
+        # Calculate nearest neighbour indices and return them as tensors
+        nn_indices_h, nn_indices_w = nearest_neighbour_indices(
+            input_latlons, output_latlons
+        )
         return (
             torch.tensor(nn_indices_h, dtype=torch.long, device=device),
             torch.tensor(nn_indices_w, dtype=torch.long, device=device),

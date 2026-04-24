@@ -36,6 +36,8 @@ class EncodeProcessDecode(BaseModel):
                     | {
                         "data_space_in": input_space,
                         "latent_space": encoders["latent_space"],
+                        "latitudes": self.latitudes,
+                        "longitudes": self.longitudes,
                         "n_history_steps": self.n_history_steps,
                     }
                 )

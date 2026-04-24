@@ -95,13 +95,3 @@ class ReprojectionEncoder(BaseEncoder):
 
         """
         return self.norm(x[:, :, *self.cached_nearest_neighbours(x.device)])
-
-    def set_latlon(
-        self, name: str, latitudes: list[float], longitudes: list[float]
-    ) -> None:
-        if name == self.name:
-            self.input_latitudes = latitudes
-            self.input_longitudes = longitudes
-        if name == self.project_to:
-            self.output_latitudes = latitudes
-            self.output_longitudes = longitudes

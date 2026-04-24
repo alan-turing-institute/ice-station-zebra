@@ -5,7 +5,6 @@ import torch
 from omegaconf import DictConfig
 
 from icenet_mp.types import DataSpace, TensorNTCHW
-from icenet_mp.types.protocols import SupportsLatLon
 
 from .base_model import BaseModel
 
@@ -115,10 +114,3 @@ class EncodeProcessDecode(BaseModel):
 
         # Return
         return output
-
-    def set_latlon(
-        self, name: str, latitudes: list[float], longitudes: list[float]
-    ) -> None:
-        for module in [*self.encoders, self.processor, self.decoder]:
-            if isinstance(module, SupportsLatLon):
-                module.set_latlon(name, latitudes, longitudes)

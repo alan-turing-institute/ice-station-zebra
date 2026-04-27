@@ -54,7 +54,6 @@ class ActivationSaver(Callback):
 
     def __init__(
         self,
-        model: nn.Module,
         layer_paths: Sequence[str],
         output_dir: Path | str,
         *,
@@ -62,7 +61,6 @@ class ActivationSaver(Callback):
     ) -> None:
         """Initialise an ActivationSaver bound to a specific model."""
         super().__init__()
-        self.model = model
         self.layer_paths: list[str] = list(layer_paths)
         self.output_dir = Path(output_dir)
         self.save_inputs = save_inputs
@@ -73,7 +71,7 @@ class ActivationSaver(Callback):
         self._current_activations: dict[str, torch.Tensor] = {}
         self._current_inputs: dict[str, torch.Tensor] = {}
 
-    def attach(self) -> None:
+    def attach(self, model: nn.Module) -> None:
         """Resolve layer paths on the model and register all forward hooks.
 
         Raises:
@@ -81,7 +79,7 @@ class ActivationSaver(Callback):
                 submodule on the model.
 
         """
-        named_modules = dict(self.model.named_modules())
+        named_modules = dict(model.named_modules())
         missing = [path for path in self.layer_paths if path not in named_modules]
         if missing:
             available = sorted(name for name in named_modules if name)
@@ -93,10 +91,10 @@ class ActivationSaver(Callback):
             raise ValueError(msg)
 
         # Reset rollout counter at the start of every outer forward pass.
-        self._handles.append(self.model.register_forward_pre_hook(self._root_pre_hook))
+        self._handles.append(model.register_forward_pre_hook(self._root_pre_hook))
 
         # Increment rollout counter each time `processor.forward` runs.
-        processor = getattr(self.model, "processor", None)
+        processor = getattr(model, "processor", None)
         if processor is not None:
             self._handles.append(
                 processor.register_forward_pre_hook(self._processor_pre_hook)
@@ -235,3 +233,11 @@ class ActivationSaver(Callback):
         )
         self.detach()
         logger.info("ActivationSaver detached; metadata at %s", metadata_path)
+
+    def on_test_start(
+        self,
+        trainer: Trainer,  # noqa: ARG002
+        pl_module: LightningModule,
+    ) -> None:
+        """Called when the test begins."""
+        self.attach(pl_module)

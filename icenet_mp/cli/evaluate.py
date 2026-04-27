@@ -5,7 +5,6 @@ from typing import Annotated
 import typer
 from omegaconf import DictConfig
 
-from icenet_mp.callbacks import ActivationSaver
 from icenet_mp.model_service import ModelService
 
 from .hydra import hydra_adaptor
@@ -33,16 +32,6 @@ def evaluate(
             ),
         ),
     ] = False,
-    activations_output: Annotated[
-        Path | None,
-        typer.Option(
-            "--activations-output",
-            help=(
-                "Directory to write per-batch activation files. "
-                "Required when --save-activations is set."
-            ),
-        ),
-    ] = None,
     activation_layer: Annotated[
         list[str] | None,
         typer.Option(
@@ -55,12 +44,8 @@ def evaluate(
     ] = None,
 ) -> None:
     """Evaluate a pre-trained model."""
-    model = ModelService.from_checkpoint(config, Path(checkpoint).resolve())
-
+    # If activation saving is enabled, then add appropriate layers
     if save_activations:
-        if activations_output is None:
-            msg = "--activations-output is required when --save-activations is set."
-            raise typer.BadParameter(msg)
         layers = list(activation_layer or [])
         if not layers:
             msg = (
@@ -68,22 +53,11 @@ def evaluate(
                 "--save-activations is set."
             )
             raise typer.BadParameter(msg)
+        config.get("evaluate", {}).get("callbacks", {}).get("activation_saver", {})[
+            "layer_paths"
+        ] = layers
 
-        hook_manager = ActivationSaver(
-            model=model.model,  # maybe slightly confusing naming bere
-            layer_paths=layers,
-            output_dir=activations_output,
-        )
-        hook_manager.attach()
-        # Append directly: ModelService.add_callbacks expects DictConfig entries
-        # to hydra-instantiate, whereas this callback is already built.
-        model.extra_callbacks_.append(hook_manager)
-        log.info(
-            "Activation capture enabled for layers %s; writing to %s",
-            layers,
-            activations_output,
-        )
-
+    model = ModelService.from_checkpoint(config, Path(checkpoint).resolve())
     model.evaluate()
 
 

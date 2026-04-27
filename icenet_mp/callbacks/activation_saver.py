@@ -10,27 +10,23 @@ rollout step**. Encoder modules similarly fire once per history step inside
 `BaseEncoder.rollout`; the first fire per batch is the one we save.
 """
 
-from __future__ import annotations
-
 import json
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import torch
-from lightning.pytorch import Callback
+from lightning.pytorch import Callback, LightningModule, Trainer
+from torch import nn
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from lightning.pytorch import LightningModule, Trainer
-    from torch import nn
     from torch.utils.hooks import RemovableHandle
 
 logger = logging.getLogger(__name__)
 
 
-class ActivationHookManager(Callback):
+class ActivationSaver(Callback):
     """Register forward hooks and save captured activations to disk per batch.
 
     The manager plays two roles:
@@ -64,7 +60,7 @@ class ActivationHookManager(Callback):
         *,
         save_inputs: bool = True,
     ) -> None:
-        """Initialise an ActivationHookManager bound to a specific model."""
+        """Initialise an ActivationSaver bound to a specific model."""
         super().__init__()
         self.model = model
         self.layer_paths: list[str] = list(layer_paths)
@@ -76,10 +72,6 @@ class ActivationHookManager(Callback):
         self._current_batch_idx: int = -1
         self._current_activations: dict[str, torch.Tensor] = {}
         self._current_inputs: dict[str, torch.Tensor] = {}
-
-    # ------------------------------------------------------------------
-    # Hook registration / teardown
-    # ------------------------------------------------------------------
 
     def attach(self) -> None:
         """Resolve layer paths on the model and register all forward hooks.
@@ -93,9 +85,7 @@ class ActivationHookManager(Callback):
         missing = [path for path in self.layer_paths if path not in named_modules]
         if missing:
             available = sorted(name for name in named_modules if name)
-            preview = ", ".join(available[:10])
-            if len(available) > 10:
-                preview += ", ..."
+            preview = ", ".join(available)
             msg = (
                 f"Activation layers not found on model: {missing}. "
                 f"Example available modules: {preview}"
@@ -120,7 +110,7 @@ class ActivationHookManager(Callback):
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         logger.info(
-            "ActivationHookManager attached: %d layer(s), output_dir=%s",
+            "ActivationSaver attached: %d layer(s), output_dir=%s",
             len(self.layer_paths),
             self.output_dir,
         )
@@ -130,10 +120,6 @@ class ActivationHookManager(Callback):
         for handle in self._handles:
             handle.remove()
         self._handles.clear()
-
-    # ------------------------------------------------------------------
-    # Torch hooks
-    # ------------------------------------------------------------------
 
     def _root_pre_hook(
         self,
@@ -155,7 +141,7 @@ class ActivationHookManager(Callback):
         def _hook(
             module: nn.Module,  # noqa: ARG001
             module_input: tuple[Any, ...],  # noqa: ARG001
-            module_output: Any,
+            module_output: Any,  # noqa: ANN401
         ) -> None:
             # Gate 1: skip any processor rollout step beyond the first.
             if self._rollout_idx > 0:
@@ -172,15 +158,11 @@ class ActivationHookManager(Callback):
 
         return _hook
 
-    # ------------------------------------------------------------------
-    # Lightning Callback: test loop only
-    # ------------------------------------------------------------------
-
     def on_test_batch_start(
         self,
         trainer: Trainer,  # noqa: ARG002
         pl_module: LightningModule,  # noqa: ARG002
-        batch: Any,
+        batch: Any,  # noqa: ANN401
         batch_idx: int,
         dataloader_idx: int = 0,  # noqa: ARG002
     ) -> None:
@@ -197,8 +179,8 @@ class ActivationHookManager(Callback):
         self,
         trainer: Trainer,  # noqa: ARG002
         pl_module: LightningModule,  # noqa: ARG002
-        outputs: Any,  # noqa: ARG002
-        batch: Any,  # noqa: ARG002
+        outputs: Any,  # noqa: ARG002, ANN401
+        batch: Any,  # noqa: ARG002, ANN401
         batch_idx: int,
         dataloader_idx: int = 0,  # noqa: ARG002
     ) -> None:
@@ -252,4 +234,4 @@ class ActivationHookManager(Callback):
             )
         )
         self.detach()
-        logger.info("ActivationHookManager detached; metadata at %s", metadata_path)
+        logger.info("ActivationSaver detached; metadata at %s", metadata_path)

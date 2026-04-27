@@ -5,8 +5,8 @@ from typing import Annotated
 import typer
 from omegaconf import DictConfig
 
+from icenet_mp.callbacks import ActivationSaver
 from icenet_mp.model_service import ModelService
-from icenet_mp.visualisations.hook_manager import ActivationHookManager
 
 from .hydra import hydra_adaptor
 
@@ -23,7 +23,7 @@ def evaluate(
     checkpoint: Annotated[
         str, typer.Option(help="Specify the path to a trained model checkpoint")
     ],
-    save_activations: Annotated[
+    save_activations: Annotated[  # noqa: FBT002
         bool,
         typer.Option(
             "--save-activations/--no-save-activations",
@@ -69,7 +69,7 @@ def evaluate(
             )
             raise typer.BadParameter(msg)
 
-        hook_manager = ActivationHookManager(
+        hook_manager = ActivationSaver(
             model=model.model,  # maybe slightly confusing naming bere
             layer_paths=layers,
             output_dir=activations_output,

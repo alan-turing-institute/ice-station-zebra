@@ -23,6 +23,8 @@ class TestReprojectionEncoder:
             ReprojectionEncoder(
                 data_space_in=DataSpace(name=INPUT_NAME, channels=2, shape=(4, 4)),
                 latent_space=(2, 2),
+                latitudes={},
+                longitudes={},
                 n_history_steps=1,
                 project_to=OUTPUT_NAME,
             )

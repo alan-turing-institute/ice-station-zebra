@@ -1810,7 +1810,6 @@ dependencies = [
     { name = "torch", version = "2.9.1+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "platform_machine == 'x86_64' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025' and sys_platform == 'linux'" },
     { name = "torch-ema" },
     { name = "typer" },
-    { name = "types-pyyaml" },
     { name = "wandb" },
     { name = "xarray" },
     { name = "zarr" },
@@ -1824,6 +1823,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "types-cachetools" },
+    { name = "types-pyyaml" },
 ]
 notebooks = [
     { name = "cmocean" },
@@ -1859,7 +1859,6 @@ requires-dist = [
     { name = "torch", marker = "platform_machine == 'x86_64' and platform_version == '#1 SMP PREEMPT_DYNAMIC Wed Dec 17 11:57:42 GMT 2025' and sys_platform == 'linux'", specifier = ">=2.8.0,!=2.10.0", index = "https://download.pytorch.org/whl/xpu" },
     { name = "torch-ema", specifier = ">=0.3" },
     { name = "typer", specifier = ">=0.16.0" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20260408" },
     { name = "wandb", specifier = ">=0.21.0" },
     { name = "xarray", specifier = ">=2025.3.0" },
     { name = "zarr", specifier = "<3.0.0" },
@@ -1873,6 +1872,7 @@ dev = [
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "types-cachetools", specifier = ">=6.1.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12" },
 ]
 notebooks = [
     { name = "cmocean", specifier = ">=4.0.3" },

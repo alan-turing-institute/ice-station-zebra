@@ -219,7 +219,7 @@ class DataDownloader:
     def create_masks(self, *, overwrite: bool) -> None:
         """Download the land and active grid cell masks for the SSMIS dataset."""
         # if there is an SSMIS dataset, create the masks
-        if self.name.rfind("ssmis") == -1:
+        if "ssmis" not in self.name:
             logger.info("Not SSMIS dataset, skipping mask creation.")
             return
 

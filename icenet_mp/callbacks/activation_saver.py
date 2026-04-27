@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class ActivationSaver(Callback):
     """Register forward hooks and save captured activations to disk per batch.
 
-    The manager plays two roles:
+    The ActivationSaver plays two roles:
 
     1. A set of PyTorch forward hooks attached to named submodules of the
        model (encoders, `processor.conv*`, decoder stages, ...). Each hook
@@ -61,10 +61,11 @@ class ActivationSaver(Callback):
     ) -> None:
         """Initialise an ActivationSaver bound to a specific model."""
         super().__init__()
-        self.layer_paths: list[str] = list(layer_paths)
+        self.layer_paths = list(layer_paths)
         self.output_dir = Path(output_dir)
         self.save_inputs = save_inputs
 
+        self._enabled = len(self.layer_paths) > 0
         self._handles: list[RemovableHandle] = []
         self._rollout_idx: int = -1
         self._current_batch_idx: int = -1
@@ -80,6 +81,8 @@ class ActivationSaver(Callback):
 
         """
         named_modules = dict(model.named_modules())
+        for name in self.layer_paths:
+            logger.debug("Available activation layer: %s", name)
         missing = [path for path in self.layer_paths if path not in named_modules]
         if missing:
             available = sorted(name for name in named_modules if name)
@@ -91,13 +94,15 @@ class ActivationSaver(Callback):
             raise ValueError(msg)
 
         # Reset rollout counter at the start of every outer forward pass.
-        self._handles.append(model.register_forward_pre_hook(self._root_pre_hook))
+        self._handles.append(
+            model.register_forward_pre_hook(self.rollout_counter_reset)
+        )
 
         # Increment rollout counter each time `processor.forward` runs.
         processor = getattr(model, "processor", None)
-        if processor is not None:
+        if isinstance(processor, nn.Module):
             self._handles.append(
-                processor.register_forward_pre_hook(self._processor_pre_hook)
+                processor.register_forward_pre_hook(self.rollout_counter_increment)
             )
 
         for path in self.layer_paths:
@@ -105,6 +110,7 @@ class ActivationSaver(Callback):
             self._handles.append(
                 module.register_forward_hook(self._make_layer_hook(path))
             )
+            logger.info("Registered ActivationSaver hook on layer '%s'", path)
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         logger.info(
@@ -118,22 +124,23 @@ class ActivationSaver(Callback):
         for handle in self._handles:
             handle.remove()
         self._handles.clear()
+        logger.debug("ActivationSaver detached")
 
-    def _root_pre_hook(
+    def rollout_counter_increment(
         self,
         module: nn.Module,  # noqa: ARG002
         inputs: tuple[Any, ...],  # noqa: ARG002
     ) -> None:
-        # Runs once per outer `EncodeProcessDecode.forward`. Encoders fire
-        # while `_rollout_idx == -1`; the first processor forward sets it to 0.
-        self._rollout_idx = -1
-
-    def _processor_pre_hook(
-        self,
-        module: nn.Module,  # noqa: ARG002
-        inputs: tuple[Any, ...],  # noqa: ARG002
-    ) -> None:
+        """Increment the rollout counter for this batch at each forward."""
         self._rollout_idx += 1
+
+    def rollout_counter_reset(
+        self,
+        module: nn.Module,  # noqa: ARG002
+        inputs: tuple[Any, ...],  # noqa: ARG002
+    ) -> None:
+        """Reset the processor rollout counter at the start of each batch."""
+        self._rollout_idx = -1
 
     def _make_layer_hook(self, path: str):  # noqa: ANN202
         def _hook(
@@ -150,9 +157,7 @@ class ActivationSaver(Callback):
             if path in self._current_activations:
                 return
             if isinstance(module_output, torch.Tensor):
-                self._current_activations[path] = module_output.detach().to(
-                    "cpu", copy=True
-                )
+                self._current_activations[path] = module_output.detach().cpu()
 
         return _hook
 
@@ -165,13 +170,14 @@ class ActivationSaver(Callback):
         dataloader_idx: int = 0,  # noqa: ARG002
     ) -> None:
         """Clear per-batch buffers and snapshot the raw batch tensors."""
-        self._current_batch_idx = batch_idx
-        self._current_activations = {}
-        self._current_inputs = {}
-        if self.save_inputs and isinstance(batch, dict):
-            for key, value in batch.items():
-                if isinstance(value, torch.Tensor):
-                    self._current_inputs[key] = value.detach().to("cpu", copy=True)
+        if self._enabled:
+            self._current_batch_idx = batch_idx
+            self._current_activations = {}
+            self._current_inputs = {}
+            if self.save_inputs and isinstance(batch, dict):
+                for key, value in batch.items():
+                    if isinstance(value, torch.Tensor):
+                        self._current_inputs[key] = value.detach().cpu()
 
     def on_test_batch_end(
         self,
@@ -183,35 +189,38 @@ class ActivationSaver(Callback):
         dataloader_idx: int = 0,  # noqa: ARG002
     ) -> None:
         """Persist captured activations for this batch to a single `.pt` file."""
-        uncaptured = [
-            path for path in self.layer_paths if path not in self._current_activations
-        ]
-        if uncaptured:
-            logger.warning(
-                "Batch %d: no activation captured for layers %s; "
-                "the forward hook did not fire during the first rollout step.",
-                batch_idx,
-                uncaptured,
+        if self._enabled:
+            uncaptured = [
+                path
+                for path in self.layer_paths
+                if path not in self._current_activations
+            ]
+            if uncaptured:
+                logger.warning(
+                    "Batch %d: no activation captured for layers %s; "
+                    "the forward hook did not fire during the first rollout step.",
+                    batch_idx,
+                    uncaptured,
+                )
+
+            payload: dict[str, Any] = {
+                "batch_idx": batch_idx,
+                "layer_paths": self.layer_paths,
+                "activations": self._current_activations,
+            }
+            if self.save_inputs:
+                payload["inputs"] = self._current_inputs
+
+            out_path = self.output_dir / self.BATCH_FILE_TEMPLATE.format(
+                batch_idx=batch_idx
             )
-
-        payload: dict[str, Any] = {
-            "batch_idx": batch_idx,
-            "layer_paths": self.layer_paths,
-            "activations": self._current_activations,
-        }
-        if self.save_inputs:
-            payload["inputs"] = self._current_inputs
-
-        out_path = self.output_dir / self.BATCH_FILE_TEMPLATE.format(
-            batch_idx=batch_idx
-        )
-        torch.save(payload, out_path)
-        logger.debug(
-            "Saved activations for batch %d to %s (%d layers).",
-            batch_idx,
-            out_path,
-            len(self._current_activations),
-        )
+            torch.save(payload, out_path)
+            logger.debug(
+                "Saved activations for batch %d to %s (%d layers).",
+                batch_idx,
+                out_path,
+                len(self._current_activations),
+            )
 
     def on_test_end(
         self,
@@ -219,20 +228,21 @@ class ActivationSaver(Callback):
         pl_module: LightningModule,  # noqa: ARG002
     ) -> None:
         """Write a metadata file and remove forward hooks when the test loop ends."""
-        metadata_path = self.output_dir / self.METADATA_FILE
-        metadata_path.write_text(
-            json.dumps(
-                {
-                    "layer_paths": self.layer_paths,
-                    "save_inputs": self.save_inputs,
-                    "batch_file_template": self.BATCH_FILE_TEMPLATE,
-                    "note": "Only activations from the first processor rollout step are saved.",
-                },
-                indent=2,
+        if self._enabled:
+            metadata_path = self.output_dir / self.METADATA_FILE
+            metadata_path.write_text(
+                json.dumps(
+                    {
+                        "layer_paths": self.layer_paths,
+                        "save_inputs": self.save_inputs,
+                        "batch_file_template": self.BATCH_FILE_TEMPLATE,
+                        "note": "Only activations from the first processor rollout step are saved.",
+                    },
+                    indent=2,
+                )
             )
-        )
-        self.detach()
-        logger.info("ActivationSaver detached; metadata at %s", metadata_path)
+            logger.info("ActivationSaver metadata written to %s", metadata_path)
+            self.detach()
 
     def on_test_start(
         self,
@@ -240,4 +250,9 @@ class ActivationSaver(Callback):
         pl_module: LightningModule,
     ) -> None:
         """Called when the test begins."""
+        if not self._enabled:
+            logger.info(
+                "No layer paths specified for ActivationSaver; skipping hook attachment."
+            )
+            return
         self.attach(pl_module)

@@ -35,12 +35,11 @@ def evaluate(
     ] = None,
 ) -> None:
     """Evaluate a pre-trained model."""
-    # If activation saving is enabled, then add appropriate layers
+    # If activation saving is enabled, then add requested layers
     if layer_paths := list(save_layer or []):
         config.get("evaluate", {}).get("callbacks", {}).get("activation_saver", {})[
             "layer_paths"
         ] = layer_paths
-
     model = ModelService.from_checkpoint(config, Path(checkpoint).resolve())
     model.evaluate()
 

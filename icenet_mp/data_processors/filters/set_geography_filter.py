@@ -26,7 +26,6 @@ class SetGeographyFilter(Filter):
 
     def __init__(self, *, crs: str, resolution: str) -> None:
         """Initialise a SetGeographyFilter with the specified CRS and resolution."""
-        self.geography_: GeographicGrid | None = None
         self.crs_ = crs
         self.resolution_ = resolution
         self.cached_geography = cache(self.geography)

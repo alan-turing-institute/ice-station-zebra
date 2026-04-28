@@ -34,7 +34,7 @@ class SetGeographyFilter(Filter):
         return grid_factory.create(self.crs_, resolution=self.resolution_, shape=shape)
 
     def forward(self, data: ekd.FieldList | pd.DataFrame) -> ekd.FieldList:
-        """Apply the forward regridding transformation.
+        """Wrap each input field with the configured geography.
 
         Parameters
         ----------
@@ -44,7 +44,7 @@ class SetGeographyFilter(Filter):
         Returns
         -------
         ekd.FieldList
-            The transformed data.
+            The transformed data, wrapped with the configured geography.
 
         """
         if not isinstance(data, ekd.FieldList):

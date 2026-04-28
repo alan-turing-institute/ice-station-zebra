@@ -208,20 +208,19 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             fetcher = DataFetcher().region(region + time_window)
-            msg = f"Successfully fetched data from ERDDAP on attempt {attempt}"
-            logger.debug(msg)
+            logger.debug("Successfully fetched data from ERDDAP on attempt %s", attempt)
             return fetcher.to_dataframe()
         except FSTimeoutError as exc:
             # Retry on timeout, with exponential backoff
             logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
             if attempt < max_retries:
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
-
-                msg = (
-                    f"ERDDAP data server unavailable, retrying in {backoff:.1f}s "
-                    f"(attempt {attempt}/{max_retries})"
+                logger.warning(
+                    "ERDDAP data server unavailable, retrying in %.1fs (attempt %d/%d)",
+                    backoff,
+                    attempt,
+                    max_retries
                 )
-                logger.warning(msg)
                 time.sleep(backoff)
                 continue
             # Otherwise raise an exception

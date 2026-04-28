@@ -106,7 +106,7 @@ class SingleDataset(Dataset):
             for ds in self.datasets
         )
         if n_different != 0:
-            msg = f"All datasets must have the same latitudes, found {n_different + 1} different values"
+            msg = f"All date ranges must have the same latitudes, found {n_different + 1} different values"
             raise ValueError(msg)
         return reference_latitudes.tolist()
 
@@ -119,7 +119,7 @@ class SingleDataset(Dataset):
             for ds in self.datasets
         )
         if n_different != 0:
-            msg = f"All datasets must have the same longitudes, found {n_different + 1} different values"
+            msg = f"All date ranges must have the same longitudes, found {n_different + 1} different values"
             raise ValueError(msg)
         return reference_longitudes.tolist()
 
@@ -134,12 +134,12 @@ class SingleDataset(Dataset):
         # Check all datasets have the same number of channels
         per_ds_channels = sorted({ds.shape[1] for ds in self.datasets})
         if len(per_ds_channels) != 1:
-            msg = f"All datasets must have the same number of channels, found {len(per_ds_channels)} different values"
+            msg = f"All date ranges must have the same number of channels, found {len(per_ds_channels)} different values"
             raise ValueError(msg)
         # Check all datasets have the same shape
         per_ds_shape = sorted({ds.field_shape for ds in self.datasets})
         if len(per_ds_shape) != 1:
-            msg = f"All datasets must have the same shape, found {len(per_ds_shape)} different values"
+            msg = f"All date ranges must have the same shape, found {len(per_ds_shape)} different values"
             raise ValueError(msg)
         # Return the data space
         return DataSpace(
@@ -162,7 +162,7 @@ class SingleDataset(Dataset):
         """
         variable_names = {tuple(sorted(ds.variables)) for ds in self.datasets}
         if len(variable_names) != 1:
-            msg = f"Found {len(variable_names)} different sets of variables across {len(self.datasets)} datasets."
+            msg = f"All date ranges must have the same variables, found {len(variable_names)} different values."
             raise ValueError(msg)
         return self.datasets[0].variables
 

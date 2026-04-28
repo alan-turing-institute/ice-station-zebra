@@ -230,14 +230,16 @@ class DataDownloader:
         dates = ds_sf.dates
 
         status_flag = np.array(ds_sf).astype(np.uint8).reshape(*shape)
+        binary = np.unpackbits(status_flag, axis=-1).reshape(*shape, 8)
 
-        # create land mask unless it already exists and overwrite is False
+        # land mask with land = 0 and sea = 1
+        # create unless it already exists and overwrite is False
         if (self.path_masks / "land_mask.npy").exists() and not overwrite:
             logger.info("Land mask already exists, skipping creation.")
+            land_mask = np.load(self.path_masks / "land_mask.npy")
         else:
             if overwrite and (self.path_masks / "land_mask.npy").exists():
                 (self.path_masks / "land_mask.npy").unlink()
-            binary = np.unpackbits(status_flag, axis=-1).reshape(*shape, 8)
             land_mask = np.squeeze(binary[..., [7]]).sum(axis=0)
             land_mask = 1 - (land_mask > 0).astype(np.uint8)  # convert to binary mask
             land_mask = land_mask.reshape(ds_sf.field_shape[-2:])  # reshape to 2D grid
@@ -246,24 +248,25 @@ class DataDownloader:
             )  # save the land mask for later use
             logger.info("Land mask created and saved.")
 
-        # create active mask unless it already exists and overwrite is False
+        # active mask with active grid cells = 1 and inactive grid cells = 0
+        # create unless it already exists and overwrite is False
         if (self.path_masks / "active_mask.npy").exists() and not overwrite:
             logger.info("Active mask already exists, skipping creation.")
         else:
             if overwrite and (self.path_masks / "active_mask.npy").exists():
                 (self.path_masks / "active_mask.npy").unlink()
-            active_mask = (
+            inactive_mask = (
                 np.squeeze(binary[..., [0]]).sum(axis=0) >= dates.shape[0]
-            )  # if any time step is active, consider the grid cell active
-            active_mask = 1 - (active_mask > 0).astype(
+            )  # Identify grid cells that are inactive for all time steps
+            active_mask = 1 - (inactive_mask > 0).astype(
                 np.uint8
-            )  # convert to binary mask
+            )  # convert to binary mask, and set to 1 for active grid cells
             active_mask = active_mask.reshape(
                 ds_sf.field_shape[-2:]
             )  # reshape to 2D grid
             active_mask = (
-                active_mask + land_mask
-            )  # add land mask to active mask to see all non-active grid cells
+                active_mask * land_mask
+            )  # intersect land mask with active mask to set all active grid cells to 1
             np.save(
                 self.path_masks / "active_mask.npy", active_mask
             )  # save the active mask for later use

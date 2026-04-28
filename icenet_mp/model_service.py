@@ -16,7 +16,7 @@ from icenet_mp.models.base_model import BaseModel
 from icenet_mp.types import SupportsMetadata
 from icenet_mp.utils import get_device_name, get_timestamp, get_wandb_run
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class ModelService:
@@ -35,6 +35,7 @@ class ModelService:
         builder = cls(config)
 
         # Construct the model
+        log.info("Building a new %s model...", builder.config["model"]["name"])
         builder.model_ = hydra.utils.instantiate(
             dict(
                 {
@@ -66,7 +67,7 @@ class ModelService:
         """Build a new ModelService by loading a model from a checkpoint."""
         # Verify the checkpoint path
         if checkpoint_path.is_file():
-            logger.debug("Found checkpoint at %s.", checkpoint_path)
+            log.debug("Found checkpoint at %s.", checkpoint_path)
         else:
             msg = f"Checkpoint file {checkpoint_path} does not exist."
             raise FileNotFoundError(msg)
@@ -78,7 +79,7 @@ class ModelService:
         try:
             # Load the model configuration from the checkpoint directory
             ckpt_config = DictConfig(OmegaConf.load(config_path))
-            logger.debug("Loaded checkpoint configuration from %s.", config_path)
+            log.debug("Loaded checkpoint configuration from %s.", config_path)
             combined_cfg = DictConfig(OmegaConf.merge(ckpt_config, config))
             for key in ("model", "predict", "train"):
                 combined_cfg[key] = OmegaConf.merge(
@@ -86,9 +87,7 @@ class ModelService:
                 )
         except (NotADirectoryError, FileNotFoundError):
             combined_cfg = config
-            logger.debug(
-                "Could not load checkpoint configuration from %s.", config_path
-            )
+            log.debug("Could not load checkpoint configuration from %s.", config_path)
 
         # Load the model from checkpoint
         builder = cls(combined_cfg)
@@ -96,6 +95,7 @@ class ModelService:
             builder.config["model"]["_target_"]
         )
         with torch.serialization.safe_globals([PosixPath]):
+            log.info("Loading a trained %s model...", builder.config["model"]["name"])
             builder.model_ = model_cls.load_from_checkpoint(
                 checkpoint_path,
                 latitudes=builder.data_module.latitudes,
@@ -155,7 +155,7 @@ class ModelService:
             for callback_config in callback_configs
         ]
         if not extra_callbacks:
-            logger.warning("No callbacks have been set for the trainer.")
+            log.warning("No callbacks have been set for the trainer.")
 
         # Setup lightning loggers
         logger_overrides = {
@@ -167,10 +167,10 @@ class ModelService:
             for logger_config in self.config.get("loggers", {}).values()
         ]
         if not extra_loggers:
-            logger.warning("No loggers have been set for the trainer.")
+            log.warning("No loggers have been set for the trainer.")
 
         # Create a new trainer
-        logger.debug("Instantiating lightning trainer.")
+        log.debug("Instantiating lightning trainer.")
         trainer = cast(
             "Trainer",
             hydra.utils.instantiate(
@@ -189,7 +189,7 @@ class ModelService:
 
         # Ensure the run directory exists
         run_directory = self.build_run_directory(trainer)
-        logger.debug("Set run directory to %s.", run_directory)
+        log.debug("Set run directory to %s.", run_directory)
         run_directory.mkdir(parents=True, exist_ok=True)
 
         # Save model config to the run directory
@@ -202,14 +202,14 @@ class ModelService:
 
         # Additional configuration for callbacks
         for callback in cast("list[Callback]", trainer.callbacks):  # type: ignore[attr-defined]
-            logger.debug("Configuring callback %s.", callback.__class__.__name__)
+            log.debug("Configuring callback %s.", callback.__class__.__name__)
             # Set metadata for supported callbacks
             if isinstance(callback, SupportsMetadata):
-                logger.debug("Setting metadata for %s.", callback.__class__.__name__)
+                log.debug("Setting metadata for %s.", callback.__class__.__name__)
                 callback.set_metadata(self.config, self.model.__class__.__name__)
             # Set checkpoint run directory for supported callbacks
             if isinstance(callback, (ModelCheckpoint, UnconditionalCheckpoint)):
-                logger.debug(
+                log.debug(
                     "Setting run_directory for %s to %s.",
                     callback.__class__.__name__,
                     run_directory / "checkpoints",
@@ -221,10 +221,10 @@ class ModelService:
     def evaluate(self) -> None:
         """Evaluate a trained model."""
         # Configure the trainer with evaluation callbacks and loggers
-        logger.info("Configuring model for evaluation.")
+        log.info("Configuring model for evaluation.")
         trainer = self.build_trainer(job_type="evaluate")
         # Log evaluation details
-        logger.info(
+        log.info(
             "Starting evaluation using %d threads across %d %s device(s).",
             torch.get_num_threads(),
             trainer.num_devices,
@@ -240,11 +240,11 @@ class ModelService:
     def train(self) -> None:
         """Train a model."""
         # Configure the trainer with training callbacks and loggers
-        logger.info("Configuring model for training.")
+        log.info("Configuring model for training.")
         trainer = self.build_trainer(job_type="train")
 
         # Log training details
-        logger.info(
+        log.info(
             "Starting training for %d epochs using %d threads across %d %s device(s).",
             trainer.max_epochs,
             torch.get_num_threads(),

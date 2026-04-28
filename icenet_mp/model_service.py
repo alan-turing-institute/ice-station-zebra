@@ -29,10 +29,6 @@ class ModelService:
     def __init__(self, config: DictConfig) -> None:
         """Initialize the model service."""
         self.config_ = config
-        # if seed := config.get("seed", None):
-        #     seed_everything(int(seed), workers=True)
-        #     torch.use_deterministic_algorithms(True, warn_only=True)
-        #     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
         if seed := config.get("seed", None):
             seed = int(seed)
             os.environ["PYTHONHASHSEED"] = str(seed)
@@ -186,7 +182,6 @@ class ModelService:
                         {
                             "callbacks": self.extra_callbacks_,
                             "logger": self.extra_loggers_,
-                            # "deterministic": "warn" if self.config.get("seed", None) is not None else False,
                             "deterministic": self.config.get("seed", None) is not None,
                         },
                         **self.config["train"]["trainer"],

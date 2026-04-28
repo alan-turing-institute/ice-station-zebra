@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 import hydra
 import torch
+import torch.nn.functional as F
 from lightning import Callback, Trainer, seed_everything
 from lightning.fabric.utilities import suggested_max_num_workers
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -28,10 +29,24 @@ class ModelService:
     def __init__(self, config: DictConfig) -> None:
         """Initialize the model service."""
         self.config_ = config
+        # if seed := config.get("seed", None):
+        #     seed_everything(int(seed), workers=True)
+        #     torch.use_deterministic_algorithms(True, warn_only=True)
+        #     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
         if seed := config.get("seed", None):
-            seed_everything(int(seed), workers=True)
-            torch.use_deterministic_algorithms(True, warn_only=True)
+            seed = int(seed)
+            os.environ["PYTHONHASHSEED"] = str(seed)
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+            seed_everything(seed, workers=True)
+            torch.use_deterministic_algorithms(True, warn_only=True)
+
+        # Monkey-patch F.interpolate to strip antialias=True globally,
+        # since upsample_bilinear2d_aa has no deterministic CUDA backward
+        _original_interpolate = F.interpolate
+        def _deterministic_interpolate(input, *args, **kwargs):
+            kwargs.pop("antialias", None)
+            return _original_interpolate(input, *args, **kwargs)
+        F.interpolate = _deterministic_interpolate
         
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
@@ -171,13 +186,17 @@ class ModelService:
                         {
                             "callbacks": self.extra_callbacks_,
                             "logger": self.extra_loggers_,
-                            "deterministic": "warn" if self.config.get("seed", None) is not None else False,
-                            # "deterministic": self.config.get("seed", None) is not None,
+                            # "deterministic": "warn" if self.config.get("seed", None) is not None else False,
+                            "deterministic": self.config.get("seed", None) is not None,
                         },
                         **self.config["train"]["trainer"],
                     )
                 ),
             )
+            # Check warn_only survived Lightning's deterministic setup
+            logger.debug("deterministic_algorithms_enabled: %s", torch.are_deterministic_algorithms_enabled())
+            logger.debug("warn_only_enabled: %s", torch.is_deterministic_algorithms_warn_only_enabled())
+
             # Assign workers for data loading
             self.data_module.assign_workers(
                 suggested_max_num_workers(self.trainer_.num_devices)

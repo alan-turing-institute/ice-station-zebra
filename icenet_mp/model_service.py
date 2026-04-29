@@ -28,9 +28,14 @@ class _DeterministicInterpolate:
     the antialias argument globally to ensure deterministic behaviour.
     """
 
+    _applied = False  # class-level flag
+
     def __init__(self) -> None:
+        if _DeterministicInterpolate._applied:
+            return
         self._original = F.interpolate
         F.interpolate = self  # type: ignore[assignment]
+        _DeterministicInterpolate._applied = True
 
     def __call__(
         self, tensor: torch.Tensor, *args: object, **kwargs: object

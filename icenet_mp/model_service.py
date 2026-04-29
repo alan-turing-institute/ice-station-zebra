@@ -200,6 +200,10 @@ class ModelService:
                 )
             ),
         )
+        # Check warn_only survived Lightning's deterministic setup
+        log.debug("deterministic_algorithms_enabled: %s", torch.are_deterministic_algorithms_enabled())
+        log.debug("warn_only_enabled: %s", torch.is_deterministic_algorithms_warn_only_enabled())
+
         # Assign workers for data loading
         self.data_module.assign_workers(suggested_max_num_workers(trainer.num_devices))
 

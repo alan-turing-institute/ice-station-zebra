@@ -1,6 +1,5 @@
 import logging
 import os
-from collections.abc import Iterable
 from pathlib import Path, PosixPath
 from typing import cast
 
@@ -36,11 +35,13 @@ class ModelService:
         # Monkey-patch F.interpolate to strip antialias=True globally,
         # since upsample_bilinear2d_aa has no deterministic CUDA backward
         _original_interpolate = F.interpolate
+
         def _deterministic_interpolate(input, *args, **kwargs):
             kwargs.pop("antialias", None)
             return _original_interpolate(input, *args, **kwargs)
+
         F.interpolate = _deterministic_interpolate
-        
+
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
 
@@ -201,8 +202,14 @@ class ModelService:
             ),
         )
         # Check warn_only survived Lightning's deterministic setup
-        log.debug("deterministic_algorithms_enabled: %s", torch.are_deterministic_algorithms_enabled())
-        log.debug("warn_only_enabled: %s", torch.is_deterministic_algorithms_warn_only_enabled())
+        log.debug(
+            "deterministic_algorithms_enabled: %s",
+            torch.are_deterministic_algorithms_enabled(),
+        )
+        log.debug(
+            "warn_only_enabled: %s",
+            torch.is_deterministic_algorithms_warn_only_enabled(),
+        )
 
         # Assign workers for data loading
         self.data_module.assign_workers(suggested_max_num_workers(trainer.num_devices))

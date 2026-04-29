@@ -29,15 +29,14 @@ class _DeterministicInterpolate:
     """
 
     def __init__(self) -> None:
-        self._original = F.interpolate
-        F.interpolate = self
+        self._original = F.interpolate  # noqa: N812
+        F.interpolate = self  # type: ignore[assignment]  # noqa: N812
 
     def __call__(
         self, tensor: torch.Tensor, *args: object, **kwargs: object
     ) -> torch.Tensor:
         kwargs.pop("antialias", None)
-        return self._original(tensor, *args, **kwargs)
-
+        return self._original(tensor, *args, **kwargs)  # type: ignore[arg-type]
 
 class ModelService:
     def __init__(self, config: DictConfig) -> None:

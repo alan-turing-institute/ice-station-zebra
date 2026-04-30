@@ -3,6 +3,7 @@ from typing import Any, cast
 import numpy as np
 from earthkit.data import Field
 from earthkit.data.core.metadata import Metadata
+from numpy.typing import NDArray
 
 from .geographic_grid import GeographicGrid
 from .geographic_metadata import GeographicMetadata
@@ -39,7 +40,7 @@ class GeographicField(Field):
             self.geo_metadata.geography,
         )
 
-    def grid_points(self) -> tuple[np.ndarray, np.ndarray]:
+    def grid_points(self) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         return self._field.grid_points()
 
     def message(self) -> bytes:
@@ -53,5 +54,5 @@ class GeographicField(Field):
         flatten: bool = False,  # noqa: FBT001, FBT002
         dtype: type | None = None,
         index: int | None = None,
-    ) -> np.ndarray[Any]:
+    ) -> NDArray[np.float32]:
         return self._field.to_numpy(flatten=flatten, dtype=dtype, index=index)

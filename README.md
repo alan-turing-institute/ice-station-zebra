@@ -5,7 +5,8 @@
 | Name                                                        |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | icenet\_mp/\_\_init\_\_.py                                  |        6 |        0 |    100% |           |
-| icenet\_mp/callbacks/\_\_init\_\_.py                        |        6 |        0 |    100% |           |
+| icenet\_mp/callbacks/\_\_init\_\_.py                        |        7 |        0 |    100% |           |
+| icenet\_mp/callbacks/activation\_saver.py                   |       92 |       70 |     24% |63-73, 83-116, 124-127, 135, 143, 146-162, 173-180, 192-218, 231-245, 253-258 |
 | icenet\_mp/callbacks/ema\_weight\_averaging\_callback.py    |       13 |        8 |     38% |24-28, 34-40 |
 | icenet\_mp/callbacks/metric\_summary\_callback.py           |       21 |        0 |    100% |           |
 | icenet\_mp/callbacks/plotting\_callback.py                  |       57 |       33 |     42% |    68-115 |
@@ -14,7 +15,7 @@
 | icenet\_mp/callbacks/weight\_averaging.py                   |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | icenet\_mp/cli/\_\_init\_\_.py                              |        2 |        0 |    100% |           |
 | icenet\_mp/cli/datasets.py                                  |       24 |        9 |     62% |27-30, 43-46, 50 |
-| icenet\_mp/cli/evaluate.py                                  |       16 |        3 |     81% | 27-28, 32 |
+| icenet\_mp/cli/evaluate.py                                  |       18 |        5 |     72% | 39-44, 48 |
 | icenet\_mp/cli/hydra.py                                     |       29 |        3 |     90% |     39-41 |
 | icenet\_mp/cli/main.py                                      |       25 |        8 |     68% | 45-57, 61 |
 | icenet\_mp/cli/train.py                                     |       14 |        3 |     79% | 20-21, 25 |
@@ -114,7 +115,7 @@
 | icenet\_mp/visualisations/range\_check.py                   |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                              |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                               |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                   | **3886** | **1107** | **72%** |           |
+| **TOTAL**                                                   | **3981** | **1179** | **70%** |           |
 
 
 ## Setup coverage badge

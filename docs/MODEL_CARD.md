@@ -27,7 +27,7 @@ tbd
 Louisa van Zeeland
 
 ### Contact Information 
-Louisa van Zeeland
+Louisa van Zeeland - lvanzeeland@turing.ac.uk
 
 ### Access to Products  
 Code for the forecasting pipeline is open source and available on [GitHub](https://github.com/alan-turing-institute/icenet-mp

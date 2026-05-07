@@ -237,12 +237,8 @@ def _fetch_argo_dataframe_with_retry(
                 time_window[0].isoformat(),
                 time_window[1].isoformat(),
             )
-        except Exception as exc:
-            logger.error(
-                "Unexpected error while fetching Argo data: %s: %s",
-                type(exc),
-                exc,
-            )
+        except Exception:
+            logger.exception("Unexpected error while fetching Argo data")
             raise
 
     # Return empty DataFrame if file not found (e.g., no data for that region/time)

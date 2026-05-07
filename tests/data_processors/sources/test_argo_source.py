@@ -9,6 +9,7 @@ from anemoi.datasets.create.input import FieldContext
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
+from fsspec import FSTimeoutError
 
 from icenet_mp.data_processors.sources import ArgoSource, register_sources
 from icenet_mp.data_processors.sources.argo import _fetch_argo_dataframe_with_retry
@@ -99,7 +100,7 @@ class TestArgoSource:
 
         # First call raises 503, second succeeds
         first_fetcher = MagicMock()
-        first_fetcher.region.side_effect = Exception("503 Service Unavailable")
+        first_fetcher.region.side_effect = FSTimeoutError("503 Service Unavailable")
 
         second_fetcher = MagicMock()
         second_region_fetcher = MagicMock()

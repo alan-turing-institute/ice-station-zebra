@@ -138,7 +138,11 @@ class ArgoSource(Source):
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
 
         if missing_dates:
-            logger.info("%d of %d requested dates were missing:", len(missing_dates), len(requested_dates))
+            logger.info(
+                "%d of %d requested dates were missing:",
+                len(missing_dates),
+                len(requested_dates),
+            )
             for missing_date in missing_dates:
                 logger.warning(missing_date.isoformat())
 
@@ -219,7 +223,7 @@ def _fetch_argo_dataframe_with_retry(
                     "ERDDAP data server unavailable, retrying in %.1fs (attempt %d/%d)",
                     backoff,
                     attempt,
-                    max_retries
+                    max_retries,
                 )
                 time.sleep(backoff)
                 continue

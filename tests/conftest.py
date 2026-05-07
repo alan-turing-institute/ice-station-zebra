@@ -17,7 +17,6 @@ class MockAnemoiCreateArgs:
         """Initialise the arguments."""
         self.command = "unused"
         self.config = config
-        self.overwrite = True
         self.path = str(path)
         self.processes = 0
         self.threads = 0

@@ -35,7 +35,6 @@ class DataDownloader:
         Register a preprocessor if appropriate.
         """
         self.name = name
-        self.overwrite = False
         _data_path = Path(config["base_path"]).resolve() / "data"
         self.path_dataset = _data_path / "anemoi" / f"{name}.zarr"
         self.path_preprocessor = _data_path / "preprocessing"
@@ -44,9 +43,8 @@ class DataDownloader:
         self.config: DictConfig = OmegaConf.to_object(config["data"]["datasets"][name])  # type: ignore[assignment]
         self.preprocessor = cls_preprocessor(self.config)
 
-    def create(self, *, overwrite: bool) -> None:
+    def create(self, *, overwrite: bool = False) -> None:
         """Ensure that a single Anemoi dataset exists."""
-        self.overwrite = overwrite
         # If we are overwriting we delete any existing dataset
         if overwrite:
             logger.info(
@@ -71,7 +69,7 @@ class DataDownloader:
             if download_complete:
                 # If the statistics are not ready we should finalise
                 if not statistics_ready:
-                    self.finalise()
+                    self.finalise(overwrite=overwrite)
 
                 # Inspect the dataset for validity
                 try:
@@ -94,9 +92,9 @@ class DataDownloader:
                     return
 
         # Download the dataset
-        self.download()
+        self.download(overwrite=overwrite)
 
-    def download(self) -> None:
+    def download(self, *, overwrite: bool) -> None:
         """Download an Anemoi dataset in parts."""
         self.preprocessor.download(self.path_preprocessor)
         logger.info("Creating dataset %s at %s.", self.name, self.path_dataset)
@@ -107,7 +105,7 @@ class DataDownloader:
         # Finalise if the status indicates the dataset is complete
         download_in_progress, download_complete, statistics_ready = self.status()
         if download_complete and (not download_in_progress) and (not statistics_ready):
-            self.finalise()
+            self.finalise(overwrite=overwrite)
         else:
             logger.warning(
                 "Dataset %s at %s is not fully loaded, skipping finalise.",
@@ -119,7 +117,7 @@ class DataDownloader:
             if download_in_progress:
                 logger.info("Dataset is still being downloaded by another process.")
 
-    def finalise(self) -> None:
+    def finalise(self, *, overwrite: bool) -> None:
         """Finalise the segmented Anemoi dataset."""
         Finalise().run(
             AnemoiFinaliseArgs(
@@ -130,7 +128,7 @@ class DataDownloader:
         logger.info("Finalised dataset %s at %s.", self.name, self.path_dataset)
 
         # create active grid cell and land masks for the SSMIS dataset
-        self.create_masks(overwrite=self.overwrite)
+        self.create_masks(overwrite=overwrite)
 
     def initialise(self) -> None:
         """Initialise an Anemoi dataset."""

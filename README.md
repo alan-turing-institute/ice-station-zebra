@@ -14,7 +14,7 @@
 | icenet\_mp/callbacks/wandb\_metric\_callback.py               |        8 |        3 |     62% |     11-13 |
 | icenet\_mp/callbacks/weight\_averaging.py                     |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | icenet\_mp/cli/\_\_init\_\_.py                                |        2 |        0 |    100% |           |
-| icenet\_mp/cli/datasets.py                                    |       24 |        9 |     62% |27-30, 43-46, 50 |
+| icenet\_mp/cli/datasets.py                                    |       31 |       13 |     58% |27-30, 43-46, 59-62, 66 |
 | icenet\_mp/cli/evaluate.py                                    |       18 |        5 |     72% | 39-44, 48 |
 | icenet\_mp/cli/hydra.py                                       |       29 |        3 |     90% |     39-41 |
 | icenet\_mp/cli/main.py                                        |       25 |        8 |     68% | 45-57, 61 |
@@ -25,7 +25,7 @@
 | icenet\_mp/data\_loaders/common\_data\_module.py              |       79 |       27 |     66% |48-49, 93, 101-105, 110, 115, 120, 125, 133-135, 141-157, 163-176, 182-198, 204-217 |
 | icenet\_mp/data\_loaders/single\_dataset.py                   |      100 |        5 |     95% |106, 111, 135, 193-198 |
 | icenet\_mp/data\_processors/\_\_init\_\_.py                   |        2 |        0 |    100% |           |
-| icenet\_mp/data\_processors/data\_downloader.py               |       93 |       69 |     26% |35-41, 46-92, 96-115, 119-125, 129-148, 158-177, 181, 190-209 |
+| icenet\_mp/data\_processors/data\_downloader.py               |      128 |      101 |     21% |37-44, 49-95, 99-118, 122-131, 135-154, 164-183, 187, 196-215, 220-273 |
 | icenet\_mp/data\_processors/data\_downloader\_factory.py      |       11 |        4 |     64% |     19-26 |
 | icenet\_mp/data\_processors/filters/\_\_init\_\_.py           |       14 |        0 |    100% |           |
 | icenet\_mp/data\_processors/filters/doubling\_filter.py       |       12 |        5 |     58% |16-17, 21-23 |
@@ -116,7 +116,7 @@
 | icenet\_mp/visualisations/range\_check.py                     |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                                |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                                 |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                     | **4025** | **1207** | **70%** |           |
+| **TOTAL**                                                     | **4067** | **1243** | **69%** |           |
 
 
 ## Setup coverage badge

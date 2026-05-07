@@ -62,7 +62,7 @@ This stage of the codebase is not intended for operational forecasting, safety-c
 global (Arctic and Antarctic)
 
 ### Temporal / Seasonal Domain  
-tbd
+currently dependent on OSI-SAF SSMIS sensor availability 1978–2025.
 
 ###  Approaches to Uncertainty & Variability
 Currently no default uncertainty quantification. The DDPM architecture supports epistemic uncertainty estimation through multiple sampling runs, producing a spread of plausible SIC forecasts rather than a single deterministic prediction

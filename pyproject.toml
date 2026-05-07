@@ -81,12 +81,13 @@ module = [
     "anemoi.datasets.*",
     "anemoi.transform.*",
     "anemoi.utils.*",
+    "argopy.*",
     "earthkit.*",
+    "fsspec.*",
+    "haversine.*",
     "icenet.data.sic.*",
     "imageio_ffmpeg.*",
     "zarr.*",
-    "argopy.*",
-    "haversine.*",
 ]
 ignore_missing_imports = true
 

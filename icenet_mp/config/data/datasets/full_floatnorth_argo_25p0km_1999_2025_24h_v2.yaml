@@ -1,5 +1,5 @@
-full-floatnorth-argo-1p0-1999-2025-24h-v1:
-  name: full-floatnorth-argo-1p0-1999-2025-24h-v1
+full-floatnorth-argo-25p0km-1999-2025-24h-v2:
+  name: full-floatnorth-argo-25p0km-1999-2025-24h-v2
   group_as: float_argo
   description: ARGO float data for northern hemisphere
   attribution: ARGO
@@ -555,12 +555,20 @@ full-floatnorth-argo-1p0-1999-2025-24h-v1:
 
   input:
     pipe:
+      # Get the ARGO data
       - argo:
           area: "90/-180/0/180"  # northern hemisphere
-          grid_resolution_degrees: 1.0
+          crs: "EPSG:6931"
           param:
             - TEMP # temperature
             - PSAL # salinity
+          resolution: "25p0km"
+          shape: [432, 432]
+      # Replace NaNs with a fill value
       - nan_to_num:
           variables: [TEMP, PSAL]
           replace_with: 99
+      # Set the geography to EASE2 25km grid
+      - set_geography:
+          crs: ${...0.argo.crs}
+          resolution: ${...0.argo.resolution}

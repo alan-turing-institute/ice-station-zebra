@@ -79,9 +79,12 @@ class TestArgoSource:
             mp.setattr("icenet_mp.data_processors.sources.argo.load_one", mock_load_one)
 
             source = ArgoSource(
-                context=self.context,
                 area="20/30/0/40",
+                context=self.context,
+                crs="EPSG:6931",
                 param=["TEMP"],
+                resolution="25p0km",
+                shape=(4, 4),
             )
             result = source.execute(dates=self.dates)
 

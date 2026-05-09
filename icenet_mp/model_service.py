@@ -48,13 +48,29 @@ class ModelService:
     def __init__(self, config: DictConfig) -> None:
         """Initialize the model service."""
         self.config_ = config
-        if seed := config.get("seed", None):
+
+        random_config = config.get("random", {})
+        seed = random_config.get("seed", None)
+        fully_deterministic = random_config.get("fully_deterministic", False)
+
+        if seed is not None:
             seed = int(seed)
             os.environ["PYTHONHASHSEED"] = str(seed)
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
             seed_everything(seed, workers=True)
-            torch.use_deterministic_algorithms(True, warn_only=True)  # noqa: FBT003
+
+        if fully_deterministic:
+            torch.use_deterministic_algorithms(True, warn_only=True) # noqa: FBT003
+            log.warning("WARNING: Fully deterministic mode enabled. This may impact performance and disable certain features like anti-aliasing. Ensure this is intended.")
             _DeterministicInterpolate()
+
+        # if seed := config.get("seed", None):
+        #     seed = int(seed)
+        #     os.environ["PYTHONHASHSEED"] = str(seed)
+        #     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+        #     seed_everything(seed, workers=True)
+        #     torch.use_deterministic_algorithms(True, warn_only=True)  # noqa: FBT003
+        #     _DeterministicInterpolate()
 
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
@@ -208,7 +224,7 @@ class ModelService:
                 dict(
                     {
                         "callbacks": extra_callbacks,
-                        "deterministic": self.config.get("seed", None) is not None,
+                        "deterministic": self.config.get("random", {}).get("fully_deterministic", False),
                         "logger": extra_loggers,
                     },
                     **self.config["train"]["trainer"],

@@ -66,14 +66,6 @@ class ModelService:
             )
             _DeterministicInterpolate()
 
-        # if seed := config.get("seed", None):
-        #     seed = int(seed)
-        #     os.environ["PYTHONHASHSEED"] = str(seed)
-        #     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-        #     seed_everything(seed, workers=True)
-        #     torch.use_deterministic_algorithms(True, warn_only=True)
-        #     _DeterministicInterpolate()
-
         self.data_module_: CommonDataModule | None = None
         self.model_: BaseModel | None = None
 

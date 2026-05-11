@@ -27,7 +27,6 @@ class ArgoSource(Source):
         *,
         area: str,
         param: list[str],
-        skip_interpolation: bool = False,
         grid_resolution_degrees: float = 1,
         distance_scale_km: float = 2000,
         min_weight: float = 1e-10,
@@ -36,7 +35,6 @@ class ArgoSource(Source):
         """Set parameters for fetching and interpolating Argo float data."""
         self.context = context
         self.param = param
-        self.skip_interpolation = skip_interpolation
         self.grid_resolution_degrees = grid_resolution_degrees
         self.distance_scale_km = distance_scale_km
         self.min_weight = min_weight
@@ -105,9 +103,6 @@ class ArgoSource(Source):
             if df.empty:
                 logger.info("No Argo observations for %s; returning NaNs", date)
                 missing_dates.append(date)
-                continue
-
-            if self.skip_interpolation:
                 continue
 
             # Get positions of observations

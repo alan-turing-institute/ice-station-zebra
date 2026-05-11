@@ -743,7 +743,6 @@ full-floatnorth-argo-1p0-1999-2025-24h-v1:
           param:
             - TEMP # temperature
             - PSAL # salinity
-          skip_interpolation: true
       - nan_to_num:
           variables: [TEMP, PSAL]
           replace_with: 99

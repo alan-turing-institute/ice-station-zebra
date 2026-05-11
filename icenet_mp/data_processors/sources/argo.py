@@ -226,11 +226,12 @@ def _fetch_argo_dataframe_with_retry(
             raise RuntimeError(msg) from exc
         except (FileNotFoundError, NoData):
             logger.warning(
-                "Failed to load data for %s between %s and %s.",
+                "Data for %s between %s and %s is unavailable.",
                 region,
                 time_window[0].isoformat(),
                 time_window[1].isoformat(),
             )
+            break
         except Exception:
             logger.exception("Unexpected error while fetching Argo data")
             raise

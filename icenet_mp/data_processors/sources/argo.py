@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import datetime, timedelta
+from typing import ClassVar
 
 import numpy as np
 import xarray as xr
@@ -21,12 +22,15 @@ logger = logging.getLogger(__name__)
 
 @source_registry.register("argo")
 class ArgoSource(Source):
+    missing_dates: ClassVar[list[datetime]] = []
+
     def __init__(  # noqa: PLR0913
         self,
         context: Context,
         *,
         area: str,
         param: list[str],
+        ignore_missing_dates: bool = False,
         grid_resolution_degrees: float = 1,
         distance_scale_km: float = 2000,
         min_weight: float = 1e-10,
@@ -34,10 +38,11 @@ class ArgoSource(Source):
     ) -> None:
         """Set parameters for fetching and interpolating Argo float data."""
         self.context = context
-        self.param = param
-        self.grid_resolution_degrees = grid_resolution_degrees
         self.distance_scale_km = distance_scale_km
+        self.grid_resolution_degrees = grid_resolution_degrees
+        self.ignore_missing_dates = ignore_missing_dates
         self.min_weight = min_weight
+        self.param = param
         self.time_half_window_hrs = time_half_window_hrs
         self.north, self.west, self.south, self.east = map(float, area.split("/"))
         if (self.north < self.south) or (self.east < self.west):
@@ -92,12 +97,15 @@ class ArgoSource(Source):
             end_time = date + timedelta(hours=self.time_half_window_hrs)
 
             # Extract data for the mixed layer (top 50m), retry if 503 error from erddap
-            region = [self.west, self.east, self.south, self.north, 0, 50]
-            time_window = [
-                start_time,
-                end_time,
-            ]
-            df = _fetch_argo_dataframe_with_retry(region, time_window)
+            try:
+                region = [self.west, self.east, self.south, self.north, 0, 50]
+                time_window = [start_time, end_time]
+                df = _fetch_argo_dataframe_with_retry(region, time_window)
+            except RuntimeError:
+                if self.ignore_missing_dates:
+                    ArgoSource.missing_dates.append(date)
+                    continue
+                raise
 
             # Get positions of observations
             obs_lat = df["LATITUDE"].to_numpy(dtype=float)
@@ -125,6 +133,14 @@ class ArgoSource(Source):
                 weighted_array[t_idx] = (
                     np.matmul(weights, unweighted_data) / sum_weights
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
+
+        if self.ignore_missing_dates:
+            logger.info(
+                "Identified %d missing dates:",
+                len(ArgoSource.missing_dates),
+            )
+            for missing_date in ArgoSource.missing_dates:
+                logger.warning(missing_date.isoformat())
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(
@@ -210,7 +226,7 @@ def _fetch_argo_dataframe_with_retry(
             time.sleep(backoff)
         except (FileNotFoundError, NoData) as exc:
             msg = f"{data_target} is unavailable. Error: {exc!s}"
-            logger.exception(msg)
+            logger.warning(msg)
             raise RuntimeError(msg) from exc
 
     # Raise an error if all retries have failed

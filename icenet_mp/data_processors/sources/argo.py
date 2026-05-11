@@ -69,7 +69,6 @@ class ArgoSource(Source):
         )
 
         requested_dates: list[datetime] = sorted(date for date in dates)
-        missing_dates: list[datetime] = []
 
         weighted_data: dict[str, np.ndarray] = {
             variable: np.full(
@@ -100,11 +99,6 @@ class ArgoSource(Source):
             ]
             df = _fetch_argo_dataframe_with_retry(region, time_window)
 
-            if df.empty:
-                logger.info("No Argo observations for %s; returning NaNs", date)
-                missing_dates.append(date)
-                continue
-
             # Get positions of observations
             obs_lat = df["LATITUDE"].to_numpy(dtype=float)
             obs_lon = df["LONGITUDE"].to_numpy(dtype=float)
@@ -131,15 +125,6 @@ class ArgoSource(Source):
                 weighted_array[t_idx] = (
                     np.matmul(weights, unweighted_data) / sum_weights
                 ).reshape(len(lats), len(lons))  # shape: (n_lat, n_lon)
-
-        if missing_dates:
-            logger.info(
-                "%d of %d requested dates were missing:",
-                len(missing_dates),
-                len(requested_dates),
-            )
-            for missing_date in missing_dates:
-                logger.warning(missing_date.isoformat())
 
         # Construct an xarray dataset
         ds_out = xr.Dataset(
@@ -203,41 +188,31 @@ def _fetch_argo_dataframe_with_retry(
         DataFrame from Argo data
 
     """
-    # Try erddap with exponential backoff
+    data_target = f"ERDDAP data for {region} between {time_window[0].isoformat()} and {time_window[1].isoformat()}"
+
+    # Download from ERDDAP with exponential backoff
     for attempt in range(1, max_retries + 1):
         try:
-            fetcher = DataFetcher().region(region + time_window)
-            dataframe = fetcher.to_dataframe()
+            return DataFetcher().region(region + time_window).to_dataframe()
         except FSTimeoutError as exc:
-            # Retry on timeout, with exponential backoff
-            logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
-            if attempt < max_retries:
-                backoff = initial_backoff_s * (2 ** (attempt - 1))
-                logger.warning(
-                    "ERDDAP data server unavailable, retrying in %.1fs (attempt %d/%d)",
-                    backoff,
-                    attempt,
-                    max_retries,
-                )
-                time.sleep(backoff)
-                continue
-            # Otherwise raise an exception
-            msg = f"ERDDAP data server failed after {attempt} retries. Error: {exc!s}"
-            raise RuntimeError(msg) from exc
-        except (FileNotFoundError, NoData):
-            logger.exception(
-                "Data for %s between %s and %s is unavailable.",
-                region,
-                time_window[0].isoformat(),
-                time_window[1].isoformat(),
+            if attempt >= max_retries:
+                msg = f"{data_target} failed after {attempt} retries. Error: {exc!s}"
+                raise RuntimeError(msg) from exc
+            backoff = initial_backoff_s * (2 ** (attempt - 1))
+            logger.warning(
+                "%s failed after %s attempts. Retrying in %.1fs (attempt %d/%d)",
+                data_target,
+                attempt,
+                backoff,
+                attempt,
+                max_retries,
             )
-            raise
-        except Exception:
-            logger.exception("Unexpected error while fetching Argo data")
-            raise
-        else:
-            logger.debug("Successfully fetched data from ERDDAP on attempt %s", attempt)
-            return dataframe
+            time.sleep(backoff)
+        except (FileNotFoundError, NoData) as exc:
+            msg = f"{data_target} is unavailable. Error: {exc!s}"
+            logger.exception(msg)
+            raise RuntimeError(msg) from exc
 
-    # Return empty DataFrame if file not found (e.g., no data for that region/time)
-    return DataFrame()
+    # Raise an error if all retries have failed
+    msg = f"{data_target} failed after {max_retries} retries."
+    raise RuntimeError(msg)

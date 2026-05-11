@@ -196,7 +196,7 @@ def _fetch_argo_dataframe_with_retry(
     Args:
         region: List of [west, east, south, north, depth_min, depth_max]
         time_window: List of [start_time, end_time]
-        max_retries: Number of retry attempts for ERDDAP 503 or 500 responses.
+        max_retries: Number of retry attempts when ERDDAP times out.
         initial_backoff_s: Initial backoff delay in seconds before retrying.
 
     Returns:

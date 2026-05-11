@@ -216,7 +216,7 @@ class ModelService:
             hydra.utils.instantiate(
                 self.config["train"]["trainer"],
                 callbacks=extra_callbacks,
-                "deterministic": self.config.get("random", {}).get(
+                deterministic=self.config.get("random", {}).get(
                             "fully_deterministic", False
                         ),
                 logger=extra_loggers,

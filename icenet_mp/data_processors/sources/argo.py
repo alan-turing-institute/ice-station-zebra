@@ -225,13 +225,13 @@ def _fetch_argo_dataframe_with_retry(
             msg = f"ERDDAP data server failed after {attempt} retries. Error: {exc!s}"
             raise RuntimeError(msg) from exc
         except (FileNotFoundError, NoData):
-            logger.warning(
+            logger.exception(
                 "Data for %s between %s and %s is unavailable.",
                 region,
                 time_window[0].isoformat(),
                 time_window[1].isoformat(),
             )
-            break
+            raise
         except Exception:
             logger.exception("Unexpected error while fetching Argo data")
             raise

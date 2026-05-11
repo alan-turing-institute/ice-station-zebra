@@ -9,6 +9,7 @@ from anemoi.datasets.create.input import FieldContext
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
+from argopy.errors import NoData
 from fsspec import FSTimeoutError
 
 from icenet_mp.data_processors.sources import ArgoSource, register_sources
@@ -126,3 +127,27 @@ class TestArgoSource:
 
         assert not df.empty
         assert datafetcher_cls.call_count == 2
+
+    def test_argo_source_execute_missing_date_raises(self) -> None:
+        """Test that a date with no Argo data raises NoData without being swallowed."""
+        mock_region_no_data = MagicMock()
+        mock_region_no_data.to_dataframe.side_effect = NoData("no data for region")
+        mock_fetcher_no_data = MagicMock()
+        mock_fetcher_no_data.region.return_value = mock_region_no_data
+
+        mock_datafetcher_cls = MagicMock(side_effect=[mock_fetcher_no_data])
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "icenet_mp.data_processors.sources.argo.DataFetcher",
+                mock_datafetcher_cls,
+            )
+            mp.setattr("icenet_mp.data_processors.sources.argo.load_one", MagicMock())
+
+            source = ArgoSource(
+                context=self.context,
+                area="20/30/0/40",
+                param=["TEMP"],
+            )
+            with pytest.raises(NoData):
+                source.execute(dates=self.dates)

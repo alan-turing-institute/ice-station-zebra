@@ -212,8 +212,7 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             fetcher = DataFetcher().region(region + time_window)
-            logger.debug("Successfully fetched data from ERDDAP on attempt %s", attempt)
-            return fetcher.to_dataframe()
+            dataframe = fetcher.to_dataframe()
         except FSTimeoutError as exc:
             # Retry on timeout, with exponential backoff
             logger.info("Failed to fetch Argo data from ERDDAP: %s", type(exc))
@@ -240,6 +239,9 @@ def _fetch_argo_dataframe_with_retry(
         except Exception:
             logger.exception("Unexpected error while fetching Argo data")
             raise
+        else:
+            logger.debug("Successfully fetched data from ERDDAP on attempt %s", attempt)
+            return dataframe
 
     # Return empty DataFrame if file not found (e.g., no data for that region/time)
     return DataFrame()

@@ -10,4 +10,4 @@ defaults:
   - train: default
   - _self_
 
-base_path: /lus/lfs1aip2/projects/public/u6iz/shared/base
+base_path: ../base

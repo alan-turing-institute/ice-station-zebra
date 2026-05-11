@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @source_registry.register("argo")
 class ArgoSource(Source):
-    missing_dates: ClassVar[list[datetime]] = []
+    missing_dates: ClassVar[set[datetime]] = set()
 
     def __init__(  # noqa: PLR0913
         self,
@@ -101,9 +101,9 @@ class ArgoSource(Source):
                 region = [self.west, self.east, self.south, self.north, 0, 50]
                 time_window = [start_time, end_time]
                 df = _fetch_argo_dataframe_with_retry(region, time_window)
-            except RuntimeError:
+            except NoData:
                 if self.ignore_missing_dates:
-                    ArgoSource.missing_dates.append(date)
+                    ArgoSource.missing_dates.add(date)
                     continue
                 raise
 
@@ -139,7 +139,7 @@ class ArgoSource(Source):
                 "Identified %d missing dates:",
                 len(ArgoSource.missing_dates),
             )
-            for missing_date in ArgoSource.missing_dates:
+            for missing_date in sorted(ArgoSource.missing_dates):
                 logger.warning(missing_date.isoformat())
 
         # Construct an xarray dataset
@@ -203,6 +203,9 @@ def _fetch_argo_dataframe_with_retry(
     Returns:
         DataFrame from Argo data
 
+    Raises:
+        NoData if data cannot be retrieved.
+
     """
     data_target = f"ERDDAP data for {region} between {time_window[0].isoformat()} and {time_window[1].isoformat()}"
 
@@ -213,7 +216,7 @@ def _fetch_argo_dataframe_with_retry(
         except FSTimeoutError as exc:
             if attempt >= max_retries:
                 msg = f"{data_target} failed after {attempt} retries. Error: {exc!s}"
-                raise RuntimeError(msg) from exc
+                raise NoData(msg) from exc
             backoff = initial_backoff_s * (2 ** (attempt - 1))
             logger.warning(
                 "%s failed after %s attempts. Retrying in %.1fs (attempt %d/%d)",
@@ -227,8 +230,8 @@ def _fetch_argo_dataframe_with_retry(
         except (FileNotFoundError, NoData) as exc:
             msg = f"{data_target} is unavailable. Error: {exc!s}"
             logger.warning(msg)
-            raise RuntimeError(msg) from exc
+            raise NoData(msg) from exc
 
     # Raise an error if all retries have failed
     msg = f"{data_target} failed after {max_retries} retries."
-    raise RuntimeError(msg)
+    raise NoData(msg)

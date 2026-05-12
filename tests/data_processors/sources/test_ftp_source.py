@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
+from anemoi.datasets.create.input import FieldContext
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
@@ -14,6 +15,13 @@ from icenet_mp.data_processors.sources import FTPSource, register_sources
 class TestFTPSource:
     """Test suite for FTPSource class."""
 
+    context = FieldContext(
+        argument=None,
+        order_by="none",
+        flatten_grid=False,
+        remapping={},
+        use_grib_paramid=False,
+    )
     dates = GroupOfDates(
         [datetime(2020, 1, day) for day in range(1, 4)],
         provider=DatesProvider.from_config(
@@ -53,13 +61,13 @@ class TestFTPSource:
             mp.setattr("icenet_mp.data_processors.sources.ftp.load_one", mock_load_one)
 
             # Execute
-            FTPSource._execute(
-                context={},
-                dates=self.dates,
+            source = FTPSource(
+                context=self.context,
                 url=r"ftp://example.com/data/file.nc",
                 user="testuser",
                 passwd="testpass",  # noqa: S106
             )
+            source.execute(dates=self.dates)
 
             # Verify FTP session was created with correct credentials
             mock_ftp_class.assert_called_once_with("example.com")
@@ -85,11 +93,11 @@ class TestFTPSource:
             mp.setattr("icenet_mp.data_processors.sources.ftp.load_one", mock_load_one)
 
             # Execute without providing user/passwd
-            FTPSource._execute(
-                context={},
-                dates=self.dates,
+            source = FTPSource(
+                context=self.context,
                 url=r"ftp://example.com/data/file.nc",
             )
+            source.execute(dates=self.dates)
 
             # Verify FTP session was created with correct credentials
             mock_ftp_class.assert_called_once_with("example.com")
@@ -122,11 +130,11 @@ class TestFTPSource:
             )
 
             # Execute with a complex URL
-            FTPSource._execute(
-                context={},
-                dates=self.dates,
+            source = FTPSource(
+                context=self.context,
                 url=r"ftp://data.server.com/archive/datasets/file.nc",
             )
+            source.execute(dates=self.dates)
 
             # Verify correct server was used
             mock_ftp_class.assert_called_once_with("data.server.com")
@@ -158,11 +166,11 @@ class TestFTPSource:
             mp.setattr("icenet_mp.data_processors.sources.ftp.FTP", mock_ftp_class)
             mp.setattr("icenet_mp.data_processors.sources.ftp.load_one", mock_load_one)
 
-            FTPSource._execute(
-                context={},
-                dates=self.dates,
+            source = FTPSource(
+                context=self.context,
                 url=r"ftp://example.com/data/{date:strftime(%Y%m%d)}.nc",
             )
+            source.execute(dates=self.dates)
 
             # Verify load_one was called with correct iso dates
             calls = mock_load_one.call_args_list

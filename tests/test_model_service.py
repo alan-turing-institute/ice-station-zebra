@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -14,6 +15,8 @@ class MockCommonDataModule:
         self.config = config
         self.hemisphere = "north"
         self.input_spaces = [DataSpace(5, "input", (20, 20))]
+        self.latitudes = {"input": [0.0] * 400}
+        self.longitudes = {"input": [0.0] * 400}
         self.n_forecast_steps = 2
         self.n_history_steps = 3
         self.output_space = DataSpace(1, "output", (10, 10))
@@ -21,8 +24,13 @@ class MockCommonDataModule:
 
 class MockModel:
     @classmethod
-    def load_from_checkpoint(cls, checkpoint_path: str | Path) -> "MockModel":
-        del checkpoint_path
+    def load_from_checkpoint(
+        cls,
+        checkpoint_path: str | Path,
+        latitudes_fn: Callable[[], dict[str, list[float]]] | None = None,
+        longitudes_fn: Callable[[], dict[str, list[float]]] | None = None,
+    ) -> "MockModel":
+        del checkpoint_path, latitudes_fn, longitudes_fn
         return cls()
 
 
@@ -36,22 +44,17 @@ class TestModelService:
             mp.setattr(
                 "icenet_mp.model_service.hydra.utils.instantiate", mock_instantiate
             )
-
             service = ModelService.from_config(cfg_model_service)
             assert isinstance(service.model, MockModel)
 
         args, kwargs = mock_instantiate.call_args
-        model_config = args[0]
-        assert model_config["input_spaces"] == [
-            DataSpace(5, "input", (20, 20)).to_dict()
-        ]
-        assert (
-            model_config["output_space"] == DataSpace(1, "output", (10, 10)).to_dict()
-        )
-        assert model_config["n_forecast_steps"] == 2
-        assert model_config["n_history_steps"] == 3
-        assert model_config["optimizer"] is cfg_model_service["train"]["optimizer"]
-        assert model_config["scheduler"] is cfg_model_service["train"]["scheduler"]
+        assert args[0] is cfg_model_service["model"]
+        assert kwargs["input_spaces"] == [DataSpace(5, "input", (20, 20)).to_dict()]
+        assert kwargs["output_space"] == DataSpace(1, "output", (10, 10)).to_dict()
+        assert kwargs["n_forecast_steps"] == 2
+        assert kwargs["n_history_steps"] == 3
+        assert kwargs["optimizer"] is cfg_model_service["train"]["optimizer"]
+        assert kwargs["scheduler"] is cfg_model_service["train"]["scheduler"]
         assert kwargs["_recursive_"] is False
         assert kwargs["_convert_"] == "object"
 
@@ -69,6 +72,7 @@ class TestModelService:
         OmegaConf.save(cfg_model_service, files_dir / "model_config.yaml")
 
         with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("icenet_mp.model_service.CommonDataModule", MockCommonDataModule)
             mp.setattr(
                 "icenet_mp.model_service.hydra.utils.get_class",
                 lambda _target: MockModel,
@@ -91,6 +95,7 @@ class TestModelService:
         OmegaConf.save(cfg_model_service, files_dir / "model_config.yaml")
 
         with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("icenet_mp.model_service.CommonDataModule", MockCommonDataModule)
             mp.setattr(
                 "icenet_mp.model_service.hydra.utils.get_class",
                 lambda _target: MockModel,

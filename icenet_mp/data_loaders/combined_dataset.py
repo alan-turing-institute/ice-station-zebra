@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
+from functools import cached_property
 
 from matplotlib.pyplot import step
 import numpy as np
@@ -80,35 +81,35 @@ class CombinedDataset(Dataset):
             print("No land mask provided, using uniform sample weights.")
             self.sample_weights = None
 
-    @property
+    # @property
+    @cached_property
     def dates(self) -> list[np.datetime64]:
         """Get list of dates that are available in all datasets."""
-        if self._available_dates is None:
-            # Identify dates that exist in all input datasets
-            input_date_set = set.intersection(*(set(ds.dates) for ds in self.inputs))
-            target_date_set = set(self.target.dates)
-            self._available_dates = sorted(
-                available_date
-                for available_date in input_date_set
-                # ... if all inputs have n_history_steps starting on start_date
-                if all(
-                    date in input_date_set
-                    for date in self.get_history_steps(available_date)
-                )
-                # ... and if the target has n_forecast_steps starting after the history dates
-                and all(
-                    date in target_date_set
-                    for date in self.get_forecast_steps(available_date)
-                )
+        # Identify dates that exist in all input datasets
+        input_date_set = set.intersection(*(set(ds.dates) for ds in self.inputs))
+        target_date_set = set(self.target.dates)
+        available_dates = sorted(
+            available_date
+            for available_date in input_date_set
+            # ... if all inputs have n_history_steps starting on start_date
+            if all(
+                date in input_date_set
+                for date in self.get_history_steps(available_date)
             )
-            if len(self._available_dates) == 0:
-                msg = (
-                    "CombinedDataset has no valid dates. This can happen when there "
-                    "are no valid windows given the configured history/forecast steps or "
-                    "when the input datasets do not have overlapping time ranges."
-                )
-                raise ValueError(msg)
-        return self._available_dates
+            # ... and if the target has n_forecast_steps starting after the history dates
+            and all(
+                date in target_date_set
+                for date in self.get_forecast_steps(available_date)
+            )
+        )
+        if len(available_dates) == 0:
+            msg = (
+                "CombinedDataset has no valid dates. This can happen when there "
+                "are no valid windows given the configured history/forecast steps or "
+                "when the input datasets do not have overlapping time ranges."
+            )
+            raise ValueError(msg)
+        return available_dates
 
     @property
     def end_date(self) -> np.datetime64:
@@ -126,6 +127,10 @@ class CombinedDataset(Dataset):
 
     def __getitem__(self, idx: int) -> dict[str, ArrayTCHW]:
         """Return the data for a single timestep as a dictionary.
+
+        Note that because we have already checked which starting dates are valid in the
+        `dates` property, we know that the requested dates will be consecutive in each
+        data input, so we can use `get_tchw_slice` rather than `get_tchw`.
 
         Returns:
             A dictionary with dataset names as keys and a numpy array as the value.
@@ -152,12 +157,18 @@ class CombinedDataset(Dataset):
         else:
             weights = np.ones_like(target, dtype=np.float32)
 
+        start_date = self.dates[idx]
         return {
-            ds.name: ds.get_tchw(self.get_history_steps(self.dates[idx]))
+            ds.name: ds.get_tchw_slice(start_date, self.n_history_steps, check=False)
             for ds in self.inputs
         } | {
-            "target": target,
+            # "target": target,
             "sample_weights": weights,
+            "target": self.target.get_tchw_slice(
+                start_date + self.n_history_steps * self.frequency,
+                self.n_forecast_steps,
+                check=False,
+            )
         }
 
     def get_forecast_steps(self, start_date: np.datetime64) -> list[np.datetime64]:

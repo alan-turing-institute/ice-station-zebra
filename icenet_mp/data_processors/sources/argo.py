@@ -1,16 +1,16 @@
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any
 
-import earthkit.data as ekd
 import numpy as np
 import xarray as xr
+from anemoi.datasets.create.input.context import Context
 from anemoi.datasets.create.source import Source
 from anemoi.datasets.create.sources import source_registry
 from anemoi.datasets.create.sources.xarray import load_one
 from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
+from earthkit.data import FieldList
 from haversine import Unit, haversine_vector
 from pandas import DataFrame
 
@@ -18,21 +18,20 @@ logger = logging.getLogger(__name__)
 
 
 @source_registry.register("argo")
-# class ArgoSource(LegacySource):
 class ArgoSource(Source):
     def __init__(  # noqa: PLR0913
         self,
-        context: dict[str, Any],
+        context: Context,
+        *,
         area: str,
         param: list[str],
-        *,
         skip_interpolation: bool = False,
         grid_resolution_degrees: float = 1,
         distance_scale_km: float = 2000,
         min_weight: float = 1e-10,
         time_half_window_hrs: int = 2,
     ) -> None:
-        """Initialise the source."""
+        """Set parameters for fetching and interpolating Argo float data."""
         self.context = context
         self.param = param
         self.skip_interpolation = skip_interpolation
@@ -45,11 +44,8 @@ class ArgoSource(Source):
             msg = f"Invalid area: {area}. Expected format: 'N/W/S/E'"
             raise ValueError(msg)
 
-    def execute(
-        self,
-        date_group: GroupOfDates,
-    ) -> ekd.FieldList:
-        """Download Argo float data within given parameters."""
+    def execute(self, dates: list[datetime] | GroupOfDates) -> FieldList:
+        """Download Argo float data within given date range."""
         # Set constants
         # Construct the grid that we want to project onto
         lats = np.arange(
@@ -72,7 +68,7 @@ class ArgoSource(Source):
             len(lats) * len(lons),
         )
 
-        requested_dates = sorted(date_group.dates)
+        requested_dates = sorted(date for date in dates)
         weighted_data: dict[str, np.ndarray] = {
             variable: np.full(
                 (len(requested_dates), len(lats), len(lons)), np.nan, dtype=float
@@ -184,16 +180,15 @@ class ArgoSource(Source):
             },
         )
 
-        field_lists = load_one(
+        multi_field_list = load_one(
             "📂", self.context, [date.isoformat() for date in requested_dates], ds_out
         )
-
-        n_dates = len(field_lists) // len(self.param)
+        n_dates = len(multi_field_list) // len(self.param)
         if n_dates != len(requested_dates):
             msg = f"Expected {len(requested_dates)} dates, got {n_dates} dates"
             raise ValueError(msg)
 
-        return field_lists
+        return multi_field_list
 
 
 def _fetch_argo_dataframe_with_retry(
@@ -224,6 +219,7 @@ def _fetch_argo_dataframe_with_retry(
             is_500 = "500" in error_str
             is_503 = "503" in error_str
 
+            # Retry on 503 or 500 errors, with exponential backoff
             if (is_503 or is_500) and attempt < max_retries:
                 backoff = initial_backoff_s * (2 ** (attempt - 1))
 
@@ -234,26 +230,24 @@ def _fetch_argo_dataframe_with_retry(
                 logger.warning(msg)
                 time.sleep(backoff)
                 continue
-            if is_503:
-                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
-                raise RuntimeError(msg) from exc
+
+            # Otherwise raise an exception
             if is_500:
                 msg = f"ERDDAP data server failed with 500 after {max_retries} retries. Error: {error_str}"
                 raise RuntimeError(msg) from exc
-
-            # Otherwise don't retry
+            if is_503:
+                msg = f"ERDDAP data server failed with 503 after {max_retries} retries. Error: {error_str}"
+                raise RuntimeError(msg) from exc
             raise
-
         else:
-            break
+            # If we successfully fetched the data, attempt to return it as a DataFrame
+            try:
+                msg = f"Successfully fetched data from erddap on attempt {attempt}"
+                logger.debug(msg)
+                return fetcher.to_dataframe()
+            except FileNotFoundError:
+                msg = f"Failed to load data for {region} and {time_window}. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
+                logger.warning(msg)
 
-    try:
-        df = fetcher.to_dataframe()
-    except FileNotFoundError:
-        msg = f"Failed to load file for {region + time_window}, it may be empty. Check whether the data exists at https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.html"
-        logger.warning(msg)
-        return DataFrame()  # Return empty DataFrame if file not found (e.g., no data for that region/time)
-    else:
-        msg = f"Successfully fetched data from erddap on attempt {attempt}"
-        logger.debug(msg)
-        return df
+    # Return empty DataFrame if file not found (e.g., no data for that region/time)
+    return DataFrame()

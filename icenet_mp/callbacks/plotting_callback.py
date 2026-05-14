@@ -50,6 +50,19 @@ class PlottingCallback(Callback):
         self.make_video_plots = make_video_plots
         self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
 
+    def load_dataset(
+        self, trainer: Trainer, dataloader_idx: int
+    ) -> CombinedDataset | None:
+        """Load the dataset for the given dataloader index."""
+        dl: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
+        if dl is None:
+            return None
+        dataset = (dl[dataloader_idx] if isinstance(dl, Sequence) else dl).dataset
+        if not isinstance(dataset, CombinedDataset):
+            logger.warning("Dataset is of type %s not CombinedDataset", type(dataset))
+            return None
+        return dataset
+
     def set_metadata(self, config: DictConfig, model_name: str) -> None:
         """Set metadata for the plotter."""
         self.plotter.set_metadata(config, model_name)
@@ -68,31 +81,23 @@ class PlottingCallback(Callback):
         if batch_idx % self.frequency:
             return
 
-        # Check that outputs is a ModelStepOutput
-        if not isinstance(outputs, ModelStepOutput):
-            msg = f"Output is of type {type(outputs)}, skipping plotting."
-            logger.warning(msg)
+        # Ensure that outputs is a ModelStepOutput
+        if isinstance(outputs, Mapping):
+            outputs = ModelStepOutput(**outputs)
+        else:
+            logger.warning("Could not load outputs, skipping plotting.")
             return
-
-        # Get date for this batch
-        dl: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
-        if dl is None:
-            logger.warning("No test dataloaders found, skipping plotting.")
-            return
-        dataset = (dl[dataloader_idx] if isinstance(dl, Sequence) else dl).dataset
-        if not isinstance(dataset, CombinedDataset):
-            msg = f"Dataset is of type {type(dataset)}, skipping plotting."
-            logger.warning(msg)
-            return
-
-        # Get sequence dates for static and video plots
         batch_size = int(outputs.target.shape[0])
 
+        # Load dates from the dataset
+        if (dataset := self.load_dataset(trainer, dataloader_idx)) is None:
+            logger.warning("Could not load dataset, skipping plotting.")
+            return
         start_date = dataset.dates[batch_size * batch_idx]
-
         dates = list(
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
         )
+
         # Set hemisphere for plotting based on dataset
         if not isinstance(pl_module, BaseModel):
             msg = f"Lightning module is of type {type(pl_module)}, skipping plotting."

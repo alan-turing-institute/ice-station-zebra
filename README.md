@@ -37,7 +37,7 @@
 | icenet\_mp/data\_processors/preprocessors/ipreprocessor.py    |        9 |        2 |     78% |     10-11 |
 | icenet\_mp/data\_processors/preprocessors/null.py             |        5 |        1 |     80% |         9 |
 | icenet\_mp/data\_processors/sources/\_\_init\_\_.py           |       12 |        0 |    100% |           |
-| icenet\_mp/data\_processors/sources/argo.py                   |      104 |       24 |     77% |44-45, 103-105, 108, 138-142, 188-189, 235-241, 248-253 |
+| icenet\_mp/data\_processors/sources/argo.py                   |       88 |       12 |     86% |48-49, 105-106, 137-142, 235-241 |
 | icenet\_mp/data\_processors/sources/ftp.py                    |       40 |        3 |     92% |     66-68 |
 | icenet\_mp/exceptions.py                                      |        3 |        0 |    100% |           |
 | icenet\_mp/geotools/\_\_init\_\_.py                           |        8 |        0 |    100% |           |
@@ -116,7 +116,7 @@
 | icenet\_mp/visualisations/range\_check.py                     |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                                |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                                 |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                     | **4093** | **1259** | **69%** |           |
+| **TOTAL**                                                     | **4077** | **1247** | **69%** |           |
 
 
 ## Setup coverage badge

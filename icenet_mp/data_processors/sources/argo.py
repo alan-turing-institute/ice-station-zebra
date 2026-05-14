@@ -212,7 +212,10 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             return DataFetcher().region(region + time_window).to_dataframe()
-        except TimeoutError as exc:
+        except (FileNotFoundError, TimeoutError) as exc:
+            # Annoyingly, both 50x errors and 404 errors raise a FileNotFoundError and
+            # the error message does not contain the HTTP status code so we need to
+            # retry both cases.
             if attempt >= max_retries:
                 msg = f"{data_target} failed after {attempt} retries. Error: {exc!s}"
                 raise NoData(msg) from exc
@@ -226,7 +229,7 @@ def _fetch_argo_dataframe_with_retry(
                 max_retries,
             )
             time.sleep(backoff)
-        except (FileNotFoundError, NoData) as exc:
+        except NoData as exc:
             msg = f"{data_target} is unavailable. Error: {exc!s}"
             logger.warning(msg)
             raise NoData(msg) from exc

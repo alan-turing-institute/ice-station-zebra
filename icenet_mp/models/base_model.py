@@ -50,7 +50,7 @@ class BaseModel(LightningModule, ABC):
 
         # Save model name, hemisphere and lat/lon information
         self.name = name
-        self.hemisphere = hemisphere
+        self.hemisphere: Hemisphere = hemisphere
         self.latitudes_fn = latitudes_fn
         self.longitudes_fn = longitudes_fn
 

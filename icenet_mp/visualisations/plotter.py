@@ -1,14 +1,13 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
 import numpy as np
 from omegaconf import DictConfig
 
 from icenet_mp.data_loaders import SingleDataset
 from icenet_mp.exceptions import InvalidArrayError, VideoRenderError
-from icenet_mp.types import ArrayHW, ArrayTHW, ModelStepOutput, PlotSpec
+from icenet_mp.types import ArrayHW, ArrayTHW, Hemisphere, ModelStepOutput, PlotSpec
 
 from .land_mask import LandMask
 from .metadata import build_metadata, format_metadata_subtitle
@@ -24,7 +23,7 @@ class Plotter:
         self.base_path = Path(base_path) if base_path else None
         self.plot_spec = plot_spec
 
-    def set_hemisphere(self, hemisphere: Literal["north", "south"]) -> None:
+    def set_hemisphere(self, hemisphere: Hemisphere) -> None:
         """Set the hemisphere and update the plot spec accordingly."""
         self.plot_spec.hemisphere = hemisphere
         self.land_mask = LandMask(self.base_path, hemisphere)

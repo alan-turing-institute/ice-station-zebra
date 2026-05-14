@@ -9,7 +9,6 @@ from anemoi.datasets.create.input import FieldContext
 from anemoi.datasets.dates import DatesProvider
 from anemoi.datasets.dates.groups import GroupOfDates
 from anemoi.utils.registry import Registry
-from argopy.errors import NoData
 
 from icenet_mp.data_processors.sources import ArgoSource, register_sources
 from icenet_mp.data_processors.sources.argo import _fetch_argo_dataframe_with_retry
@@ -128,9 +127,9 @@ class TestArgoSource:
         assert datafetcher_cls.call_count == 2
 
     def test_argo_source_execute_missing_date_raises(self) -> None:
-        """Test that a date with no Argo data raises NoData without being swallowed."""
+        """Test that a date with no Argo data raises LookupError without being swallowed."""
         mock_region_no_data = MagicMock()
-        mock_region_no_data.to_dataframe.side_effect = NoData("no data for region")
+        mock_region_no_data.to_dataframe.side_effect = LookupError("no data for region")
         mock_fetcher_no_data = MagicMock()
         mock_fetcher_no_data.region.return_value = mock_region_no_data
 
@@ -148,5 +147,5 @@ class TestArgoSource:
                 area="20/30/0/40",
                 param=["TEMP"],
             )
-            with pytest.raises(NoData):
+            with pytest.raises(LookupError):
                 source.execute(dates=self.dates)

@@ -100,7 +100,7 @@ class ArgoSource(Source):
                 region = [self.west, self.east, self.south, self.north, 0, 50]
                 time_window = [start_time, end_time]
                 df = _fetch_argo_dataframe_with_retry(region, time_window)
-            except NoData:
+            except LookupError:
                 if self.ignore_missing_dates:
                     ArgoSource.missing_dates.add(date)
                     continue
@@ -203,10 +203,13 @@ def _fetch_argo_dataframe_with_retry(
         DataFrame from Argo data
 
     Raises:
-        NoData if data cannot be retrieved.
+        LookupError if data cannot be retrieved.
 
     """
-    data_target = f"ERDDAP data for {region} between {time_window[0].isoformat()} and {time_window[1].isoformat()}"
+    data_target = (
+        f"Argo float data for {region} between {time_window[0].isoformat()} and "
+        f"{time_window[1].isoformat()}"
+    )
 
     # Download from ERDDAP with exponential backoff
     for attempt in range(1, max_retries + 1):
@@ -216,24 +219,23 @@ def _fetch_argo_dataframe_with_retry(
             # Annoyingly, both 50x errors and 404 errors raise a FileNotFoundError and
             # the error message does not contain the HTTP status code so we need to
             # retry both cases.
-            if attempt >= max_retries:
-                msg = f"{data_target} failed after {attempt} retries. Error: {exc!s}"
-                raise NoData(msg) from exc
-            backoff = initial_backoff_s * (2 ** (attempt - 1))
             logger.warning(
-                "%s failed after %s attempts. Retrying in %.1fs (attempt %d/%d)",
+                "Downloading %s failed after %d/%d attempts.",
                 data_target,
-                attempt,
-                backoff,
                 attempt,
                 max_retries,
             )
+            if attempt >= max_retries:
+                msg = f"{data_target} is unavailable."
+                raise LookupError(msg) from exc
+            backoff = initial_backoff_s * (2 ** (attempt - 1))
+            logger.debug("Retrying download in %.1fs.", backoff)
             time.sleep(backoff)
         except NoData as exc:
-            msg = f"{data_target} is unavailable. Error: {exc!s}"
+            msg = f"{data_target} is unavailable."
             logger.warning(msg)
-            raise NoData(msg) from exc
+            raise LookupError(msg) from exc
 
     # Raise an error if all retries have failed
-    msg = f"{data_target} failed after {max_retries} retries."
-    raise NoData(msg)
+    msg = f"{data_target} could not be downloaded after {max_retries} attempts."
+    raise LookupError(msg)

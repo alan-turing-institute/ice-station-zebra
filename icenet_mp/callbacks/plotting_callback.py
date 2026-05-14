@@ -9,7 +9,7 @@ from torch import Tensor
 
 from icenet_mp.data_loaders import CombinedDataset
 from icenet_mp.models import BaseModel
-from icenet_mp.types import ModelTestOutput, PlotSpec
+from icenet_mp.types import ModelStepOutput, PlotSpec
 from icenet_mp.utils import datetime_from_npdatetime
 from icenet_mp.visualisations import DEFAULT_SIC_SPEC, Plotter
 
@@ -68,8 +68,8 @@ class PlottingCallback(Callback):
         if batch_idx % self.frequency:
             return
 
-        # Check that outputs is a ModelTestOutput
-        if not isinstance(outputs, ModelTestOutput):
+        # Check that outputs is a ModelStepOutput
+        if not isinstance(outputs, ModelStepOutput):
             msg = f"Output is of type {type(outputs)}, skipping plotting."
             logger.warning(msg)
             return

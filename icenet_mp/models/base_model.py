@@ -18,7 +18,7 @@ from torchmetrics import MetricCollection
 
 from icenet_mp.metrics.base_metrics import MAEPerForecastDay, RMSEPerForecastDay
 from icenet_mp.metrics.sie_error_abs import SeaIceExtentErrorPerForecastDay
-from icenet_mp.types import DataSpace, Hemisphere, ModelTestOutput, TensorNTCHW
+from icenet_mp.types import DataSpace, Hemisphere, ModelStepOutput, TensorNTCHW
 
 
 class BaseModel(LightningModule, ABC):
@@ -145,7 +145,7 @@ class BaseModel(LightningModule, ABC):
         self,
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,  # noqa: PT019
-    ) -> ModelTestOutput:
+    ) -> ModelStepOutput:
         """Run the test step, in PyTorch eval model (i.e. no gradients).
 
         - Separate the batch into inputs and target
@@ -158,7 +158,7 @@ class BaseModel(LightningModule, ABC):
                    TensorNTCHW with (batch_size, n_history_steps, C, H, W).
 
         Returns:
-            A ModelTestOutput containing the prediction, target and loss for the batch.
+            A ModelStepOutput containing the prediction, target and loss for the batch.
 
         """
         target = batch.pop("target")
@@ -167,7 +167,7 @@ class BaseModel(LightningModule, ABC):
         # update test metrics with the current batch; computation will be done at epoch end
         self.test_metrics.update(prediction, target)
 
-        return ModelTestOutput(prediction, target, loss)
+        return ModelStepOutput(prediction, target, loss)
 
     def training_step(
         self,

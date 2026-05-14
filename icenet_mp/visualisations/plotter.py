@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 from icenet_mp.data_loaders import SingleDataset
 from icenet_mp.exceptions import InvalidArrayError, VideoRenderError
-from icenet_mp.types import ArrayHW, ArrayTHW, ModelTestOutput, PlotSpec
+from icenet_mp.types import ArrayHW, ArrayTHW, ModelStepOutput, PlotSpec
 
 from .land_mask import LandMask
 from .metadata import build_metadata, format_metadata_subtitle
@@ -64,7 +64,7 @@ class Plotter:
             logger.warning("Static plotting failed: %s", exc)
 
     def log_static_outputs(
-        self, outputs: ModelTestOutput, dates: list[datetime], image_loggers: list
+        self, outputs: ModelStepOutput, dates: list[datetime], image_loggers: list
     ) -> None:
         """Create and log static image plots."""
         try:
@@ -123,7 +123,7 @@ class Plotter:
                     )
 
     def log_video_outputs(
-        self, outputs: ModelTestOutput, dates: list[datetime], video_loggers: list
+        self, outputs: ModelStepOutput, dates: list[datetime], video_loggers: list
     ) -> None:
         """Create and log video plots."""
         try:

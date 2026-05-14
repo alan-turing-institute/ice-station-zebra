@@ -174,7 +174,10 @@ class TestArgoSource:
             source = ArgoSource(
                 context=self.context,
                 area="20/30/0/40",
+                crs="EPSG:6932",
                 param=["TEMP"],
+                resolution="25p0km",
+                shape=(432, 432),
             )
             with pytest.raises(LookupError):
                 source.execute(dates=self.dates)

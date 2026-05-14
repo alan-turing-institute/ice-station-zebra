@@ -35,7 +35,6 @@ class ArgoSource(Source):
         resolution: str,
         shape: tuple[int, int],
         distance_scale_km: float = 2000,
-        grid_resolution_degrees: float = 1,
         ignore_missing_dates: bool = False,
         min_weight: float = 1e-10,
         time_half_window_hrs: int = 2,
@@ -51,7 +50,6 @@ class ArgoSource(Source):
 
         # Set weighting parameters for interpolation
         self.distance_scale_km = distance_scale_km
-        self.grid_resolution_degrees = grid_resolution_degrees
         self.ignore_missing_dates = ignore_missing_dates
         self.min_weight = min_weight
 

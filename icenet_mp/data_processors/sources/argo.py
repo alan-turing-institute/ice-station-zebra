@@ -188,7 +188,7 @@ class ArgoSource(Source):
 def _fetch_argo_dataframe_with_retry(
     region: list[float],
     time_window: list[datetime],
-    max_retries: int = 5,
+    max_attempts: int = 5,
     initial_backoff_s: float = 0.5,
 ) -> DataFrame:
     """Fetch Argo data with exponential backoff.
@@ -196,7 +196,7 @@ def _fetch_argo_dataframe_with_retry(
     Args:
         region: List of [west, east, south, north, depth_min, depth_max]
         time_window: List of [start_time, end_time]
-        max_retries: Number of retry attempts when ERDDAP times out.
+        max_attempts: Maximum number of attempts to make when ERDDAP download fails.
         initial_backoff_s: Initial backoff delay in seconds before retrying.
 
     Returns:
@@ -212,7 +212,7 @@ def _fetch_argo_dataframe_with_retry(
     )
 
     # Download from ERDDAP with exponential backoff
-    for attempt in range(1, max_retries + 1):
+    for attempt in range(1, max_attempts + 1):
         try:
             return DataFetcher().region(region + time_window).to_dataframe()
         except (FileNotFoundError, TimeoutError) as exc:
@@ -223,9 +223,9 @@ def _fetch_argo_dataframe_with_retry(
                 "Downloading %s failed after %d/%d attempts.",
                 data_target,
                 attempt,
-                max_retries,
+                max_attempts,
             )
-            if attempt >= max_retries:
+            if attempt >= max_attempts:
                 msg = f"{data_target} is unavailable."
                 raise LookupError(msg) from exc
             backoff = initial_backoff_s * (2 ** (attempt - 1))
@@ -237,5 +237,5 @@ def _fetch_argo_dataframe_with_retry(
             raise LookupError(msg) from exc
 
     # Raise an error if all retries have failed
-    msg = f"{data_target} could not be downloaded after {max_retries} attempts."
+    msg = f"{data_target} could not be downloaded after {max_attempts} attempts."
     raise LookupError(msg)

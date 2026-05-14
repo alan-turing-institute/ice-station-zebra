@@ -13,7 +13,6 @@ from anemoi.datasets.dates.groups import GroupOfDates
 from argopy import DataFetcher
 from argopy.errors import NoData
 from earthkit.data import FieldList
-from fsspec import FSTimeoutError
 from haversine import Unit, haversine_vector
 from pandas import DataFrame
 
@@ -213,7 +212,7 @@ def _fetch_argo_dataframe_with_retry(
     for attempt in range(1, max_retries + 1):
         try:
             return DataFetcher().region(region + time_window).to_dataframe()
-        except FSTimeoutError as exc:
+        except TimeoutError as exc:
             if attempt >= max_retries:
                 msg = f"{data_target} failed after {attempt} retries. Error: {exc!s}"
                 raise NoData(msg) from exc

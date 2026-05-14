@@ -91,6 +91,21 @@ defaults:
   - _self_
 ```
 
+### Generating Argo float missing dates
+
+Some dates do not have any Argo float data.
+In order to generate a list of missing dates for a particular Argo float dataset, you can do the following:
+
+Add `ignore_missing_dates: true` to the relevant dataset file.
+Delete any previously downloaded version of the dataset.
+
+```
+uv run imp datasets create --config-name <a config file that requires this dataset>
+```
+
+This will then attempt to download the full dataset, ignoring any exceptions that would usually be raised by missing dates.
+It will also print a list of missing dates at the end of each data group.
+
 ## Running IceNet-MP commands
 
 :information_source: Note that if you are running the below commands locally, specify the base path in your local config, then add the argument `--config-name <your local config>.yaml`.

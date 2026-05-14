@@ -1,5 +1,5 @@
-samp-floatsouth-argo-pt-2017-2019-24h-v1:
-  name: samp-floatsouth-argo-pt-2017-2019-24h-v1
+samp-floatsouth-argo-1p0-2017-2019-24h-v1:
+  name: samp-floatsouth-argo-1p0-2017-2019-24h-v1
   group_as: float_argo
   description: ARGO float data for southern hemisphere
   attribution: ARGO
@@ -14,6 +14,7 @@ samp-floatsouth-argo-pt-2017-2019-24h-v1:
     pipe:
       - argo:
           area: "-20/-180/-90/180"  # southern hemisphere
+          grid_resolution_degrees: 1.0
           param:
             - TEMP # temperature
             - PSAL # salinity

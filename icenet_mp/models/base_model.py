@@ -72,7 +72,15 @@ class BaseModel(LightningModule, ABC):
         self.optimizer_cfg = optimizer
         self.scheduler_cfg = scheduler
 
+        # Metrics
         self.test_metrics = MetricCollection(
+            {
+                "sieerror": SeaIceExtentErrorPerForecastDay(),
+                "rmse": RMSEPerForecastDay(),
+                "mae": MAEPerForecastDay(),
+            }
+        )
+        self.train_metrics = MetricCollection(
             {
                 "sieerror": SeaIceExtentErrorPerForecastDay(),
                 "rmse": RMSEPerForecastDay(),
@@ -164,7 +172,8 @@ class BaseModel(LightningModule, ABC):
         target = batch.pop("target")
         prediction = self(batch)
         loss = self.loss(prediction, target)
-        # update test metrics with the current batch; computation will be done at epoch end
+
+        # Update metrics; computation will be done at epoch end
         self.test_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)
@@ -201,6 +210,10 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
+
+        # Update metrics; computation will be done at epoch end
+        self.train_metrics.update(prediction, target)
+
         return ModelStepOutput(prediction, target, loss)
 
     def validation_step(

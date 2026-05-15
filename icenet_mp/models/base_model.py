@@ -195,7 +195,7 @@ class BaseModel(LightningModule, ABC):
                    TensorNTCHW with (batch_size, n_history_steps, C, H, W).
 
         Returns:
-            A Tensor containing the loss for the batch.
+            A ModelStepOutput containing the prediction, target and loss for the batch.
 
         """
         target = batch["target"].clone().detach()
@@ -220,7 +220,7 @@ class BaseModel(LightningModule, ABC):
         self,
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,
-    ) -> torch.Tensor:
+    ) -> ModelStepOutput:
         """Run the validation step.
 
         A batch contains one tensor for each input dataset and one for the target
@@ -236,7 +236,7 @@ class BaseModel(LightningModule, ABC):
                    TensorNTCHW with (batch_size, n_history_steps, C, H, W).
 
         Returns:
-            A Tensor containing the loss for the batch.
+            A ModelStepOutput containing the prediction, target and loss for the batch.
 
         """
         target = batch["target"].clone().detach()
@@ -250,4 +250,4 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
-        return loss
+        return ModelStepOutput(prediction, target, loss)

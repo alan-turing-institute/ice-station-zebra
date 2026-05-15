@@ -128,7 +128,7 @@ class PlotSpec:
 
     """
 
-    variable: str
+    variable: str = "sea_ice_concentration"
     title_groundtruth: str = "Ground Truth"
     title_prediction: str = "Prediction"
     title_difference: str = "Difference"

@@ -10,23 +10,7 @@ plotting:
   plot_spec:
     _target_: icenet_mp.types.PlotSpec
     # Plot specification
-    variable: "sea_ice_concentration"
-    selected_timestep: 0          # which T to render for the static map
-    title_groundtruth: "Ground Truth"
-    title_prediction: "Prediction"
-    title_difference: "Difference"
-    n_contour_levels: 51
-    colourmap: "viridis"
-    include_difference: true
-    diff_mode: "signed"             # "signed" | "absolute" | "smape"
-    diff_strategy: "precompute"     # "precompute" | "two-pass" | "per-frame"
-    vmin: 0.0
-    vmax: 1.0
-    colourbar_location: "horizontal"
     colourbar_strategy: "separate"  # shared | separate (prediction gets its own colourbar)
-    include_footer_metadata: true
-    video_fps: 2
-    video_format: mp4             # mp4 or gif
 
     # Per-variable styles
     per_variable_styles:
@@ -53,6 +37,7 @@ plotting:
       "era5:v_*": { cmap: "RdBu_r", two_slope_centre: 0.0, units: "m/s" }
       # Sea ice concentration
       "sic-icenet:ice_conc": { cmap: "Blues_r" }
+      "sic-ssmis:ice_conc": { cmap: "Blues_r" }
 
       # Default fallback
       # NOTE: This _default entry means plot_spec.colourmap above is never used.

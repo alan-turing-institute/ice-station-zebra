@@ -23,7 +23,7 @@ class PlottingCallback(Callback):
     def __init__(
         self,
         *,
-        frequency: int = 5,
+        frequency: dict[str, int] | None = None,
         make_input_plots: bool = False,
         make_static_plots: bool = True,
         make_video_plots: bool = True,
@@ -33,7 +33,7 @@ class PlottingCallback(Callback):
         """Create plots during evaluation.
 
         Args:
-            frequency: Create a new plot every `frequency` batches.
+            frequency: A dictionary specifying how often to make plots, with keys "batch" and/or "epoch".
             make_input_plots: Whether to plot the raw inputs.
             make_static_plots: Whether to create static plots.
             make_video_plots: Whether to create video plots.
@@ -42,20 +42,39 @@ class PlottingCallback(Callback):
 
         """
         super().__init__()
-        self.frequency = int(max(1, frequency))
+        self.frequency_batch = int((frequency or {}).get("batch", -1))
+        self.frequency_epoch = int((frequency or {}).get("epoch", -1))
+        self.epoch_idx = -1
         self.make_input_plots = make_input_plots
         self.make_static_plots = make_static_plots
         self.make_video_plots = make_video_plots
         self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
 
+        # Cache the most recent batch
+        self.current_batch_idx_: int | None = None
+        self.current_dataloader_idx_: int | None = None
+        self.current_outputs_: ModelStepOutput | None = None
+
+    def cache_current_batch(
+        self,
+        batch_idx: int,
+        dataloader_idx: int,
+        outputs: Tensor | Mapping[str, Any] | None,
+    ) -> None:
+        """Cache the current batch information for use in epoch-end plotting."""
+        if isinstance(outputs, Mapping):
+            self.current_outputs_ = ModelStepOutput(**outputs)
+            self.current_batch_idx_ = batch_idx
+            self.current_dataloader_idx_ = dataloader_idx
+
     def load_dataset(
-        self, dataloader: DataLoader | list[DataLoader] | None, dataloader_idx: int
+        self, dataloader: DataLoader | list[DataLoader] | None
     ) -> CombinedDataset | None:
         """Load the dataset for the given dataloader index."""
-        if dataloader is None:
+        if dataloader is None or self.current_dataloader_idx_ is None:
             return None
         dataset = (
-            dataloader[dataloader_idx]
+            dataloader[self.current_dataloader_idx_]
             if isinstance(dataloader, Sequence)
             else dataloader
         ).dataset
@@ -68,21 +87,16 @@ class PlottingCallback(Callback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        *,
-        batch_idx: int,
         dataset: CombinedDataset,
-        outputs: Tensor | Mapping[str, Any] | None,
     ) -> None:
         # Ensure that outputs is a ModelStepOutput
-        if isinstance(outputs, Mapping):
-            outputs = ModelStepOutput(**outputs)
-        else:
+        if self.current_outputs_ is None or self.current_batch_idx_ is None:
             logger.warning("Could not load outputs, skipping plotting.")
             return
 
         # Load dates from the dataset
-        batch_size = int(outputs.target.shape[0])
-        start_date = dataset.dates[batch_size * batch_idx]
+        batch_size = int(self.current_outputs_.target.shape[0])
+        start_date = dataset.dates[batch_size * self.current_batch_idx_]
         dates = list(
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
         )
@@ -99,14 +113,19 @@ class PlottingCallback(Callback):
         video_loggers = [ll for ll in trainer.loggers if hasattr(ll, "log_video")]
 
         if self.make_static_plots:
-            self.plotter.log_static_outputs(outputs, dates, image_loggers)
+            self.plotter.log_static_outputs(self.current_outputs_, dates, image_loggers)
             if self.make_input_plots:
                 self.plotter.log_static_inputs(dataset.inputs, dates, image_loggers)
 
         if self.make_video_plots:
-            self.plotter.log_video_outputs(outputs, dates, video_loggers)
+            self.plotter.log_video_outputs(self.current_outputs_, dates, video_loggers)
             if self.make_input_plots:
                 self.plotter.log_video_inputs(dataset.inputs, dates, video_loggers)
+
+        # Reset cached batch info after plotting
+        self.current_batch_idx_ = None
+        self.current_dataloader_idx_ = None
+        self.current_outputs_ = None
 
     def on_test_batch_end(
         self,
@@ -118,23 +137,34 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each test batch."""
-        # Only run plotting every `frequency` batches
-        if batch_idx % self.frequency:
+        self.cache_current_batch(batch_idx, dataloader_idx, outputs)
+
+        # Only run plotting if this batch is at the specified frequency
+        if self.frequency_batch < 0 or batch_idx % self.frequency_batch:
             return
 
         # Load the dataset
-        if not (dataset := self.load_dataset(trainer.test_dataloaders, dataloader_idx)):
+        if not (dataset := self.load_dataset(trainer.test_dataloaders)):
             logger.warning("Could not load dataset, skipping plotting.")
             return
 
         # Make the plots
-        self.make_plots(
-            trainer,
-            pl_module,
-            batch_idx=batch_idx,
-            dataset=dataset,
-            outputs=outputs,
-        )
+        self.make_plots(trainer, pl_module, dataset)
+
+    def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of each test epoch."""
+        # Only run plotting if this batch is at the specified frequency
+        self.epoch_idx += 1
+        if self.frequency_epoch < 0 or self.epoch_idx % self.frequency_epoch:
+            return
+
+        # Load the dataset
+        if not (dataset := self.load_dataset(trainer.test_dataloaders)):
+            logger.warning("Could not load dataset, skipping plotting.")
+            return
+
+        # Make the plots
+        self.make_plots(trainer, pl_module, dataset)
 
     def on_train_batch_end(
         self,
@@ -146,23 +176,34 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each train batch."""
-        # Only run plotting every `frequency` batches
-        if batch_idx % self.frequency:
+        self.cache_current_batch(batch_idx, dataloader_idx, outputs)
+
+        # Only run plotting if this batch is at the specified frequency
+        if self.frequency_batch < 0 or batch_idx % self.frequency_batch:
             return
 
         # Load the dataset
-        if not (dataset := self.load_dataset(trainer.train_dataloader, dataloader_idx)):
+        if not (dataset := self.load_dataset(trainer.train_dataloader)):
             logger.warning("Could not load dataset, skipping plotting.")
             return
 
         # Make the plots
-        self.make_plots(
-            trainer,
-            pl_module,
-            batch_idx=batch_idx,
-            dataset=dataset,
-            outputs=outputs,
-        )
+        self.make_plots(trainer, pl_module, dataset)
+
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of each train epoch."""
+        # Only run plotting if this batch is at the specified frequency
+        self.epoch_idx += 1
+        if self.frequency_epoch < 0 or self.epoch_idx % self.frequency_epoch:
+            return
+
+        # Load the dataset
+        if not (dataset := self.load_dataset(trainer.train_dataloader)):
+            logger.warning("Could not load dataset, skipping plotting.")
+            return
+
+        # Make the plots
+        self.make_plots(trainer, pl_module, dataset)
 
     def set_metadata(self, config: DictConfig, model_name: str) -> None:
         """Set metadata for the plotter."""

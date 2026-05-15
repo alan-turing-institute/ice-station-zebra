@@ -173,7 +173,15 @@ class BaseModel(LightningModule, ABC):
         prediction = self(batch)
         loss = self.loss(prediction, target)
 
-        # Update metrics; computation will be done at epoch end
+        # Log metrics; computation will be done at epoch end
+        self.log(
+            "test_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )
         self.test_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)
@@ -202,6 +210,7 @@ class BaseModel(LightningModule, ABC):
         prediction = self(batch)
         loss = self.loss(prediction, target)
 
+        # Log metrics; computation will be done at epoch end
         self.log(
             "train_loss",
             loss,
@@ -210,8 +219,6 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
-
-        # Update metrics; computation will be done at epoch end
         self.train_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)
@@ -242,6 +249,8 @@ class BaseModel(LightningModule, ABC):
         target = batch["target"].clone().detach()
         prediction = self(batch)
         loss = self.loss(prediction, target)
+
+        # Log metrics; computation will be done at epoch end
         self.log(
             "validation_loss",
             loss,
@@ -250,4 +259,5 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
+
         return ModelStepOutput(prediction, target, loss)

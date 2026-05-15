@@ -173,7 +173,7 @@ class BaseModel(LightningModule, ABC):
         self,
         batch: dict[str, TensorNTCHW],
         _batch_idx: int,
-    ) -> torch.Tensor:
+    ) -> ModelStepOutput:
         """Run the training step.
 
         - Separate the batch into inputs and target
@@ -201,7 +201,7 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
-        return loss
+        return ModelStepOutput(prediction, target, loss)
 
     def validation_step(
         self,

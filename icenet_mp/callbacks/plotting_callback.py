@@ -1,20 +1,18 @@
 import logging
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from lightning import LightningModule, Trainer
 from lightning.pytorch import Callback
 from omegaconf import DictConfig
 from torch import Tensor
+from torch.utils.data import DataLoader
 
 from icenet_mp.data_loaders import CombinedDataset
 from icenet_mp.models import BaseModel
 from icenet_mp.types import ModelStepOutput, PlotSpec
 from icenet_mp.utils import datetime_from_npdatetime
 from icenet_mp.visualisations import DEFAULT_SIC_SPEC, Plotter
-
-if TYPE_CHECKING:
-    from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +49,16 @@ class PlottingCallback(Callback):
         self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
 
     def load_dataset(
-        self, trainer: Trainer, dataloader_idx: int
+        self, dataloader: DataLoader | list[DataLoader] | None, dataloader_idx: int
     ) -> CombinedDataset | None:
         """Load the dataset for the given dataloader index."""
-        dl: DataLoader | list[DataLoader] | None = trainer.test_dataloaders
-        if dl is None:
+        if dataloader is None:
             return None
-        dataset = (dl[dataloader_idx] if isinstance(dl, Sequence) else dl).dataset
+        dataset = (
+            dataloader[dataloader_idx]
+            if isinstance(dataloader, Sequence)
+            else dataloader
+        ).dataset
         if not isinstance(dataset, CombinedDataset):
             logger.warning("Dataset is of type %s not CombinedDataset", type(dataset))
             return None
@@ -69,7 +70,7 @@ class PlottingCallback(Callback):
         pl_module: LightningModule,
         *,
         batch_idx: int,
-        dataloader_idx: int = 0,
+        dataset: CombinedDataset,
         outputs: Tensor | Mapping[str, Any] | None,
     ) -> None:
         # Ensure that outputs is a ModelStepOutput
@@ -77,11 +78,6 @@ class PlottingCallback(Callback):
             outputs = ModelStepOutput(**outputs)
         else:
             logger.warning("Could not load outputs, skipping plotting.")
-            return
-
-        # Load the dataset
-        if (dataset := self.load_dataset(trainer, dataloader_idx)) is None:
-            logger.warning("Could not load dataset, skipping plotting.")
             return
 
         # Load dates from the dataset
@@ -126,12 +122,45 @@ class PlottingCallback(Callback):
         if batch_idx % self.frequency:
             return
 
+        # Load the dataset
+        if not (dataset := self.load_dataset(trainer.test_dataloaders, dataloader_idx)):
+            logger.warning("Could not load dataset, skipping plotting.")
+            return
+
         # Make the plots
         self.make_plots(
             trainer,
             pl_module,
             batch_idx=batch_idx,
-            dataloader_idx=dataloader_idx,
+            dataset=dataset,
+            outputs=outputs,
+        )
+
+    def on_train_batch_end(
+        self,
+        trainer: Trainer,
+        pl_module: LightningModule,
+        outputs: Tensor | Mapping[str, Any] | None,
+        batch: Any,  # noqa: ANN401, ARG002
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
+        """Called at the end of each train batch."""
+        # Only run plotting every `frequency` batches
+        if batch_idx % self.frequency:
+            return
+
+        # Load the dataset
+        if not (dataset := self.load_dataset(trainer.train_dataloader, dataloader_idx)):
+            logger.warning("Could not load dataset, skipping plotting.")
+            return
+
+        # Make the plots
+        self.make_plots(
+            trainer,
+            pl_module,
+            batch_idx=batch_idx,
+            dataset=dataset,
             outputs=outputs,
         )
 

@@ -63,36 +63,29 @@ class PlottingCallback(Callback):
             return None
         return dataset
 
-    def set_metadata(self, config: DictConfig, model_name: str) -> None:
-        """Set metadata for the plotter."""
-        self.plotter.set_metadata(config, model_name)
-
-    def on_test_batch_end(
+    def make_plots(
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: Tensor | Mapping[str, Any] | None,
-        batch: Any,  # noqa: ANN401, ARG002
+        *,
         batch_idx: int,
         dataloader_idx: int = 0,
+        outputs: Tensor | Mapping[str, Any] | None,
     ) -> None:
-        """Called at the end of each test batch."""
-        # Only run plotting every `frequency` batches
-        if batch_idx % self.frequency:
-            return
-
         # Ensure that outputs is a ModelStepOutput
         if isinstance(outputs, Mapping):
             outputs = ModelStepOutput(**outputs)
         else:
             logger.warning("Could not load outputs, skipping plotting.")
             return
-        batch_size = int(outputs.target.shape[0])
 
-        # Load dates from the dataset
+        # Load the dataset
         if (dataset := self.load_dataset(trainer, dataloader_idx)) is None:
             logger.warning("Could not load dataset, skipping plotting.")
             return
+
+        # Load dates from the dataset
+        batch_size = int(outputs.target.shape[0])
         start_date = dataset.dates[batch_size * batch_idx]
         dates = list(
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
@@ -118,3 +111,30 @@ class PlottingCallback(Callback):
             self.plotter.log_video_outputs(outputs, dates, video_loggers)
             if self.make_input_plots:
                 self.plotter.log_video_inputs(dataset.inputs, dates, video_loggers)
+
+    def on_test_batch_end(
+        self,
+        trainer: Trainer,
+        pl_module: LightningModule,
+        outputs: Tensor | Mapping[str, Any] | None,
+        batch: Any,  # noqa: ANN401, ARG002
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
+        """Called at the end of each test batch."""
+        # Only run plotting every `frequency` batches
+        if batch_idx % self.frequency:
+            return
+
+        # Make the plots
+        self.make_plots(
+            trainer,
+            pl_module,
+            batch_idx=batch_idx,
+            dataloader_idx=dataloader_idx,
+            outputs=outputs,
+        )
+
+    def set_metadata(self, config: DictConfig, model_name: str) -> None:
+        """Set metadata for the plotter."""
+        self.plotter.set_metadata(config, model_name)

@@ -13,14 +13,9 @@ logger = logging.getLogger(__name__)
 class MetricSummaryCallback(Callback):
     """A callback to summarise metrics during evaluation."""
 
-    def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
-        """Called at the end of testing."""
-        test_metrics: MetricCollection = pl_module.test_metrics  # type: ignore[assignment]
-        if not isinstance(pl_module.test_metrics, MetricCollection):
-            logger.warning("Could not load test metrics!")
-            return
-
-        for name, metric in test_metrics.items():
+    def log_metrics(self, trainer: Trainer, metrics: MetricCollection) -> None:
+        """Log the metrics to W&B."""
+        for name, metric in metrics.items():
             # Compute the metric value (e.g., SIEError) across all batches and log it
             values = metric.compute()
 
@@ -42,3 +37,17 @@ class MetricSummaryCallback(Callback):
                 run.log(
                     {plot_name: wandb.plot.line(table, "day", name, title=plot_name)}
                 )
+
+    def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of testing."""
+        if isinstance(pl_module.test_metrics, MetricCollection):
+            self.log_metrics(trainer, pl_module.test_metrics)
+        else:
+            logger.warning("Could not load test metrics!")
+
+    def on_train_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of training."""
+        if isinstance(pl_module.train_metrics, MetricCollection):
+            self.log_metrics(trainer, pl_module.train_metrics)
+        else:
+            logger.warning("Could not load train metrics!")

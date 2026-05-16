@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from icenet_mp.data_loaders import CombinedDataset
 from icenet_mp.models import BaseModel
-from icenet_mp.types import ModelStepOutput, PlotSpec
+from icenet_mp.types import Metadata, ModelStepOutput, PlotSpec
 from icenet_mp.utils import datetime_from_npdatetime
 from icenet_mp.visualisations import DEFAULT_SIC_SPEC, Plotter
 
@@ -44,11 +44,13 @@ class PlottingCallback(Callback):
         super().__init__()
         self.frequency_batch = int((frequency or {}).get("batch", -1))
         self.frequency_epoch = int((frequency or {}).get("epoch", -1))
-        self.epoch_idx = -1
         self.make_input_plots = make_input_plots
         self.make_static_plots = make_static_plots
         self.make_video_plots = make_video_plots
+
+        # Plotter instance
         self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
+        self.plotter_metadata: Metadata | None = None
 
         # Cache the most recent batch
         self.current_batch_idx_: int | None = None
@@ -89,6 +91,11 @@ class PlottingCallback(Callback):
         pl_module: LightningModule,
         dataset: CombinedDataset,
     ) -> None:
+        # Set plotting metadata
+        if self.plotter_metadata:
+            self.plotter_metadata.epochs = trainer.current_epoch + 1
+            self.plotter.set_metadata(self.plotter_metadata)
+
         # Ensure that outputs is a ModelStepOutput
         if self.current_outputs_ is None or self.current_batch_idx_ is None:
             logger.warning("Could not load outputs, skipping plotting.")
@@ -154,8 +161,7 @@ class PlottingCallback(Callback):
     def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of each test epoch."""
         # Only run plotting if this batch is at the specified frequency
-        self.epoch_idx += 1
-        if self.frequency_epoch < 0 or self.epoch_idx % self.frequency_epoch:
+        if self.frequency_epoch < 0 or trainer.current_epoch % self.frequency_epoch:
             return
 
         # Load the dataset
@@ -193,8 +199,7 @@ class PlottingCallback(Callback):
     def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of each train epoch."""
         # Only run plotting if this batch is at the specified frequency
-        self.epoch_idx += 1
-        if self.frequency_epoch < 0 or self.epoch_idx % self.frequency_epoch:
+        if self.frequency_epoch < 0 or trainer.current_epoch % self.frequency_epoch:
             return
 
         # Load the dataset
@@ -207,4 +212,4 @@ class PlottingCallback(Callback):
 
     def set_metadata(self, config: DictConfig, model_name: str) -> None:
         """Set metadata for the plotter."""
-        self.plotter.set_metadata(config, model_name)
+        self.plotter_metadata = self.plotter.get_metadata(config, model_name)

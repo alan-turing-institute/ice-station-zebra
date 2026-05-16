@@ -7,7 +7,14 @@ from omegaconf import DictConfig
 
 from icenet_mp.data_loaders import SingleDataset
 from icenet_mp.exceptions import InvalidArrayError, VideoRenderError
-from icenet_mp.types import ArrayHW, ArrayTHW, Hemisphere, ModelStepOutput, PlotSpec
+from icenet_mp.types import (
+    ArrayHW,
+    ArrayTHW,
+    Hemisphere,
+    Metadata,
+    ModelStepOutput,
+    PlotSpec,
+)
 
 from .land_mask import LandMask
 from .metadata import build_metadata, format_metadata_subtitle
@@ -23,14 +30,11 @@ class Plotter:
         self.base_path = Path(base_path) if base_path else None
         self.plot_spec = plot_spec
 
-    def set_hemisphere(self, hemisphere: Hemisphere) -> None:
-        """Set the hemisphere and update the plot spec accordingly."""
-        self.plot_spec.hemisphere = hemisphere
-        self.land_mask = LandMask(self.base_path, hemisphere)
-
-    def set_metadata(self, config: DictConfig, model_name: str) -> None:
+    def get_metadata(self, config: DictConfig, model_name: str) -> Metadata:
         """Set metadata for the plotter based on the model test output."""
-        metadata = build_metadata(config, model_name)
+        return build_metadata(config, model_name)
+
+    def set_metadata(self, metadata: Metadata) -> None:
         self.plot_spec.metadata_subtitle = format_metadata_subtitle(metadata)
 
     def log_static_inputs(
@@ -148,3 +152,8 @@ class Plotter:
             logger.warning("Video plotting skipped: %s", err)
         except (IndexError, ValueError, MemoryError, OSError):
             logger.exception("Video plotting failed")
+
+    def set_hemisphere(self, hemisphere: Hemisphere) -> None:
+        """Set the hemisphere and update the plot spec accordingly."""
+        self.plot_spec.hemisphere = hemisphere
+        self.land_mask = LandMask(self.base_path, hemisphere)

@@ -3,7 +3,8 @@
 ## Versioning and Reference Information
 
 ### Card Authors
-Sophie Arana
+Sophie Arana, Isabel Fenton, Maria Novitasari, James Robinson, Louisa van Zeeland
+
 
 ### Model/System Name
 IceNet Multimodal Pipeline (shorthand: IceNet-MP)

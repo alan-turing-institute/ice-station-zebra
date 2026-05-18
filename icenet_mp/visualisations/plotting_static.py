@@ -54,6 +54,7 @@ def plot_static_prediction(
     date: date | datetime,
     land_mask: LandMask,
     plot_spec: PlotSpec,
+    variable_name: str = "sea-ice-concentration",
 ) -> dict[str, list[ImageFile]]:
     """Create static maps comparing ground truth and prediction sea ice concentration data.
 
@@ -67,6 +68,7 @@ def plot_static_prediction(
             other visualisation parameters.
         land_mask: Land mask to apply to the data.
         date: Date/datetime for the data being visualised, used in the plot title.
+        variable_name: Name of the variable being plotted, used in the plot title and output key.
 
     Returns:
         Dictionary that maps plot names to lists of PIL ImageFile objects. Currently
@@ -134,7 +136,9 @@ def plot_static_prediction(
     _maybe_add_footer(fig, plot_spec)
 
     try:
-        return {"sea-ice_concentration-static-maps": [image_from_figure(fig)]}
+        return {
+            f"{variable_name}-{date.strftime(r'%Y-%m-%d')}": [image_from_figure(fig)]
+        }
     finally:
         plt.close(fig)
 
@@ -238,8 +242,9 @@ def plot_static_inputs(
             plt.close(fig)
 
         # Add image to results dict
-        if variable_name not in results:
-            results[variable_name] = []
-        results[variable_name].append(pil_img)
+        key = f"{variable_name}-{when.strftime(r'%Y-%m-%d')}"
+        if key not in results:
+            results[key] = []
+        results[key].append(pil_img)
 
     return results

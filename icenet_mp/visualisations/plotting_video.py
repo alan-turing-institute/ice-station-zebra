@@ -69,6 +69,7 @@ def plot_video_prediction(
     dates: Sequence[date | datetime],
     land_mask: LandMask,
     plot_spec: PlotSpec,
+    variable_name: str = "sea-ice-concentration",
 ) -> dict[str, io.BytesIO]:
     """Generate animated visualisations showing the temporal evolution of sea ice concentration.
 
@@ -86,6 +87,7 @@ def plot_video_prediction(
         land_mask: Land mask to apply to the data.
         plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
             other visualisation parameters.
+        variable_name: Name of the variable being plotted, used in the plot title and output key.
 
     Returns:
         Dictionary mapping video names to BytesIO objects containing the encoded video data.
@@ -232,7 +234,7 @@ def plot_video_prediction(
             video_format=plot_spec.video_format,
         )
         # Return the video buffer
-        return {"sea-ice_concentration-video-maps": video_buffer}
+        return {f"{variable_name}-{dates[0].strftime(r'%Y-%m-%d')}": video_buffer}
     finally:
         # Clean up by closing figure
         plt.close(fig)
@@ -434,8 +436,7 @@ def plot_video_inputs(
                 land_mask=land_mask,
                 plot_spec=plot_spec,
             )
-
-            results[variable_name] = video_buffer
+            results[f"{variable_name}-{dates[0].strftime(r'%Y-%m-%d')}"] = video_buffer
 
         except (InvalidArrayError, ValueError, MemoryError, OSError):
             logger.exception(

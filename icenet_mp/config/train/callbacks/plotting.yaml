@@ -1,8 +1,7 @@
 plotting:
-  # Callback behaviour
   _target_: icenet_mp.callbacks.PlottingCallback
   frequency:
-    epoch: 1
+    batch: 5  # plot every 5 validation batches
   make_input_plots: false
   make_static_plots: true
   make_video_plots: true

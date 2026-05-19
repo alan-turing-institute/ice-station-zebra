@@ -100,6 +100,7 @@ class MetricSummaryCallback(Callback):
     ) -> None:
         """Called at the end of a run."""
         metrics = {}
+        # If this was a training run we want to log train and validation metrics
         if stage == TrainerFn.FITTING.value:
             if isinstance(pl_module.train_metrics, MetricCollection):
                 metrics["train"] = pl_module.train_metrics
@@ -109,6 +110,7 @@ class MetricSummaryCallback(Callback):
                 metrics["validation"] = pl_module.validation_metrics
             else:
                 logger.warning("Could not load validation metrics!")
+        # If this was a testing run we want to log test metrics
         elif stage == TrainerFn.TESTING.value:
             if isinstance(pl_module.test_metrics, MetricCollection):
                 metrics["test"] = pl_module.test_metrics

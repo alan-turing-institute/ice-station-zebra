@@ -242,8 +242,8 @@ class TestBaseModel:
             scheduler=cfg_scheduler,
         )
         output = model.training_step(batch, 0)
-        assert isinstance(output, torch.Tensor)
-        assert output.shape == torch.Size([])
+        assert isinstance(output, ModelStepOutput)
+        assert output.loss.shape == torch.Size([])
 
     def test_validation_step(
         self,
@@ -279,5 +279,5 @@ class TestBaseModel:
             scheduler=cfg_scheduler,
         )
         output = model.validation_step(batch, 0)
-        assert isinstance(output, torch.Tensor)
-        assert output.shape == torch.Size([])
+        assert isinstance(output, ModelStepOutput)
+        assert output.loss.shape == torch.Size([])

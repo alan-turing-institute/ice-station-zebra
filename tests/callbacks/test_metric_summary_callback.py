@@ -52,7 +52,7 @@ class TestOnTestEnd:
         for pred, target in zip(preds, targets, strict=False):
             metric_collection.update(pred.unsqueeze(0), target.unsqueeze(0))
 
-        callback.on_test_end(mock_trainer, mock_module)
+        callback.on_test_epoch_end(mock_trainer, mock_module)
 
         mock_logger = mock_trainer.loggers[0]
         mock_logger.log_metrics.assert_called()
@@ -156,7 +156,7 @@ class TestOnTestEnd:
         targets = torch.randn(1, 3, 1, 2, 2)
         metric_collection.update(preds, targets)
 
-        callback.on_test_end(mock_trainer, mock_module)
+        callback.on_test_epoch_end(mock_trainer, mock_module)
 
         # Assert that the mean value was logged without wandb plotting
         mock_logger = mock_trainer.loggers[0]

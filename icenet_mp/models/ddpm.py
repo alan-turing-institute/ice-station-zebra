@@ -2,9 +2,7 @@ from typing import Any, NoReturn
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torchmetrics import Metric, MetricCollection
 
-from icenet_mp.metrics import IceNetAccuracy, SIEError
 from icenet_mp.models.diffusion import GaussianDiffusion, UNetDiffusion
 from icenet_mp.types import ModelStepOutput, TensorNCHW, TensorNTCHW
 
@@ -150,19 +148,6 @@ class DDPM(BaseModel):
         self.diffusion = GaussianDiffusion(timesteps=timesteps)
 
         self.learning_rate = learning_rate
-
-        metrics: dict[str, Metric | MetricCollection] = {
-            "val_accuracy": IceNetAccuracy(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-            "val_sieerror": SIEError(
-                leadtimes_to_evaluate=list(range(self.n_forecast_steps))
-            ),
-        }
-        for i in range(self.n_forecast_steps):
-            metrics[f"val_accuracy_{i}"] = IceNetAccuracy(leadtimes_to_evaluate=[i])
-            metrics[f"val_sieerror_{i}"] = SIEError(leadtimes_to_evaluate=[i])
-        self.metrics = MetricCollection(metrics)
 
         self.save_hyperparameters()
 
@@ -348,7 +333,6 @@ class DDPM(BaseModel):
 
         # Extract target and optional weights
         y = batch["target"].squeeze(2)  # [B, T, H, W]
-        sample_weight = batch.get("sample_weight", torch.ones_like(y))
 
         # Generate samples
         y_hat = self.sample(x)
@@ -367,7 +351,7 @@ class DDPM(BaseModel):
         # Convert to NTCHW format to update metrics and return
         prediction = y_hat.unsqueeze(2)  # [B, C_out, 1, H, W]
         target = y.unsqueeze(2)  # [B, C_out, 1, H, W]
-        self.metrics.update(y_hat, y, sample_weight)
+        self.validation_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)
 

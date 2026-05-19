@@ -96,7 +96,7 @@ class PlottingCallback(Callback):
     ) -> None:
         # Set plotting metadata
         if self.plotter_metadata:
-            self.plotter_metadata.epochs = trainer.current_epoch + 1
+            self.plotter_metadata.epochs = trainer.current_epoch
             self.plotter.set_metadata(self.plotter_metadata)
 
         # Ensure that outputs is a ModelStepOutput
@@ -186,6 +186,11 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each validation batch."""
+        # Ignore the initial sanity checking run
+        if trainer.sanity_checking:
+            return
+
+        # Cache the batch if this is the last validation batch of the epoch
         if trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch:
             self.cache_batch(batch_idx, dataloader_idx, outputs)
 

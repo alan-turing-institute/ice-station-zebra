@@ -282,10 +282,10 @@ class DDPM(BaseModel):
 
         """
         # Prepare input tensor by combining osisaf-south and era5
-        x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
+        x = self.prepare_inputs(batch)  # [B, C_cond, H, W]
 
         # Extract target
-        y = batch["target"].squeeze(2)
+        y = batch["target"].squeeze(2)  # B, T, H, W
 
         # Sample random timesteps
         t = torch.randint(
@@ -293,14 +293,14 @@ class DDPM(BaseModel):
         ).long()  # look into this
 
         # Create noisy version
-        noise = torch.randn_like(y)
-        noisy_y = self.diffusion.q_sample(y, t, noise)
+        noise = torch.randn_like(y)  # B, T, H, W
+        noisy_y = self.diffusion.q_sample(y, t, noise)  # B, T, H, W
 
         # Predict v
-        pred_v = self.model(noisy_y, t, x)
+        pred_v: torch.Tensor = self.model(noisy_y, t, x)  # B, T, H, W
 
         # Compute target v
-        target_v = self.diffusion.calculate_v(y, noise, t)
+        target_v = self.diffusion.calculate_v(y, noise, t)  # B, T, H, W
 
         # Compute loss
         loss = self.loss(pred_v, target_v)
@@ -313,10 +313,12 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        # Use BaseModel train metrics
-        self.train_metrics.update(pred_v, target_v)
+        # Convert to NTCHW format to update metrics and return
+        prediction = pred_v.unsqueeze(2)  # B, T, 1, H, W
+        target = target_v.unsqueeze(2)  # B, T, 1, H, W
+        self.train_metrics.update(prediction, target)
 
-        return ModelStepOutput(prediction=pred_v, target=target_v, loss=loss)
+        return ModelStepOutput(prediction, target, loss)
 
     def validation_step(
         self, batch: dict[str, TensorNTCHW], _batch_idx: int
@@ -342,7 +344,7 @@ class DDPM(BaseModel):
 
         """
         # Prepare input tensor
-        x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
+        x = self.prepare_inputs(batch)  # [B, C_cond, H, W]
 
         # Extract target and optional weights
         y = batch["target"].squeeze(2)  # [B, T, H, W]
@@ -362,10 +364,12 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        # Update metrics
+        # Convert to NTCHW format to update metrics and return
+        prediction = y_hat.unsqueeze(2)  # [B, C_out, 1, H, W]
+        target = y.unsqueeze(2)  # [B, C_out, 1, H, W]
         self.metrics.update(y_hat, y, sample_weight)
 
-        return ModelStepOutput(prediction=y_hat, target=y, loss=loss)
+        return ModelStepOutput(prediction, target, loss)
 
     def test_step(
         self,
@@ -393,9 +397,9 @@ class DDPM(BaseModel):
             - loss: test loss value
 
         """
-        x = self.prepare_inputs(batch)  # [B, T, C_combined, H, W]
-        y = batch["target"]
-        y_hat = self.sample(x).unsqueeze(2)  # note that this assumes C=1
+        x = self.prepare_inputs(batch)  # [B, C_cond, H, W]
+        y = batch["target"]  # [B, T, 1, H, W]
+        y_hat = self.sample(x).unsqueeze(2)  # [B, C_cond, 1, H, W]
 
         loss = self.loss(y_hat, y)
         self.log(
@@ -407,7 +411,7 @@ class DDPM(BaseModel):
             sync_dist=True,
         )
 
-        # Use BaseModel test metrics
+        # Convert to NTCHW format to update metrics and return
         self.test_metrics.update(y_hat, y)
 
         return ModelStepOutput(prediction=y_hat, target=y, loss=loss)

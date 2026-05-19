@@ -186,7 +186,7 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each validation batch."""
-        if trainer.is_last_batch:
+        if trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch:
             self.cache_batch(batch_idx, dataloader_idx, outputs)
 
         # Only run plotting if this batch is at the specified frequency

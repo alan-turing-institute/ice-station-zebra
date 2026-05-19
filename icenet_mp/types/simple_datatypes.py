@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import ClassVar, Literal, NamedTuple, TypedDict
+from dataclasses import dataclass, field
+from typing import Literal, NamedTuple, TypedDict
 
 from matplotlib.colors import Normalize
 from omegaconf import DictConfig
@@ -169,79 +169,81 @@ class PlotSpec:
     video_format: Literal["mp4", "gif"] = "mp4"
 
     # Per-variable styles
-    per_variable_styles: ClassVar[dict[str, dict[str, str | float | bool]]] = {
-        # Diverging colourmaps
-        "era5:10u": {
-            "cmap": "RdBu_r",
-            "two_slope_centre": 0.0,
-            "units": "m/s",
-        },  # 10m u-wind component
-        "era5:10v": {
-            "cmap": "RdBu_r",
-            "two_slope_centre": 0.0,
-            "units": "m/s",
-        },  # 10m v-wind component
-        "era5:sin_julian_day": {
-            "cmap": "PuOr",
-            "two_slope_centre": 0.0,
-        },  # sin of Julian day
-        "era5:cos_julian_day": {
-            "cmap": "PuOr",
-            "two_slope_centre": 0.0,
-        },  # cos of Julian day
-        # Sequential colourmaps
-        "era5:2t": {
-            "cmap": "RdBu_r",
-            "two_slope_centre": 273.15,
-            "units": "K",
-        },  # 2m temperature
-        "era5:t_*": {
-            "cmap": "RdBu_r",
-            "two_slope_centre": 273.15,
-            "units": "K",
-        },  # temperature at various levels
-        "era5:msl": {"cmap": "RdYlBu_r", "units": "Pa"},  # mean sea level pressure
-        "era5:sp": {"cmap": "RdYlBu_r", "units": "Pa"},  # surface pressure
-        # Specific humidity at various levels (scientific notation handles small values better)
-        "era5:q_10": {
-            "cmap": "viridis",
-            "decimals": 2,
-            "units": "kg/kg",
-            "use_scientific_notation": True,
-        },
-        "era5:q_250": {
-            "cmap": "viridis",
-            "decimals": 2,
-            "units": "kg/kg",
-            "use_scientific_notation": True,
-        },
-        "era5:q_500": {
-            "cmap": "viridis",
-            "decimals": 2,
-            "units": "kg/kg",
-            "use_scientific_notation": True,
-        },
-        "era5:q_1000": {
-            "cmap": "viridis",
-            "decimals": 2,
-            "units": "kg/kg",
-            "use_scientific_notation": True,
-        },
-        # geopotential at various levels
-        "era5:z_*": {"cmap": "plasma", "units": "m"},
-        # u-wind component at various levels
-        "era5:u_*": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
-        # v-wind component at various levels
-        "era5:v_*": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
-        # Sea ice concentration
-        "sic-icenet:ice_conc": {"cmap": "Blues_r"},
-        "sic-ssmis:ice_conc": {"cmap": "Blues_r"},
-        # Wildcard fallback for ERA5 channels
-        "era5:*": {"origin": "upper"},
-        # Default fallback
-        # NOTE: This _default entry means plot_spec.colourmap above is never used.
-        # Variables that don't match any specific pattern will use this colourmap.
-        # To use plot_spec.colourmap instead, either remove this _default entry or
-        # set cmap to null: "_default": { cmap: null }
-        "_default": {"cmap": "viridis"},
-    }
+    per_variable_styles: dict[str, dict[str, str | float | bool]] = field(
+        default_factory=lambda: {
+            # Diverging colourmaps
+            "era5:10u": {
+                "cmap": "RdBu_r",
+                "two_slope_centre": 0.0,
+                "units": "m/s",
+            },  # 10m u-wind component
+            "era5:10v": {
+                "cmap": "RdBu_r",
+                "two_slope_centre": 0.0,
+                "units": "m/s",
+            },  # 10m v-wind component
+            "era5:sin_julian_day": {
+                "cmap": "PuOr",
+                "two_slope_centre": 0.0,
+            },  # sin of Julian day
+            "era5:cos_julian_day": {
+                "cmap": "PuOr",
+                "two_slope_centre": 0.0,
+            },  # cos of Julian day
+            # Sequential colourmaps
+            "era5:2t": {
+                "cmap": "RdBu_r",
+                "two_slope_centre": 273.15,
+                "units": "K",
+            },  # 2m temperature
+            "era5:t_*": {
+                "cmap": "RdBu_r",
+                "two_slope_centre": 273.15,
+                "units": "K",
+            },  # temperature at various levels
+            "era5:msl": {"cmap": "RdYlBu_r", "units": "Pa"},  # mean sea level pressure
+            "era5:sp": {"cmap": "RdYlBu_r", "units": "Pa"},  # surface pressure
+            # Specific humidity at various levels (scientific notation handles small values better)
+            "era5:q_10": {
+                "cmap": "viridis",
+                "decimals": 2,
+                "units": "kg/kg",
+                "use_scientific_notation": True,
+            },
+            "era5:q_250": {
+                "cmap": "viridis",
+                "decimals": 2,
+                "units": "kg/kg",
+                "use_scientific_notation": True,
+            },
+            "era5:q_500": {
+                "cmap": "viridis",
+                "decimals": 2,
+                "units": "kg/kg",
+                "use_scientific_notation": True,
+            },
+            "era5:q_1000": {
+                "cmap": "viridis",
+                "decimals": 2,
+                "units": "kg/kg",
+                "use_scientific_notation": True,
+            },
+            # geopotential at various levels
+            "era5:z_*": {"cmap": "plasma", "units": "m"},
+            # u-wind component at various levels
+            "era5:u_*": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+            # v-wind component at various levels
+            "era5:v_*": {"cmap": "RdBu_r", "two_slope_centre": 0.0, "units": "m/s"},
+            # Sea ice concentration
+            "sic-icenet:ice_conc": {"cmap": "Blues_r"},
+            "sic-ssmis:ice_conc": {"cmap": "Blues_r"},
+            # Wildcard fallback for ERA5 channels
+            "era5:*": {"origin": "upper"},
+            # Default fallback
+            # NOTE: This _default entry means plot_spec.colourmap above is never used.
+            # Variables that don't match any specific pattern will use this colourmap.
+            # To use plot_spec.colourmap instead, either remove this _default entry or
+            # set cmap to null: "_default": { cmap: null }
+            "_default": {"cmap": "viridis"},
+        }
+    )

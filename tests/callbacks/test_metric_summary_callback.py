@@ -133,12 +133,7 @@ class TestOnTestEnd:
         # Assert that wandb.log was called with the plot
         mock_run.log.assert_called_once()
         log_call_args = mock_run.log.call_args[0][0]
-        assert "mae_daily per day" in log_call_args
-
-        # Assert that the mean value was logged
-        wandb_logger.log_metrics.assert_called_once()
-        metrics_call_args = wandb_logger.log_metrics.call_args[0][0]
-        assert "mae_daily (mean)" in metrics_call_args
+        assert "mae_daily_per_forecast_day" in log_call_args
 
     def test_on_test_end_without_wandb_logger_vector_metric(
         self,
@@ -162,7 +157,7 @@ class TestOnTestEnd:
         mock_logger = mock_trainer.loggers[0]
         mock_logger.log_metrics.assert_called_once()
         metrics_call_args = mock_logger.log_metrics.call_args[0][0]
-        assert "mae_daily (mean)" in metrics_call_args
+        assert "test_mae_daily_mean" in metrics_call_args
 
 
 class TestMetricCalculations:

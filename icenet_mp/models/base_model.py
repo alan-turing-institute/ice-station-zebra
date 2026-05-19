@@ -87,6 +87,13 @@ class BaseModel(LightningModule, ABC):
                 "mae": MAEPerForecastDay(),
             }
         )
+        self.validation_metrics = MetricCollection(
+            {
+                "sieerror": SeaIceExtentErrorPerForecastDay(),
+                "rmse": RMSEPerForecastDay(),
+                "mae": MAEPerForecastDay(),
+            }
+        )
 
         # Save all non-ignored arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
@@ -259,5 +266,6 @@ class BaseModel(LightningModule, ABC):
             prog_bar=True,
             sync_dist=True,
         )
+        self.validation_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)

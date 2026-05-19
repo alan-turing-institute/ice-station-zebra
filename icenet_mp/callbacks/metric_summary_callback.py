@@ -39,7 +39,11 @@ class MetricSummaryCallback(Callback):
     def log_per_run_metrics(
         self, trainer: Trainer, metrics: dict[str, MetricCollection]
     ) -> None:
-        """Log per-run metrics to W&B."""
+        """Log per-run metrics to W&B.
+
+        Note that these will be based on metrics accumulated during the final epoch, due
+        to the reset behaviour in log_per_epoch_metrics.
+        """
         # Check that W&B is being used as a logger
         if not isinstance(run := get_wandb_run(trainer), wandb.Run):
             logger.warning(
@@ -70,6 +74,11 @@ class MetricSummaryCallback(Callback):
                 },
             )
 
+    def on_test_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:  # noqa: ARG002
+        """Called at the start of a test epoch."""
+        if isinstance(pl_module.test_metrics, MetricCollection):
+            pl_module.test_metrics.reset()
+
     def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of a test epoch."""
         if isinstance(pl_module.test_metrics, MetricCollection):
@@ -77,12 +86,30 @@ class MetricSummaryCallback(Callback):
         else:
             logger.warning("Could not load test metrics!")
 
+    def on_train_epoch_start(
+        self,
+        trainer: Trainer,  # noqa: ARG002
+        pl_module: LightningModule,
+    ) -> None:
+        """Called at the start of a train epoch."""
+        if isinstance(pl_module.train_metrics, MetricCollection):
+            pl_module.train_metrics.reset()
+
     def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of a training epoch."""
         if isinstance(pl_module.train_metrics, MetricCollection):
             self.log_per_epoch_metrics(trainer, pl_module.train_metrics, stage="train")
         else:
             logger.warning("Could not load train metrics!")
+
+    def on_validation_epoch_start(
+        self,
+        trainer: Trainer,  # noqa: ARG002
+        pl_module: LightningModule,
+    ) -> None:
+        """Called at the start of a validation epoch."""
+        if isinstance(pl_module.validation_metrics, MetricCollection):
+            pl_module.validation_metrics.reset()
 
     def on_validation_epoch_end(
         self, trainer: Trainer, pl_module: LightningModule

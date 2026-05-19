@@ -18,7 +18,7 @@ class MetricSummaryCallback(Callback):
     """A callback to summarise metrics during evaluation."""
 
     def log_per_epoch_metrics(
-        self, trainer: Trainer, metrics: MetricCollection
+        self, trainer: Trainer, metrics: MetricCollection, step: str
     ) -> None:
         """Log per-epoch metrics to W&B."""
         for name, metric in metrics.items():
@@ -29,7 +29,7 @@ class MetricSummaryCallback(Callback):
             for logger_ in trainer.loggers:
                 logger_.log_metrics(
                     {
-                        f"{name} (mean)": values.mean().item(),
+                        f"{step}_{name}_mean".lower(): values.mean().item(),
                         "epoch": trainer.current_epoch,
                     }
                 )
@@ -58,9 +58,9 @@ class MetricSummaryCallback(Callback):
     def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of a test epoch."""
         if isinstance(pl_module.test_metrics, MetricCollection):
-            self.log_per_epoch_metrics(trainer, pl_module.test_metrics)
+            self.log_per_epoch_metrics(trainer, pl_module.test_metrics, step="test")
         else:
-            logger.warning("Could not load train metrics!")
+            logger.warning("Could not load test metrics!")
 
     def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of testing."""
@@ -72,7 +72,7 @@ class MetricSummaryCallback(Callback):
     def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of a training epoch."""
         if isinstance(pl_module.train_metrics, MetricCollection):
-            self.log_per_epoch_metrics(trainer, pl_module.train_metrics)
+            self.log_per_epoch_metrics(trainer, pl_module.train_metrics, step="train")
         else:
             logger.warning("Could not load train metrics!")
 
@@ -82,3 +82,21 @@ class MetricSummaryCallback(Callback):
             self.log_per_run_metrics(trainer, pl_module.train_metrics)
         else:
             logger.warning("Could not load train metrics!")
+
+    def on_validation_epoch_end(
+        self, trainer: Trainer, pl_module: LightningModule
+    ) -> None:
+        """Called at the end of a validation epoch."""
+        if isinstance(pl_module.validation_metrics, MetricCollection):
+            self.log_per_epoch_metrics(
+                trainer, pl_module.validation_metrics, step="validation"
+            )
+        else:
+            logger.warning("Could not load validation metrics!")
+
+    def on_validation_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Called at the end of validation."""
+        if isinstance(pl_module.validation_metrics, MetricCollection):
+            self.log_per_run_metrics(trainer, pl_module.validation_metrics)
+        else:
+            logger.warning("Could not load validation metrics!")

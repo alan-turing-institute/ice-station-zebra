@@ -90,7 +90,7 @@ class ArgoSource(Source):
 
         # Iterate over dates, requesting data for each one separately
         for t_idx, date in enumerate(requested_dates):
-            logger.info("Processing data from %s", date.date())
+            logger.info("Requesting data for %s", date.date())
             start_time = date - timedelta(hours=self.time_half_window_hrs)
             end_time = date + timedelta(hours=self.time_half_window_hrs)
 
@@ -218,7 +218,7 @@ def _fetch_argo_dataframe_with_retry(
             # the error message does not contain the HTTP status code so we need to
             # retry both cases.
             logger.warning(
-                "Downloading %s failed after %d/%d attempts.",
+                "Downloading %s attempt %d/%d failed.",
                 data_target,
                 attempt,
                 max_attempts,
@@ -227,7 +227,7 @@ def _fetch_argo_dataframe_with_retry(
                 msg = f"{data_target} is unavailable."
                 raise LookupError(msg) from exc
             backoff = initial_backoff_s * (2 ** (attempt - 1))
-            logger.debug("Retrying download in %.1fs.", backoff)
+            logger.info("Retrying download in %.1fs.", backoff)
             time.sleep(backoff)
         except NoData as exc:
             msg = f"{data_target} is unavailable."

@@ -1,6 +1,6 @@
 samp-floatsouth-argo-1p0-2017-2019-24h-v1:
   name: samp-floatsouth-argo-1p0-2017-2019-24h-v1
-  group_as: float_argo
+  group_as: float-argo
   description: ARGO float data for southern hemisphere
   attribution: ARGO
   licence: CC-BY-4.0

@@ -1,6 +1,6 @@
 full-floatnorth-argo-25p0km-1999-2025-24h-v2:
   name: full-floatnorth-argo-25p0km-1999-2025-24h-v2
-  group_as: float_argo
+  group_as: float-argo
   description: ARGO float data for northern hemisphere
   attribution: ARGO
   licence: CC-BY-4.0

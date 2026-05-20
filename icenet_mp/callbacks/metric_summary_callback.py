@@ -52,21 +52,24 @@ class MetricSummaryCallback(Callback):
             return
 
         # Extract the metric values (e.g., SIEError) across all batches
-        values: dict[str, dict[str, Tensor]] = defaultdict(dict)
+        # Only consider metrics that have a value for each forecast day
+        values_per_forecast_day: dict[str, dict[str, Tensor]] = defaultdict(dict)
         for stage, metric_collection in metrics.items():
             for metric_name, metric in metric_collection.items():
-                values[metric_name][stage] = metric.compute()
+                metric_tensor: Tensor = metric.compute()
+                if metric_tensor.reshape(-1).shape[0] > 1:
+                    values_per_forecast_day[metric_name][stage] = metric_tensor
 
         # For each metric, log the per-day values to W&B
-        for metric_name, per_stage_metrics in values.items():
+        for metric_name, per_stage_metrics in values_per_forecast_day.items():
             stages = list(per_stage_metrics.keys())
             days = list(range(1, len(per_stage_metrics[stages[0]]) + 1))
             plot_name = f"{metric_name}_per_forecast_day"
             run.log(
                 {
                     plot_name: wandb.plot.line_series(
-                        days,
-                        [per_stage_metrics[stage].tolist() for stage in stages],
+                        xs=days,
+                        ys=[per_stage_metrics[stage].tolist() for stage in stages],
                         keys=stages,
                         title=plot_name,
                         xname="day",

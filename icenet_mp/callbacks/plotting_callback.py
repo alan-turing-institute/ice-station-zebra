@@ -149,7 +149,7 @@ class PlottingCallback(Callback):
         """Called at the end of each test batch."""
         # Check whether this is a batch we want to plot based on the frequency settings
         is_per_epoch = trainer.is_last_batch
-        is_per_batch = self.frequency_batch < 0 or batch_idx % self.frequency_batch
+        is_per_batch = self.frequency_batch > 0 and not batch_idx % self.frequency_batch
 
         # Cache if this is a batch we want to plot
         if is_per_epoch or is_per_batch:
@@ -195,7 +195,7 @@ class PlottingCallback(Callback):
 
         # Check whether this is a batch we want to plot based on the frequency settings
         is_per_epoch = trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch
-        is_per_batch = self.frequency_batch < 0 or batch_idx % self.frequency_batch
+        is_per_batch = self.frequency_batch > 0 and not batch_idx % self.frequency_batch
 
         # Cache if this is a batch we want to plot
         if is_per_epoch or is_per_batch:

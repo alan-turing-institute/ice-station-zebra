@@ -24,20 +24,18 @@ class GridFactory:
 
 def epsg_4326n_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
     """Builder function to create a GeographicGrid for the northern hemisphere in WGS (EPSG:4326)."""
-    step = float(resolution.replace("p", "."))
-    lat_points = np.arange(90 + 0.5 * step - shape[0], 90, step)
-    lon_points = np.arange(0.5 * step - shape[1] / 2, shape[1] / 2, step)
-    normalised_resolution = str(step).replace(".", "p")
-    return GeographicGrid("EPSG:4326", normalised_resolution, lon_points, lat_points)
+    res_deg = float(resolution.replace("p", "."))
+    lat_points = np.arange(90 + 0.5 * res_deg - shape[0], 90, res_deg)
+    lon_points = np.arange(0.5 * res_deg - shape[1] / 2, shape[1] / 2, res_deg)
+    return GeographicGrid("EPSG:4326", str(res_deg), lon_points, lat_points)
 
 
 def epsg_4326s_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
     """Builder function to create a GeographicGrid for the southern hemisphere in WGS (EPSG:4326)."""
-    step = float(resolution.replace("p", "."))
-    lat_points = np.arange(0.5 * step - shape[0], 0, step)
-    lon_points = np.arange(0.5 * step - shape[1] / 2, shape[1] / 2, step)
-    normalised_resolution = str(step).replace(".", "p")
-    return GeographicGrid("EPSG:4326", normalised_resolution, lon_points, lat_points)
+    res_deg = float(resolution.replace("p", "."))
+    lat_points = np.arange(0.5 * res_deg - shape[0], 0, res_deg)
+    lon_points = np.arange(0.5 * res_deg - shape[1] / 2, shape[1] / 2, res_deg)
+    return GeographicGrid("EPSG:4326", str(res_deg), lon_points, lat_points)
 
 
 def epsg_6931_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:

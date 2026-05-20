@@ -22,6 +22,24 @@ class GridFactory:
         self.builders[crs] = builder_fn
 
 
+def epsg_4326n_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
+    """Builder function to create a GeographicGrid for the northern hemisphere in WGS (EPSG:4326)."""
+    step = float(resolution.replace("p", "."))
+    lat_points = np.arange(90 + 0.5 * step - shape[0], 90, step)
+    lon_points = np.arange(0.5 * step - shape[1] / 2, shape[1] / 2, step)
+    normalised_resolution = str(step).replace(".", "p")
+    return GeographicGrid("EPSG:4326", normalised_resolution, lon_points, lat_points)
+
+
+def epsg_4326s_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
+    """Builder function to create a GeographicGrid for the southern hemisphere in WGS (EPSG:4326)."""
+    step = float(resolution.replace("p", "."))
+    lat_points = np.arange(0.5 * step - shape[0], 0, step)
+    lon_points = np.arange(0.5 * step - shape[1] / 2, shape[1] / 2, step)
+    normalised_resolution = str(step).replace(".", "p")
+    return GeographicGrid("EPSG:4326", normalised_resolution, lon_points, lat_points)
+
+
 def epsg_6931_builder(resolution: str, shape: tuple[int, int]) -> GeographicGrid:
     """Builder function to create a GeographicGrid for the EASE2 northern polar grid (EPSG:6931)."""
     normalised_resolution, h_points, w_points = ease2_grid_helper(resolution, *shape)

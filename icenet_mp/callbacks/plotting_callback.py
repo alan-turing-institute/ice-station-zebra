@@ -147,20 +147,23 @@ class PlottingCallback(Callback):
         dataloader_idx: int = 0,
     ) -> None:
         """Called at the end of each test batch."""
-        if trainer.is_last_batch:
+        # Check whether this is a batch we want to plot based on the frequency settings
+        is_per_epoch = trainer.is_last_batch
+        is_per_batch = self.frequency_batch < 0 or batch_idx % self.frequency_batch
+
+        # Cache if this is a batch we want to plot
+        if is_per_epoch or is_per_batch:
             self.cache_batch(batch_idx, dataloader_idx, outputs)
 
-        # Only run plotting if this batch is at the specified frequency
-        if self.frequency_batch < 0 or batch_idx % self.frequency_batch:
-            return
+        # If this is a selected batch then we will plot here
+        if is_per_batch:
+            # Load the dataset
+            if not (dataset := self.load_dataset(trainer.test_dataloaders)):
+                logger.warning("Could not load dataset, skipping plotting.")
+                return
 
-        # Load the dataset
-        if not (dataset := self.load_dataset(trainer.test_dataloaders)):
-            logger.warning("Could not load dataset, skipping plotting.")
-            return
-
-        # Make the plots
-        self.make_plots(trainer, pl_module, dataset)
+            # Make the plots
+            self.make_plots(trainer, pl_module, dataset)
 
     def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of each test epoch."""
@@ -190,21 +193,23 @@ class PlottingCallback(Callback):
         if trainer.sanity_checking:
             return
 
-        # Cache the batch if this is the last validation batch of the epoch
-        if trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch:
+        # Check whether this is a batch we want to plot based on the frequency settings
+        is_per_epoch = trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch
+        is_per_batch = self.frequency_batch < 0 or batch_idx % self.frequency_batch
+
+        # Cache if this is a batch we want to plot
+        if is_per_epoch or is_per_batch:
             self.cache_batch(batch_idx, dataloader_idx, outputs)
 
-        # Only run plotting if this batch is at the specified frequency
-        if self.frequency_batch < 0 or batch_idx % self.frequency_batch:
-            return
+        # If this is a selected batch then we will plot here
+        if is_per_batch:
+            # Load the dataset
+            if not (dataset := self.load_dataset(trainer.val_dataloaders)):
+                logger.warning("Could not load dataset, skipping plotting.")
+                return
 
-        # Load the dataset
-        if not (dataset := self.load_dataset(trainer.val_dataloaders)):
-            logger.warning("Could not load dataset, skipping plotting.")
-            return
-
-        # Make the plots
-        self.make_plots(trainer, pl_module, dataset)
+            # Make the plots
+            self.make_plots(trainer, pl_module, dataset)
 
     def on_validation_epoch_end(
         self, trainer: Trainer, pl_module: LightningModule

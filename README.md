@@ -108,6 +108,7 @@ It will also print a list of missing dates at the end of each data group.
 
 The default set of datasets to run over is defined by the `data` key which is set to `sample` in `base.yaml`.
 This means that the default set of datasets are the ones defined in `config/data/sample.yaml`.
+To understand how dataset properties are encoded in its name, read `config/data/datasets/naming_convention.txt`.
 To define a custom set of datasets, for example for comparison testing, you can do the following.
 
 - create a custom dataset list in `config/data/my_datasets.local.yaml` that might look like this:

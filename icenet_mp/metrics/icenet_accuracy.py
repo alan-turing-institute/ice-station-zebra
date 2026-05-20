@@ -36,7 +36,7 @@ class IceNetAccuracy(Metric):
         """Update metric state with a new batch of predictions and targets."""
         preds = (preds > THRESHOLD).long()
         target = (target > THRESHOLD).long()
-        if not sample_weight:
+        if sample_weight is None:
             sample_weight = torch.ones_like(target)
         base_score = preds == target
         weighted_score = torch.sum(base_score * sample_weight, dim=[0, 2, 3, 4])

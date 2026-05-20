@@ -117,7 +117,7 @@ To define a custom set of datasets, for example for comparison testing, you can 
 defaults:
   - datasets:
     - samp_sicsouth_osisaf_25p0km_2017_2019_24h_v2
-    - samp_weathersouth_era5_0p5_2017_2019_24h_v3
+    - samp_weathersouth_era5_0p5_2017_2019_24h_v2
   - split: sample_dataset
   - _self_
 ```

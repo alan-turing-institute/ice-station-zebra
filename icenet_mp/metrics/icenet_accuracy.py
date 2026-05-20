@@ -40,12 +40,12 @@ class IceNetAccuracy(Metric):
             sample_weight = torch.ones_like(target)
         base_score = preds == target
         weighted_score = torch.sum(base_score * sample_weight, dim=[0, 2, 3, 4])
-        if self.weighted_score.numel() == 0:
+        if self.weighted_score.numel() == 0:  # type: ignore[has-type]
             self.weighted_score = weighted_score
         else:
             self.weighted_score += weighted_score
         possible_score = torch.sum(sample_weight, dim=[0, 2, 3, 4])
-        if self.possible_score.numel() == 0:
+        if self.possible_score.numel() == 0:  # type: ignore[has-type]
             self.possible_score = possible_score
         else:
             self.possible_score += possible_score

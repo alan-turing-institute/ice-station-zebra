@@ -15,7 +15,7 @@ from lightning.pytorch.utilities.types import (
     OptimizerLRSchedulerConfig,
 )
 from omegaconf import DictConfig
-from torchmetrics import MetricCollection
+from torchmetrics import Metric, MetricCollection
 
 from icenet_mp.metrics import (
     IceNetAccuracy,
@@ -78,7 +78,7 @@ class BaseModel(LightningModule, ABC):
         self.scheduler_cfg = scheduler
 
         # Metrics
-        _common_metrics = {
+        _common_metrics: dict[str, Metric | MetricCollection] = {
             "accuracy": IceNetAccuracy(),
             "mae": MAEPerForecastDay(),
             "rmse": RMSEPerForecastDay(),

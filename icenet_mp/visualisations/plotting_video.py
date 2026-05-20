@@ -71,10 +71,10 @@ def plot_video_prediction(
     plot_spec: PlotSpec,
     variable_name: str = "sea-ice-concentration",
 ) -> dict[str, io.BytesIO]:
-    """Generate animated visualisations showing the temporal evolution of sea ice concentration.
+    """Generate animationa showing the temporal evolution of sea ice concentration.
 
-    Compares ground truth data with model predictions. Supports multiple video formats and
-    difference computation strategies for optimal performance with large datasets.
+    Compares ground truth data with model predictions. Supports multiple video formats
+    and difference computation strategies for optimal performance with large datasets.
 
     Args:
         ground_truth: 3D array with shape (time, height, width) containing
@@ -87,11 +87,12 @@ def plot_video_prediction(
         land_mask: Land mask to apply to the data.
         plot_spec: Configuration object specifying titles, colourmaps, value ranges, and
             other visualisation parameters.
-        variable_name: Name of the variable being plotted, used in the plot title and output key.
+        variable_name: Name of the variable being plotted, used in the plot title and
+            output key.
 
     Returns:
-        Dictionary mapping video names to BytesIO objects containing the encoded video data.
-        Currently returns a single key "sea-ice_concentration-video-maps" containing the video
+        Dictionary mapping video names to BytesIO objects containing the encoded video
+        data. Currently this returns a single key `variable_name` containing the video
         data suitable for direct wandb.Video logging.
 
     Raises:

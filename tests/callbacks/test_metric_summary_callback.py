@@ -7,8 +7,11 @@ from lightning.pytorch.loggers import WandbLogger
 from torchmetrics import MeanAbsoluteError, MetricCollection
 
 from icenet_mp.callbacks.metric_summary_callback import MetricSummaryCallback
-from icenet_mp.metrics.base_metrics import MAEPerForecastDay, RMSEPerForecastDay
-from icenet_mp.metrics.sie_error_abs import SeaIceExtentErrorPerForecastDay
+from icenet_mp.metrics import (
+    MAEPerForecastDay,
+    RMSEPerForecastDay,
+    SeaIceExtentErrorPerForecastDay,
+)
 
 
 @pytest.fixture

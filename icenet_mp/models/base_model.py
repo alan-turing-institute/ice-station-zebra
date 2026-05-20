@@ -1,6 +1,7 @@
 import itertools
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from copy import deepcopy
 from functools import cached_property
 from typing import Any
 
@@ -16,8 +17,12 @@ from lightning.pytorch.utilities.types import (
 from omegaconf import DictConfig
 from torchmetrics import MetricCollection
 
-from icenet_mp.metrics.base_metrics import MAEPerForecastDay, RMSEPerForecastDay
-from icenet_mp.metrics.sie_error_abs import SeaIceExtentErrorPerForecastDay
+from icenet_mp.metrics import (
+    IceNetAccuracy,
+    MAEPerForecastDay,
+    RMSEPerForecastDay,
+    SeaIceExtentErrorPerForecastDay,
+)
 from icenet_mp.types import DataSpace, Hemisphere, ModelStepOutput, TensorNTCHW
 
 
@@ -73,27 +78,15 @@ class BaseModel(LightningModule, ABC):
         self.scheduler_cfg = scheduler
 
         # Metrics
-        self.test_metrics = MetricCollection(
-            {
-                "sieerror": SeaIceExtentErrorPerForecastDay(),
-                "rmse": RMSEPerForecastDay(),
-                "mae": MAEPerForecastDay(),
-            }
-        )
-        self.train_metrics = MetricCollection(
-            {
-                "sieerror": SeaIceExtentErrorPerForecastDay(),
-                "rmse": RMSEPerForecastDay(),
-                "mae": MAEPerForecastDay(),
-            }
-        )
-        self.validation_metrics = MetricCollection(
-            {
-                "sieerror": SeaIceExtentErrorPerForecastDay(),
-                "rmse": RMSEPerForecastDay(),
-                "mae": MAEPerForecastDay(),
-            }
-        )
+        _common_metrics = {
+            "accuracy": IceNetAccuracy(),
+            "mae": MAEPerForecastDay(),
+            "rmse": RMSEPerForecastDay(),
+            "sieerror": SeaIceExtentErrorPerForecastDay(),
+        }
+        self.test_metrics = MetricCollection(deepcopy(_common_metrics))
+        self.train_metrics = MetricCollection(deepcopy(_common_metrics))
+        self.validation_metrics = MetricCollection(deepcopy(_common_metrics))
 
         # Save all non-ignored arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used

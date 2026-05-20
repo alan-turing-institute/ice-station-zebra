@@ -132,11 +132,6 @@ class PlottingCallback(Callback):
             if self.make_input_plots:
                 self.plotter.log_video_inputs(dataset.inputs, dates, video_loggers)
 
-        # Reset cached batch info after plotting
-        self.cached_batch_idx_ = None
-        self.cached_dataloader_idx_ = None
-        self.cached_outputs_ = None
-
     def on_test_batch_end(
         self,
         trainer: Trainer,

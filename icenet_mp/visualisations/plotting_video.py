@@ -92,8 +92,8 @@ def plot_video_prediction(
 
     Returns:
         Dictionary mapping video names to BytesIO objects containing the encoded video
-        data. Currently this returns a single key `variable_name` containing the video
-        data suitable for direct wandb.Video logging.
+        data. Currently this returns a single key `variable_name`-`date` containing the
+        video data suitable for direct wandb.Video logging.
 
     Raises:
         InvalidArrayError: If arrays have incompatible shapes or if the number of
@@ -416,7 +416,7 @@ def plot_video_inputs(
         variables: Dictionary of variable name to THW 3D array of values.
 
     Returns:
-        Dictionary mapping variable_name to video_buffer.
+        Dictionary mapping `variable_name`-`date` to video_buffer.
 
     Raises:
         InvalidArrayError: If arrays/names count mismatch or invalid shapes.

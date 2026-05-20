@@ -73,8 +73,9 @@ class TestPlotVideoPrediction:
         # Reference the fixture to avoid unused-argument lint error
         assert fake_video_from_animation is not None
 
-        assert "sea-ice-concentration-video-maps" in result
-        buffer = result["sea-ice-concentration-video-maps"]
+        expected_key = f"sea-ice-concentration-{TEST_DATE.strftime('%Y-%m-%d')}"
+        assert expected_key in result
+        buffer = result[expected_key]
         assert isinstance(buffer, io.BytesIO)
         assert buffer.getvalue()  # not empty
 

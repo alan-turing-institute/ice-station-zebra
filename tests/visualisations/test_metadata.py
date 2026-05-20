@@ -285,9 +285,9 @@ def test_plotting_callback_metadata_subtitle_from_config() -> None:
         or callback.plotter.plot_spec.metadata_subtitle == ""
     )
 
-    # Check that metadata can be set
+    # Check that metadata is stored on the callback (subtitle is applied later in make_plots)
     callback.set_metadata(config, model_name="test_model")
-    assert callback.plotter.plot_spec.metadata_subtitle is not None
-    assert "Model: test_model" in callback.plotter.plot_spec.metadata_subtitle
-    assert "Epoch: 5" in callback.plotter.plot_spec.metadata_subtitle
-    assert "2020-01-01" in callback.plotter.plot_spec.metadata_subtitle
+    assert callback.plotter_metadata is not None
+    assert callback.plotter_metadata.model == "test_model"
+    assert callback.plotter_metadata.epochs == 5
+    assert callback.plotter_metadata.start == "2020-01-01"

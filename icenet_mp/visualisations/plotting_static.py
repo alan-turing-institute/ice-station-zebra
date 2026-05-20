@@ -56,10 +56,10 @@ def plot_static_prediction(
     plot_spec: PlotSpec,
     variable_name: str = "sea-ice-concentration",
 ) -> dict[str, list[ImageFile]]:
-    """Create static maps comparing ground truth and prediction sea ice concentration data.
+    """Create static maps comparing ground truth and prediction data.
 
-    Create static maps and (optional) the difference. The plots use contour mapping with customisable colour
-    schemes and include proper axis scaling and colourbars.
+    Create static maps and (optional) the difference. The plots use contour mapping with
+    customisable colour schemes and include proper axis scaling and colourbars.
 
     Args:
         ground_truth: 2D array of ground truth sea ice concentration values.
@@ -68,12 +68,13 @@ def plot_static_prediction(
             other visualisation parameters.
         land_mask: Land mask to apply to the data.
         date: Date/datetime for the data being visualised, used in the plot title.
-        variable_name: Name of the variable being plotted, used in the plot title and output key.
+        variable_name: Name of the variable being plotted, used in the plot title and
+            output key.
 
     Returns:
         Dictionary that maps plot names to lists of PIL ImageFile objects. Currently
-        returns a single key "sea-ice_concentration-static-maps" containing a list
-        with one image representing the generated plot.
+        returns a single key `variable_name`-`date` containing a list with one image
+        representing the generated plot.
 
     Raises:
         InvalidArrayError: If ground_truth and prediction arrays have incompatible shapes.

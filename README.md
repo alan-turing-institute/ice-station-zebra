@@ -37,14 +37,14 @@
 | icenet\_mp/data\_processors/preprocessors/ipreprocessor.py    |        9 |        2 |     78% |     10-11 |
 | icenet\_mp/data\_processors/preprocessors/null.py             |        5 |        1 |     80% |         9 |
 | icenet\_mp/data\_processors/sources/\_\_init\_\_.py           |       12 |        0 |    100% |           |
-| icenet\_mp/data\_processors/sources/argo.py                   |       88 |       12 |     86% |48-49, 105-106, 137-142, 235-241 |
+| icenet\_mp/data\_processors/sources/argo.py                   |       88 |       12 |     86% |60-61, 104-105, 136-141, 233-239 |
 | icenet\_mp/data\_processors/sources/ftp.py                    |       40 |        3 |     92% |     66-68 |
 | icenet\_mp/exceptions.py                                      |        3 |        0 |    100% |           |
-| icenet\_mp/geotools/\_\_init\_\_.py                           |        8 |        0 |    100% |           |
+| icenet\_mp/geotools/\_\_init\_\_.py                           |       10 |        0 |    100% |           |
 | icenet\_mp/geotools/geographic\_field.py                      |       37 |       20 |     46% |15-16, 22, 27, 31, 40, 47, 60-71, 84 |
-| icenet\_mp/geotools/geographic\_grid.py                       |       74 |       37 |     50% |23-27, 30-31, 35-39, 43-47, 51-53, 57-59, 63-64, 68-70, 79-81, 88, 92, 96, 100, 104, 108 |
+| icenet\_mp/geotools/geographic\_grid.py                       |       76 |       20 |     74% |31, 40, 46, 48, 54, 60, 65-66, 70-72, 81-83, 90, 94, 98, 102, 106, 110 |
 | icenet\_mp/geotools/geographic\_metadata.py                   |       88 |       39 |     56% |14-15, 21, 26, 31, 36, 41, 45, 49-56, 60, 64, 68, 72, 76, 87-97, 101, 105, 109, 113, 117, 121, 128 |
-| icenet\_mp/geotools/grid\_factory.py                          |       34 |       20 |     41% |16-19, 27-28, 33-34, 42-54 |
+| icenet\_mp/geotools/grid\_factory.py                          |       44 |       12 |     73% |17-18, 27-30, 35-38, 59-60 |
 | icenet\_mp/geotools/reproject.py                              |       26 |        4 |     85% |36-37, 40-41 |
 | icenet\_mp/losses/\_\_init\_\_.py                             |        4 |        4 |      0% |       1-5 |
 | icenet\_mp/losses/weighted\_bce\_loss.py                      |        8 |        8 |      0% |      7-42 |
@@ -116,7 +116,7 @@
 | icenet\_mp/visualisations/range\_check.py                     |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                                |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                                 |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                     | **4077** | **1247** | **69%** |           |
+| **TOTAL**                                                     | **4091** | **1222** | **70%** |           |
 
 
 ## Setup coverage badge

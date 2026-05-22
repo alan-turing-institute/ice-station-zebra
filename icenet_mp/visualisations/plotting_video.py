@@ -28,7 +28,7 @@ from icenet_mp.visualisations.layout import (
 from icenet_mp.visualisations.plotting_core import (
     colourmap_with_bad,
     compute_difference,
-    compute_display_ranges_stream,
+    compute_display_ranges,
     create_normalisation,
     levels_from_spec,
     make_diff_colourmap,
@@ -127,7 +127,7 @@ def plot_video_prediction(
     levels = levels_from_spec(plot_spec)
 
     # Stable ranges for the whole animation
-    display_ranges = compute_display_ranges_stream(
+    display_ranges = compute_display_ranges(
         masked_ground_truth, masked_prediction, plot_spec
     )
 

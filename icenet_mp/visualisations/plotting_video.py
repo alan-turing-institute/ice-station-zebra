@@ -71,7 +71,7 @@ def plot_video_prediction(
     plot_spec: PlotSpec,
     variable_name: str = "sea-ice-concentration",
 ) -> dict[str, io.BytesIO]:
-    """Generate animationa showing the temporal evolution of sea ice concentration.
+    """Generate animations showing the temporal evolution of sea ice concentration.
 
     Compares ground truth data with model predictions. Supports multiple video formats
     and difference computation strategies for optimal performance with large datasets.

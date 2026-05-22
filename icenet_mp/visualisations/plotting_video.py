@@ -180,7 +180,9 @@ def plot_video_prediction(
     )
     _set_axes_limits(axs, width=width, height=height)
     try:
-        title_text = set_suptitle_with_box(fig, _build_title_video(plot_spec, dates, 0))
+        title_text = set_suptitle_with_box(
+            fig, _build_title_video(variable_name, plot_spec, dates, 0)
+        )
     except Exception:
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None
@@ -216,7 +218,7 @@ def plot_video_prediction(
         _set_titles(axs, plot_spec)
 
         if title_text is not None:
-            title_text.set_text(_build_title_video(plot_spec, dates, tt))
+            title_text.set_text(_build_title_video(variable_name, plot_spec, dates, tt))
         return ()
 
     try:

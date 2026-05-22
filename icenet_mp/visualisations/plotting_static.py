@@ -128,7 +128,9 @@ def plot_static_prediction(
 
     _set_axes_limits(axs, width=width, height=height)
     try:
-        title_text = set_suptitle_with_box(fig, _build_title_static(plot_spec, date))
+        title_text = set_suptitle_with_box(
+            fig, _build_title_static(variable_name, plot_spec, date)
+        )
     except Exception:
         logger.exception("Failed to draw suptitle; continuing without title.")
         title_text = None

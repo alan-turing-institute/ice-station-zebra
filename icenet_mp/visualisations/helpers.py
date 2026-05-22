@@ -441,19 +441,22 @@ def _format_date_for_title(dt: date | datetime) -> str:
     return dt.isoformat()
 
 
-def _build_title_static(plot_spec: PlotSpec, when: date | datetime) -> str:
+def _build_title_static(
+    variable_name: str, plot_spec: PlotSpec, when: date | datetime
+) -> str:
     """Compose a simple suptitle for static plots.
 
     Lines:
       1) "<Variable> (<Hemisphere>)  Shown: YYYY-MM-DD"
          (Footer contains any metadata such as model/epoch/training data if present)
     """
-    metric = _formatted_variable_name(plot_spec.variable)
+    metric = _formatted_variable_name(variable_name)
     hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
     return f"{metric}{hemi} Prediction   Shown: {_format_date_for_title(when)}"
 
 
 def _build_title_video(
+    variable_name: str,
     plot_spec: PlotSpec,
     dates: Sequence[date | datetime],
     current_index: int,
@@ -466,7 +469,7 @@ def _build_title_video(
       3) Footer: "Model: <model>  Epoch: <num>  Training Dates: <start> — <end> (<cadence>) <num> pts" (optional)
       4) Footer: "Training Data: <source> (<vars>) <source> (<vars>)" (optional)
     """
-    metric = _formatted_variable_name(plot_spec.variable)
+    metric = _formatted_variable_name(variable_name)
     hemi = f" ({plot_spec.hemisphere.capitalize()})" if plot_spec.hemisphere else ""
     if dates:
         return f"{metric}{hemi} Prediction   Frame: {_format_date_for_title(dates[current_index])}"

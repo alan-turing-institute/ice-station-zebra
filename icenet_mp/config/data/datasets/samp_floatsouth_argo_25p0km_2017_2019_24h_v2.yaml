@@ -1,5 +1,5 @@
-samp-floatsouth-argo-1p0-2017-2019-24h-v1:
-  name: samp-floatsouth-argo-1p0-2017-2019-24h-v1
+samp-floatsouth-argo-25p0km-2017-2019-24h-v2:
+  name: samp-floatsouth-argo-25p0km-2017-2019-24h-v2
   group_as: float-argo
   description: ARGO float data for southern hemisphere
   attribution: ARGO
@@ -15,17 +15,17 @@ samp-floatsouth-argo-1p0-2017-2019-24h-v1:
       # Get the ARGO data
       - argo:
           area: "0/-180/-90/180"  # southern hemisphere
-          crs: "EPSG:4326s"
+          crs: "EPSG:6932"
           param:
             - TEMP # temperature
             - PSAL # salinity
-          resolution: "1p0"
-          shape: [90, 360]
+          resolution: "25p0km"
+          shape: [432, 432]
       # Replace NaNs with a fill value
       - nan_to_num:
           variables: [TEMP, PSAL]
           replace_with: 99
-      # Set the geography to EPSG:4326 with 1 degree resolution
+      # Set the geography to EASE2 25km grid
       - set_geography:
           crs: ${...0.argo.crs}
           resolution: ${...0.argo.resolution}

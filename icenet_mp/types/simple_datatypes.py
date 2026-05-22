@@ -240,11 +240,7 @@ class PlotSpec:
             # Wildcard fallback for ERA5 channels
             "era5:*": {"origin": "upper"},
             # Default fallback
-            # NOTE: This _default entry means plot_spec.colourmap above is never used.
-            # Variables that don't match any specific pattern will use this colourmap.
-            # To use plot_spec.colourmap instead, either remove this _default entry or
-            # set cmap to null: "_default": { cmap: null }
-            "_default": {"cmap": "viridis"},
+            "_default": {},
         }
     )
 

@@ -301,6 +301,8 @@ class DDPM(BaseModel):
         # Convert to NTCHW format to update metrics and return
         prediction = pred_v.unsqueeze(2)  # B, T, 1, H, W
         target = target_v.unsqueeze(2)  # B, T, 1, H, W
+        # Note that metrics like IceNetAccuracy and SIE Error might not be meaningful
+        # for the v-prediction space
         self.train_metrics.update(prediction, target)
 
         return ModelStepOutput(prediction, target, loss)

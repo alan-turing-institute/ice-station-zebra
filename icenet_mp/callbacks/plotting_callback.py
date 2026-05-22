@@ -96,7 +96,7 @@ class PlottingCallback(Callback):
     ) -> None:
         # Set plotting metadata
         if self.plotter_metadata:
-            self.plotter_metadata.epochs = trainer.current_epoch
+            self.plotter_metadata.current_epoch = trainer.current_epoch
             self.plotter.set_metadata(self.plotter_metadata)
 
         # Ensure that outputs is a ModelStepOutput

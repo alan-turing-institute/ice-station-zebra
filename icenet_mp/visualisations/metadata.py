@@ -282,8 +282,8 @@ def format_metadata_subtitle(metadata: Metadata) -> str | None:  # noqa: C901, P
     info_parts: list[str] = []
     if metadata.model:
         info_parts.append(f"Model: {metadata.model}")
-    if metadata.epochs is not None:
-        info_parts.append(f"Epoch: {metadata.epochs}")
+    if metadata.current_epoch is not None:
+        info_parts.append(f"Epoch: {metadata.current_epoch}")
 
     if metadata.start or metadata.end:
         s_clean = (

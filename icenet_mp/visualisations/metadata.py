@@ -252,7 +252,8 @@ def build_metadata(
 
     return Metadata(
         model=model_name if isinstance(model_name, str) and model_name else None,
-        epochs=max_epochs if isinstance(max_epochs, int) else None,
+        current_epoch=None,
+        max_epochs=max_epochs if isinstance(max_epochs, int) else None,
         start=start_str,
         end=end_str,
         cadence=cadence_str,

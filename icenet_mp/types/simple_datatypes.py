@@ -83,6 +83,7 @@ class Metadata:
 
     Attributes:
         model: Model name (if available).
+        max_epochs: Maximum number of training epochs (if available).
         current_epoch: Current training epoch (if available).
         start: Training start date string (if available).
         end: Training end date string (if available).
@@ -94,6 +95,7 @@ class Metadata:
     """
 
     model: str | None = None
+    max_epochs: int | None = None
     current_epoch: int | None = None
     start: str | None = None
     end: str | None = None

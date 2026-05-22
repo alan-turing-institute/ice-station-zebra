@@ -74,25 +74,31 @@ class PlottingCallback(Callback):
 
     def load_dataset(
         self, dataloader: DataLoader | list[DataLoader] | None
-    ) -> CombinedDataset | None:
+    ) -> tuple[CombinedDataset, int] | None:
         """Load the dataset for the given dataloader index."""
         if dataloader is None or self.cached_dataloader_idx_ is None:
             return None
-        dataset = (
+        dataloader = (
             dataloader[self.cached_dataloader_idx_]
             if isinstance(dataloader, Sequence)
             else dataloader
-        ).dataset
+        )
+        dataset = dataloader.dataset
+        batch_size = dataloader.batch_size
         if not isinstance(dataset, CombinedDataset):
             logger.warning("Dataset is of type %s not CombinedDataset", type(dataset))
             return None
-        return dataset
+        if batch_size is None:
+            logger.warning("Dataloader does not have a batch size.")
+            return None
+        return (dataset, batch_size)
 
     def make_plots(
         self,
         trainer: Trainer,
         pl_module: LightningModule,
         dataset: CombinedDataset,
+        batch_size: int,
     ) -> None:
         # Set plotting metadata
         if self.plotter_metadata:
@@ -105,7 +111,6 @@ class PlottingCallback(Callback):
             return
 
         # Load dates from the dataset
-        batch_size = int(self.cached_outputs_.target.shape[0])
         start_date = dataset.dates[batch_size * self.cached_batch_idx_]
         dates = list(
             map(datetime_from_npdatetime, dataset.get_forecast_steps(start_date))
@@ -153,12 +158,12 @@ class PlottingCallback(Callback):
         # If this is a selected batch then we will plot here
         if is_per_batch:
             # Load the dataset
-            if not (dataset := self.load_dataset(trainer.test_dataloaders)):
+            if not (ds_tuple := self.load_dataset(trainer.test_dataloaders)):
                 logger.warning("Could not load dataset, skipping plotting.")
                 return
 
             # Make the plots
-            self.make_plots(trainer, pl_module, dataset)
+            self.make_plots(trainer, pl_module, *ds_tuple)
 
     def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         """Called at the end of each test epoch."""
@@ -167,12 +172,12 @@ class PlottingCallback(Callback):
             return
 
         # Load the dataset
-        if not (dataset := self.load_dataset(trainer.test_dataloaders)):
+        if not (ds_tuple := self.load_dataset(trainer.test_dataloaders)):
             logger.warning("Could not load dataset, skipping plotting.")
             return
 
         # Make the plots
-        self.make_plots(trainer, pl_module, dataset)
+        self.make_plots(trainer, pl_module, *ds_tuple)
 
     def on_validation_batch_end(
         self,
@@ -199,12 +204,12 @@ class PlottingCallback(Callback):
         # If this is a selected batch then we will plot here
         if is_per_batch:
             # Load the dataset
-            if not (dataset := self.load_dataset(trainer.val_dataloaders)):
+            if not (ds_tuple := self.load_dataset(trainer.val_dataloaders)):
                 logger.warning("Could not load dataset, skipping plotting.")
                 return
 
             # Make the plots
-            self.make_plots(trainer, pl_module, dataset)
+            self.make_plots(trainer, pl_module, *ds_tuple)
 
     def on_validation_epoch_end(
         self, trainer: Trainer, pl_module: LightningModule
@@ -215,12 +220,12 @@ class PlottingCallback(Callback):
             return
 
         # Load the dataset
-        if not (dataset := self.load_dataset(trainer.val_dataloaders)):
+        if not (ds_tuple := self.load_dataset(trainer.val_dataloaders)):
             logger.warning("Could not load dataset, skipping plotting.")
             return
 
         # Make the plots
-        self.make_plots(trainer, pl_module, dataset)
+        self.make_plots(trainer, pl_module, *ds_tuple)
 
     def set_metadata(self, config: DictConfig, model_name: str) -> None:
         """Set metadata for the plotter."""

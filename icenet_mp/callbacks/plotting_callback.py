@@ -52,7 +52,7 @@ class PlottingCallback(Callback):
         self.make_video_plots = make_video_plots
 
         # Plotter instance
-        self.plotter = Plotter(base_path, plot_spec or DEFAULT_SIC_SPEC)
+        self.plotter = Plotter(base_path, DEFAULT_SIC_SPEC + plot_spec)
         self.plotter_metadata: Metadata | None = None
 
         # Cache the most recent batch

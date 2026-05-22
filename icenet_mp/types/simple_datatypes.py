@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field
-from typing import Literal, NamedTuple, TypedDict
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal, NamedTuple, TypedDict, cast
 
 from matplotlib.colors import Normalize
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from .typedefs import DiffMode, DiffStrategy
 
@@ -247,3 +247,17 @@ class PlotSpec:
             "_default": {"cmap": "viridis"},
         }
     )
+
+    def __add__(
+        self, other: "PlotSpec | DictConfig | dict [str, Any] | None"
+    ) -> "PlotSpec":
+        """Combine two PlotSpec instances or a PlotSpec with a dictionary."""
+        if other is None:
+            return self
+        if isinstance(other, PlotSpec):
+            dict_other = asdict(other)
+        elif isinstance(other, DictConfig):
+            dict_other = cast("dict[str, Any]", OmegaConf.to_container(other))
+        else:
+            dict_other = dict(other)
+        return PlotSpec(**(asdict(self) | dict_other))

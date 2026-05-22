@@ -175,6 +175,7 @@ def plot_video_prediction(
         image_difference=image_difference,
         plot_spec=plot_spec,
         diff_colour_scale=diff_colour_scale,
+        display_ranges=display_ranges,
         cbar_axes=cbar_axes,
     )
     _set_axes_limits(axs, width=width, height=height)

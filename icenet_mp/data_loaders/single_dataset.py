@@ -153,19 +153,25 @@ class SingleDataset(Dataset):
         return len(self.dates)
 
     def __getitem__(self, idx: int) -> ArrayCHW:
-        """Return the data for a single timestep in [C, H, W] format."""
+        """Return normalised data for a single timestep in [C, H, W] format."""
+        return self.normalise(self._chw_raw(idx))
+
+    def _chw_raw(self, idx: int) -> ArrayCHW:
+        """Return unnormalised data for a single timestep in [C, H, W] format."""
         try:
             idx_ds, idx_date = self._idx2anemoi[idx]
-            data_chw = self.dataslices[idx_ds][idx_date].reshape(self.space.chw)
-            return self.normalise(data_chw) if self._normalise else data_chw
+            return self.dataslices[idx_ds][idx_date].reshape(self.space.chw)
         except KeyError as exc:
             msg = f"Index {idx} out of range for dataset of length {len(self)}."
             raise IndexError(msg) from exc
 
     def get_tchw(self, dates: Sequence[np.datetime64]) -> ArrayTCHW:
-        """Return the data for an arbitrary sequence of timesteps in [T, C, H, W] format."""
-        return np.stack(
-            [self[self.to_index(target_date)] for target_date in dates], axis=0
+        """Return normalised data for an arbitrary sequence of timesteps in [T, C, H, W] format."""
+        return self.normalise(
+            np.stack(
+                [self._chw_raw(self.to_index(target_date)) for target_date in dates],
+                axis=0,
+            )
         )
 
     def get_tchw_slice(
@@ -200,11 +206,11 @@ class SingleDataset(Dataset):
                         f"{idx_ds_end}."
                     )
                     raise ValueError(msg)
-            dataslice = self.dataslices[idx_ds_start][
-                idx_date_start : idx_date_start + n_steps
-            ]
-            data_tchw = dataslice.reshape(n_steps, *self.space.chw)
-            return self.normalise(data_tchw) if self._normalise else data_tchw
+            return self.normalise(
+                self.dataslices[idx_ds_start][
+                    idx_date_start : idx_date_start + n_steps
+                ].reshape(n_steps, *self.space.chw)
+            )
         except KeyError as exc:
             msg = (
                 f"Requested slice of {n_steps} steps following {start_date} "
@@ -214,10 +220,12 @@ class SingleDataset(Dataset):
             raise ValueError(msg) from exc
 
     def normalise(self, data: ArrayType) -> ArrayType:
-        """Normalise the data to [0, 1] for each channel.
+        """Normalise the data to [0, 1] for each channel if configured to do so.
 
         Note that this can be applied to both ArrayCHW and ArrayTCHW.
         """
+        if not self._normalise:
+            return data
         if self._norm_offset is None:
             self._norm_offset = (
                 self.statistics["minimum"].reshape(-1, 1, 1).astype(data.dtype)

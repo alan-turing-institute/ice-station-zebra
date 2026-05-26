@@ -6,22 +6,22 @@ from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockDownsample(nn.Module):
-    """Convolutional block that halves each spatial dimension and doubles the number of channels.
+    """Convolutional block that doubles channels and halves each spatial dimension.
 
     (Conv2d > Normalization > Activation) > (Conv2d > Normalization > Activation)
 
-    This is the reverse of ConvBlockUpsample.
+    Reverse of ConvBlockUpsample.
     """
 
     def __init__(
         self, n_input_channels: int, *, activation: str = "ReLU", kernel_size: int = 3
     ) -> None:
-        """Initialize the ConvBlockDownsample module.
+        """Initialize a ConvBlockDownsample module.
 
         Args:
+            n_input_channels: the number of input channels.
             activation: the activation function to use.
             kernel_size: the size of the convolutional kernel.
-            n_input_channels: the number of input channels.
 
         """
         super().__init__()

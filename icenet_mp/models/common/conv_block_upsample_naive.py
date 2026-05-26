@@ -4,32 +4,32 @@ from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockUpsampleNaive(nn.Module):
-    """Convolutional block that doubles the resolution.
+    """Convolutional block that reduces channels and doubles each spatial dimension.
 
-    Upsample > ConvNormAct
+    Upsample > (Conv2d > Normalization > Activation)
 
-    Note that using ConvTranspose2d as implemented in ConvBlockUpsample, is generally
-    preferred (see e.g. https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081)
+    Prefer ConvBlockUpsample for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
     """
 
     def __init__(
         self,
         in_channels: int,
+        *,
         out_channels: int | None = None,
         kernel_size: int = 2,
         norm_type: str = "batchnorm",
         activation: str = "ReLU",
         dropout_rate: float = 0.0,
     ) -> None:
-        """Upsampling block with upsample and convolution.
+        """Initialize a ConvBlockUpsampleNaive module.
 
         Args:
-            in_channels: Number of input channels.
-            out_channels: Number of output channels (if None, half of n_input_channels).
-            kernel_size: Kernel size for the convolution after upsampling.
-            norm_type: Type of normalization ("groupnorm", "batchnorm", or "none").
-            activation: Name of activation function.
-            dropout_rate: Dropout probability for ConvNormAct.
+            in_channels: the number of input channels.
+            out_channels: the number of output channels (if None, half of in_channels).
+            kernel_size: the size of the convolutional kernel.
+            norm_type: the type of normalization ("groupnorm", "batchnorm", or "none").
+            activation: the activation function to use.
+            dropout_rate: the dropout probability.
 
         """
         super().__init__()

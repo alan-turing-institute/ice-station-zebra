@@ -6,11 +6,12 @@ from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvBlockUpsample(nn.Module):
-    """Convolutional block that doubles each spatial dimension and halves the number of channels.
+    """Convolutional block that reduces channels and doubles each spatial dimension.
 
     (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
 
-    This is the reverse of ConvBlockDownsample.
+    Reverse of ConvBlockDownsample.
+    Preferred over ConvBlockUpsampleNaive for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
     """
 
     def __init__(
@@ -21,15 +22,15 @@ class ConvBlockUpsample(nn.Module):
         kernel_size: int = 3,
         n_output_channels: int | None = None,
     ) -> None:
-        """Initialize the ConvBlockUpsample module.
+        """Initialize a ConvBlockUpsample module.
 
         Args:
+            n_input_channels: the number of input channels.
             activation: the activation function to use.
             kernel_size: the base size of the convolutional kernel. The size-increasing
                 convolution needs an even kernel and the size-preserving convolution
                 needs an odd kernel, so one will use `kernel_size` and the other will
                 use `kernel_size + 1`.
-            n_input_channels: the number of input channels.
             n_output_channels: the number of output channels (if None, half of n_input_channels).
 
         """

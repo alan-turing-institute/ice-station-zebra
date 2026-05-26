@@ -15,7 +15,7 @@ class ConvBlockUpsampleNaive(nn.Module):
     def __init__(
         self,
         in_channels: int,
-        out_channels: int,
+        out_channels: int | None = None,
         kernel_size: int = 2,
         norm_type: str = "batchnorm",
         activation: str = "ReLU",
@@ -34,8 +34,9 @@ class ConvBlockUpsampleNaive(nn.Module):
         """
         super().__init__()
 
+        out_channels = in_channels // 2 if out_channels is None else out_channels
         self.block = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode="nearest"),
+            nn.Upsample(scale_factor=2, mode="bilinear"),
             ConvNormAct(
                 in_channels,
                 out_channels,

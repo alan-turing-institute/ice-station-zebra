@@ -6,7 +6,9 @@ from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockDownsample(nn.Module):
-    """Convolutional block that halves the resolution and doubles the number of channels.
+    """Convolutional block that halves each spatial dimension and doubles the number of channels.
+
+    (Conv2d > Normalization > Activation) > (Conv2d > Normalization > Activation)
 
     This is the reverse of ConvBlockUpsample.
     """

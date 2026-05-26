@@ -6,9 +6,9 @@ from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvBlockUpsample(nn.Module):
-    """Convolutional block that doubles the resolution.
+    """Convolutional block that doubles each spatial dimension and halves the number of channels.
 
-    (ConvTranspose2d → Normalization → Activation) → (ConvTranspose2d → Normalization → Activation)
+    (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
 
     This is the reverse of ConvBlockDownsample.
     """
@@ -25,7 +25,7 @@ class ConvBlockUpsample(nn.Module):
 
         Args:
             activation: the activation function to use.
-            kernel_size: the size of the convolutional kernel (odd numbers are preferable!).
+            kernel_size: the size of the convolutional kernel.
             n_input_channels: the number of input channels.
             n_output_channels: the number of output channels (if None, half of n_input_channels).
 
@@ -37,30 +37,31 @@ class ConvBlockUpsample(nn.Module):
         n_output_channels = (
             n_input_channels // 2 if n_output_channels is None else n_output_channels
         )
-        padding = (kernel_size - 1) // 2
-        output_padding = kernel_size % 2
+        kernel_size_odd = kernel_size if kernel_size % 2 else kernel_size + 1
+        kernel_size_even = kernel_size + 1 if kernel_size % 2 else kernel_size
 
         self.model = nn.Sequential(
-            # Size reducing convolution/normalisation/activation
+            # Size increasing convolution/normalisation/activation
+            # To avoid checkerboarding, kernel size must be a multiple of stride.
+            # We therefore use an even kernel size with appropriate padding.
             nn.ConvTranspose2d(
                 n_input_channels,
                 n_output_channels,
-                kernel_size=kernel_size,
-                output_padding=output_padding,
-                padding=padding,
+                kernel_size=kernel_size_even,
+                padding=(kernel_size_even - 2) // 2,
                 stride=2,
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),
             # Size preserving convolution/normalisation/activation
             # Since ConvTranspose2d does not yet support `padding=same`, even-sized
-            # kernels cannot preserve size. We therefore adjust the kernel size and
-            # padding accordingly.
+            # kernels cannot preserve size.
+            # We therefore use an odd kernel size with appropriate padding.
             nn.ConvTranspose2d(
                 n_output_channels,
                 n_output_channels,
-                kernel_size=kernel_size + 1 - output_padding,
-                padding=padding + 1 - output_padding,
+                kernel_size=kernel_size_odd,
+                padding=(kernel_size_odd - 1) // 2,
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),

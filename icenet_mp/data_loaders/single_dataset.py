@@ -46,6 +46,8 @@ class SingleDataset(Dataset):
         self._input_files = tuple(sorted(input_files))
         self._name = name
         self._normalise = normalise
+        self._norm_offset: np.ndarray | None = None
+        self._norm_scale: np.ndarray | None = None
         self._variables = set(variables)
 
     @classmethod
@@ -214,11 +216,19 @@ class SingleDataset(Dataset):
     def normalise(self, data: ArrayType) -> ArrayType:
         """Normalise the data to [0, 1] for each channel.
 
-        Note that this applies to either ArrayCHW or ArrayTCHW.
+        Note that this can be applied to both ArrayCHW and ArrayTCHW.
         """
-        min_ = self.statistics["minimum"].reshape(-1, 1, 1).astype(data.dtype)
-        max_ = self.statistics["maximum"].reshape(-1, 1, 1).astype(data.dtype)
-        return cast("ArrayType", (data - min_) / (max_ - min_))
+        if self._norm_offset is None:
+            self._norm_offset = (
+                self.statistics["minimum"].reshape(-1, 1, 1).astype(data.dtype)
+            )
+        if self._norm_scale is None:
+            self._norm_scale = (
+                (1.0 / (self.statistics["maximum"] - self.statistics["minimum"]))
+                .reshape(-1, 1, 1)
+                .astype(data.dtype)
+            )
+        return cast("ArrayType", (data - self._norm_offset) * self._norm_scale)
 
     def subset(
         self,

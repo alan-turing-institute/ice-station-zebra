@@ -25,7 +25,10 @@ class ConvBlockUpsample(nn.Module):
 
         Args:
             activation: the activation function to use.
-            kernel_size: the size of the convolutional kernel.
+            kernel_size: the base size of the convolutional kernel. The size-increasing
+                convolution needs an even kernel and the size-preserving convolution
+                needs an odd kernel, so one will use `kernel_size` and the other will
+                use `kernel_size + 1`.
             n_input_channels: the number of input channels.
             n_output_channels: the number of output channels (if None, half of n_input_channels).
 

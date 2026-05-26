@@ -24,12 +24,12 @@ class ConvBlockUpsampleNaive(nn.Module):
         """Upsampling block with upsample and convolution.
 
         Args:
-            in_channels (int): Input channel size.
-            out_channels (int): Output channel size.
-            kernel_size (int): Kernel size for the convolution after upsampling.
-            norm_type (str): Type of normalization ("groupnorm", "batchnorm", or "none").
-            activation (str): Name of activation function.
-            dropout_rate (float): Dropout probability for ConvNormAct.
+            in_channels: Number of input channels.
+            out_channels: Number of output channels (if None, half of n_input_channels).
+            kernel_size: Kernel size for the convolution after upsampling.
+            norm_type: Type of normalization ("groupnorm", "batchnorm", or "none").
+            activation: Name of activation function.
+            dropout_rate: Dropout probability for ConvNormAct.
 
         """
         super().__init__()

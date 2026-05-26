@@ -6,7 +6,7 @@ from .conv_norm_act import ConvNormAct
 class ConvBlockUpsampleNaive(nn.Module):
     """Convolutional block that doubles the resolution.
 
-    Upsample → ConvNormAct
+    Upsample > ConvNormAct
 
     Note that using ConvTranspose2d as implemented in ConvBlockUpsample, is generally
     preferred (see e.g. https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081)
@@ -36,7 +36,7 @@ class ConvBlockUpsampleNaive(nn.Module):
 
         out_channels = in_channels // 2 if out_channels is None else out_channels
         self.block = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode="bilinear"),
+            nn.Upsample(scale_factor=2, mode="nearest"),
             ConvNormAct(
                 in_channels,
                 out_channels,

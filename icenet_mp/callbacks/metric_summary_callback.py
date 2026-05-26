@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class MetricSummaryCallback(Callback):
-    """A callback to summarise metrics during evaluation."""
+    """A callback to summarise metrics at the end of an epoch or a run."""
 
     def log_per_epoch_metrics(
         self, trainer: Trainer, metrics: MetricCollection, stage: str

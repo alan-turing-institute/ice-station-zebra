@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, TypeVar, cast
 
 import numpy as np
 from anemoi.datasets.data import open_dataset
@@ -10,6 +10,8 @@ from torch.utils.data import Dataset
 
 from icenet_mp.types import ArrayCHW, ArrayTCHW, DataSpace, Hemisphere
 from icenet_mp.utils import normalise_date
+
+ArrayType = TypeVar("ArrayType", ArrayCHW, ArrayTCHW)
 
 
 class SingleDataset(Dataset):
@@ -24,6 +26,7 @@ class SingleDataset(Dataset):
         input_files: Sequence[Path],
         *,
         date_ranges: Sequence[dict[str, str | None]] = [{"start": None, "end": None}],
+        normalise: bool = True,
         variables: Sequence[str] = (),
     ) -> None:
         """A dataset for use by IceNet-MP.
@@ -42,6 +45,7 @@ class SingleDataset(Dataset):
         )
         self._input_files = tuple(sorted(input_files))
         self._name = name
+        self._normalise = normalise
         self._variables = set(variables)
 
     @classmethod
@@ -134,6 +138,14 @@ class SingleDataset(Dataset):
         """Return the variable names for this dataset."""
         return self.dataslices[0].variables
 
+    @cached_property
+    def statistics(self) -> dict[str, np.ndarray]:
+        """Return per-channel statistics from the underlying dataset.
+
+        Keys are 'mean', 'stdev', 'maximum', 'minimum', each with shape [C].
+        """
+        return self.dataslices[0].statistics
+
     def __len__(self) -> int:
         """Return the total length of the dataset."""
         return len(self.dates)
@@ -142,7 +154,8 @@ class SingleDataset(Dataset):
         """Return the data for a single timestep in [C, H, W] format."""
         try:
             idx_ds, idx_date = self._idx2anemoi[idx]
-            return self.dataslices[idx_ds][idx_date].reshape(self.space.chw)
+            data_chw = self.dataslices[idx_ds][idx_date].reshape(self.space.chw)
+            return self.normalise(data_chw) if self._normalise else data_chw
         except KeyError as exc:
             msg = f"Index {idx} out of range for dataset of length {len(self)}."
             raise IndexError(msg) from exc
@@ -188,7 +201,8 @@ class SingleDataset(Dataset):
             dataslice = self.dataslices[idx_ds_start][
                 idx_date_start : idx_date_start + n_steps
             ]
-            return dataslice.reshape(n_steps, *self.space.chw)
+            data_tchw = dataslice.reshape(n_steps, *self.space.chw)
+            return self.normalise(data_tchw) if self._normalise else data_tchw
         except KeyError as exc:
             msg = (
                 f"Requested slice of {n_steps} steps following {start_date} "
@@ -196,6 +210,15 @@ class SingleDataset(Dataset):
                 f"{self.end_date}"
             )
             raise ValueError(msg) from exc
+
+    def normalise(self, data: ArrayType) -> ArrayType:
+        """Normalise the data to [0, 1] for each channel.
+
+        Note that this applies to either ArrayCHW or ArrayTCHW.
+        """
+        min_ = self.statistics["minimum"].reshape(-1, 1, 1).astype(data.dtype)
+        max_ = self.statistics["maximum"].reshape(-1, 1, 1).astype(data.dtype)
+        return cast("ArrayType", (data - min_) / (max_ - min_))
 
     def subset(
         self,
@@ -207,6 +230,7 @@ class SingleDataset(Dataset):
             name=self.name,
             input_files=self._input_files,
             date_ranges=date_ranges or self._date_ranges,
+            normalise=self._normalise,
             variables=variables or list(self._variables),
         )
 

@@ -37,6 +37,7 @@ class BaseModel(LightningModule, ABC):
         optimizer: DictConfig,
         output_space: DictConfig,
         scheduler: DictConfig,
+        loss: DictConfig | None = None,
         **_kwargs: Any,
     ) -> None:
         """Initialise a BaseModel.
@@ -79,6 +80,16 @@ class BaseModel(LightningModule, ABC):
                 "mae": MAEPerForecastDay(),
             }
         )
+
+        if loss:
+            self._loss_fn: torch.nn.Module = hydra.utils.instantiate(loss)
+        else:
+            logger.warning(
+                "No loss config provided to %s; falling back to torch.nn.MSELoss(). "
+                "Check that your Hydra config mounts a loss at `model.loss`.",
+                name,
+            )
+            self._loss_fn = torch.nn.MSELoss()
 
         # Save all non-ignored arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
@@ -139,7 +150,7 @@ class BaseModel(LightningModule, ABC):
 
     def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
         """Calculate the loss given a prediction and target."""
-        return torch.nn.functional.l1_loss(prediction, target)
+        return self._loss_fn(prediction, target)
 
     def test_step(
         self,

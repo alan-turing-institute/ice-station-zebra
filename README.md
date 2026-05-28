@@ -5,13 +5,12 @@
 | Name                                                          |    Stmts |     Miss |   Cover |   Missing |
 |-------------------------------------------------------------- | -------: | -------: | ------: | --------: |
 | icenet\_mp/\_\_init\_\_.py                                    |        6 |        0 |    100% |           |
-| icenet\_mp/callbacks/\_\_init\_\_.py                          |        7 |        0 |    100% |           |
+| icenet\_mp/callbacks/\_\_init\_\_.py                          |        6 |        0 |    100% |           |
 | icenet\_mp/callbacks/activation\_saver.py                     |       92 |       70 |     24% |63-73, 83-116, 124-127, 135, 143, 146-162, 173-180, 192-218, 231-245, 253-258 |
 | icenet\_mp/callbacks/ema\_weight\_averaging\_callback.py      |       13 |        8 |     38% |24-28, 34-40 |
-| icenet\_mp/callbacks/metric\_summary\_callback.py             |       21 |        0 |    100% |           |
-| icenet\_mp/callbacks/plotting\_callback.py                    |       57 |       33 |     42% |    68-115 |
+| icenet\_mp/callbacks/metric\_summary\_callback.py             |       66 |       22 |     67% |49-52, 82-83, 90, 98-99, 103-106, 114-115, 121-126, 135-142, 148 |
+| icenet\_mp/callbacks/plotting\_callback.py                    |      107 |       71 |     34% |70-73, 79-94, 104-138, 151-166, 171-180, 193-212, 219-228 |
 | icenet\_mp/callbacks/unconditional\_checkpoint.py             |       21 |       10 |     52% |17-19, 24, 29-30, 34-35, 39-40 |
-| icenet\_mp/callbacks/wandb\_metric\_callback.py               |        8 |        3 |     62% |     11-13 |
 | icenet\_mp/callbacks/weight\_averaging.py                     |       95 |       60 |     37% |96-112, 133, 149-161, 191-197, 212-217, 232-233, 248-249, 264-265, 277, 289, 310-326, 349-376, 387-398, 407-416 |
 | icenet\_mp/cli/\_\_init\_\_.py                                |        2 |        0 |    100% |           |
 | icenet\_mp/cli/datasets.py                                    |       31 |       13 |     58% |27-30, 43-46, 59-62, 66 |
@@ -50,14 +49,14 @@
 | icenet\_mp/losses/weighted\_bce\_loss.py                      |        8 |        8 |      0% |      7-42 |
 | icenet\_mp/losses/weighted\_l1\_loss.py                       |       10 |       10 |      0% |      6-38 |
 | icenet\_mp/losses/weighted\_mse\_loss.py                      |       12 |       12 |      0% |      7-48 |
-| icenet\_mp/metrics/\_\_init\_\_.py                            |        3 |        0 |    100% |           |
-| icenet\_mp/metrics/base\_metrics.py                           |       42 |        7 |     83% |30, 63-67, 81 |
-| icenet\_mp/metrics/icenet\_accuracy.py                        |       18 |       11 |     39% |18-23, 31-41, 47 |
+| icenet\_mp/metrics/\_\_init\_\_.py                            |        5 |        0 |    100% |           |
+| icenet\_mp/metrics/daily\_metrics.py                          |       42 |        7 |     83% |30, 63-67, 81 |
+| icenet\_mp/metrics/icenet\_accuracy.py                        |       24 |        3 |     88% |46, 51, 55 |
 | icenet\_mp/metrics/sie\_error.py                              |       17 |       10 |     41% |27-31, 51-55, 59 |
 | icenet\_mp/metrics/sie\_error\_abs.py                         |       26 |        2 |     92% |    70, 76 |
 | icenet\_mp/model\_service.py                                  |      137 |       65 |     53% |34-38, 43-44, 57-60, 63-67, 107-108, 123-125, 146-147, 161-162, 168-173, 187-259, 264-275, 283-296 |
 | icenet\_mp/models/\_\_init\_\_.py                             |        5 |        0 |    100% |           |
-| icenet\_mp/models/base\_model.py                              |       69 |        2 |     97% |    90, 94 |
+| icenet\_mp/models/base\_model.py                              |       75 |        2 |     97% |   98, 102 |
 | icenet\_mp/models/common/\_\_init\_\_.py                      |       13 |        0 |    100% |           |
 | icenet\_mp/models/common/activations.py                       |        2 |        0 |    100% |           |
 | icenet\_mp/models/common/conv\_block\_common.py               |        8 |        0 |    100% |           |
@@ -73,7 +72,7 @@
 | icenet\_mp/models/common/shift.py                             |       14 |        0 |    100% |           |
 | icenet\_mp/models/common/time\_embed.py                       |        9 |        4 |     56% | 26-30, 37 |
 | icenet\_mp/models/common/transformerblock.py                  |       12 |        7 |     42% |16-22, 40-42 |
-| icenet\_mp/models/ddpm.py                                     |       99 |       80 |     19% |23-24, 40, 82-167, 170-171, 183-204, 220-260, 283-314, 339-361, 390-407 |
+| icenet\_mp/models/ddpm.py                                     |       96 |       79 |     18% |21-22, 38, 80-152, 155-156, 168-189, 205-245, 270-308, 334-358, 386-403 |
 | icenet\_mp/models/decoders/\_\_init\_\_.py                    |        5 |        0 |    100% |           |
 | icenet\_mp/models/decoders/base\_decoder.py                   |       14 |        2 |     86% |     40-41 |
 | icenet\_mp/models/decoders/cnn\_decoder.py                    |       40 |        0 |    100% |           |
@@ -100,23 +99,23 @@
 | icenet\_mp/types/complex\_datatypes.py                        |       39 |       12 |     69% |57-64, 68-70, 74 |
 | icenet\_mp/types/enums.py                                     |       16 |        1 |     94% |        23 |
 | icenet\_mp/types/protocols.py                                 |        4 |        0 |    100% |           |
-| icenet\_mp/types/simple\_datatypes.py                         |       53 |        0 |    100% |           |
+| icenet\_mp/types/simple\_datatypes.py                         |       64 |        6 |     91% |   255-261 |
 | icenet\_mp/types/typedefs.py                                  |       16 |        0 |    100% |           |
-| icenet\_mp/utils.py                                           |       36 |       17 |     53% |12, 17-29, 34, 43, 57 |
+| icenet\_mp/utils.py                                           |       36 |       20 |     44% |12, 17-29, 34, 39-44, 57 |
 | icenet\_mp/visualisations/\_\_init\_\_.py                     |        7 |        0 |    100% |           |
 | icenet\_mp/visualisations/convert.py                          |       47 |        5 |     89% |82-84, 88-89 |
-| icenet\_mp/visualisations/helpers.py                          |      151 |       27 |     82% |57, 59, 62-63, 79-80, 113, 133, 140, 145-146, 206-221, 332-333, 356-364, 387-393, 455, 488 |
+| icenet\_mp/visualisations/helpers.py                          |      152 |       30 |     80% |57, 59, 62-63, 79-80, 113, 133, 140, 144-146, 203-213, 317-318, 341-349, 372-378, 440, 476, 483, 495 |
 | icenet\_mp/visualisations/land\_mask.py                       |       26 |        6 |     77% |     18-23 |
-| icenet\_mp/visualisations/layout.py                           |      372 |       31 |     92% |217-218, 259-263, 303-304, 432, 655, 661, 675, 771-774, 776, 834-851, 863, 887, 902, 910-918, 1013, 1017, 1037 |
-| icenet\_mp/visualisations/metadata.py                         |      192 |       24 |     88% |36, 40, 45, 59, 63, 68, 86-87, 119-125, 166, 170-174, 202-203, 251, 304, 325, 377, 379 |
-| icenet\_mp/visualisations/plotter.py                          |       72 |       46 |     36% |29-30, 41-64, 70-95, 101-119, 129-151 |
-| icenet\_mp/visualisations/plotting\_core.py                   |      165 |       48 |     71% |59, 65-67, 87, 104, 127, 136-137, 147-149, 161, 169-180, 279-285, 314-315, 334, 345-346, 381, 391-414, 451-454, 480-484 |
-| icenet\_mp/visualisations/plotting\_static.py                 |       64 |        5 |     92% |129-131, 230-231 |
-| icenet\_mp/visualisations/plotting\_video.py                  |      117 |       17 |     85% |104-105, 107-110, 141-146, 180-182, 190-191, 334, 360-361, 440-444 |
+| icenet\_mp/visualisations/layout.py                           |      376 |       30 |     92% |217-218, 259-263, 303-304, 432, 655, 661, 675, 771-774, 776, 842-859, 875, 899, 914, 922-930, 1025, 1049 |
+| icenet\_mp/visualisations/metadata.py                         |      192 |       24 |     88% |36, 40, 45, 59, 63, 68, 86-87, 119-125, 166, 170-174, 202-203, 251, 305, 326, 378, 380 |
+| icenet\_mp/visualisations/plotter.py                          |       72 |       47 |     35% |39, 45-68, 74-99, 105-123, 133-155, 159-160 |
+| icenet\_mp/visualisations/plotting\_core.py                   |      152 |       36 |     76% |59, 65-67, 87, 104, 127, 136-137, 149, 161, 169, 180, 279-285, 314-315, 334, 345-346, 381, 391-414, 450-454 |
+| icenet\_mp/visualisations/plotting\_static.py                 |       65 |        5 |     92% |134-136, 237-238 |
+| icenet\_mp/visualisations/plotting\_video.py                  |      117 |       16 |     86% |107-108, 110-113, 144-149, 186-188, 196-197, 366-367, 445-449 |
 | icenet\_mp/visualisations/range\_check.py                     |       77 |       16 |     79% |29, 33-36, 43-44, 53, 58-60, 98, 107, 144, 165, 171 |
 | icenet\_mp/xpu/\_\_init\_\_.py                                |        9 |        0 |    100% |           |
 | icenet\_mp/xpu/accelerator.py                                 |       72 |       39 |     46% |35-42, 55, 60-62, 77-111, 125-127, 133, 144-147, 152 |
-| **TOTAL**                                                     | **4091** | **1222** | **70%** |           |
+| **TOTAL**                                                     | **4192** | **1269** | **70%** |           |
 
 
 ## Setup coverage badge

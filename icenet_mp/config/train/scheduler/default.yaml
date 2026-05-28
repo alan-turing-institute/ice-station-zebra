@@ -5,7 +5,7 @@ _target_: torch.optim.lr_scheduler.CosineAnnealingLR
 lr_scheduler_parameters:
   frequency: 1
   interval: epoch
-  name: cosine-annealing  # used by W&B
+  name: learning-rate  # used when logging to W&B
 
 # These parameters are passed to the scheduler instance
 scheduler_parameters:

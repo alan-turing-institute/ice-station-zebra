@@ -5,7 +5,7 @@ import torch
 from omegaconf import DictConfig
 
 from icenet_mp.models import BaseModel
-from icenet_mp.types import ModelTestOutput, TensorNTCHW
+from icenet_mp.types import ModelStepOutput, TensorNTCHW
 
 
 class FakeDataModel(BaseModel):
@@ -203,7 +203,7 @@ class TestBaseModel:
         )
         output_shape = batch["target"].shape
         output = model.test_step(batch, 0)
-        assert isinstance(output, ModelTestOutput)
+        assert isinstance(output, ModelStepOutput)
         assert output.prediction.shape == output_shape
         assert output.target.shape == output_shape
         assert output.loss.shape == torch.Size([])
@@ -242,8 +242,8 @@ class TestBaseModel:
             scheduler=cfg_scheduler,
         )
         output = model.training_step(batch, 0)
-        assert isinstance(output, torch.Tensor)
-        assert output.shape == torch.Size([])
+        assert isinstance(output, ModelStepOutput)
+        assert output.loss.shape == torch.Size([])
 
     def test_validation_step(
         self,
@@ -279,5 +279,5 @@ class TestBaseModel:
             scheduler=cfg_scheduler,
         )
         output = model.validation_step(batch, 0)
-        assert isinstance(output, torch.Tensor)
-        assert output.shape == torch.Size([])
+        assert isinstance(output, ModelStepOutput)
+        assert output.loss.shape == torch.Size([])

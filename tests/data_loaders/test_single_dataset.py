@@ -352,3 +352,77 @@ class TestSingleDataset:
         assert data_array.shape == (1, 2, 2)
         assert dataset.start_date == self.dates_np[0]
         assert dataset.end_date == self.dates_np[-1]
+
+    def test_normalise_formula_chw(self, mock_dataset: Path) -> None:
+        """Normalised __getitem__ output equals (raw - minimum) / (maximum - minimum).
+
+        Verifies the statistics key names ('minimum', 'maximum') and the per-channel
+        [C,1,1] reshape for CHW broadcasting.
+        """
+        dataset = SingleDataset(name="mock_dataset", input_files=[mock_dataset])
+        dataset_raw = SingleDataset(
+            name="mock_dataset", input_files=[mock_dataset], normalise=False
+        )
+        min_ = dataset.statistics["minimum"][:, None, None].astype(np.float64)
+        max_ = dataset.statistics["maximum"][:, None, None].astype(np.float64)
+        for idx in range(len(dataset)):
+            raw = dataset_raw[idx].astype(np.float64)
+            expected = (raw - min_) / (max_ - min_)
+            np.testing.assert_allclose(
+                dataset[idx].astype(np.float64), expected, rtol=1e-5
+            )
+
+    def test_normalise_formula_tchw(self, mock_dataset: Path) -> None:
+        """Normalised get_tchw_slice output equals (raw - minimum) / (maximum - minimum).
+
+        Verifies that [C,1,1] broadcasting works correctly against TCHW arrays —
+        a regression in the reshape would silently misalign channels across time.
+        """
+        dataset = SingleDataset(name="mock_dataset", input_files=[mock_dataset])
+        dataset_raw = SingleDataset(
+            name="mock_dataset", input_files=[mock_dataset], normalise=False
+        )
+        min_ = dataset.statistics["minimum"][:, None, None].astype(np.float64)
+        max_ = dataset.statistics["maximum"][:, None, None].astype(np.float64)
+        raw = dataset_raw.get_tchw_slice(self.dates_np[0], len(dataset)).astype(
+            np.float64
+        )
+        expected = (raw - min_) / (max_ - min_)
+        result = dataset.get_tchw_slice(self.dates_np[0], len(dataset)).astype(
+            np.float64
+        )
+        np.testing.assert_allclose(result, expected, rtol=1e-5)
+
+    def test_normalise_false_returns_raw_chw(self, mock_dataset: Path) -> None:
+        """normalise=False __getitem__ returns raw values, not normalised ones."""
+        dataset_raw = SingleDataset(
+            name="mock_dataset", input_files=[mock_dataset], normalise=False
+        )
+        dataset_norm = SingleDataset(name="mock_dataset", input_files=[mock_dataset])
+        raw = dataset_raw[0]
+        normalised = dataset_norm[0]
+        # Temperature channel should be much larger than [0, 1] when not normalised
+        assert not np.allclose(raw, normalised), (
+            "normalise=False output equals normalised output"
+        )
+
+    def test_normalise_false_returns_raw_tchw(self, mock_dataset: Path) -> None:
+        """normalise=False get_tchw_slice returns raw values, not normalised ones."""
+        dataset_raw = SingleDataset(
+            name="mock_dataset", input_files=[mock_dataset], normalise=False
+        )
+        dataset_norm = SingleDataset(name="mock_dataset", input_files=[mock_dataset])
+        raw = dataset_raw.get_tchw_slice(self.dates_np[0], 3)
+        normalised = dataset_norm.get_tchw_slice(self.dates_np[0], 3)
+        assert not np.allclose(raw, normalised), (
+            "normalise=False TCHW output equals normalised output"
+        )
+
+    def test_subset_preserves_normalise_flag(self, mock_dataset: Path) -> None:
+        """subset() propagates the normalise flag to the child dataset."""
+        for flag in (True, False):
+            dataset = SingleDataset(
+                name="mock_dataset", input_files=[mock_dataset], normalise=flag
+            )
+            subset = dataset.subset(variables=["ice_conc"])
+            assert subset._normalise is flag

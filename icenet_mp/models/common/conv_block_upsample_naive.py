@@ -4,7 +4,7 @@ from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockUpsampleNaive(nn.Module):
-    """Convolutional block that reduces channels and doubles each spatial dimension.
+    """Convolutional block that doubles each spatial dimension.
 
     Upsample > (Conv2d > Normalization > Activation)
 

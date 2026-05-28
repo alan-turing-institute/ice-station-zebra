@@ -6,7 +6,7 @@ from .activations import ACTIVATION_FROM_NAME
 
 
 class ConvBlockUpsample(nn.Module):
-    """Convolutional block that reduces channels and doubles each spatial dimension.
+    """Convolutional block that doubles each spatial dimension.
 
     (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
 

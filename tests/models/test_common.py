@@ -3,7 +3,7 @@ import torch
 
 from icenet_mp.models.common import (
     ConvBlockUpsample,
-    ConvBlockUpsampleNaive,
+    ConvNormActUpsample,
     NormalisedFold,
 )
 
@@ -21,14 +21,14 @@ class TestConvBlockUpsample:
         assert y.shape == (1, in_channels // 2, height * 2, width * 2)
 
 
-class TestConvBlockUpsampleNaive:
+class TestConvNormActUpsample:
     @pytest.mark.parametrize("kernel_size", [2, 3, 4, 5])
     @pytest.mark.parametrize("in_channels", [4, 16])
     @pytest.mark.parametrize(("height", "width"), [(8, 8), (12, 20)])
     def test_output_shape(
         self, kernel_size: int, in_channels: int, height: int, width: int
     ) -> None:
-        layer = ConvBlockUpsampleNaive(in_channels, kernel_size=kernel_size)
+        layer = ConvNormActUpsample(in_channels, kernel_size=kernel_size)
         x = torch.zeros(1, in_channels, height, width)
         y = layer(x)
         assert y.shape == (1, in_channels // 2, height * 2, width * 2)

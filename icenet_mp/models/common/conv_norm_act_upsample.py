@@ -3,7 +3,7 @@ from torch import Tensor, nn
 from .conv_norm_act import ConvNormAct
 
 
-class ConvBlockUpsampleNaive(nn.Module):
+class ConvNormActUpsample(nn.Module):
     """Convolutional block that doubles each spatial dimension.
 
     Upsample > (Conv2d > Normalization > Activation)
@@ -21,7 +21,7 @@ class ConvBlockUpsampleNaive(nn.Module):
         activation: str = "ReLU",
         dropout_rate: float = 0.0,
     ) -> None:
-        """Initialize a ConvBlockUpsampleNaive module.
+        """Initialize a ConvNormActUpsample module.
 
         Args:
             in_channels: the number of input channels.

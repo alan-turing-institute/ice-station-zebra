@@ -11,7 +11,7 @@ class ConvBlockUpsample(nn.Module):
     (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
 
     Reverse of ConvBlockDownsample.
-    Preferred over ConvBlockUpsampleNaive for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
+    Preferred over ConvNormActUpsample for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
     """
 
     def __init__(

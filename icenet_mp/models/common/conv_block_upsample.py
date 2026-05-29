@@ -21,6 +21,7 @@ class ConvBlockUpsample(nn.Module):
         *,
         activation: str = "ReLU",
         kernel_size: int = 3,
+        norm_type: str = "batchnorm",
         out_channels: int | None = None,
     ) -> None:
         """Initialize a ConvBlockUpsample module.
@@ -29,6 +30,7 @@ class ConvBlockUpsample(nn.Module):
             in_channels: the number of input channels.
             activation: the activation function to use.
             kernel_size: the size of the convolutional kernel.
+            norm_type: type of normalization ("groupnorm", "batchnorm", or "none").
             out_channels: the number of output channels (if None, half of in_channels).
 
         """
@@ -42,17 +44,17 @@ class ConvBlockUpsample(nn.Module):
             ConvNormAct(
                 in_channels,
                 out_channels,
-                kernel_size=kernel_size,
                 activation=activation,
-                norm_type="batchnorm",
+                kernel_size=kernel_size,
+                norm_type=norm_type,
             ),
             # Size preserving convolution/normalisation/activation
             ConvNormAct(
                 out_channels,
                 out_channels,
-                kernel_size=kernel_size,
                 activation=activation,
-                norm_type="batchnorm",
+                kernel_size=kernel_size,
+                norm_type=norm_type,
             ),
         )
 

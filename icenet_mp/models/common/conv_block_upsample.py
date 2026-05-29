@@ -11,7 +11,6 @@ class ConvBlockUpsample(nn.Module):
     (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
 
     Reverse of ConvBlockDownsample.
-    Preferred over ConvNormActUpsample for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
     """
 
     def __init__(
@@ -27,10 +26,7 @@ class ConvBlockUpsample(nn.Module):
         Args:
             n_input_channels: the number of input channels.
             activation: the activation function to use.
-            kernel_size: the base size of the convolutional kernel. The size-increasing
-                convolution needs an even kernel and the size-preserving convolution
-                needs an odd kernel, so one will use `kernel_size` and the other will
-                use `kernel_size + 1`.
+            kernel_size: the base size of the convolutional kernel (must be odd).
             n_output_channels: the number of output channels (if None, half of n_input_channels).
 
         """
@@ -41,31 +37,31 @@ class ConvBlockUpsample(nn.Module):
         n_output_channels = (
             n_input_channels // 2 if n_output_channels is None else n_output_channels
         )
-        kernel_size_odd = kernel_size if kernel_size % 2 else kernel_size + 1
-        kernel_size_even = kernel_size + 1 if kernel_size % 2 else kernel_size
+        # Since ConvTranspose2d does not support `padding=same`, even-sized kernels
+        # cannot preserve size.
+        if (kernel_size % 2) == 0:
+            msg = "`kernel_size` must be odd to preserve spatial dimensions."
+            raise ValueError(msg)
 
         self.model = nn.Sequential(
             # Size increasing convolution/normalisation/activation
-            # To avoid checkerboarding, kernel size must be a multiple of stride.
-            # We therefore use an even kernel size with appropriate padding.
+            # We use an Upsample layer to avoid checkerboarding artifacts (see
+            # https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
+            nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False),
             nn.ConvTranspose2d(
                 n_input_channels,
                 n_output_channels,
-                kernel_size=kernel_size_even,
-                padding=(kernel_size_even - 2) // 2,
-                stride=2,
+                kernel_size=kernel_size,
+                padding=(kernel_size - 1) // 2,
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),
             # Size preserving convolution/normalisation/activation
-            # Since ConvTranspose2d does not yet support `padding=same`, even-sized
-            # kernels cannot preserve size.
-            # We therefore use an odd kernel size with appropriate padding.
             nn.ConvTranspose2d(
                 n_output_channels,
                 n_output_channels,
-                kernel_size=kernel_size_odd,
-                padding=(kernel_size_odd - 1) // 2,
+                kernel_size=kernel_size,
+                padding=(kernel_size - 1) // 2,
             ),
             nn.BatchNorm2d(n_output_channels),
             activation_layer(inplace=True),

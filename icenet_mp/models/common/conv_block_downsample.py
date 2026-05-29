@@ -34,10 +34,7 @@ class ConvBlockDownsample(nn.Module):
         """
         super().__init__()
 
-        # Calculate convolutional parameters
         out_channels = in_channels * 2 if out_channels is None else out_channels
-        padding = (kernel_size - 1) // 2
-
         self.model = nn.Sequential(
             # Size reducing convolution/normalisation/activation
             ConvNormAct(
@@ -46,7 +43,7 @@ class ConvBlockDownsample(nn.Module):
                 kernel_size=kernel_size,
                 activation=activation,
                 norm_type="batchnorm",
-                padding=padding,
+                padding=(kernel_size - 1) // 2,
                 stride=2,
             ),
             # Size preserving convolution/normalisation/activation

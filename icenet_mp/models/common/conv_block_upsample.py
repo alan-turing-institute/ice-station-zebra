@@ -2,7 +2,7 @@ from torch import nn
 
 from icenet_mp.types import TensorNCHW
 
-from .activations import ACTIVATION_FROM_NAME
+from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockUpsample(nn.Module):
@@ -10,9 +10,9 @@ class ConvBlockUpsample(nn.Module):
 
     If out_channels is not specified than this will halve the number of input channels.
 
-    (ConvTranspose2d > Normalization > Activation) > (ConvTranspose2d > Normalization > Activation)
+    Upsample > (Conv2d > Normalization > Activation) > (Conv2d > Normalization > Activation)
 
-    Reverse of ConvBlockDownsample.
+    Reverse of ConvBlockDownsample, using upsampling to avoid checkerboarding.
     """
 
     def __init__(
@@ -28,43 +28,32 @@ class ConvBlockUpsample(nn.Module):
         Args:
             in_channels: the number of input channels.
             activation: the activation function to use.
-            kernel_size: the base size of the convolutional kernel (must be odd).
+            kernel_size: the size of the convolutional kernel.
             out_channels: the number of output channels (if None, half of in_channels).
 
         """
         super().__init__()
-        activation_layer = ACTIVATION_FROM_NAME[activation]
 
-        # Calculate convolutional parameters
         out_channels = in_channels // 2 if out_channels is None else out_channels
-        # Since ConvTranspose2d does not support `padding=same`, even-sized kernels
-        # cannot preserve size.
-        if (kernel_size % 2) == 0:
-            msg = "`kernel_size` must be odd to preserve spatial dimensions."
-            raise ValueError(msg)
-
         self.model = nn.Sequential(
-            # Size increasing convolution/normalisation/activation
-            # We use an Upsample layer to avoid checkerboarding artifacts (see
-            # https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
+            # Size increasing upsample
             nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False),
-            nn.ConvTranspose2d(
+            # Size preserving convolution/normalisation/activation
+            ConvNormAct(
                 in_channels,
                 out_channels,
                 kernel_size=kernel_size,
-                padding=(kernel_size - 1) // 2,
+                activation=activation,
+                norm_type="batchnorm",
             ),
-            nn.BatchNorm2d(out_channels),
-            activation_layer(inplace=True),
             # Size preserving convolution/normalisation/activation
-            nn.ConvTranspose2d(
+            ConvNormAct(
                 out_channels,
                 out_channels,
                 kernel_size=kernel_size,
-                padding=(kernel_size - 1) // 2,
+                activation=activation,
+                norm_type="batchnorm",
             ),
-            nn.BatchNorm2d(out_channels),
-            activation_layer(inplace=True),
         )
 
     def forward(self, x: TensorNCHW) -> TensorNCHW:

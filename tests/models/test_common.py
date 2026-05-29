@@ -9,7 +9,7 @@ from icenet_mp.models.common import (
 
 
 class TestConvBlockUpsample:
-    @pytest.mark.parametrize("kernel_size", [3, 5])
+    @pytest.mark.parametrize("kernel_size", [2, 3, 4, 5])
     @pytest.mark.parametrize("in_channels", [4, 16])
     @pytest.mark.parametrize(("height", "width"), [(8, 8), (12, 20)])
     def test_output_shape(

@@ -3,6 +3,7 @@ from torch import nn
 from icenet_mp.types import TensorNCHW
 
 from .conv_norm_act import ConvNormAct
+from .conv_norm_act_upsample import ConvNormActUpsample
 
 
 class ConvBlockUpsample(nn.Module):
@@ -38,15 +39,14 @@ class ConvBlockUpsample(nn.Module):
 
         out_channels = in_channels // 2 if out_channels is None else out_channels
         self.model = nn.Sequential(
-            # Size increasing upsample
-            nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False),
-            # Size preserving convolution/normalisation/activation
-            ConvNormAct(
+            # Size increasing upsample + convolution/normalisation/activation
+            ConvNormActUpsample(
                 in_channels,
                 out_channels,
                 activation=activation,
                 kernel_size=kernel_size,
                 norm_type=norm_type,
+                upsample_mode="bilinear",
             ),
             # Size preserving convolution/normalisation/activation
             ConvNormAct(

@@ -11,32 +11,39 @@ class ConvNormActUpsample(nn.Module):
     Prefer ConvBlockUpsample for most use cases (see https://discuss.pytorch.org/t/upsample-conv2d-vs-convtranspose2d/138081).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         in_channels: int,
         out_channels: int,
         *,
+        kernel_size: int,
         activation: str = "ReLU",
         dropout_rate: float = 0.0,
-        kernel_size: int,
         norm_type: str = "batchnorm",
+        upsample_mode: str = "nearest",
     ) -> None:
         """Initialize a ConvNormActUpsample module.
 
         Args:
-            in_channels: the number of input channels.
-            out_channels: the number of output channels (if None, half of in_channels).
-            kernel_size: the size of the convolutional kernel.
-            norm_type: the type of normalization ("groupnorm", "batchnorm", or "none").
             activation: the activation function to use.
             dropout_rate: the dropout probability.
+            in_channels: the number of input channels.
+            kernel_size: the size of the convolutional kernel.
+            norm_type: the type of normalization ("groupnorm", "batchnorm", or "none").
+            out_channels: the number of output channels (if None, half of in_channels).
+            upsample_mode: the mode to use for upsampling ("nearest", "bilinear", etc.).
 
         """
         super().__init__()
 
         out_channels = in_channels // 2 if out_channels is None else out_channels
+        upsample_kwargs = (
+            {"align_corners": False}
+            if upsample_mode in ("bilinear", "bicubic", "trilinear")
+            else {}
+        )
         self.block = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode="nearest"),
+            nn.Upsample(scale_factor=2, mode=upsample_mode, **upsample_kwargs),
             ConvNormAct(
                 in_channels,
                 out_channels,

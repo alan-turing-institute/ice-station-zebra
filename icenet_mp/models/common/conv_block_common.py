@@ -95,7 +95,7 @@ class CommonConvBlock(nn.Module):
                 ConvNormAct(
                     in_channels if idx_subblock == 0 else out_channels,
                     out_channels,
-                    kernel_size,
+                    kernel_size=kernel_size,
                     activation=activation,
                     dropout_rate=dropout_rate,
                     norm_type=norm_type,

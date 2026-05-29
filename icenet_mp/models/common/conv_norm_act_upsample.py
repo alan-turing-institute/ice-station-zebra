@@ -14,9 +14,9 @@ class ConvNormActUpsample(nn.Module):
     def __init__(
         self,
         in_channels: int,
+        out_channels: int,
         *,
-        out_channels: int | None = None,
-        kernel_size: int = 2,
+        kernel_size: int,
         norm_type: str = "batchnorm",
         activation: str = "ReLU",
         dropout_rate: float = 0.0,
@@ -40,7 +40,7 @@ class ConvNormActUpsample(nn.Module):
             ConvNormAct(
                 in_channels,
                 out_channels,
-                kernel_size,
+                kernel_size=kernel_size,
                 activation=activation,
                 dropout_rate=dropout_rate,
                 norm_type=norm_type,

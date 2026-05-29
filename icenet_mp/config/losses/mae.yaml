@@ -22,7 +22,7 @@
 #   - Encourages median-like predictions (vs. MSE which encourages the mean)
 #
 # When NOT to use:
-#   - If you need a smooth gradient near zero — use HuberLoss or SmoothL1Loss
+#   - If you need a smooth gradient near zero, use HuberLoss or SmoothL1Loss
 #     instead, which behave like L1 for large errors but quadratic near zero.
 # =============================================================================
 

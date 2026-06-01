@@ -1,0 +1,2 @@
+# @package model.loss
+_target_: icenet_mp.losses.rmse_loss.RMSELoss

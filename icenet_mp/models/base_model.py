@@ -1,4 +1,5 @@
 import itertools
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
@@ -25,6 +26,8 @@ from icenet_mp.metrics import (
 )
 from icenet_mp.types import DataSpace, Hemisphere, ModelStepOutput, TensorNTCHW
 
+log = logging.getLogger(__name__)
+
 
 class BaseModel(LightningModule, ABC):
     """A base class for all models used in the IceNet-MP project."""
@@ -42,6 +45,7 @@ class BaseModel(LightningModule, ABC):
         optimizer: DictConfig,
         output_space: DictConfig,
         scheduler: DictConfig,
+        loss: DictConfig | None = None,
         **_kwargs: Any,
     ) -> None:
         """Initialise a BaseModel.
@@ -88,6 +92,7 @@ class BaseModel(LightningModule, ABC):
         self.train_metrics = MetricCollection(deepcopy(_common_metrics))
         self.validation_metrics = MetricCollection(deepcopy(_common_metrics))
 
+        self._loss_fn: torch.nn.Module = hydra.utils.instantiate(loss)
         # Save all non-ignored arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
         # Note that W&B will log all hyperparameters
@@ -147,7 +152,7 @@ class BaseModel(LightningModule, ABC):
 
     def loss(self, prediction: TensorNTCHW, target: TensorNTCHW) -> torch.Tensor:
         """Calculate the loss given a prediction and target."""
-        return torch.nn.functional.l1_loss(prediction, target)
+        return self._loss_fn(prediction, target)
 
     def test_step(
         self,

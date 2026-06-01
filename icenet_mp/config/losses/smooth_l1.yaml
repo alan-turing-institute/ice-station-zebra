@@ -30,4 +30,3 @@
 
 _target_: torch.nn.SmoothL1Loss
 beta: 0.5  # Controls the threshold between MSE and MAE behaviour; lower values (0.0) behave more like MAE, higher values (1.0) behave more like MSE
-

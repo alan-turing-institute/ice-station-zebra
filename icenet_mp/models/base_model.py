@@ -84,16 +84,7 @@ class BaseModel(LightningModule, ABC):
             }
         )
 
-        if loss:
-            self._loss_fn: torch.nn.Module = hydra.utils.instantiate(loss)
-        else:
-            log.warning(
-                "No loss config provided to %s; falling back to torch.nn.MSELoss(). "
-                "Check that your Hydra config mounts a loss at `model.loss`.",
-                name,
-            )
-            self._loss_fn = torch.nn.MSELoss()
-
+        self._loss_fn: torch.nn.Module = hydra.utils.instantiate(loss)
         # Save all non-ignored arguments to __init__ as hyperparameters
         # This will also save the parameters of whichever child class is used
         # Note that W&B will log all hyperparameters

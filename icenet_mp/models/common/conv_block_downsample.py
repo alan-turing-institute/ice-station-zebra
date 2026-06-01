@@ -6,46 +6,55 @@ from .conv_norm_act import ConvNormAct
 
 
 class ConvBlockDownsample(nn.Module):
-    """Convolutional block that halves the resolution and doubles the number of channels.
+    """Convolutional block that halves each spatial dimension.
 
-    This is the reverse of ConvBlockUpsample.
+    If out_channels is not specified than this will double the number of input channels.
+
+    (Conv2d > Normalization > Activation) > (Conv2d > Normalization > Activation)
+
+    Reverse of ConvBlockUpsample.
     """
 
     def __init__(
-        self, n_input_channels: int, *, activation: str = "ReLU", kernel_size: int = 3
+        self,
+        in_channels: int,
+        *,
+        activation: str = "ReLU",
+        kernel_size: int = 3,
+        norm_type: str = "batchnorm",
+        out_channels: int | None = None,
     ) -> None:
-        """Initialize the ConvBlockDownsample module.
+        """Initialize a ConvBlockDownsample module.
 
         Args:
+            in_channels: the number of input channels.
             activation: the activation function to use.
             kernel_size: the size of the convolutional kernel.
-            n_input_channels: the number of input channels.
+            norm_type: type of normalization ("groupnorm", "batchnorm", or "none").
+            out_channels: the number of output channels (if None, double the input channels).
 
         """
         super().__init__()
 
-        # Calculate convolutional parameters
-        n_output_channels = n_input_channels * 2
-        padding = (kernel_size - 1) // 2
-
+        out_channels = in_channels * 2 if out_channels is None else out_channels
         self.model = nn.Sequential(
             # Size reducing convolution/normalisation/activation
             ConvNormAct(
-                n_input_channels,
-                n_output_channels,
-                kernel_size=kernel_size,
+                in_channels,
+                out_channels,
                 activation=activation,
-                norm_type="batchnorm",
-                padding=padding,
+                kernel_size=kernel_size,
+                norm_type=norm_type,
+                padding=(kernel_size - 1) // 2,
                 stride=2,
             ),
             # Size preserving convolution/normalisation/activation
             ConvNormAct(
-                n_output_channels,
-                n_output_channels,
-                kernel_size=kernel_size,
+                out_channels,
+                out_channels,
                 activation=activation,
-                norm_type="batchnorm",
+                kernel_size=kernel_size,
+                norm_type=norm_type,
             ),
         )
 
